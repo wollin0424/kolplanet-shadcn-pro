@@ -39,6 +39,8 @@ import {
 } from "lucide-react";
 import { VettingStatusSelect, type VettingStatus } from "./VettingStatusSelect";
 import { PlatformIcon, type Platform } from "./PlatformIcon";
+import { ContactChannelList, ALL_CONTACT_CHANNELS, type ContactChannel } from "./ContactChannels";
+import { QuotesMatrixDialog } from "./QuotesMatrixDialog";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -50,7 +52,7 @@ type Influencer = {
   vettingStatuses: VettingStatus[];
   linkedAccounts: Platform[];
   geo: string;
-  contactDots: string[];
+  contactChannels: ContactChannel[];
   followers: string;
   engRate: string;
   viewRate: string;
@@ -76,7 +78,7 @@ const BASE_ROWS: Influencer[] = [
     vettingStatuses: ["Rejected: Over Budget", "Pending"],
     linkedAccounts: ["IG", "TT"],
     geo: "SG",
-    contactDots: ["#22c55e", "#3b82f6", "#a855f7", "#ec4899", "#14b8a6"],
+    contactChannels: ["Email", "WhatsApp", "Telegram"],
     followers: "34K",
     engRate: "3.4%",
     viewRate: "34%",
@@ -98,7 +100,7 @@ const BASE_ROWS: Influencer[] = [
     vettingStatuses: ["No Response", "Rejected: Poor Content"],
     linkedAccounts: ["IG", "YT"],
     geo: "SG",
-    contactDots: ["#22c55e", "#3b82f6", "#a855f7", "#f97316", "#14b8a6"],
+    contactChannels: ["Email", "WhatsApp", "Line", "Viber", "Telegram"],
     followers: "34K",
     engRate: "2.8%",
     viewRate: "34%",
@@ -120,7 +122,7 @@ const BASE_ROWS: Influencer[] = [
     vettingStatuses: ["Rejected: Over Budget", "Rejected: Poor Content"],
     linkedAccounts: ["IG", "TT", "YT"],
     geo: "SG",
-    contactDots: ["#22c55e", "#3b82f6", "#a855f7", "#ec4899", "#f97316"],
+    contactChannels: ["Email", "WhatsApp"],
     followers: "54K",
     engRate: "4.1%",
     viewRate: "41%",
@@ -142,7 +144,7 @@ const BASE_ROWS: Influencer[] = [
     vettingStatuses: ["Rejected: Over Budget", "Shortlisted"],
     linkedAccounts: ["IG", "FB"],
     geo: "SG",
-    contactDots: ["#22c55e", "#3b82f6", "#a855f7", "#ec4899", "#14b8a6"],
+    contactChannels: ["Email", "Line", "Telegram", "WhatsApp"],
     followers: "34K",
     engRate: "3.1%",
     viewRate: "34%",
@@ -164,7 +166,7 @@ const BASE_ROWS: Influencer[] = [
     vettingStatuses: ["Rejected: Over Budget"],
     linkedAccounts: ["YT", "IG"],
     geo: "MY",
-    contactDots: ["#22c55e", "#3b82f6", "#a855f7", "#f97316", "#6366f1"],
+    contactChannels: ["Email", "WhatsApp", "Telegram"],
     followers: "45K",
     engRate: "5.2%",
     viewRate: "52%",
@@ -186,7 +188,7 @@ const BASE_ROWS: Influencer[] = [
     vettingStatuses: ["Pending"],
     linkedAccounts: ["TT", "IG"],
     geo: "SG",
-    contactDots: ["#22c55e", "#3b82f6", "#ec4899", "#14b8a6", "#6366f1"],
+    contactChannels: ["Email", "WhatsApp", "Telegram", "Line", "Viber"],
     followers: "28K",
     engRate: "6.7%",
     viewRate: "67%",
@@ -246,7 +248,6 @@ const LINKED_POOL: Platform[][] = [
   ["TT"],
 ];
 const GEO_POOL = ["SG", "MY", "ID", "TH", "PH", "VN"];
-const DOTS = ["#22c55e", "#3b82f6", "#a855f7", "#ec4899", "#14b8a6", "#f97316", "#6366f1", "#eab308"];
 const MANAGERS = ["Wollin", "Derek", "Sophie", "Jasmine"];
 const DELIVERABLE_POOL = [
   "1 Reel + 1 Story",
@@ -289,13 +290,13 @@ function buildExtras(): Influencer[] {
       vettingStatuses: pick(STATUS_POOL, i),
       linkedAccounts: pick(LINKED_POOL, i),
       geo: pick(GEO_POOL, i),
-      contactDots: [
-        pick(DOTS, i),
-        pick(DOTS, i + 1),
-        pick(DOTS, i + 2),
-        pick(DOTS, i + 3),
-        pick(DOTS, i + 4),
-      ],
+      contactChannels: (() => {
+        const count = 2 + (i % 4);
+        const start = i % ALL_CONTACT_CHANNELS.length;
+        return Array.from({ length: count }, (_, k) =>
+          ALL_CONTACT_CHANNELS[(start + k) % ALL_CONTACT_CHANNELS.length]
+        );
+      })(),
       followers: `${f}K`,
       engRate: `${(2 + ((i * 0.4) % 5)).toFixed(1)}%`,
       viewRate: `${20 + ((i * 3) % 50)}%`,
@@ -334,22 +335,6 @@ function AutoBadge() {
   );
 }
 
-// ─── Contact Dots ─────────────────────────────────────────────────────────────
-
-function ContactDots({ colors }: { colors: string[] }) {
-  return (
-    <div className="flex items-center gap-1">
-      {colors.map((color, i) => (
-        <span
-          key={i}
-          className="w-4 h-4 rounded-full shrink-0 border border-white ring-1 ring-black/5"
-          style={{ backgroundColor: color }}
-        />
-      ))}
-    </div>
-  );
-}
-
 // ─── Sticky cell bg helpers (left columns only) ──────────────────────────────
 const stickyBgDefault = "bg-white";
 const stickyBgHover = "group-hover:bg-[#f0f5fc]";
@@ -375,6 +360,7 @@ function buildPageList(current: number, total: number): (number | "…")[] {
 export default function InfluencerTable() {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [statusOverrides, setStatusOverrides] = useState<Record<string, VettingStatus[]>>({});
+  const [quotesDialogOpen, setQuotesDialogOpen] = useState(false);
 
   const setRowStatuses = (id: string, next: VettingStatus[]) => {
     setStatusOverrides((prev) => ({ ...prev, [id]: next }));
@@ -635,7 +621,7 @@ export default function InfluencerTable() {
 
                   {/* Contact Dots */}
                   <TableCell className="py-4">
-                    <ContactDots colors={row.contactDots} />
+                    <ContactChannelList channels={row.contactChannels} />
                   </TableCell>
 
                   {/* Followers */}
@@ -661,11 +647,17 @@ export default function InfluencerTable() {
                   {/* Quotes */}
                   <TableCell className="py-4">
                     <div className="flex items-center gap-1.5">
-                      <button className="text-brand text-[13px] font-medium hover:underline flex items-center gap-1">
+                      <button
+                        onClick={() => setQuotesDialogOpen(true)}
+                        className="text-brand text-[13px] font-medium hover:underline flex items-center gap-1"
+                      >
                         <LinkIcon size={11} />
                         {row.quotes}
                       </button>
-                      <button className="text-gray-400 hover:text-gray-600 transition-colors">
+                      <button
+                        onClick={() => setQuotesDialogOpen(true)}
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                      >
                         <Pencil size={11} />
                       </button>
                     </div>
@@ -731,6 +723,9 @@ export default function InfluencerTable() {
           </TableBody>
         </Table>
       </div>
+
+      {/* ── Quotes Matrix Dialog ── */}
+      <QuotesMatrixDialog open={quotesDialogOpen} onOpenChange={setQuotesDialogOpen} />
 
       {/* ── Pagination footer ── */}
       <div className="flex items-center justify-between gap-4 px-5 py-3 border-t border-gray-100 shrink-0 bg-white">
