@@ -31,17 +31,17 @@ export const ALL_STATUSES: VettingStatus[] = [
   "Rejected: Not a Fit",
 ];
 
-const statusStyle: Record<VettingStatus, { bg: string; text: string; dot: string }> = {
-  Shortlisted:              { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
-  Contacted:                { bg: "bg-blue-50",    text: "text-blue-700",    dot: "bg-blue-500" },
-  Proposed:                 { bg: "bg-violet-50",  text: "text-violet-700",  dot: "bg-violet-500" },
-  Pending:                  { bg: "bg-amber-50",   text: "text-amber-700",   dot: "bg-amber-500" },
-  Approved:                 { bg: "bg-brand-50",   text: "text-brand",       dot: "bg-brand" },
-  "No Response":            { bg: "bg-gray-100",   text: "text-gray-600",    dot: "bg-gray-400" },
-  "KOL Declined":           { bg: "bg-orange-50",  text: "text-orange-700",  dot: "bg-orange-500" },
-  "Rejected: Over Budget":  { bg: "bg-red-50",     text: "text-red-600",     dot: "bg-red-500" },
-  "Rejected: Poor Content": { bg: "bg-red-50",     text: "text-red-600",     dot: "bg-red-500" },
-  "Rejected: Not a Fit":    { bg: "bg-red-50",     text: "text-red-600",     dot: "bg-red-500" },
+const statusStyle: Record<VettingStatus, { bg: string; text: string }> = {
+  Shortlisted:              { bg: "bg-emerald-50", text: "text-emerald-700" },
+  Contacted:                { bg: "bg-blue-50",    text: "text-blue-700" },
+  Proposed:                 { bg: "bg-violet-50",  text: "text-violet-700" },
+  Pending:                  { bg: "bg-amber-50",   text: "text-amber-700" },
+  Approved:                 { bg: "bg-brand-50",   text: "text-brand" },
+  "No Response":            { bg: "bg-gray-100",   text: "text-gray-600" },
+  "KOL Declined":           { bg: "bg-orange-50",  text: "text-orange-700" },
+  "Rejected: Over Budget":  { bg: "bg-red-50",     text: "text-red-600" },
+  "Rejected: Poor Content": { bg: "bg-red-50",     text: "text-red-600" },
+  "Rejected: Not a Fit":    { bg: "bg-red-50",     text: "text-red-600" },
 };
 
 function StatusBadge({
@@ -60,7 +60,6 @@ function StatusBadge({
         s.text
       )}
     >
-      <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", s.dot)} />
       <span>{status}</span>
       {onRemove && (
         <button
@@ -135,7 +134,6 @@ export function VettingStatusSelect({
         <div className="max-h-[320px] overflow-y-auto py-1">
           {ALL_STATUSES.map((s) => {
             const active = value.includes(s);
-            const style = statusStyle[s];
             return (
               <button
                 key={s}
@@ -147,7 +145,6 @@ export function VettingStatusSelect({
                   checked={active}
                   className="pointer-events-none data-[state=checked]:bg-brand data-[state=checked]:border-brand border-gray-300"
                 />
-                <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", style.dot)} />
                 <span className="text-[13px] text-gray-800 flex-1">{s}</span>
               </button>
             );
