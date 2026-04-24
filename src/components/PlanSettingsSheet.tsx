@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -18,82 +18,50 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { Settings, ChevronDown, X } from "lucide-react";
 import {
-  Settings,
-  ChevronDown,
-  X,
-  Plus,
-  Check,
-  Info,
-} from "lucide-react";
+  CURRENCIES,
+  UNIT_OPTIONS,
+  DELIVERABLE_CATALOGUE,
+  SCOPE_SECTION_ACCENT,
+  type DeliverableType,
+} from "@/lib/deliverableCatalog";
+import { ScopeAddPopover } from "./ScopeAddPopover";
+import { usePlanScope } from "@/context/PlanScopeContext";
+import { buildAllowedLinesFromRows } from "@/lib/planScope";
 
-// ─── Catalogue of deliverable types ──────────────────────────────────────────
-
-type DeliverableType = {
-  id: string;
-  label: string;
-  platform: string;
-  color: string;
-  defaultUnit: string;
-};
-
-const DELIVERABLE_CATALOGUE: DeliverableType[] = [
-  { id: "ig-reel",     label: "IG Reel",                platform: "Instagram", color: "#E1306C", defaultUnit: "Qty" },
-  { id: "ig-story",    label: "IG Story",               platform: "Instagram", color: "#833AB4", defaultUnit: "Qty" },
-  { id: "ig-post",     label: "IG Static Post",         platform: "Instagram", color: "#F77737", defaultUnit: "Qty" },
-  { id: "ig-live",     label: "IG Live",                platform: "Instagram", color: "#FCAF45", defaultUnit: "Hours" },
-  { id: "ig-content",  label: "Content Usage (Digital)",platform: "Instagram", color: "#6366f1", defaultUnit: "Days" },
-  { id: "tt-video",    label: "TikTok Video",           platform: "TikTok",   color: "#010101", defaultUnit: "Qty" },
-  { id: "tt-live",     label: "TikTok Live",            platform: "TikTok",   color: "#69C9D0", defaultUnit: "Hours" },
-  { id: "yt-video",    label: "YouTube Video",          platform: "YouTube",  color: "#FF0000", defaultUnit: "Qty" },
-  { id: "yt-shorts",   label: "YouTube Shorts",         platform: "YouTube",  color: "#FF4500", defaultUnit: "Qty" },
-  { id: "fb-post",     label: "Facebook Post",          platform: "Facebook", color: "#1877F2", defaultUnit: "Qty" },
-  { id: "fb-reel",     label: "Facebook Reel",          platform: "Facebook", color: "#1877F2", defaultUnit: "Qty" },
-];
-
-const UNIT_OPTIONS = ["Qty", "Hours", "Days", "Posts", "Videos", "Stories", "Months"];
-
-const CURRENCIES = [
-  { value: "inr", label: "INR", symbol: "₹", name: "Indian Rupee" },
-  { value: "usd", label: "USD", symbol: "$", name: "US Dollar" },
-  { value: "sgd", label: "SGD", symbol: "S$", name: "Singapore Dollar" },
-  { value: "myr", label: "MYR", symbol: "RM", name: "Malaysian Ringgit" },
-  { value: "idr", label: "IDR", symbol: "Rp", name: "Indonesian Rupiah" },
-  { value: "thb", label: "THB", symbol: "฿", name: "Thai Baht" },
-];
-
-// ─── Active deliverable (instance in this plan) ───────────────────────────────
+// ─── Row model ────────────────────────────────────────────────────────────────
 
 type ActiveDeliverable = {
   instanceId: string;
   typeId: string;
   label: string;
-  color: string;
-  platform: string;
   qty: string;
   unit: string;
 };
 
+/** Matches screenshot: four default rows (3 standard + 1 add-on). */
 const DEFAULT_DELIVERABLES: ActiveDeliverable[] = [
-  { instanceId: "d1", typeId: "ig-reel",    label: "IG Reel",                color: "#E1306C", platform: "Instagram", qty: "1",  unit: "Qty" },
-  { instanceId: "d2", typeId: "ig-story",   label: "IG Story",               color: "#833AB4", platform: "Instagram", qty: "1",  unit: "Qty" },
-  { instanceId: "d3", typeId: "ig-live",    label: "IG Live",                color: "#FCAF45", platform: "Instagram", qty: "2",  unit: "Hours" },
-  { instanceId: "d4", typeId: "ig-content", label: "Content Usage (Digital)",color: "#6366f1", platform: "Instagram", qty: "30", unit: "Days" },
+  { instanceId: "d1", typeId: "ig-reel",        label: "IG Reel",                 qty: "1",  unit: "Qty" },
+  { instanceId: "d2", typeId: "ig-story",       label: "IG Story",                qty: "1",  unit: "Qty" },
+  { instanceId: "d3", typeId: "ig-live",      label: "IG Live",                 qty: "2",  unit: "Hours" },
+  { instanceId: "d4", typeId: "content-usage",  label: "Content Usage (Digital)", qty: "30", unit: "Days" },
 ];
+
+function subtitleForTypeId(typeId: string): string {
+  if (typeId.startsWith("custom-")) return "Custom";
+  const t = DELIVERABLE_CATALOGUE.find((d) => d.id === typeId);
+  if (!t) return "";
+  return t.group === "addon" ? "Add-ons" : t.platform;
+}
+
+function accentBarForTypeId(typeId: string): string {
+  if (typeId.startsWith("custom-")) return SCOPE_SECTION_ACCENT.custom;
+  const t = DELIVERABLE_CATALOGUE.find((d) => d.id === typeId);
+  if (!t) return SCOPE_SECTION_ACCENT.standard;
+  return t.group === "addon" ? SCOPE_SECTION_ACCENT.addon : SCOPE_SECTION_ACCENT.standard;
+}
 
 // ─── Deliverable row ──────────────────────────────────────────────────────────
 
@@ -106,25 +74,19 @@ function DeliverableRow({
   onChange: (patch: Partial<ActiveDeliverable>) => void;
   onRemove: () => void;
 }) {
+  const bar = accentBarForTypeId(item.typeId);
+  const sub = subtitleForTypeId(item.typeId);
+
   return (
     <div className="group grid grid-cols-[minmax(140px,1fr)_72px_104px_24px] gap-3 items-center py-2.5 px-4">
-      {/* Col 1 — color bar + label */}
       <div className="flex items-center gap-2.5 min-w-0">
-        <span
-          className="w-1.5 h-8 rounded-full shrink-0"
-          style={{ backgroundColor: item.color }}
-        />
+        <span className="w-1.5 h-8 rounded-full shrink-0" style={{ backgroundColor: bar }} />
         <div className="min-w-0 leading-tight">
-          <div className="text-[13px] font-medium text-gray-800 truncate">
-            {item.label}
-          </div>
-          <div className="text-[11px] text-gray-400 truncate">
-            {item.platform}
-          </div>
+          <div className="text-[13px] font-medium text-gray-800 truncate">{item.label}</div>
+          <div className="text-[11px] text-gray-400 truncate">{sub}</div>
         </div>
       </div>
 
-      {/* Col 2 — Qty */}
       <Input
         value={item.qty}
         onChange={(e) => onChange({ qty: e.target.value })}
@@ -133,7 +95,6 @@ function DeliverableRow({
         min="1"
       />
 
-      {/* Col 3 — Unit */}
       <Select value={item.unit} onValueChange={(v) => v && onChange({ unit: v })}>
         <SelectTrigger className="w-full h-9! text-[13px] border-gray-200 px-3">
           <SelectValue />
@@ -147,7 +108,6 @@ function DeliverableRow({
         </SelectContent>
       </Select>
 
-      {/* Col 4 — Remove */}
       <button
         type="button"
         onClick={onRemove}
@@ -160,92 +120,30 @@ function DeliverableRow({
   );
 }
 
-// ─── Add Deliverable picker ───────────────────────────────────────────────────
-
-function AddDeliverablePicker({
-  existingTypeIds,
-  onAdd,
-}: {
-  existingTypeIds: string[];
-  onAdd: (type: DeliverableType) => void;
-}) {
-  const [open, setOpen] = useState(false);
-
-  const grouped = DELIVERABLE_CATALOGUE.reduce<Record<string, DeliverableType[]>>(
-    (acc, t) => {
-      acc[t.platform] = acc[t.platform] ?? [];
-      acc[t.platform].push(t);
-      return acc;
-    },
-    {}
-  );
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-dashed border-gray-300 text-[12.5px] text-gray-500 hover:border-brand hover:text-brand hover:bg-brand-50 transition-colors font-medium"
-      >
-        <Plus size={12} />
-        Add Deliverable
-      </PopoverTrigger>
-      <PopoverContent align="start" side="bottom" sideOffset={6} className="w-[260px] p-0">
-        <Command>
-          <CommandInput placeholder="Search deliverables…" />
-          <CommandList className="max-h-[260px]">
-            <CommandEmpty>No results found.</CommandEmpty>
-            {Object.entries(grouped).map(([platform, types]) => (
-              <CommandGroup key={platform} heading={platform}>
-                {types.map((t) => {
-                  const already = existingTypeIds.includes(t.id);
-                  return (
-                    <CommandItem
-                      key={t.id}
-                      value={t.label}
-                      disabled={already}
-                      onSelect={() => {
-                        if (!already) {
-                          onAdd(t);
-                          setOpen(false);
-                        }
-                      }}
-                      className="flex items-center gap-2"
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: t.color }}
-                      />
-                      <span className={cn("flex-1 text-[13px]", already && "text-gray-400")}>
-                        {t.label}
-                      </span>
-                      {already && <Check size={12} className="text-gray-400" />}
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            ))}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 // ─── Sheet ────────────────────────────────────────────────────────────────────
 
 export function PlanSettingsSheet() {
   const [open, setOpen] = useState(false);
-
-  // Quote settings
   const [currency, setCurrency] = useState<string | null>("inr");
   const [margin, setMargin] = useState("30");
   const marginNum = parseFloat(margin);
   const marginValid = !isNaN(marginNum) && marginNum >= 0 && marginNum <= 100;
 
-  // Deliverables
   const [deliverables, setDeliverables] = useState<ActiveDeliverable[]>(DEFAULT_DELIVERABLES);
   const counter = useRef(100);
+  const { setAllowedLines } = usePlanScope();
 
-  const addDeliverable = (type: DeliverableType) => {
+  useEffect(() => {
+    setAllowedLines(
+      buildAllowedLinesFromRows(
+        deliverables.map((d) => ({ typeId: d.typeId, label: d.label, unit: d.unit }))
+      )
+    );
+  }, [deliverables, setAllowedLines]);
+
+  const addDeliverable = (
+    type: DeliverableType | { id: string; label: string; color: string; platform: string; defaultUnit: string; group: "standard" | "addon" }
+  ) => {
     counter.current += 1;
     setDeliverables((prev) => [
       ...prev,
@@ -253,8 +151,6 @@ export function PlanSettingsSheet() {
         instanceId: `d${counter.current}`,
         typeId: type.id,
         label: type.label,
-        color: type.color,
-        platform: type.platform,
         qty: "1",
         unit: type.defaultUnit,
       },
@@ -262,9 +158,7 @@ export function PlanSettingsSheet() {
   };
 
   const updateDeliverable = (id: string, patch: Partial<ActiveDeliverable>) => {
-    setDeliverables((prev) =>
-      prev.map((d) => (d.instanceId === id ? { ...d, ...patch } : d))
-    );
+    setDeliverables((prev) => prev.map((d) => (d.instanceId === id ? { ...d, ...patch } : d)));
   };
 
   const removeDeliverable = (id: string) => {
@@ -280,7 +174,6 @@ export function PlanSettingsSheet() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      {/* Trigger */}
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -294,16 +187,14 @@ export function PlanSettingsSheet() {
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="p-0 flex flex-col gap-0 border-l border-gray-100 w-full! sm:max-w-[640px]!"
+        className="p-0 flex flex-col gap-0 border-l border-gray-100 w-full! sm:max-w-[500px]!"
       >
-        {/* ── Header ── */}
         <div className="flex items-start justify-between px-6 pt-5 pb-4 shrink-0">
           <div>
-            <h2 className="text-[15px] font-bold text-gray-900 tracking-tight">
-              Plan Settings
-            </h2>
-            <p className="text-[12px] text-gray-400 mt-0.5 leading-relaxed">
-              Configure default pricing and deliverable scope for this plan.
+            <h2 className="text-[15px] font-bold text-gray-900 tracking-tight">Plan Settings</h2>
+            <p className="text-[12px] text-gray-400 mt-0.5 leading-relaxed max-w-[420px]">
+              Define the default pricing rules and plan scope. Specific durations and individual rates
+              can be refined in the Quote Matrix.
             </p>
           </div>
           <SheetClose
@@ -321,27 +212,16 @@ export function PlanSettingsSheet() {
 
         <Separator />
 
-        {/* ── Scrollable body ── */}
         <ScrollArea className="flex-1 min-h-0">
           <div className="px-6 py-5 space-y-7">
-
-            {/* ── Section: Quote Settings ── */}
             <section className="space-y-4">
-              <div className="space-y-0.5">
-                <h3 className="text-[13px] font-semibold text-gray-900">
-                  Quote Settings
-                </h3>
-                <p className="text-[12px] text-gray-400">
-                  Baseline pricing rules for every quote in this plan.
-                </p>
-              </div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                CLIENT QUOTE SETTING
+              </p>
 
               <div className="grid grid-cols-2 gap-3">
-                {/* Proposal Currency */}
                 <div className="space-y-1.5">
-                  <Label className="text-[12px] text-gray-600 font-medium">
-                    Proposal Currency
-                  </Label>
+                  <Label className="text-[12px] text-gray-600 font-medium">Proposal Currency</Label>
                   <Select value={currency} onValueChange={(v) => setCurrency(v)}>
                     <SelectTrigger className="w-full h-9! text-[13px] border-gray-200">
                       <SelectValue>
@@ -367,17 +247,8 @@ export function PlanSettingsSheet() {
                   </Select>
                 </div>
 
-                {/* Margin % */}
                 <div className="space-y-1.5">
-                  <Label className="text-[12px] text-gray-600 font-medium flex items-center gap-1">
-                    Agency Margin
-                    <span
-                      title="The percentage added on top of the influencer's quoted rate to form the client-facing price."
-                      className="text-gray-400 cursor-help"
-                    >
-                      <Info size={11} />
-                    </span>
-                  </Label>
+                  <Label className="text-[12px] text-gray-600 font-medium">Margin %</Label>
                   <div className="relative">
                     <Input
                       value={margin}
@@ -401,64 +272,39 @@ export function PlanSettingsSheet() {
                   )}
                 </div>
               </div>
-
-              {/* Live preview pill */}
-              {marginValid && margin !== "" && selectedCurrency && (
-                <div className="flex items-center gap-2 rounded-lg bg-brand-50 border border-brand-100 px-3 py-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0" />
-                  <span className="text-[12px] text-brand">
-                    A ₹10,000 quote becomes{" "}
-                    <strong>
-                      {selectedCurrency.symbol}
-                      {(10000 * (1 + parseFloat(margin) / 100)).toLocaleString("en-IN", {
-                        maximumFractionDigits: 0,
-                      })}
-                    </strong>{" "}
-                    after {margin}% margin.
-                  </span>
-                </div>
-              )}
             </section>
 
             <Separator />
 
-            {/* ── Section: Deliverables ── */}
             <section className="space-y-3">
-              <div className="flex items-end justify-between gap-2">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-[13px] font-semibold text-gray-900">
-                      Deliverables
-                    </h3>
-                    {deliverables.length > 0 && (
-                      <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-gray-100 text-gray-600 text-[10px] font-semibold tabular-nums">
-                        {deliverables.length}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[12px] text-gray-400">
-                    Content types included in this plan.
-                  </p>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-[13px] font-semibold text-gray-900">Plan Scope</h3>
+                  {deliverables.length > 0 && (
+                    <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-gray-100 text-gray-600 text-[10px] font-semibold tabular-nums">
+                      {deliverables.length}
+                    </span>
+                  )}
                 </div>
+                <ScopeAddPopover
+                  existingTypeIds={deliverables.map((d) => d.typeId)}
+                  onAdd={addDeliverable}
+                  triggerVariant="dashed"
+                />
               </div>
 
               {deliverables.length > 0 ? (
                 <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-                  {/* Table header — uses the same grid as rows below */}
                   <div className="grid grid-cols-[minmax(140px,1fr)_72px_104px_24px] gap-3 items-center px-4 py-2.5 bg-gray-50/70 border-b border-gray-100">
-                    <span className="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500 pl-[18px] truncate">
+                    <span className="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500 pl-[18px]">
                       Deliverable
                     </span>
-                    <span className="text-center text-[10.5px] font-semibold uppercase tracking-wider text-gray-500 truncate">
+                    <span className="text-center text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
                       Qty
                     </span>
-                    <span className="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500 truncate">
-                      Unit
-                    </span>
+                    <span className="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Unit</span>
                     <span aria-hidden />
                   </div>
-
-                  {/* Rows */}
                   <div className="divide-y divide-gray-50">
                     {deliverables.map((d) => (
                       <DeliverableRow
@@ -472,23 +318,16 @@ export function PlanSettingsSheet() {
                 </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-gray-200 py-10 text-center">
-                  <p className="text-[13px] text-gray-500 font-medium">No deliverables yet</p>
-                  <p className="text-[12px] text-gray-400 mt-1">Add one below to define the scope.</p>
+                  <p className="text-[13px] text-gray-500 font-medium">No scope items yet</p>
+                  <p className="text-[12px] text-gray-400 mt-1">Use Add Scope to define the plan.</p>
                 </div>
               )}
-
-              {/* Add button */}
-              <AddDeliverablePicker
-                existingTypeIds={deliverables.map((d) => d.typeId)}
-                onAdd={addDeliverable}
-              />
             </section>
           </div>
         </ScrollArea>
 
         <Separator />
 
-        {/* ── Footer ── */}
         <div className="shrink-0 flex items-center justify-between gap-3 px-6 py-4 bg-white">
           <SheetClose
             render={

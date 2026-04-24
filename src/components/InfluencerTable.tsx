@@ -75,7 +75,7 @@ const BASE_ROWS: Influencer[] = [
     handle: "@insta_beautyqueen",
     platform: "Instagram",
     avatarUrl: "",
-    vettingStatuses: ["Rejected: Over Budget", "Pending"],
+    vettingStatuses: ["Pending", "Proposed"],
     linkedAccounts: ["IG", "TT"],
     geo: "SG",
     contactChannels: ["Email", "WhatsApp", "Telegram"],
@@ -97,7 +97,7 @@ const BASE_ROWS: Influencer[] = [
     handle: "@sportsmaven_sg",
     platform: "Instagram",
     avatarUrl: "",
-    vettingStatuses: ["No Response", "Rejected: Poor Content"],
+    vettingStatuses: ["No Response", "Contacted"],
     linkedAccounts: ["IG", "YT"],
     geo: "SG",
     contactChannels: ["Email", "WhatsApp", "Line", "Viber", "Telegram"],
@@ -119,7 +119,7 @@ const BASE_ROWS: Influencer[] = [
     handle: "@foodiesg_official",
     platform: "Instagram",
     avatarUrl: "",
-    vettingStatuses: ["Rejected: Over Budget", "Rejected: Poor Content"],
+    vettingStatuses: ["Pending", "No Response", "Shortlisted"],
     linkedAccounts: ["IG", "TT", "YT"],
     geo: "SG",
     contactChannels: ["Email", "WhatsApp"],
@@ -141,7 +141,7 @@ const BASE_ROWS: Influencer[] = [
     handle: "@lifestylediaries",
     platform: "Instagram",
     avatarUrl: "",
-    vettingStatuses: ["Rejected: Over Budget", "Shortlisted"],
+    vettingStatuses: ["Shortlisted", "Proposed", "Contacted"],
     linkedAccounts: ["IG", "FB"],
     geo: "SG",
     contactChannels: ["Email", "Line", "Telegram", "WhatsApp"],
@@ -163,7 +163,7 @@ const BASE_ROWS: Influencer[] = [
     handle: "@techreview_asia",
     platform: "YouTube",
     avatarUrl: "",
-    vettingStatuses: ["Rejected: Over Budget"],
+    vettingStatuses: ["Pending", "KOL Declined"],
     linkedAccounts: ["YT", "IG"],
     geo: "MY",
     contactChannels: ["Email", "WhatsApp", "Telegram"],
@@ -233,9 +233,9 @@ const STATUS_POOL: VettingStatus[][] = [
   ["Pending"],
   ["Approved"],
   ["No Response"],
-  ["Rejected: Over Budget"],
-  ["Pending", "Shortlisted"],
-  ["Rejected: Poor Content"],
+  ["Proposed", "Shortlisted"],
+  ["Pending", "Shortlisted", "Proposed"],
+  ["Contacted", "Proposed"],
   ["Shortlisted", "Approved"],
 ];
 const LINKED_POOL: Platform[][] = [
@@ -397,7 +397,8 @@ export default function InfluencerTable() {
   const toggleRow = (id: string) => {
     setSelectedRows((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
@@ -696,7 +697,7 @@ export default function InfluencerTable() {
 
                   {/* KOL Manager */}
                   <TableCell className={`py-4 ${COL_KOL_MANAGER_W}`}>
-                    <div className="flex items-center gap-2 px-2">
+                    <div className="flex items-center gap-2">
                       <Avatar className="w-6 h-6 shrink-0">
                         <AvatarFallback className="text-[9px] font-bold bg-brand-50 text-brand">
                           WL
@@ -708,8 +709,8 @@ export default function InfluencerTable() {
 
                   {/* Internal Notes */}
                   <TableCell className={`py-4 ${COL_INTERNAL_NOTES_W}`}>
-                    <div className="flex items-center gap-2 px-2">
-                      <span className="text-[13px] text-gray-500 truncate max-w-[170px]">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-[13px] text-gray-500 truncate min-w-0 max-w-[170px]">
                         {row.internalNotes}
                       </span>
                       <button className="shrink-0 text-gray-400 hover:text-brand transition-colors">

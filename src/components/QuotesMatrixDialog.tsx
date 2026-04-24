@@ -19,7 +19,8 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Search, Trash2 } from "lucide-react";
-import { CURRENCIES, UNIT_OPTIONS, type DeliverableType } from "@/lib/deliverableCatalog";
+import { CURRENCIES, type DeliverableType } from "@/lib/deliverableCatalog";
+import { usePlanScope } from "@/context/PlanScopeContext";
 import { ScopeAddPopover } from "./ScopeAddPopover";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -35,8 +36,9 @@ type ScopeRow = {
   unit: string;
 };
 
-// Item | Tax | Qty | Rate | Cost | Sugg. | Delete
-const SCOPE_COL = "grid-cols-[minmax(140px,1.8fr)_52px_60px_minmax(80px,1fr)_minmax(80px,1fr)_minmax(80px,1fr)_36px] gap-x-3";
+// Item | Value | Unit | Influencer rate (net) | Tax | Cost (gross) | Suggested price | Delete
+const SCOPE_COL =
+  "grid-cols-[minmax(128px,1.5fr)_60px_68px_minmax(108px,1.15fr)_44px_minmax(88px,1fr)_minmax(88px,1.1fr)_36px] gap-x-3";
 
 const MOCK_RATES: Record<string, string> = {
   usd: "1 USD = Rp 16,503.44 · 1 USD = ₹ 83.25",
@@ -85,10 +87,6 @@ function ScopeItemRow({
         </div>
       </div>
 
-      <span className="text-[12px] text-gray-500 tabular-nums text-center">
-        {taxPct > 0 ? `${taxPct}%` : "—"}
-      </span>
-
       <Input
         type="number"
         min="1"
@@ -97,7 +95,13 @@ function ScopeItemRow({
         className="h-8 text-[12.5px] text-center tabular-nums border-gray-200 px-1.5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
 
-      <div className="relative">
+      <Input
+        value={row.unit}
+        onChange={(e) => onChange({ unit: e.target.value })}
+        className="h-8 text-[12.5px] text-center border-gray-200 px-1.5"
+      />
+
+      <div className="relative min-w-0">
         <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-gray-400 pointer-events-none select-none">
           {influencerSymbol}
         </span>
@@ -106,15 +110,19 @@ function ScopeItemRow({
           min="0"
           value={row.influencerRate}
           onChange={(e) => onChange({ influencerRate: e.target.value })}
-          className="h-8 text-[12.5px] tabular-nums border-gray-200 pl-7 pr-1.5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          className="h-8 w-full min-w-0 text-[12.5px] tabular-nums border-gray-200 pl-7 pr-1.5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
       </div>
 
-      <span className="text-[12.5px] text-gray-700 tabular-nums truncate">
+      <span className="text-[12px] text-gray-500 tabular-nums text-center">
+        {taxPct > 0 ? `${taxPct}%` : "—"}
+      </span>
+
+      <span className="text-[12.5px] text-gray-700 tabular-nums truncate min-w-0">
         {influencerSymbol} {cost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </span>
 
-      <span className="text-[12.5px] text-gray-700 tabular-nums truncate">
+      <span className="text-[12.5px] text-gray-700 tabular-nums truncate min-w-0">
         {proposalSymbol} {sugg.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </span>
 
@@ -146,6 +154,7 @@ export function QuotesMatrixDialog({
   const [scopeRows, setScopeRows] = useState<ScopeRow[]>([]);
   const [finalInfluencerCost, setFinalInfluencerCost] = useState("0");
   const [finalClientPrice, setFinalClientPrice] = useState("0");
+  const { allowedLines } = usePlanScope();
 
   function addScope(type: DeliverableType | { id: string; label: string; color: string; platform: string; defaultUnit: string; group: "standard" | "addon" }) {
     setScopeRows((prev) => [
@@ -272,19 +281,31 @@ export function QuotesMatrixDialog({
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/60">
               <span className="text-[13px] font-semibold text-gray-800">Plan Scope</span>
               {scopeRows.length > 0 && (
-                <ScopeAddPopover existingTypeIds={existingTypeIds} onAdd={addScope} />
+                <ScopeAddPopover
+                  existingTypeIds={existingTypeIds}
+                  onAdd={addScope}
+                  triggerVariant="dashed"
+                  planScopeOnly={allowedLines}
+                  allowCustom={false}
+                />
               )}
             </div>
 
             {scopeRows.length > 0 && (
-              <div className={cn("grid items-center px-4 py-2 bg-gray-50/40 border-b border-gray-100 text-[11px] font-semibold uppercase tracking-wide text-gray-400", SCOPE_COL)}>
-                <span>Item</span>
-                <span className="text-center">Tax</span>
-                <span className="text-center">Qty</span>
-                <span>Rate</span>
-                <span>Cost</span>
-                <span>Sugg. Price</span>
-                <span />
+              <div
+                className={cn(
+                  "grid items-end px-4 py-2.5 bg-gray-50/40 border-b border-gray-100 text-[10px] font-semibold uppercase tracking-wide text-gray-400 gap-x-3",
+                  SCOPE_COL
+                )}
+              >
+                <span className="leading-tight">Item</span>
+                <span className="text-center leading-tight">Value</span>
+                <span className="text-center leading-tight">Unit</span>
+                <span className="leading-tight whitespace-normal">Influencer rate (net)</span>
+                <span className="text-center leading-tight">Tax</span>
+                <span className="leading-tight whitespace-normal">Cost (gross)</span>
+                <span className="leading-tight whitespace-normal">Suggested price</span>
+                <span aria-hidden className="shrink-0 w-9" />
               </div>
             )}
 
@@ -300,7 +321,13 @@ export function QuotesMatrixDialog({
                     <br />are disabled in the picker.
                   </p>
                 </div>
-                <ScopeAddPopover existingTypeIds={existingTypeIds} onAdd={addScope} />
+                <ScopeAddPopover
+                  existingTypeIds={existingTypeIds}
+                  onAdd={addScope}
+                  triggerVariant="dashed"
+                  planScopeOnly={allowedLines}
+                  allowCustom={false}
+                />
               </div>
             ) : (
               <div className="divide-y divide-gray-100">

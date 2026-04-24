@@ -82,10 +82,11 @@ function StatusBadge({
 export function VettingStatusSelect({
   value,
   onChange,
-  maxVisible = 2,
+  maxVisible = 1,
 }: {
   value: VettingStatus[];
   onChange: (next: VettingStatus[]) => void;
+  /** Table cell: show this many full badges; the rest are folded into +N. */
   maxVisible?: number;
 }) {
   const [open, setOpen] = useState(false);
@@ -96,7 +97,7 @@ export function VettingStatusSelect({
   };
 
   const visible = value.slice(0, maxVisible);
-  const overflow = value.length - visible.length;
+  const restCount = Math.max(0, value.length - maxVisible);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -115,9 +116,9 @@ export function VettingStatusSelect({
               {visible.map((s) => (
                 <StatusBadge key={s} status={s} />
               ))}
-              {overflow > 0 && (
-                <span className="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium bg-gray-100 text-gray-600 whitespace-nowrap">
-                  +{overflow}
+              {restCount > 0 && (
+                <span className="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium bg-gray-100 text-gray-600 tabular-nums whitespace-nowrap">
+                  +{restCount}
                 </span>
               )}
             </>

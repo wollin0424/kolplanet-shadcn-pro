@@ -74,14 +74,15 @@ export default function Sidebar() {
   // Auto-expand the section that owns the current route when it changes
   useEffect(() => {
     const owner = findOwningSection(pathname);
-    if (owner) {
+    if (!owner) return;
+    queueMicrotask(() => {
       setOpenSections((prev) => {
         if (prev.has(owner)) return prev;
         const next = new Set(prev);
         next.add(owner);
         return next;
       });
-    }
+    });
   }, [pathname]);
 
   const toggle = (label: string) => {
