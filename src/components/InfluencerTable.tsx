@@ -446,47 +446,57 @@ export default function InfluencerTable() {
         </Button>
       </div>
 
-      {/* ── Sub-toolbar ── */}
-      <div className="flex items-center gap-3 px-5 py-2.5 border-b border-gray-100 shrink-0 bg-gray-50/60">
-        <span className="text-[12px] text-gray-500 font-medium">
-          Influencers:{" "}
-          <span className="text-gray-900 tabular-nums">
-            {filtered.length}/{MOCK_DATA.length}
+      {/* ── Sub-toolbar (first block = checkbox + influencer column width so "Proposal" aligns with Vetting Status) ── */}
+      <div className="flex items-center pl-5 pr-5 py-2.5 border-b border-gray-100 shrink-0 bg-gray-50/60">
+        <div className="flex min-w-0 items-center gap-2 shrink-0 w-[276px]">
+          <span className="text-[12px] text-gray-500 font-medium truncate min-w-0">
+            Influencers:{" "}
+            <span className="text-gray-900 tabular-nums">
+              {filtered.length}/{MOCK_DATA.length}
+            </span>
           </span>
-        </span>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            className={cn(
-              "flex items-center gap-1 text-[12px] border border-gray-200 rounded-md px-2.5 py-1 bg-white hover:bg-gray-50 transition-colors",
-              someSelected || allSelected ? "text-gray-700" : "text-gray-400"
-            )}
-          >
-            Bulk Actions
-            <ChevronDown size={11} />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="text-[13px]">
-            <DropdownMenuItem>Export Selected</DropdownMenuItem>
-            <DropdownMenuItem>Send Proposal</DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600">Remove Selected</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className={cn(
+                "shrink-0 flex items-center gap-1 text-[12px] border border-gray-200 rounded-md px-2.5 py-1 bg-white hover:bg-gray-50 transition-colors",
+                someSelected || allSelected ? "text-gray-700" : "text-gray-400"
+              )}
+            >
+              Bulk Actions
+              <ChevronDown size={11} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="text-[13px]">
+              <DropdownMenuItem>Export Selected</DropdownMenuItem>
+              <DropdownMenuItem>Send Proposal</DropdownMenuItem>
+              <DropdownMenuItem className="text-red-600">Remove Selected</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
-        <button className="text-[12px] border border-brand-100 bg-brand-50 text-brand font-medium rounded-md px-2.5 py-1 hover:bg-brand-100 transition-colors">
+        <button
+          type="button"
+          className="shrink-0 text-[12px] border border-brand-100 bg-brand-50 text-brand font-medium rounded-md px-2.5 py-1 hover:bg-brand-100 transition-colors"
+        >
           Proposal
         </button>
 
-        <div className="flex-1" />
+        <div className="flex-1 min-w-4" />
 
-        <span className="text-[12px] text-gray-500">
-          Selected Quote Value:{" "}
-          <span className="font-semibold text-gray-900">{selectedQuoteValue}</span>
-        </span>
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="text-[12px] text-gray-500">
+            Selected Quote Value:{" "}
+            <span className="font-semibold text-gray-900">{selectedQuoteValue}</span>
+          </span>
 
-        <button className="flex items-center gap-1 text-[12px] text-gray-600 border border-gray-200 rounded-md px-2.5 py-1 bg-white hover:bg-gray-50 transition-colors">
-          Visible Columns
-          <ChevronDown size={11} />
-        </button>
+          <button
+            type="button"
+            className="flex items-center gap-1 text-[12px] text-gray-600 border border-gray-200 rounded-md px-2.5 py-1 bg-white hover:bg-gray-50 transition-colors"
+          >
+            Visible Columns
+            <ChevronDown size={11} />
+          </button>
+        </div>
       </div>
 
       {/* ── Table ── */}
