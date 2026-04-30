@@ -12,6 +12,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -311,7 +319,7 @@ function ContractStepper({
         className="mt-2 h-8 w-full justify-center text-[12px] border-gray-200 bg-white/70 text-brand hover:bg-white"
         onClick={(e) => {
           e.stopPropagation();
-          if (isFill) onPrimaryAction?.();
+          onPrimaryAction?.();
         }}
       >
         {stage}
@@ -341,6 +349,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [contractInfoOpen, setContractInfoOpen] = useState(false);
+  const [generateDraftOpen, setGenerateDraftOpen] = useState(false);
   const [contractInfoInfluencer, setContractInfoInfluencer] = useState<{
     handle: string;
     name: string;
@@ -390,6 +399,58 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
         influencerHandle={contractInfoInfluencer?.handle ?? "@instagram ins"}
         influencerName={contractInfoInfluencer?.name ?? "Amelia Stones"}
       />
+      <Dialog open={generateDraftOpen} onOpenChange={setGenerateDraftOpen}>
+        <DialogContent className="p-0 sm:max-w-[560px]">
+          <DialogHeader className="px-6 pt-6 pb-3">
+            <DialogTitle className="text-center text-[17px] font-semibold text-gray-900">
+              Select Contract Template
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Select a contract template before generating a draft.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="px-6 pb-7">
+            <div className="rounded-2xl border border-blue-100 bg-blue-50/60 px-5 py-3 text-[13px] text-gray-700 leading-relaxed">
+              We&apos;ll perform a final consistency check. Any recent changes to Collaboration
+              Terms will be automatically saved to ensure the generated PDF is up-to-date.
+            </div>
+
+            <div className="mt-7">
+              <div className="text-[12px] font-semibold tracking-[0.18em] text-gray-400">
+                CONTRACT TEMPLATE
+              </div>
+              <div className="mt-4 h-px w-full bg-gray-100" />
+            </div>
+
+            <div className="mt-5">
+              <div className="rounded-xl border border-gray-200/70 bg-gray-50/40 px-4 py-3 text-[13px] text-gray-500">
+                No templates available
+              </div>
+              <div className="mt-4 text-[13px] text-gray-500">
+                No templates found in Contract Settings. Please configure a default template first.
+              </div>
+            </div>
+
+            <div className="mt-8 flex items-center justify-center gap-4">
+              <DialogClose
+                render={
+                  <Button variant="outline" className="h-11 w-[140px] text-[14px]" />
+                }
+              >
+                Cancel
+              </DialogClose>
+              <Button
+                className="h-11 w-[170px] text-[14px] text-white"
+                style={{ backgroundColor: "#023E8A" }}
+                onClick={() => setGenerateDraftOpen(false)}
+              >
+                Generate Draft
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* Toolbar row */}
       <div className="flex items-center justify-between gap-3 px-6 py-3 border-b border-gray-100 shrink-0">
         <div className="flex items-center gap-2">
@@ -603,6 +664,8 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                                 });
                                 setContractInfoOpen(true);
                               }
+                            : row.contractStage === "Generate Draft"
+                              ? () => setGenerateDraftOpen(true)
                             : undefined
                         }
                       />
