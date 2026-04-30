@@ -147,6 +147,45 @@ export default function ContractInfoSheet({
 }) {
   const [tab, setTab] = useState<Tab>("Collaboration Details");
 
+  const countryOptions = useMemo(
+    () => [
+      { value: "SG", label: "Singapore" },
+      { value: "MY", label: "Malaysia" },
+      { value: "ID", label: "Indonesia" },
+      { value: "TH", label: "Thailand" },
+      { value: "PH", label: "Philippines" },
+      { value: "VN", label: "Vietnam" },
+      { value: "IN", label: "India" },
+      { value: "CN", label: "China" },
+      { value: "HK", label: "Hong Kong" },
+      { value: "TW", label: "Taiwan" },
+      { value: "JP", label: "Japan" },
+      { value: "KR", label: "South Korea" },
+      { value: "AE", label: "United Arab Emirates" },
+      { value: "GB", label: "United Kingdom" },
+      { value: "US", label: "United States" },
+    ],
+    []
+  );
+  const phoneCodeOptions = useMemo(
+    () => [
+      { value: "+65", label: "+65" },
+      { value: "+60", label: "+60" },
+      { value: "+62", label: "+62" },
+      { value: "+66", label: "+66" },
+      { value: "+63", label: "+63" },
+      { value: "+84", label: "+84" },
+      { value: "+91", label: "+91" },
+      { value: "+86", label: "+86" },
+      { value: "+81", label: "+81" },
+      { value: "+82", label: "+82" },
+      { value: "+971", label: "+971" },
+      { value: "+44", label: "+44" },
+      { value: "+1", label: "+1" },
+    ],
+    []
+  );
+
   // Collaboration Details
   const [currency, setCurrency] = useState("USD");
   const [totalAmount, setTotalAmount] = useState("80,000");
@@ -232,16 +271,7 @@ export default function ContractInfoSheet({
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="h-8 w-8 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-colors"
-                aria-label="Close"
-                onClick={() => onOpenChange(false)}
-              >
-                ×
-              </button>
-            </div>
+            <div className="flex items-center gap-2" />
           </div>
 
           {/* Tabs */}
@@ -508,15 +538,16 @@ export default function ContractInfoSheet({
                 <div className="mt-4 space-y-4">
                   <div className="space-y-2">
                     <FieldLabel>Identity Type *</FieldLabel>
-                    <OptionPills
-                      value={identityType}
-                      onChange={setIdentityType}
-                      options={[
-                        { value: "A (Individual)", label: "A (Individual)" },
-                        { value: "B (Individual / Manager)", label: "B (Individual / Manager)" },
-                        { value: "C (Company)", label: "C (Company)" },
-                      ]}
-                    />
+                    <Select value={identityType} onValueChange={setIdentityType}>
+                      <SelectTrigger className="h-9 border-gray-200 bg-white text-[12px]">
+                        <SelectValue placeholder="Select Identity Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="A (Individual)">A (Individual)</SelectItem>
+                        <SelectItem value="B (Individual / Manager)">B (Individual / Manager)</SelectItem>
+                        <SelectItem value="C (Company)">C (Company)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="rounded-xl border border-gray-100 bg-brand-50/35 p-4">
@@ -559,13 +590,19 @@ export default function ContractInfoSheet({
 
                   <div className="space-y-2">
                     <FieldLabel>Residing Address *</FieldLabel>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input
-                        value={resCountry}
-                        onChange={(e) => setResCountry(e.target.value)}
-                        placeholder="Country/Region"
-                        className="h-9 border-gray-200"
-                      />
+                    <div className="space-y-3">
+                      <Select value={resCountry} onValueChange={setResCountry}>
+                        <SelectTrigger className="h-9 border-gray-200 bg-white text-[12px]">
+                          <SelectValue placeholder="Country/Region" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {countryOptions.map((c) => (
+                            <SelectItem key={c.value} value={c.value}>
+                              {c.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Input
                         value={resCity}
                         onChange={(e) => setResCity(e.target.value)}
@@ -578,14 +615,13 @@ export default function ContractInfoSheet({
                         placeholder="Zip / Postal Code"
                         className="h-9 border-gray-200"
                       />
-                      <div />
+                      <Textarea
+                        value={resStreet}
+                        onChange={(e) => setResStreet(e.target.value)}
+                        placeholder="Street Address"
+                        className="border-gray-200"
+                      />
                     </div>
-                    <Textarea
-                      value={resStreet}
-                      onChange={(e) => setResStreet(e.target.value)}
-                      placeholder="Street Address"
-                      className="border-gray-200"
-                    />
                     <label className="flex items-center gap-2 text-[12px] text-gray-600">
                       <Checkbox
                         checked={sameAsShipping}
@@ -597,13 +633,19 @@ export default function ContractInfoSheet({
 
                   <div className="space-y-2">
                     <FieldLabel>Phone Number *</FieldLabel>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input
-                        value={phoneCountryCode}
-                        onChange={(e) => setPhoneCountryCode(e.target.value)}
-                        placeholder="Country Code"
-                        className="h-9 border-gray-200"
-                      />
+                    <div className="grid grid-cols-[160px_1fr] gap-3">
+                      <Select value={phoneCountryCode} onValueChange={setPhoneCountryCode}>
+                        <SelectTrigger className="h-9 border-gray-200 bg-white text-[12px]">
+                          <SelectValue placeholder="Country Code" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {phoneCodeOptions.map((c) => (
+                            <SelectItem key={c.value} value={c.value}>
+                              {c.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Input
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
@@ -707,13 +749,19 @@ export default function ContractInfoSheet({
 
                   <div className="space-y-2">
                     <FieldLabel>Recipient Phone *</FieldLabel>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input
-                        value={recipientCountryCode}
-                        onChange={(e) => setRecipientCountryCode(e.target.value)}
-                        placeholder="Country Code"
-                        className="h-9 border-gray-200"
-                      />
+                    <div className="grid grid-cols-[160px_1fr] gap-3">
+                      <Select value={recipientCountryCode} onValueChange={setRecipientCountryCode}>
+                        <SelectTrigger className="h-9 border-gray-200 bg-white text-[12px]">
+                          <SelectValue placeholder="Country Code" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {phoneCodeOptions.map((c) => (
+                            <SelectItem key={c.value} value={c.value}>
+                              {c.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Input
                         value={recipientPhone}
                         onChange={(e) => setRecipientPhone(e.target.value)}
@@ -725,12 +773,18 @@ export default function ContractInfoSheet({
 
                   <div className="space-y-2">
                     <FieldLabel>Country/Region *</FieldLabel>
-                    <Input
-                      value={shipCountry}
-                      onChange={(e) => setShipCountry(e.target.value)}
-                      placeholder="Select Country/Region"
-                      className="h-9 border-gray-200"
-                    />
+                    <Select value={shipCountry} onValueChange={setShipCountry}>
+                      <SelectTrigger className="h-9 border-gray-200 bg-white text-[12px]">
+                        <SelectValue placeholder="Select Country/Region" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {countryOptions.map((c) => (
+                          <SelectItem key={c.value} value={c.value}>
+                            {c.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
