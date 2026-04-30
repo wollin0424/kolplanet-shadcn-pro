@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import ContractInfoSheet from "@/components/ContractInfoSheet";
 import {
   ChevronDown,
   ChevronLeft,
@@ -29,6 +30,8 @@ import {
   Columns3,
   RefreshCcw,
   Check,
+  Hourglass,
+  FileText,
 } from "lucide-react";
 
 type CollabStatus = "Pending" | "Approved";
@@ -106,6 +109,19 @@ const BASE_ROWS: PipelineRow[] = [
     manager: "Wollin",
     note: "Active user - F...",
   },
+  {
+    id: "INF-05",
+    handle: "@instagram_ins",
+    platform: "Instagram",
+    status: "Approved",
+    actionLabel: "Add Post Link",
+    contractStage: "View Final Contract",
+    copy: "Approved",
+    posting: "Posted",
+    commercial: "Approved",
+    manager: "Wollin",
+    note: "Active user - F...",
+  },
 ];
 
 function buildExtras(): PipelineRow[] {
@@ -127,7 +143,8 @@ function buildExtras(): PipelineRow[] {
     "View Final Contract",
   ];
   return Array.from({ length: 16 }, (_, i) => ({
-    id: `INF-${String(i + 5).padStart(2, "0")}`,
+    // start at 06 to avoid clashing with the 5 canonical demo rows
+    id: `INF-${String(i + 6).padStart(2, "0")}`,
     handle: handles[i % handles.length],
     platform: "Instagram",
     status: i % 5 === 0 ? "Approved" : "Pending",
@@ -196,11 +213,138 @@ function buildProgressForRow(id: string) {
   return PROGRESS_STEPS.map((_, i) => i < completed);
 }
 
+const CONTRACT_STEPS = ["Contract Info", "Contract Draft", "Advertiser Sign", "KOL Sign"] as const;
+
+function contractStageIndex(stage: ContractStage) {
+  switch (stage) {
+    case "Fill Contract Info":
+      return 0; // 0/4 complete
+    case "Generate Draft":
+      return 1; // 1/4 complete
+    case "Sign as Advertiser":
+      return 2; // 2/4 complete
+    case "Check Status":
+      return 3; // 3/4 complete
+    case "View Final Contract":
+      return 4; // 4/4 complete
+  }
+}
+
+function ContractStepper({
+  stage,
+  onPrimaryAction,
+}: {
+  stage: ContractStage;
+  onPrimaryAction?: () => void;
+}) {
+  const idx = contractStageIndex(stage); // 0..4
+  const completed = Math.min(idx, 4);
+  const currentStep = Math.min(idx + 1, 4); // 1..4, used for hourglass
+
+  const meta =
+    stage === "Fill Contract Info"
+      ? ""
+      : stage === "Generate Draft"
+        ? "Mar 31, 2026 12:22 PM"
+        : stage === "Sign as Advertiser"
+          ? "Generated at 03:40 PM"
+          : "Signed at 06:18 PM";
+
+  const showFiles = stage === "View Final Contract";
+  const isFill = stage === "Fill Contract Info";
+
+  return (
+    <div className="rounded-lg border border-gray-100 bg-gray-50/40 px-3.5 py-2.5">
+      {/* Stepper row */}
+      <div className="flex items-center gap-2 text-[11px] text-gray-400 overflow-hidden">
+        {CONTRACT_STEPS.map((label, i) => {
+          const stepNo = i + 1;
+          const isDone = stepNo <= completed;
+          const isCurrent = stepNo === currentStep && completed < 4;
+          return (
+            <div key={label} className="flex items-center min-w-0">
+              <span
+                className={cn(
+                  "h-3.5 w-3.5 shrink-0 rounded-full inline-flex items-center justify-center border",
+                  isDone
+                    ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                    : isCurrent
+                      ? "bg-brand-50 border-brand-100 text-brand"
+                      : "bg-white border-gray-200 text-gray-300"
+                )}
+              >
+                {isDone ? (
+                  <Check size={10} strokeWidth={2.8} />
+                ) : isCurrent ? (
+                  <Hourglass size={10} strokeWidth={2.4} />
+                ) : (
+                  <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
+                )}
+              </span>
+
+              <span
+                className={cn(
+                  "ml-2 truncate",
+                  isDone ? "text-gray-800 font-medium" : "text-gray-400"
+                )}
+              >
+                {label}
+              </span>
+
+              {i !== CONTRACT_STEPS.length - 1 && (
+                <span className="mx-2 text-gray-200">--</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {meta ? (
+        <div className="mt-1.5 text-[11px] text-gray-400 italic">{meta}</div>
+      ) : (
+        <div className="mt-1.5 h-[16px]" />
+      )}
+
+      <Button
+        variant="outline"
+        size="sm"
+        className="mt-2 h-8 w-full justify-center text-[12px] border-gray-200 bg-white/70 text-brand hover:bg-white"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (isFill) onPrimaryAction?.();
+        }}
+      >
+        {stage}
+        <ChevronDown size={13} className="ml-2 text-gray-400" />
+      </Button>
+
+      {showFiles && (
+        <div className="mt-2.5 space-y-1.5 text-[11px] text-gray-600">
+          {[
+            "IO_V1_Original (Signed 2026-03-31).pdf",
+            "IO_V2_Addendum (Signed 2026-03-31).pdf",
+          ].map((f) => (
+            <div key={f} className="flex items-center gap-2">
+              <FileText size={13} className="text-gray-400" />
+              <span className="truncate">{f}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CampaignPipelineTable({ campaignId }: { campaignId: string }) {
   const [query, setQuery] = useState("");
   const [pageSize, setPageSize] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [contractInfoOpen, setContractInfoOpen] = useState(false);
+  const [contractInfoInfluencer, setContractInfoInfluencer] = useState<{
+    handle: string;
+    name: string;
+  } | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -240,6 +384,12 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
 
   return (
     <div className="flex flex-col flex-1 min-h-0 bg-white overflow-hidden">
+      <ContractInfoSheet
+        open={contractInfoOpen}
+        onOpenChange={setContractInfoOpen}
+        influencerHandle={contractInfoInfluencer?.handle ?? "@instagram ins"}
+        influencerName={contractInfoInfluencer?.name ?? "Amelia Stones"}
+      />
       {/* Toolbar row */}
       <div className="flex items-center justify-between gap-3 px-6 py-3 border-b border-gray-100 shrink-0">
         <div className="flex items-center gap-2">
@@ -316,8 +466,8 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
       <div className="flex-1 min-h-0 overflow-y-auto">
         <Table className="w-full table-auto text-[13px] border-separate border-spacing-0 [&_th]:px-10 [&_td]:px-10">
           <TableHeader>
-            <TableRow className="bg-white hover:bg-white border-b border-gray-100">
-              <TableHead className="w-14">
+            <TableRow className="bg-gray-50/70 hover:bg-gray-50/70 border-b border-gray-100">
+              <TableHead className="w-14 !px-6">
                 <Checkbox
                   checked={allSelected}
                   onCheckedChange={toggleAll}
@@ -331,29 +481,29 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                   }
                 />
               </TableHead>
-              <TableHead className="font-semibold text-gray-700 py-3">
+              <TableHead className="font-semibold text-gray-800 py-3 !pl-6">
                 Influencer
               </TableHead>
-              <TableHead className="font-semibold text-gray-700 py-3">
+              <TableHead className="font-semibold text-gray-800 py-3">
                 Collaboration Status
               </TableHead>
-              <TableHead className="font-semibold text-gray-700 py-3">Action</TableHead>
-              <TableHead className="font-semibold text-gray-700 py-3">Progress</TableHead>
-              <TableHead className="font-semibold text-gray-700 py-3">Contract</TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3">Action</TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3">Progress</TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3">Contract</TableHead>
 
               {/* NOTE: user requested these three columns removed: Logistics / Script / Video */}
-              <TableHead className="font-semibold text-gray-700 py-3">Copy</TableHead>
-              <TableHead className="font-semibold text-gray-700 py-3">Posting</TableHead>
-              <TableHead className="font-semibold text-gray-700 py-3">
+              <TableHead className="font-semibold text-gray-800 py-3">Copy</TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3">Posting</TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3">
                 Commercial
               </TableHead>
-              <TableHead className="font-semibold text-gray-700 py-3">
+              <TableHead className="font-semibold text-gray-800 py-3">
                 KOL Manager
               </TableHead>
-              <TableHead className="font-semibold text-gray-700 py-3">
+              <TableHead className="font-semibold text-gray-800 py-3">
                 Internal Notes
               </TableHead>
-              <TableHead className="font-semibold text-gray-700 py-3">Chat</TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3">Chat</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -368,7 +518,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                     isSelected && "bg-[#e8f1fb] hover:bg-[#dce9f8]"
                   )}
                 >
-                  <TableCell className="py-4">
+                  <TableCell className="py-4 !px-6">
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={() => toggleRow(row.id)}
@@ -376,7 +526,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                     />
                   </TableCell>
 
-                  <TableCell className="py-4">
+                  <TableCell className="py-4 !pl-6">
                     <div className="flex items-center gap-3 min-w-[180px]">
                       <Avatar className="w-7 h-7 shrink-0">
                         <AvatarImage src="" />
@@ -441,27 +591,21 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                   </TableCell>
 
                   <TableCell className="py-4">
-                    <div className="min-w-[280px]">
-                      <div className="flex items-center gap-2 text-[11px] text-gray-400">
-                        <span className="inline-flex items-center gap-1">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                          Contract Info
-                        </span>
-                        <span className="text-gray-200">—</span>
-                        <span>Contract Draft</span>
-                        <span className="text-gray-200">—</span>
-                        <span>Advertiser Sign</span>
-                        <span className="text-gray-200">—</span>
-                        <span>KOL Sign</span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-2 h-8 w-full justify-center text-[12px] border-gray-200 text-brand"
-                      >
-                        {row.contractStage}
-                        <ChevronDown size={12} className="ml-1 text-gray-400" />
-                      </Button>
+                    <div className="min-w-[360px]">
+                      <ContractStepper
+                        stage={row.contractStage}
+                        onPrimaryAction={
+                          row.contractStage === "Fill Contract Info"
+                            ? () => {
+                                setContractInfoInfluencer({
+                                  handle: row.handle,
+                                  name: "Amelia Stones",
+                                });
+                                setContractInfoOpen(true);
+                              }
+                            : undefined
+                        }
+                      />
                     </div>
                   </TableCell>
 
