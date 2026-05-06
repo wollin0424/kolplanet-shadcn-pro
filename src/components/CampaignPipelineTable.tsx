@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,7 @@ import {
   DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -33,6 +34,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   SlidersHorizontal,
   Search,
   Columns3,
@@ -40,6 +42,13 @@ import {
   Check,
   Hourglass,
   FileText,
+  AlertTriangle,
+  X,
+  CheckCircle2,
+  Link as LinkIcon,
+  Loader2,
+  PencilLine,
+  Eye,
 } from "lucide-react";
 
 type CollabStatus = "Pending" | "Approved";
@@ -241,9 +250,17 @@ function contractStageIndex(stage: ContractStage) {
 function ContractStepper({
   stage,
   onPrimaryAction,
+  onSendH5ToKol,
+  isSendingH5,
+  onModify,
+  onRefreshStatus,
 }: {
   stage: ContractStage;
   onPrimaryAction?: () => void;
+  onSendH5ToKol?: () => void;
+  isSendingH5?: boolean;
+  onModify?: () => void;
+  onRefreshStatus?: () => void;
 }) {
   const idx = contractStageIndex(stage); // 0..4
   const completed = Math.min(idx, 4);
@@ -259,7 +276,25 @@ function ContractStepper({
           : "Signed at 06:18 PM";
 
   const showFiles = stage === "View Final Contract";
-  const isFill = stage === "Fill Contract Info";
+  const primaryLabel =
+    stage === "Sign as Advertiser"
+      ? "Invite to sign"
+      : stage === "View Final Contract"
+        ? "View Signed Contract"
+        : stage;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const showModify = stage === "Generate Draft" || stage === "Sign as Advertiser";
+  const showInviteMenu = stage === "Sign as Advertiser";
+  const showSendH5 = !showInviteMenu;
+  const prevSendingRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    const prev = prevSendingRef.current;
+    const now = Boolean(isSendingH5);
+    // When a send finishes, close the menu so the user sees completion.
+    if (menuOpen && prev && !now) setMenuOpen(false);
+    prevSendingRef.current = now;
+  }, [isSendingH5, menuOpen]);
 
   return (
     <div className="rounded-lg border border-gray-100 bg-gray-50/40 px-3.5 py-2.5">
@@ -313,18 +348,74 @@ function ContractStepper({
         <div className="mt-1.5 h-[16px]" />
       )}
 
-      <Button
-        variant="outline"
-        size="sm"
-        className="mt-2 h-8 w-full justify-center text-[12px] border-gray-200 bg-white/70 text-brand hover:bg-white"
-        onClick={(e) => {
-          e.stopPropagation();
-          onPrimaryAction?.();
-        }}
-      >
-        {stage}
-        <ChevronDown size={13} className="ml-2 text-gray-400" />
-      </Button>
+      <div className="mt-2 flex w-full">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 flex-1 justify-center text-[12px] border-gray-200 bg-white/70 text-brand hover:bg-white rounded-r-none"
+          onClick={(e) => {
+            e.stopPropagation();
+            onPrimaryAction?.();
+          }}
+        >
+          {primaryLabel}
+        </Button>
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+          <DropdownMenuTrigger
+            aria-label="More actions"
+            className="h-8 w-9 inline-flex items-center justify-center rounded-md rounded-l-none border border-l-0 border-gray-200 bg-white/70 text-gray-400 hover:bg-white hover:text-gray-600 transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {menuOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="text-[13px] w-44"
+          >
+            {showModify ? (
+              <DropdownMenuItem onClick={() => onModify?.()} className="whitespace-nowrap">
+                <PencilLine className="mr-2 h-4 w-4 text-gray-400" />
+                Modify
+              </DropdownMenuItem>
+            ) : null}
+
+            {showInviteMenu ? (
+              <>
+                <DropdownMenuItem
+                  disabled
+                  className="whitespace-nowrap"
+                >
+                  <Eye className="mr-2 h-4 w-4 text-gray-300" />
+                  Preview
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onRefreshStatus?.()}
+                  className="whitespace-nowrap"
+                >
+                  <RefreshCcw className="mr-2 h-4 w-4 text-gray-400" />
+                  Refresh Status
+                </DropdownMenuItem>
+              </>
+            ) : null}
+
+            {showSendH5 ? (
+              <DropdownMenuItem
+                closeOnClick={false}
+                onClick={() => onSendH5ToKol?.()}
+                disabled={Boolean(isSendingH5)}
+                className="whitespace-nowrap"
+              >
+                {isSendingH5 ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin text-gray-400" />
+                ) : (
+                  <LinkIcon className="mr-2 h-4 w-4 text-gray-400" />
+                )}
+                {isSendingH5 ? "Sending..." : "Send H5 to KOL"}
+              </DropdownMenuItem>
+            ) : null}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       {showFiles && (
         <div className="mt-2.5 space-y-1.5 text-[11px] text-gray-600">
@@ -348,8 +439,20 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
   const [pageSize, setPageSize] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [rows, setRows] = useState<PipelineRow[]>(MOCK_ROWS);
   const [contractInfoOpen, setContractInfoOpen] = useState(false);
   const [generateDraftOpen, setGenerateDraftOpen] = useState(false);
+  const [checkStatusOpen, setCheckStatusOpen] = useState(false);
+  const [activeRowId, setActiveRowId] = useState<string | null>(null);
+  const [inviteToSignOpen, setInviteToSignOpen] = useState(false);
+  const [inviteRowId, setInviteRowId] = useState<string | null>(null);
+  const advertiserSignerEmail = "chris.yan@moca-tech.net";
+  const [kolSignerEmail, setKolSignerEmail] = useState("ethan.carter@example.com");
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("H5 link copied");
+  const [sendingH5RowId, setSendingH5RowId] = useState<string | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
+  const [signedContractOpen, setSignedContractOpen] = useState(false);
   const [contractInfoInfluencer, setContractInfoInfluencer] = useState<{
     handle: string;
     name: string;
@@ -357,8 +460,8 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return MOCK_ROWS.filter((r) => q.length === 0 || r.handle.toLowerCase().includes(q));
-  }, [query]);
+    return rows.filter((r) => q.length === 0 || r.handle.toLowerCase().includes(q));
+  }, [query, rows]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
@@ -391,8 +494,31 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
   const goToPage = (p: number) =>
     setCurrentPage(Math.min(Math.max(1, p), totalPages));
 
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setToastOpen(true);
+    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = window.setTimeout(() => setToastOpen(false), 2600);
+  };
+
   return (
     <div className="flex flex-col flex-1 min-h-0 bg-white overflow-hidden">
+      {toastOpen ? (
+        <div className="fixed bottom-6 right-6 z-[60]">
+          <div className="flex items-center gap-3 rounded-xl bg-emerald-50 px-4 py-3 text-[13px] text-emerald-900 shadow-lg ring-1 ring-emerald-100">
+            <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600" />
+            <div className="min-w-0">{toastMessage}</div>
+            <button
+              type="button"
+              className="ml-2 inline-flex h-7 w-7 items-center justify-center rounded-lg text-emerald-700/70 hover:bg-emerald-100 hover:text-emerald-800"
+              onClick={() => setToastOpen(false)}
+              aria-label="Dismiss"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      ) : null}
       <ContractInfoSheet
         open={contractInfoOpen}
         onOpenChange={setContractInfoOpen}
@@ -448,6 +574,201 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                 Generate Draft
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={checkStatusOpen} onOpenChange={setCheckStatusOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="items-center text-center gap-2">
+            <div className="mx-auto inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-100">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <DialogTitle className="text-[16px] font-semibold text-gray-900">
+              Unable to Sync Status
+            </DialogTitle>
+            <DialogDescription className="max-w-[52ch] text-[13px] leading-relaxed text-gray-500">
+              Unable to sync status from provider. If you have confirmed the signature offline, you
+              can manually mark it as completed.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="mt-5 mx-0 mb-0 gap-3 border-t-0 bg-transparent p-0 pb-2 sm:justify-center">
+            <DialogClose render={<Button variant="outline" className="h-9 px-4" />}>
+              Cancel
+            </DialogClose>
+            <Button
+              className="h-9 px-4 text-white"
+              style={{ backgroundColor: "#023E8A" }}
+              onClick={() => {
+                if (!activeRowId) return;
+                setRows((prev) =>
+                  prev.map((r) =>
+                    r.id === activeRowId ? { ...r, contractStage: "View Final Contract" } : r
+                  )
+                );
+                setCheckStatusOpen(false);
+              }}
+            >
+              Mark as Signed Manually
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={inviteToSignOpen}
+        onOpenChange={(open) => {
+          setInviteToSignOpen(open);
+          if (!open) setInviteRowId(null);
+        }}
+      >
+        <DialogContent className="p-0 sm:max-w-[520px]">
+          <DialogHeader className="px-6 pt-6 pb-3 text-left">
+            <DialogTitle className="text-[17px] font-semibold text-gray-900">
+              Invite to Sign
+            </DialogTitle>
+            <DialogDescription className="text-[13px] leading-relaxed text-gray-500">
+              Please confirm the email addresses for both signing parties. Once sent, a signature
+              request will be delivered via the{" "}
+              <span className="font-semibold text-gray-700">selected e-signature provider.</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="px-6 pb-7 space-y-6">
+            <div className="grid grid-cols-[200px_1fr] gap-x-6 gap-y-3 items-center">
+              <div>
+                <div className="text-[13px] font-semibold text-gray-900">Advertiser Signer Email</div>
+                <div className="mt-1 text-[12px] text-gray-400">Contact Admin to change</div>
+              </div>
+              <Input
+                value={advertiserSignerEmail}
+                disabled
+                className="h-10 border-gray-200 bg-gray-50 text-[13px] text-gray-700 disabled:opacity-100"
+              />
+
+              <div>
+                <div className="text-[13px] font-semibold text-gray-900">
+                  KOL Signer Email <span className="text-red-500">*</span>
+                </div>
+              </div>
+              <Input
+                value={kolSignerEmail}
+                onChange={(e) => setKolSignerEmail(e.target.value)}
+                className="h-10 border-blue-200 bg-white text-[13px] text-gray-900 focus-visible:border-blue-300"
+              />
+            </div>
+
+            <div className="flex items-center justify-center gap-4">
+              <DialogClose render={<Button variant="outline" className="h-11 w-[140px] text-[14px]" />}>
+                Cancel
+              </DialogClose>
+              <Button
+                className="h-11 w-[170px] text-[14px] text-white"
+                style={{ backgroundColor: "#023E8A" }}
+                onClick={() => {
+                  if (!inviteRowId) return;
+                  setInviteToSignOpen(false);
+                }}
+              >
+                Send Request
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={signedContractOpen} onOpenChange={setSignedContractOpen}>
+        <DialogContent className="p-0 sm:max-w-[680px]">
+          <DialogHeader className="px-6 pt-5 pb-4 border-b border-gray-100 text-left">
+            <DialogTitle className="text-[15px] font-semibold text-gray-900">
+              Signed Contract Files - dr. Michael Dwinata, Sp.PD
+            </DialogTitle>
+            <DialogDescription className="text-[12px] leading-relaxed text-gray-500">
+              Review the executed contract files here. Use View to open the file in a new tab, or
+              Download to keep a local copy.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="px-6 py-5 space-y-4">
+            {[
+              {
+                title: "Deal Contract Signed PDF V1",
+                updated: "Updated 2026-04-29 19:32",
+                tags: [
+                  { label: "Advertiser Signed", tone: "brand" as const },
+                  { label: "V1", tone: "gray" as const },
+                ],
+              },
+              {
+                title: "Deal Contract Completion Certificate V1",
+                updated: "Updated 2026-04-29 19:32",
+                tags: [
+                  { label: "KOL Signed", tone: "amber" as const },
+                  { label: "V1", tone: "gray" as const },
+                ],
+              },
+            ].map((f) => (
+              <div
+                key={f.title}
+                className="rounded-xl border border-gray-100 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)] px-5 py-4"
+              >
+                <div className="flex items-start justify-between gap-6">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="text-[13px] font-semibold text-gray-900 truncate">
+                        {f.title}
+                      </div>
+                      {f.tags.map((t) => (
+                        <span
+                          key={t.label}
+                          className={cn(
+                            "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold border",
+                            t.tone === "brand"
+                              ? "bg-brand-50 text-brand border-brand-100"
+                              : t.tone === "amber"
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : "bg-gray-50 text-gray-600 border-gray-200"
+                          )}
+                        >
+                          {t.label}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-1 text-[11px] text-gray-400">{f.updated}</div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-4 border-gray-200 text-gray-700"
+                      onClick={() => showToast("Opened in new tab")}
+                    >
+                      View
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-4 border-gray-200 text-gray-700"
+                      onClick={() => showToast("Download started")}
+                    >
+                      Download
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="px-6 pb-7 flex items-center justify-center gap-4">
+            <DialogClose render={<Button variant="outline" className="h-10 w-[160px]" />}>
+              Close
+            </DialogClose>
+            <Button
+              className="h-10 w-[180px] text-white"
+              style={{ backgroundColor: "#023E8A" }}
+              onClick={() => showToast("Downloading all…")}
+            >
+              Download All
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -666,8 +987,54 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                               }
                             : row.contractStage === "Generate Draft"
                               ? () => setGenerateDraftOpen(true)
+                                : row.contractStage === "Sign as Advertiser"
+                                ? () => {
+                                    setInviteRowId(row.id);
+                                    setKolSignerEmail(
+                                      `${row.handle.replace(/^@/, "")}@example.com`
+                                    );
+                                    setInviteToSignOpen(true);
+                                  }
+                                : row.contractStage === "Check Status"
+                                  ? () => {
+                                      setActiveRowId(row.id);
+                                      setCheckStatusOpen(true);
+                                    }
+                                  : row.contractStage === "View Final Contract"
+                                    ? () => setSignedContractOpen(true)
+                                  : undefined
+                        }
+                        onModify={
+                          row.contractStage === "Generate Draft" || row.contractStage === "Sign as Advertiser"
+                            ? () => {
+                                setContractInfoInfluencer({
+                                  handle: row.handle,
+                                  name: "Amelia Stones",
+                                });
+                                setContractInfoOpen(true);
+                              }
                             : undefined
                         }
+                        onRefreshStatus={
+                          row.contractStage === "Sign as Advertiser"
+                            ? () => {
+                                setActiveRowId(row.id);
+                                setCheckStatusOpen(true);
+                              }
+                            : undefined
+                        }
+                        onSendH5ToKol={() => {
+                          if (sendingH5RowId) return;
+                          setSendingH5RowId(row.id);
+                          const url = `https://kolplanet.example/h5/${row.id}`;
+                          // Clipboard can be blocked; still show success toast.
+                          void navigator.clipboard?.writeText(url).catch(() => {});
+                          window.setTimeout(() => {
+                            setSendingH5RowId(null);
+                            showToast("H5 link copied");
+                          }, 900);
+                        }}
+                        isSendingH5={sendingH5RowId === row.id}
                       />
                     </div>
                   </TableCell>
