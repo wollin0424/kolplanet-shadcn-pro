@@ -310,14 +310,14 @@ function ContractStepper({
                 className={cn(
                   "h-3.5 w-3.5 shrink-0 rounded-full inline-flex items-center justify-center border",
                   isDone
-                    ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                    ? "bg-emerald-100 border-emerald-300 text-emerald-700"
                     : isCurrent
                       ? "bg-brand-50 border-brand-100 text-brand"
                       : "bg-white border-gray-200 text-gray-300"
                 )}
               >
                 {isDone ? (
-                  <Check size={10} strokeWidth={2.8} />
+                  <Check size={11} strokeWidth={3.4} />
                 ) : isCurrent ? (
                   <Hourglass size={10} strokeWidth={2.4} />
                 ) : (
