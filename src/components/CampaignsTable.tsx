@@ -305,7 +305,7 @@ export default function CampaignsTable() {
         <Select
           value={geoFilter}
           onValueChange={(v) => {
-            setGeoFilter(v);
+            setGeoFilter(v ?? "All");
             setCurrentPage(1);
           }}
         >
