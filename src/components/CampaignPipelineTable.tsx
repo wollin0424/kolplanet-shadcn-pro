@@ -452,7 +452,12 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
   const [toastMessage, setToastMessage] = useState("H5 link copied");
   const [sendingH5RowId, setSendingH5RowId] = useState<string | null>(null);
   const toastTimerRef = useRef<number | null>(null);
+  const sendH5TimerRef = useRef<number | null>(null);
   const [signedContractOpen, setSignedContractOpen] = useState(false);
+  const [signedContractInfluencer, setSignedContractInfluencer] = useState<{
+    handle: string;
+    name: string;
+  } | null>(null);
   const [contractInfoInfluencer, setContractInfoInfluencer] = useState<{
     handle: string;
     name: string;
@@ -500,6 +505,13 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
     if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
     toastTimerRef.current = window.setTimeout(() => setToastOpen(false), 2600);
   };
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+      if (sendH5TimerRef.current) window.clearTimeout(sendH5TimerRef.current);
+    };
+  }, []);
 
   return (
     <div className="flex flex-col flex-1 min-h-0 bg-white overflow-hidden">
@@ -675,11 +687,20 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
           </div>
         </DialogContent>
       </Dialog>
-      <Dialog open={signedContractOpen} onOpenChange={setSignedContractOpen}>
+      <Dialog
+        open={signedContractOpen}
+        onOpenChange={(open) => {
+          setSignedContractOpen(open);
+          if (!open) setSignedContractInfluencer(null);
+        }}
+      >
         <DialogContent className="p-0 sm:max-w-[680px]">
           <DialogHeader className="px-6 pt-5 pb-4 border-b border-gray-100 text-left">
             <DialogTitle className="text-[15px] font-semibold text-gray-900">
-              Signed Contract Files - dr. Michael Dwinata, Sp.PD
+              Signed Contract Files
+              {signedContractInfluencer
+                ? ` - ${signedContractInfluencer.name}`
+                : ""}
             </DialogTitle>
             <DialogDescription className="text-[12px] leading-relaxed text-gray-500">
               Review the executed contract files here. Use View to open the file in a new tab, or
@@ -816,7 +837,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
           <span className="text-[12px] text-gray-500 font-medium">
             Influencer:{" "}
             <span className="text-gray-900 tabular-nums">
-              {filtered.length}/{MOCK_ROWS.length}
+              {filtered.length}/{rows.length}
             </span>
           </span>
           <DropdownMenu>
@@ -1001,7 +1022,13 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                                       setCheckStatusOpen(true);
                                     }
                                   : row.contractStage === "View Final Contract"
-                                    ? () => setSignedContractOpen(true)
+                                    ? () => {
+                                        setSignedContractInfluencer({
+                                          handle: row.handle,
+                                          name: "Amelia Stones",
+                                        });
+                                        setSignedContractOpen(true);
+                                      }
                                   : undefined
                         }
                         onModify={
@@ -1029,7 +1056,8 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                           const url = `https://kolplanet.example/h5/${row.id}`;
                           // Clipboard can be blocked; still show success toast.
                           void navigator.clipboard?.writeText(url).catch(() => {});
-                          window.setTimeout(() => {
+                          if (sendH5TimerRef.current) window.clearTimeout(sendH5TimerRef.current);
+                          sendH5TimerRef.current = window.setTimeout(() => {
                             setSendingH5RowId(null);
                             showToast("H5 link copied");
                           }, 900);

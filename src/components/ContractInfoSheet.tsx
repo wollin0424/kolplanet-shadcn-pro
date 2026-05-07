@@ -539,7 +539,7 @@ export default function ContractInfoSheet({
                   <div className="space-y-2">
                     <FieldLabel>Identity Type *</FieldLabel>
                     <Select value={identityType} onValueChange={setIdentityType}>
-                      <SelectTrigger className="h-9 border-gray-200 bg-white text-[12px]">
+                      <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[12px]">
                         <SelectValue placeholder="Select Identity Type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -592,7 +592,7 @@ export default function ContractInfoSheet({
                     <FieldLabel>Residing Address *</FieldLabel>
                     <div className="space-y-3">
                       <Select value={resCountry} onValueChange={setResCountry}>
-                        <SelectTrigger className="h-9 border-gray-200 bg-white text-[12px]">
+                        <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[12px]">
                           <SelectValue placeholder="Country/Region" />
                         </SelectTrigger>
                         <SelectContent>
@@ -635,7 +635,7 @@ export default function ContractInfoSheet({
                     <FieldLabel>Phone Number *</FieldLabel>
                     <div className="grid grid-cols-[160px_1fr] gap-3">
                       <Select value={phoneCountryCode} onValueChange={setPhoneCountryCode}>
-                        <SelectTrigger className="h-9 border-gray-200 bg-white text-[12px]">
+                        <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[12px]">
                           <SelectValue placeholder="Country Code" />
                         </SelectTrigger>
                         <SelectContent>
@@ -751,7 +751,7 @@ export default function ContractInfoSheet({
                     <FieldLabel>Recipient Phone *</FieldLabel>
                     <div className="grid grid-cols-[160px_1fr] gap-3">
                       <Select value={recipientCountryCode} onValueChange={setRecipientCountryCode}>
-                        <SelectTrigger className="h-9 border-gray-200 bg-white text-[12px]">
+                        <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[12px]">
                           <SelectValue placeholder="Country Code" />
                         </SelectTrigger>
                         <SelectContent>
@@ -774,7 +774,7 @@ export default function ContractInfoSheet({
                   <div className="space-y-2">
                     <FieldLabel>Country/Region *</FieldLabel>
                     <Select value={shipCountry} onValueChange={setShipCountry}>
-                      <SelectTrigger className="h-9 border-gray-200 bg-white text-[12px]">
+                      <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[12px]">
                         <SelectValue placeholder="Select Country/Region" />
                       </SelectTrigger>
                       <SelectContent>
