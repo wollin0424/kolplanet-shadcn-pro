@@ -325,7 +325,7 @@ export default function CampaignsTable() {
         <Select
           value={projectLeadFilter}
           onValueChange={(v) => {
-            setProjectLeadFilter(v);
+            setProjectLeadFilter(v ?? "All");
             setCurrentPage(1);
           }}
         >
