@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
+import CollabStatusSelect from "@/components/pipeline/CollabStatusSelect";
+import PipelineStageCell from "@/components/pipeline/PipelineStageCell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,16 +12,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -28,178 +20,130 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  CONTENT_STATUS_CONFIG,
+  LOGISTICS_STATUS_CONFIG,
+  PAYMENT_STATUS_CONFIG,
+  POSTING_STATUS_CONFIG,
+  SCRIPT_STATUS_CONFIG,
+  type CollabStatus,
+  type ContentStatus,
+  type LogisticsStatus,
+  type PaymentStatus,
+  type PostingStatus,
+  type ScriptStatus,
+} from "@/lib/pipeline/stageStatuses";
+import {
+  PIPELINE_TABLE_COLUMNS,
+  PIPELINE_TABLE_MIN_WIDTH,
+} from "@/lib/pipeline/tableColumns";
 import { cn } from "@/lib/utils";
-import ContractInfoSheet from "@/components/ContractInfoSheet";
 import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronUp,
-  SlidersHorizontal,
-  Search,
   Columns3,
+  MessageCircle,
   RefreshCcw,
-  Check,
-  Hourglass,
-  FileText,
-  AlertTriangle,
-  X,
-  CheckCircle2,
-  Link as LinkIcon,
-  Loader2,
-  PencilLine,
-  Eye,
+  Search,
+  SlidersHorizontal,
 } from "lucide-react";
-
-type CollabStatus = "Pending" | "Approved";
-type ContractStage =
-  | "Fill Contract Info"
-  | "Generate Draft"
-  | "Sign as Advertiser"
-  | "Check Status"
-  | "View Final Contract";
 
 type PipelineRow = {
   id: string;
   handle: string;
+  displayName: string;
   platform: string;
-  status: CollabStatus;
-  actionLabel: string;
-  contractStage: ContractStage;
-  copy: "Pending" | "Approved";
-  posting: "Ready" | "Posted";
-  commercial: "Pending" | "Approved";
+  collabStatus: CollabStatus;
+  logistics: LogisticsStatus;
+  script: ScriptStatus;
+  content: ContentStatus;
+  posting: PostingStatus;
+  payment: PaymentStatus;
   manager: string;
   note: string;
 };
 
-const BASE_ROWS: PipelineRow[] = [
-  {
-    id: "INF-01",
-    handle: "@instagram_ins",
-    platform: "Instagram",
-    status: "Pending",
-    actionLabel: "Approve",
-    contractStage: "Fill Contract Info",
-    copy: "Pending",
-    posting: "Ready",
-    commercial: "Pending",
-    manager: "Wollin",
-    note: "Active user - F...",
-  },
-  {
-    id: "INF-02",
-    handle: "@instagram_ins",
-    platform: "Instagram",
-    status: "Pending",
-    actionLabel: "Approve",
-    contractStage: "Generate Draft",
-    copy: "Pending",
-    posting: "Ready",
-    commercial: "Pending",
-    manager: "Wollin",
-    note: "Active user - F...",
-  },
-  {
-    id: "INF-03",
-    handle: "@instagram_ins",
-    platform: "Instagram",
-    status: "Pending",
-    actionLabel: "Approve",
-    contractStage: "Sign as Advertiser",
-    copy: "Pending",
-    posting: "Ready",
-    commercial: "Pending",
-    manager: "Wollin",
-    note: "Active user - F...",
-  },
-  {
-    id: "INF-04",
-    handle: "@instagram_ins",
-    platform: "Instagram",
-    status: "Approved",
-    actionLabel: "Add Post Link",
-    contractStage: "Check Status",
-    copy: "Approved",
-    posting: "Ready",
-    commercial: "Pending",
-    manager: "Wollin",
-    note: "Active user - F...",
-  },
-  {
-    id: "INF-05",
-    handle: "@instagram_ins",
-    platform: "Instagram",
-    status: "Approved",
-    actionLabel: "Add Post Link",
-    contractStage: "View Final Contract",
-    copy: "Approved",
-    posting: "Posted",
-    commercial: "Approved",
-    manager: "Wollin",
-    note: "Active user - F...",
-  },
+const LOGISTICS_POOL: LogisticsStatus[] = [
+  "Recruiting",
+  "To Ship",
+  "In Transit",
+  "Delivered",
+];
+const SCRIPT_POOL: ScriptStatus[] = [
+  "Recruiting",
+  "Pending",
+  "Needs Revision",
+  "Approved",
+];
+const CONTENT_POOL: ContentStatus[] = [
+  "Recruiting",
+  "Video Pending",
+  "Copy Approved",
+  "Approved",
+];
+const POSTING_POOL: PostingStatus[] = [
+  "Recruiting",
+  "Ready",
+  "In Progress",
+  "Posted",
+];
+const PAYMENT_POOL: PaymentStatus[] = [
+  "Recruiting",
+  "Invoice Uploaded",
+  "Validated",
+];
+const COLLAB_POOL: CollabStatus[] = [
+  "Pending",
+  "Approved",
+  "Posted",
+  "Done",
+  "Terminated",
 ];
 
-function buildExtras(): PipelineRow[] {
-  const handles = [
-    "@foodie_my",
-    "@lifestyle_id",
-    "@creator_ph",
-    "@runner_in",
-    "@tech_my",
-    "@beauty_id",
-    "@daily_ph",
-    "@street_in",
-  ];
-  const stages: ContractStage[] = [
-    "Fill Contract Info",
-    "Generate Draft",
-    "Sign as Advertiser",
-    "Check Status",
-    "View Final Contract",
-  ];
-  return Array.from({ length: 16 }, (_, i) => ({
-    // start at 06 to avoid clashing with the 5 canonical demo rows
-    id: `INF-${String(i + 6).padStart(2, "0")}`,
-    handle: handles[i % handles.length],
+const DISPLAY_NAMES = [
+  "Amelia Stones",
+  "Ethan Carter",
+  "Maya Lin",
+  "Noah Brooks",
+  "Sofia Reyes",
+  "Liam Park",
+  "Chloe Tan",
+  "Aria Singh",
+];
+
+const HANDLES = [
+  "@instagram_ins",
+  "@foodie_my",
+  "@lifestyle_id",
+  "@creator_ph",
+  "@runner_in",
+  "@tech_my",
+  "@beauty_id",
+  "@daily_ph",
+];
+
+function buildMockRows(count: number): PipelineRow[] {
+  return Array.from({ length: count }, (_, i) => ({
+    id: `INF-${String(i + 1).padStart(2, "0")}`,
+    handle: HANDLES[i % HANDLES.length],
+    displayName: DISPLAY_NAMES[i % DISPLAY_NAMES.length],
     platform: "Instagram",
-    status: i % 5 === 0 ? "Approved" : "Pending",
-    actionLabel: i % 5 === 0 ? "Add Post Link" : "Approve",
-    contractStage: stages[i % stages.length],
-    copy: i % 4 === 0 ? "Approved" : "Pending",
-    posting: i % 7 === 0 ? "Posted" : "Ready",
-    commercial: i % 6 === 0 ? "Approved" : "Pending",
-    manager: "Wollin",
-    note: "Active user - F...",
+    collabStatus: COLLAB_POOL[i % COLLAB_POOL.length],
+    logistics: LOGISTICS_POOL[i % LOGISTICS_POOL.length],
+    script: SCRIPT_POOL[(i + 1) % SCRIPT_POOL.length],
+    content: CONTENT_POOL[(i + 2) % CONTENT_POOL.length],
+    posting: POSTING_POOL[(i + 3) % POSTING_POOL.length],
+    payment: PAYMENT_POOL[(i + 1) % PAYMENT_POOL.length],
+    manager: "Wolin",
+    note: "Active user - Fr...",
   }));
 }
 
-const MOCK_ROWS: PipelineRow[] = [...BASE_ROWS, ...buildExtras()];
-const PAGE_SIZE_OPTIONS = [10, 20, 50];
-const PROGRESS_STEPS = ["Contract", "Content", "Posting", "Payment", "Copy", "Commercial"] as const;
-
-function Badge({
-  tone,
-  children,
-}: {
-  tone: "amber" | "green" | "gray" | "brand";
-  children: React.ReactNode;
-}) {
-  const cls =
-    tone === "amber"
-      ? "bg-amber-50 text-amber-700 border-amber-200"
-      : tone === "green"
-        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-        : tone === "brand"
-          ? "bg-brand-50 text-brand border-brand-100"
-          : "bg-gray-50 text-gray-600 border-gray-200";
-  return (
-    <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold border", cls)}>
-      {children}
-    </span>
-  );
-}
+const MOCK_ROWS = buildMockRows(90);
+const INFLUENCER_CAP = 300;
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50];
+const TOTAL_CLIENT_PRICE = 80_000;
 
 function buildPageList(current: number, total: number): (number | "…")[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
@@ -213,259 +157,27 @@ function buildPageList(current: number, total: number): (number | "…")[] {
   return pages;
 }
 
-function hashString(input: string) {
-  // Deterministic tiny hash for stable mock UI
-  let h = 2166136261;
-  for (let i = 0; i < input.length; i++) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-function buildProgressForRow(id: string) {
-  // random-ish but stable per row: completes first N steps
-  const h = hashString(id);
-  const completed = (h % (PROGRESS_STEPS.length + 1)) as number; // 0..6
-  return PROGRESS_STEPS.map((_, i) => i < completed);
-}
-
-const CONTRACT_STEPS = ["Contract Info", "Contract Draft", "Advertiser Sign", "KOL Sign"] as const;
-
-function contractStageIndex(stage: ContractStage) {
-  switch (stage) {
-    case "Fill Contract Info":
-      return 0; // 0/4 complete
-    case "Generate Draft":
-      return 1; // 1/4 complete
-    case "Sign as Advertiser":
-      return 2; // 2/4 complete
-    case "Check Status":
-      return 3; // 3/4 complete
-    case "View Final Contract":
-      return 4; // 4/4 complete
-  }
-}
-
-function ContractStepper({
-  stage,
-  onPrimaryAction,
-  onSendH5ToKol,
-  isSendingH5,
-  onModify,
-  onRefreshStatus,
-}: {
-  stage: ContractStage;
-  onPrimaryAction?: () => void;
-  onSendH5ToKol?: () => void;
-  isSendingH5?: boolean;
-  onModify?: () => void;
-  onRefreshStatus?: () => void;
-}) {
-  const idx = contractStageIndex(stage); // 0..4
-  const completed = Math.min(idx, 4);
-  const currentStep = Math.min(idx + 1, 4); // 1..4, used for hourglass
-
-  const meta =
-    stage === "Fill Contract Info"
-      ? ""
-      : stage === "Generate Draft"
-        ? "Mar 31, 2026 12:22 PM"
-        : stage === "Sign as Advertiser"
-          ? "Generated at 03:40 PM"
-          : "Signed at 06:18 PM";
-
-  const showFiles = stage === "View Final Contract";
-  const primaryLabel =
-    stage === "Sign as Advertiser"
-      ? "Invite to sign"
-      : stage === "View Final Contract"
-        ? "View Signed Contract"
-        : stage;
-  const [menuOpen, setMenuOpen] = useState(false);
-  const showModify = stage === "Generate Draft" || stage === "Sign as Advertiser";
-  const showInviteMenu = stage === "Sign as Advertiser";
-  const showSendH5 = !showInviteMenu;
-  const prevSendingRef = useRef<boolean>(false);
-
-  useEffect(() => {
-    const prev = prevSendingRef.current;
-    const now = Boolean(isSendingH5);
-    // When a send finishes, close the menu so the user sees completion.
-    if (menuOpen && prev && !now) setMenuOpen(false);
-    prevSendingRef.current = now;
-  }, [isSendingH5, menuOpen]);
-
-  return (
-    <div className="rounded-lg border border-gray-100 bg-gray-50/40 px-3.5 py-2.5">
-      {/* Stepper row */}
-      <div className="flex items-center gap-2 text-[11px] text-gray-400 overflow-hidden">
-        {CONTRACT_STEPS.map((label, i) => {
-          const stepNo = i + 1;
-          const isDone = stepNo <= completed;
-          const isCurrent = stepNo === currentStep && completed < 4;
-          return (
-            <div key={label} className="flex items-center min-w-0">
-              <span
-                className={cn(
-                  "h-3.5 w-3.5 shrink-0 rounded-full inline-flex items-center justify-center border",
-                  isDone
-                    ? "bg-emerald-100 border-emerald-300 text-emerald-700"
-                    : isCurrent
-                      ? "bg-brand-50 border-brand-100 text-brand"
-                      : "bg-white border-gray-200 text-gray-300"
-                )}
-              >
-                {isDone ? (
-                  <Check size={11} strokeWidth={3.4} />
-                ) : isCurrent ? (
-                  <Hourglass size={10} strokeWidth={2.4} />
-                ) : (
-                  <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
-                )}
-              </span>
-
-              <span
-                className={cn(
-                  "ml-2 truncate",
-                  isDone ? "text-gray-800 font-medium" : "text-gray-400"
-                )}
-              >
-                {label}
-              </span>
-
-              {i !== CONTRACT_STEPS.length - 1 && (
-                <span className="mx-2 text-gray-200">--</span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {meta ? (
-        <div className="mt-1.5 text-[11px] text-gray-400 italic">{meta}</div>
-      ) : (
-        <div className="mt-1.5 h-[16px]" />
-      )}
-
-      <div className="mt-2 flex w-full">
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 flex-1 justify-center text-[12px] border-gray-200 bg-white/70 text-brand hover:bg-white rounded-r-none"
-          onClick={(e) => {
-            e.stopPropagation();
-            onPrimaryAction?.();
-          }}
-        >
-          {primaryLabel}
-        </Button>
-        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-          <DropdownMenuTrigger
-            aria-label="More actions"
-            className="h-8 w-9 inline-flex items-center justify-center rounded-md rounded-l-none border border-l-0 border-gray-200 bg-white/70 text-gray-400 hover:bg-white hover:text-gray-600 transition-colors"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {menuOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="text-[13px] w-44"
-          >
-            {showModify ? (
-              <DropdownMenuItem onClick={() => onModify?.()} className="whitespace-nowrap">
-                <PencilLine className="mr-2 h-4 w-4 text-gray-400" />
-                Modify
-              </DropdownMenuItem>
-            ) : null}
-
-            {showInviteMenu ? (
-              <>
-                <DropdownMenuItem
-                  disabled
-                  className="whitespace-nowrap"
-                >
-                  <Eye className="mr-2 h-4 w-4 text-gray-300" />
-                  Preview
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onRefreshStatus?.()}
-                  className="whitespace-nowrap"
-                >
-                  <RefreshCcw className="mr-2 h-4 w-4 text-gray-400" />
-                  Refresh Status
-                </DropdownMenuItem>
-              </>
-            ) : null}
-
-            {showSendH5 ? (
-              <DropdownMenuItem
-                closeOnClick={false}
-                onClick={() => onSendH5ToKol?.()}
-                disabled={Boolean(isSendingH5)}
-                className="whitespace-nowrap"
-              >
-                {isSendingH5 ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin text-gray-400" />
-                ) : (
-                  <LinkIcon className="mr-2 h-4 w-4 text-gray-400" />
-                )}
-                {isSendingH5 ? "Sending..." : "Send H5 to KOL"}
-              </DropdownMenuItem>
-            ) : null}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {showFiles && (
-        <div className="mt-2.5 space-y-1.5 text-[11px] text-gray-600">
-          {[
-            "IO_V1_Original (Signed 2026-03-31).pdf",
-            "IO_V2_Addendum (Signed 2026-03-31).pdf",
-          ].map((f) => (
-            <div key={f} className="flex items-center gap-2">
-              <FileText size={13} className="text-gray-400" />
-              <span className="truncate">{f}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function CampaignPipelineTable({ campaignId }: { campaignId: string }) {
   const [query, setQuery] = useState("");
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(30);
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [rows, setRows] = useState<PipelineRow[]>(MOCK_ROWS);
-  const [contractInfoOpen, setContractInfoOpen] = useState(false);
-  const [generateDraftOpen, setGenerateDraftOpen] = useState(false);
-  const [checkStatusOpen, setCheckStatusOpen] = useState(false);
-  const [activeRowId, setActiveRowId] = useState<string | null>(null);
-  const [inviteToSignOpen, setInviteToSignOpen] = useState(false);
-  const [inviteRowId, setInviteRowId] = useState<string | null>(null);
-  const advertiserSignerEmail = "chris.yan@moca-tech.net";
-  const [kolSignerEmail, setKolSignerEmail] = useState("ethan.carter@example.com");
-  const [toastOpen, setToastOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState("H5 link copied");
-  const [sendingH5RowId, setSendingH5RowId] = useState<string | null>(null);
-  const toastTimerRef = useRef<number | null>(null);
-  const sendH5TimerRef = useRef<number | null>(null);
-  const [signedContractOpen, setSignedContractOpen] = useState(false);
-  const [signedContractInfluencer, setSignedContractInfluencer] = useState<{
-    handle: string;
-    name: string;
-  } | null>(null);
-  const [contractInfoInfluencer, setContractInfoInfluencer] = useState<{
-    handle: string;
-    name: string;
-  } | null>(null);
+
+  const updateCollabStatus = (rowId: string, collabStatus: CollabStatus) => {
+    setRows((prev) =>
+      prev.map((r) => (r.id === rowId ? { ...r, collabStatus } : r))
+    );
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return rows.filter((r) => q.length === 0 || r.handle.toLowerCase().includes(q));
+    if (!q) return rows;
+    return rows.filter(
+      (r) =>
+        r.handle.toLowerCase().includes(q) ||
+        r.displayName.toLowerCase().includes(q)
+    );
   }, [query, rows]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -499,312 +211,22 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
   const goToPage = (p: number) =>
     setCurrentPage(Math.min(Math.max(1, p), totalPages));
 
-  const showToast = (message: string) => {
-    setToastMessage(message);
-    setToastOpen(true);
-    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = window.setTimeout(() => setToastOpen(false), 2600);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-      if (sendH5TimerRef.current) window.clearTimeout(sendH5TimerRef.current);
-    };
-  }, []);
-
   return (
     <div className="flex flex-col flex-1 min-h-0 bg-white overflow-hidden">
-      {toastOpen ? (
-        <div className="fixed bottom-6 right-6 z-[60]">
-          <div className="flex items-center gap-3 rounded-xl bg-emerald-50 px-4 py-3 text-[13px] text-emerald-900 shadow-lg ring-1 ring-emerald-100">
-            <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600" />
-            <div className="min-w-0">{toastMessage}</div>
-            <button
-              type="button"
-              className="ml-2 inline-flex h-7 w-7 items-center justify-center rounded-lg text-emerald-700/70 hover:bg-emerald-100 hover:text-emerald-800"
-              onClick={() => setToastOpen(false)}
-              aria-label="Dismiss"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      ) : null}
-      <ContractInfoSheet
-        open={contractInfoOpen}
-        onOpenChange={setContractInfoOpen}
-        influencerHandle={contractInfoInfluencer?.handle ?? "@instagram ins"}
-        influencerName={contractInfoInfluencer?.name ?? "Amelia Stones"}
-      />
-      <Dialog open={generateDraftOpen} onOpenChange={setGenerateDraftOpen}>
-        <DialogContent className="p-0 sm:max-w-[560px]">
-          <DialogHeader className="px-6 pt-6 pb-3">
-            <DialogTitle className="text-center text-[17px] font-semibold text-gray-900">
-              Select Contract Template
-            </DialogTitle>
-            <DialogDescription className="sr-only">
-              Select a contract template before generating a draft.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="px-6 pb-7">
-            <div className="rounded-2xl border border-blue-100 bg-blue-50/60 px-5 py-3 text-[13px] text-gray-700 leading-relaxed">
-              We&apos;ll perform a final consistency check. Any recent changes to Collaboration
-              Terms will be automatically saved to ensure the generated PDF is up-to-date.
-            </div>
-
-            <div className="mt-7">
-              <div className="text-[12px] font-semibold tracking-[0.18em] text-gray-400">
-                CONTRACT TEMPLATE
-              </div>
-              <div className="mt-4 h-px w-full bg-gray-100" />
-            </div>
-
-            <div className="mt-5">
-              <div className="rounded-xl border border-gray-200/70 bg-gray-50/40 px-4 py-3 text-[13px] text-gray-500">
-                No templates available
-              </div>
-              <div className="mt-4 text-[13px] text-gray-500">
-                No templates found in Contract Settings. Please configure a default template first.
-              </div>
-            </div>
-
-            <div className="mt-8 flex items-center justify-center gap-4">
-              <DialogClose
-                render={
-                  <Button variant="outline" className="h-11 w-[140px] text-[14px]" />
-                }
-              >
-                Cancel
-              </DialogClose>
-              <Button
-                className="h-11 w-[170px] text-[14px] text-white"
-                style={{ backgroundColor: "#023E8A" }}
-                onClick={() => setGenerateDraftOpen(false)}
-              >
-                Generate Draft
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={checkStatusOpen} onOpenChange={setCheckStatusOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader className="items-center text-center gap-2">
-            <div className="mx-auto inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-100">
-              <AlertTriangle className="h-5 w-5" />
-            </div>
-            <DialogTitle className="text-[16px] font-semibold text-gray-900">
-              Unable to Sync Status
-            </DialogTitle>
-            <DialogDescription className="max-w-[52ch] text-[13px] leading-relaxed text-gray-500">
-              Unable to sync status from provider. If you have confirmed the signature offline, you
-              can manually mark it as completed.
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogFooter className="mt-5 mx-0 mb-0 gap-3 border-t-0 bg-transparent p-0 pb-2 sm:justify-center">
-            <DialogClose render={<Button variant="outline" className="h-9 px-4" />}>
-              Cancel
-            </DialogClose>
-            <Button
-              className="h-9 px-4 text-white"
-              style={{ backgroundColor: "#023E8A" }}
-              onClick={() => {
-                if (!activeRowId) return;
-                setRows((prev) =>
-                  prev.map((r) =>
-                    r.id === activeRowId ? { ...r, contractStage: "View Final Contract" } : r
-                  )
-                );
-                setCheckStatusOpen(false);
-              }}
-            >
-              Mark as Signed Manually
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog
-        open={inviteToSignOpen}
-        onOpenChange={(open) => {
-          setInviteToSignOpen(open);
-          if (!open) setInviteRowId(null);
-        }}
-      >
-        <DialogContent className="p-0 sm:max-w-[520px]">
-          <DialogHeader className="px-6 pt-6 pb-3 text-left">
-            <DialogTitle className="text-[17px] font-semibold text-gray-900">
-              Invite to Sign
-            </DialogTitle>
-            <DialogDescription className="text-[13px] leading-relaxed text-gray-500">
-              Please confirm the email addresses for both signing parties. Once sent, a signature
-              request will be delivered via the{" "}
-              <span className="font-semibold text-gray-700">selected e-signature provider.</span>
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="px-6 pb-7 space-y-6">
-            <div className="grid grid-cols-[200px_1fr] gap-x-6 gap-y-3 items-center">
-              <div>
-                <div className="text-[13px] font-semibold text-gray-900">Advertiser Signer Email</div>
-                <div className="mt-1 text-[12px] text-gray-400">Contact Admin to change</div>
-              </div>
-              <Input
-                value={advertiserSignerEmail}
-                disabled
-                className="h-10 border-gray-200 bg-gray-50 text-[13px] text-gray-700 disabled:opacity-100"
-              />
-
-              <div>
-                <div className="text-[13px] font-semibold text-gray-900">
-                  KOL Signer Email <span className="text-red-500">*</span>
-                </div>
-              </div>
-              <Input
-                value={kolSignerEmail}
-                onChange={(e) => setKolSignerEmail(e.target.value)}
-                className="h-10 border-blue-200 bg-white text-[13px] text-gray-900 focus-visible:border-blue-300"
-              />
-            </div>
-
-            <div className="flex items-center justify-center gap-4">
-              <DialogClose render={<Button variant="outline" className="h-11 w-[140px] text-[14px]" />}>
-                Cancel
-              </DialogClose>
-              <Button
-                className="h-11 w-[170px] text-[14px] text-white"
-                style={{ backgroundColor: "#023E8A" }}
-                onClick={() => {
-                  if (!inviteRowId) return;
-                  setInviteToSignOpen(false);
-                }}
-              >
-                Send Request
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-      <Dialog
-        open={signedContractOpen}
-        onOpenChange={(open) => {
-          setSignedContractOpen(open);
-          if (!open) setSignedContractInfluencer(null);
-        }}
-      >
-        <DialogContent className="p-0 sm:max-w-[680px]">
-          <DialogHeader className="px-6 pt-5 pb-4 border-b border-gray-100 text-left">
-            <DialogTitle className="text-[15px] font-semibold text-gray-900">
-              Signed Contract Files
-              {signedContractInfluencer
-                ? ` - ${signedContractInfluencer.name}`
-                : ""}
-            </DialogTitle>
-            <DialogDescription className="text-[12px] leading-relaxed text-gray-500">
-              Review the executed contract files here. Use View to open the file in a new tab, or
-              Download to keep a local copy.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="px-6 py-5 space-y-4">
-            {[
-              {
-                title: "Deal Contract Signed PDF V1",
-                updated: "Updated 2026-04-29 19:32",
-                tags: [
-                  { label: "Advertiser Signed", tone: "brand" as const },
-                  { label: "V1", tone: "gray" as const },
-                ],
-              },
-              {
-                title: "Deal Contract Completion Certificate V1",
-                updated: "Updated 2026-04-29 19:32",
-                tags: [
-                  { label: "KOL Signed", tone: "amber" as const },
-                  { label: "V1", tone: "gray" as const },
-                ],
-              },
-            ].map((f) => (
-              <div
-                key={f.title}
-                className="rounded-xl border border-gray-100 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)] px-5 py-4"
-              >
-                <div className="flex items-start justify-between gap-6">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="text-[13px] font-semibold text-gray-900 truncate">
-                        {f.title}
-                      </div>
-                      {f.tags.map((t) => (
-                        <span
-                          key={t.label}
-                          className={cn(
-                            "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold border",
-                            t.tone === "brand"
-                              ? "bg-brand-50 text-brand border-brand-100"
-                              : t.tone === "amber"
-                                ? "bg-amber-50 text-amber-700 border-amber-200"
-                                : "bg-gray-50 text-gray-600 border-gray-200"
-                          )}
-                        >
-                          {t.label}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="mt-1 text-[11px] text-gray-400">{f.updated}</div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 px-4 border-gray-200 text-gray-700"
-                      onClick={() => showToast("Opened in new tab")}
-                    >
-                      View
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 px-4 border-gray-200 text-gray-700"
-                      onClick={() => showToast("Download started")}
-                    >
-                      Download
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="px-6 pb-7 flex items-center justify-center gap-4">
-            <DialogClose render={<Button variant="outline" className="h-10 w-[160px]" />}>
-              Close
-            </DialogClose>
-            <Button
-              className="h-10 w-[180px] text-white"
-              style={{ backgroundColor: "#023E8A" }}
-              onClick={() => showToast("Downloading all…")}
-            >
-              Download All
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-      {/* Toolbar row */}
       <div className="flex items-center justify-between gap-3 px-6 py-3 border-b border-gray-100 shrink-0">
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-1.5 text-[13px] text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg px-3 py-1.5 transition-colors hover:bg-gray-50">
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-[13px] text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg px-3 py-1.5 transition-colors hover:bg-gray-50"
+          >
             <SlidersHorizontal size={13} />
             Filters
             <span className="w-4 h-4 rounded-full bg-brand text-white text-[9px] font-bold flex items-center justify-center">
-              4
+              2
             </span>
           </button>
 
-          <div className="relative w-[220px]">
+          <div className="relative w-[240px]">
             <Search
               size={13}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
@@ -815,33 +237,45 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                 setQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              placeholder="Search for influencer"
+              placeholder="Search for Influencer"
               className="pl-8 h-8 text-[13px] border-gray-200 bg-gray-50 focus:bg-white"
             />
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-transparent hover:border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors">
+          <button
+            type="button"
+            className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-transparent hover:border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
+            aria-label="Refresh"
+          >
             <RefreshCcw size={15} />
           </button>
-          <button className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-transparent hover:border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors">
+          <button
+            type="button"
+            className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-transparent hover:border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
+            aria-label="Columns"
+          >
             <Columns3 size={15} />
           </button>
         </div>
       </div>
 
-      {/* Sub-toolbar */}
       <div className="flex items-center justify-between gap-3 px-6 py-2.5 border-b border-gray-100 shrink-0 bg-gray-50/60">
-        <div className="flex items-center gap-2">
-          <span className="text-[12px] text-gray-500 font-medium">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="text-[12px] text-gray-500 font-medium shrink-0">
             Influencer:{" "}
             <span className="text-gray-900 tabular-nums">
-              {filtered.length}/{rows.length}
+              {filtered.length}/{INFLUENCER_CAP}
             </span>
           </span>
           <DropdownMenu>
-            <DropdownMenuTrigger className={cn("shrink-0 flex items-center gap-1 text-[12px] border border-gray-200 rounded-md px-2.5 py-1 bg-white hover:bg-gray-50 transition-colors", (someSelected || allSelected) ? "text-gray-700" : "text-gray-400")}>
+            <DropdownMenuTrigger
+              className={cn(
+                "shrink-0 flex items-center gap-1 text-[12px] border border-gray-200 rounded-md px-2.5 py-1 bg-white hover:bg-gray-50 transition-colors",
+                someSelected || allSelected ? "text-gray-700" : "text-gray-400"
+              )}
+            >
               Bulk Actions
               <ChevronDown size={11} />
             </DropdownMenuTrigger>
@@ -851,10 +285,16 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
               <DropdownMenuItem variant="destructive">Remove Selected</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <span className="text-[12px] text-gray-500 shrink-0 hidden sm:inline">
+            Total Client Price (Incl. Tax):{" "}
+            <span className="text-gray-900 font-semibold tabular-nums">
+              $ {TOTAL_CLIENT_PRICE.toLocaleString()}
+            </span>
+          </span>
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-1 text-[12px] text-gray-600 border border-gray-200 rounded-md px-2.5 py-1 bg-white hover:bg-gray-50 transition-colors">
+          <DropdownMenuTrigger className="flex items-center gap-1 text-[12px] text-gray-600 border border-gray-200 rounded-md px-2.5 py-1 bg-white hover:bg-gray-50 transition-colors shrink-0">
             Visible Columns
             <ChevronDown size={11} className="text-gray-400" />
           </DropdownMenuTrigger>
@@ -865,12 +305,19 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
         </DropdownMenu>
       </div>
 
-      {/* Table */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        <Table className="w-full table-auto text-[13px] border-separate border-spacing-0 [&_th]:px-10 [&_td]:px-10">
+      <div className="flex-1 min-h-0 overflow-auto">
+        <Table
+          className="w-full table-fixed text-[13px] border-separate border-spacing-0 [&_th]:px-3 [&_td]:px-3"
+          style={{ minWidth: PIPELINE_TABLE_MIN_WIDTH }}
+        >
+          <colgroup>
+            {PIPELINE_TABLE_COLUMNS.map((col) => (
+              <col key={col.key} style={{ width: col.width }} />
+            ))}
+          </colgroup>
           <TableHeader>
             <TableRow className="bg-gray-50/70 hover:bg-gray-50/70 border-b border-gray-100">
-              <TableHead className="w-14 !px-6">
+              <TableHead className="!px-3">
                 <Checkbox
                   checked={allSelected}
                   onCheckedChange={toggleAll}
@@ -884,19 +331,27 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                   }
                 />
               </TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3 !pl-6">
+              <TableHead className="font-semibold text-gray-800 py-3">
                 Influencer
               </TableHead>
               <TableHead className="font-semibold text-gray-800 py-3">
                 Collaboration Status
               </TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">Action</TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">Progress</TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">Contract</TableHead>
-
-              {/* NOTE: user requested these three columns removed: Logistics / Script / Video */}
-              <TableHead className="font-semibold text-gray-800 py-3">Copy</TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">Posting</TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3">
+                Logistics
+              </TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3">
+                Script
+              </TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3">
+                Content
+              </TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3">
+                Posting
+              </TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3">
+                Payment
+              </TableHead>
               <TableHead className="font-semibold text-gray-800 py-3">
                 Commercial
               </TableHead>
@@ -906,7 +361,9 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
               <TableHead className="font-semibold text-gray-800 py-3">
                 Internal Notes
               </TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">Chat</TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3">
+                Chat
+              </TableHead>
             </TableRow>
           </TableHeader>
 
@@ -921,7 +378,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                     isSelected && "bg-[#e8f1fb] hover:bg-[#dce9f8]"
                   )}
                 >
-                  <TableCell className="py-4 !px-6">
+                  <TableCell className="py-3.5">
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={() => toggleRow(row.id)}
@@ -929,184 +386,97 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                     />
                   </TableCell>
 
-                  <TableCell className="py-4 !pl-6">
-                    <div className="flex items-center gap-3 min-w-[180px]">
-                      <Avatar className="w-7 h-7 shrink-0">
+                  <TableCell className="py-3.5 overflow-hidden">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Avatar className="w-8 h-8 shrink-0">
                         <AvatarImage src="" />
                         <AvatarFallback className="text-[10px] font-semibold bg-violet-100 text-violet-700">
-                          {row.handle.slice(1, 3).toUpperCase()}
+                          {row.displayName
+                            .split(" ")
+                            .map((p) => p[0])
+                            .join("")
+                            .slice(0, 2)
+                            .toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <p className="text-[13px] font-medium text-gray-900 truncate">
-                          {row.handle}
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="text-[10px] font-semibold text-pink-600 bg-pink-50 border border-pink-100 rounded px-1 py-0.5 shrink-0">
+                            IG
+                          </span>
+                          <p className="text-[13px] font-medium text-gray-900 truncate">
+                            {row.handle}
+                          </p>
+                        </div>
+                        <p className="text-[11px] text-gray-400 truncate">
+                          {row.displayName}
                         </p>
-                        <p className="text-[11px] text-gray-400">{row.platform}</p>
                       </div>
                     </div>
                   </TableCell>
 
-                  <TableCell className="py-4">
-                    {row.status === "Pending" ? (
-                      <Badge tone="amber">Pending</Badge>
-                    ) : (
-                      <Badge tone="brand">Approved</Badge>
-                    )}
+                  <TableCell className="py-3.5 overflow-hidden">
+                    <CollabStatusSelect
+                      status={row.collabStatus}
+                      onChange={(next) => updateCollabStatus(row.id, next)}
+                    />
                   </TableCell>
 
-                  <TableCell className="py-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-[12px] border-gray-200 text-brand"
+                  <TableCell className="py-3.5 overflow-hidden">
+                    <PipelineStageCell config={LOGISTICS_STATUS_CONFIG[row.logistics]} />
+                  </TableCell>
+
+                  <TableCell className="py-3.5 overflow-hidden">
+                    <PipelineStageCell config={SCRIPT_STATUS_CONFIG[row.script]} />
+                  </TableCell>
+
+                  <TableCell className="py-3.5 overflow-hidden">
+                    <PipelineStageCell config={CONTENT_STATUS_CONFIG[row.content]} />
+                  </TableCell>
+
+                  <TableCell className="py-3.5 overflow-hidden">
+                    <PipelineStageCell config={POSTING_STATUS_CONFIG[row.posting]} />
+                  </TableCell>
+
+                  <TableCell className="py-3.5 overflow-hidden">
+                    <PipelineStageCell config={PAYMENT_STATUS_CONFIG[row.payment]} />
+                  </TableCell>
+
+                  <TableCell className="py-3.5">
+                    <button
+                      type="button"
+                      className="text-[13px] font-medium text-brand hover:underline"
                     >
-                      {row.actionLabel}
-                      <ChevronDown size={12} className="ml-1 text-gray-400" />
-                    </Button>
-                  </TableCell>
-
-                  <TableCell className="py-4">
-                    <div className="grid grid-cols-3 gap-x-9 gap-y-3 text-[11px] min-w-[240px]">
-                      {PROGRESS_STEPS.map((step, i) => {
-                        const done = buildProgressForRow(row.id)[i];
-                        return (
-                          <span
-                            key={step}
-                            className={cn(
-                              "inline-flex items-center gap-2 rounded-full px-1.5 py-0.5",
-                              done ? "text-emerald-700/90" : "text-gray-500"
-                            )}
-                          >
-                            {done ? (
-                              <span className="h-4 w-4 shrink-0 rounded-full bg-emerald-50/70 border border-emerald-200/70 inline-flex items-center justify-center text-emerald-700">
-                                <Check size={11} strokeWidth={2.6} />
-                              </span>
-                            ) : (
-                              <span className="h-4 w-4 shrink-0 rounded-full bg-gray-50 border border-gray-200/80 inline-flex items-center justify-center">
-                                <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
-                              </span>
-                            )}
-                            <span className="leading-none">{step}</span>
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </TableCell>
-
-                  <TableCell className="py-4">
-                    <div className="min-w-[360px]">
-                      <ContractStepper
-                        stage={row.contractStage}
-                        onPrimaryAction={
-                          row.contractStage === "Fill Contract Info"
-                            ? () => {
-                                setContractInfoInfluencer({
-                                  handle: row.handle,
-                                  name: "Amelia Stones",
-                                });
-                                setContractInfoOpen(true);
-                              }
-                            : row.contractStage === "Generate Draft"
-                              ? () => setGenerateDraftOpen(true)
-                                : row.contractStage === "Sign as Advertiser"
-                                ? () => {
-                                    setInviteRowId(row.id);
-                                    setKolSignerEmail(
-                                      `${row.handle.replace(/^@/, "")}@example.com`
-                                    );
-                                    setInviteToSignOpen(true);
-                                  }
-                                : row.contractStage === "Check Status"
-                                  ? () => {
-                                      setActiveRowId(row.id);
-                                      setCheckStatusOpen(true);
-                                    }
-                                  : row.contractStage === "View Final Contract"
-                                    ? () => {
-                                        setSignedContractInfluencer({
-                                          handle: row.handle,
-                                          name: "Amelia Stones",
-                                        });
-                                        setSignedContractOpen(true);
-                                      }
-                                  : undefined
-                        }
-                        onModify={
-                          row.contractStage === "Generate Draft" || row.contractStage === "Sign as Advertiser"
-                            ? () => {
-                                setContractInfoInfluencer({
-                                  handle: row.handle,
-                                  name: "Amelia Stones",
-                                });
-                                setContractInfoOpen(true);
-                              }
-                            : undefined
-                        }
-                        onRefreshStatus={
-                          row.contractStage === "Sign as Advertiser"
-                            ? () => {
-                                setActiveRowId(row.id);
-                                setCheckStatusOpen(true);
-                              }
-                            : undefined
-                        }
-                        onSendH5ToKol={() => {
-                          if (sendingH5RowId) return;
-                          setSendingH5RowId(row.id);
-                          const url = `https://kolplanet.example/h5/${row.id}`;
-                          // Clipboard can be blocked; still show success toast.
-                          void navigator.clipboard?.writeText(url).catch(() => {});
-                          if (sendH5TimerRef.current) window.clearTimeout(sendH5TimerRef.current);
-                          sendH5TimerRef.current = window.setTimeout(() => {
-                            setSendingH5RowId(null);
-                            showToast("H5 link copied");
-                          }, 900);
-                        }}
-                        isSendingH5={sendingH5RowId === row.id}
-                      />
-                    </div>
-                  </TableCell>
-
-                  <TableCell className="py-4">
-                    {row.copy === "Pending" ? (
-                      <Badge tone="amber">Pending</Badge>
-                    ) : (
-                      <Badge tone="green">Approved</Badge>
-                    )}
-                  </TableCell>
-
-                  <TableCell className="py-4">
-                    {row.posting === "Ready" ? (
-                      <Badge tone="amber">Ready</Badge>
-                    ) : (
-                      <Badge tone="green">Posted</Badge>
-                    )}
-                  </TableCell>
-
-                  <TableCell className="py-4">
-                    {row.commercial === "Pending" ? (
-                      <Badge tone="amber">Pending</Badge>
-                    ) : (
-                      <Badge tone="green">Approved</Badge>
-                    )}
-                  </TableCell>
-
-                  <TableCell className="py-4">
-                    <button className="text-[13px] text-brand hover:underline">
-                      {row.manager}
-                      <ChevronDown size={12} className="inline-block ml-1 text-gray-300" />
+                      View
                     </button>
                   </TableCell>
 
-                  <TableCell className="py-4">
-                    <div className="text-[12px] text-gray-500 truncate max-w-[160px]">
-                      {row.note}
-                    </div>
+                  <TableCell className="py-3.5">
+                    <button
+                      type="button"
+                      className="inline-flex items-center text-[13px] text-gray-800 hover:text-gray-900"
+                    >
+                      {row.manager}
+                      <ChevronDown size={12} className="ml-0.5 text-gray-400" />
+                    </button>
                   </TableCell>
 
-                  <TableCell className="py-4">
-                    <button className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
-                      …
+                  <TableCell className="py-3.5">
+                    <button
+                      type="button"
+                      className="text-[12px] text-brand hover:underline truncate max-w-[140px] block text-left"
+                    >
+                      {row.note}
+                    </button>
+                  </TableCell>
+
+                  <TableCell className="py-3.5">
+                    <button
+                      type="button"
+                      className="h-8 w-8 inline-flex items-center justify-center rounded-md text-brand hover:bg-brand-50 transition-colors"
+                      aria-label="Open chat"
+                    >
+                      <MessageCircle size={16} />
                     </button>
                   </TableCell>
                 </TableRow>
@@ -1116,18 +486,15 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
         </Table>
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-between gap-4 px-5 py-3 border-t border-gray-100 shrink-0 bg-white">
         <div className="flex items-center gap-3">
           <span className="text-[12px] text-gray-500">
-            <span className="tabular-nums text-gray-800 font-medium">
-              {filtered.length === 0 ? 0 : pageStart + 1}–{pageEnd}
-            </span>{" "}
-            of <span className="tabular-nums text-gray-800 font-medium">{filtered.length}</span>
+            Page <span className="tabular-nums text-gray-800 font-medium">{safePage}</span> of{" "}
+            <span className="tabular-nums text-gray-800 font-medium">{totalPages}</span>
           </span>
-          <span className="text-gray-200">|</span>
-          <div className="flex items-center gap-2">
-            <span className="text-[12px] text-gray-500">Rows per page</span>
+          <span className="text-gray-200 hidden sm:inline">|</span>
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="text-[12px] text-gray-500">{pageSize} / page</span>
             <DropdownMenu>
               <DropdownMenuTrigger className="h-7 inline-flex items-center gap-1 rounded-md border border-gray-200 px-2 text-[12px] text-gray-700 hover:bg-gray-50">
                 {pageSize}
@@ -1152,6 +519,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
 
         <div className="flex items-center gap-1">
           <button
+            type="button"
             onClick={() => goToPage(safePage - 1)}
             disabled={safePage <= 1}
             className={cn(
@@ -1176,6 +544,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
             ) : (
               <button
                 key={p}
+                type="button"
                 onClick={() => goToPage(p)}
                 className={cn(
                   "h-7 min-w-[28px] px-1.5 inline-flex items-center justify-center rounded-md text-[12px] tabular-nums transition-colors",
@@ -1191,6 +560,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
           )}
 
           <button
+            type="button"
             onClick={() => goToPage(safePage + 1)}
             disabled={safePage >= totalPages}
             className={cn(
@@ -1206,9 +576,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
         </div>
       </div>
 
-      {/* keep prop referenced for future real data wiring */}
       <span className="sr-only">{campaignId}</span>
     </div>
   );
 }
-

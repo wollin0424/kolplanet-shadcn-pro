@@ -483,10 +483,29 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
           </TableHeader>
 
           <TableBody>
-            {pageRows.map((row) => (
+            {pageRows.map((row) => {
+              const canApprove = row.settlementStatus === "Waiting for Validation";
+              return (
               <TableRow
                 key={row.id}
-                className="border-b border-gray-50 transition-colors bg-white hover:bg-[#f5f8fe]"
+                className={cn(
+                  "border-b border-gray-50 transition-colors bg-white hover:bg-[#f5f8fe]",
+                  canApprove && "cursor-pointer"
+                )}
+                onClick={canApprove ? () => openApprovePayout(row) : undefined}
+                onKeyDown={
+                  canApprove
+                    ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          openApprovePayout(row);
+                        }
+                      }
+                    : undefined
+                }
+                tabIndex={canApprove ? 0 : undefined}
+                role={canApprove ? "button" : undefined}
+                aria-label={canApprove ? `Approve payout for ${row.handle}` : undefined}
               >
                 <TableCell className="py-4 !pl-6">
                   <div className="flex items-center gap-3 min-w-[180px]">
@@ -540,11 +559,16 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
                   </div>
                 </TableCell>
 
-                <TableCell className="py-4 !pr-6">
+                <TableCell
+                  className="py-4 !pr-6"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
                       aria-label="Row actions"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <MoreVertical size={14} />
                     </DropdownMenuTrigger>
@@ -582,7 +606,8 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))}
+            );
+            })}
           </TableBody>
         </Table>
       </div>

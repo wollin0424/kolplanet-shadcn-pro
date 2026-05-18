@@ -3,7 +3,10 @@
   "version": "0.2.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
+    "dev:turbo": "next dev --turbopack",
+    "dev:fresh": "npm run clean && npm run dev",
+    "clean": "rm -rf .next",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
