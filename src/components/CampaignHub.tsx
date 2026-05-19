@@ -162,9 +162,21 @@ function HubCell({
         <HubCountBadge count={badgeCount} />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2">
-        <div className="flex flex-col gap-3">{children}</div>
-        <div className="mt-auto flex justify-end pt-2">
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col",
+          emphasized ? "gap-1.5" : "gap-2"
+        )}
+      >
+        <div className={cn("flex flex-col", emphasized ? "gap-2" : "gap-3")}>
+          {children}
+        </div>
+        <div
+          className={cn(
+            "mt-auto flex shrink-0 justify-end",
+            emphasized ? "pt-1" : "pt-2"
+          )}
+        >
           <HubGoButton onClick={handleGo} />
         </div>
       </div>
@@ -231,37 +243,31 @@ const CONTRACT_STAGES = [
 
 function ContractHubOverview() {
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-4 rounded-xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-white px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-white px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-700/80">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-sky-700/80">
             Countersigned
           </p>
-          <p className="mt-1 text-[26px] font-bold leading-none text-gray-900 tabular-nums">
-            2 <span className="text-[16px] font-semibold text-gray-400">/ 8</span>
+          <p className="mt-0.5 text-[22px] font-bold leading-none text-gray-900 tabular-nums">
+            2 <span className="text-[14px] font-semibold text-gray-400">/ 8</span>
           </p>
-          <p className="mt-1 text-[12px] text-gray-500">Fully executed contracts</p>
         </div>
-        <ContractProgressRing percent={25} size="lg" />
+        <ContractProgressRing percent={25} />
       </div>
 
-      <div>
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-          By stage
-        </p>
-        <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-1.5">
           {CONTRACT_STAGES.map((stage) => (
             <div
               key={stage.label}
-              className="rounded-lg border border-gray-100 bg-gray-50/90 px-3 py-2.5"
+              className="rounded-lg border border-gray-100 bg-gray-50/90 px-2.5 py-2"
             >
-              <p className="truncate text-[11px] font-medium text-gray-500">{stage.label}</p>
-              <p className="mt-0.5 text-[15px] font-bold tabular-nums text-gray-900">
+              <p className="truncate text-[10px] font-medium text-gray-500">{stage.label}</p>
+              <p className="mt-0.5 text-[14px] font-bold tabular-nums text-gray-900">
                 {stage.value}
               </p>
             </div>
-          ))}
-        </div>
+        ))}
       </div>
     </div>
   );
