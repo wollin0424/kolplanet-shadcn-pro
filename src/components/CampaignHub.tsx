@@ -198,11 +198,15 @@ function ContractProgressRing({ percent }: { percent: number }) {
 export default function CampaignHub({
   campaignId,
   onNavigate,
+  initialSection,
 }: {
   campaignId: string;
   onNavigate?: (tab: CampaignTab) => void;
+  initialSection?: HubSection;
 }) {
-  const [activeSection, setActiveSection] = useState<HubSection | null>(null);
+  const [activeSection, setActiveSection] = useState<HubSection | null>(
+    initialSection ?? null
+  );
 
   const openContract = () => setActiveSection("contract");
   const openLogistics = () => setActiveSection("logistics");
