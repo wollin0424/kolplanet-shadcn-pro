@@ -105,6 +105,7 @@ function HubCell({
   children,
   onGo,
   onEnter,
+  emphasized,
 }: {
   title: string;
   icon: LucideIcon;
@@ -113,6 +114,7 @@ function HubCell({
   children: ReactNode;
   onGo?: () => void;
   onEnter?: () => void;
+  emphasized?: boolean;
 }) {
   const handleGo = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -135,7 +137,10 @@ function HubCell({
           : undefined
       }
       className={cn(
-        "flex h-full min-h-0 flex-col gap-3 rounded-xl border border-gray-100 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-colors",
+        "flex h-full min-h-0 flex-col gap-3 rounded-xl border bg-white p-6 transition-colors",
+        emphasized
+          ? "border-sky-100 shadow-[0_2px_12px_rgba(37,99,235,0.08)] ring-1 ring-sky-100/80"
+          : "border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
         onEnter && "cursor-pointer hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
       )}
     >
@@ -167,30 +172,97 @@ function HubCell({
   );
 }
 
-function ContractProgressRing({ percent }: { percent: number }) {
-  const r = 22;
+function ContractProgressRing({
+  percent,
+  size = "md",
+}: {
+  percent: number;
+  size?: "md" | "lg";
+}) {
+  const large = size === "lg";
+  const r = large ? 26 : 22;
+  const box = large ? "h-16 w-16" : "h-14 w-14";
+  const view = large ? 64 : 56;
+  const center = large ? 32 : 28;
   const circumference = 2 * Math.PI * r;
   const offset = circumference * (1 - percent / 100);
 
   return (
-    <div className="relative h-14 w-14 shrink-0">
-      <svg className="h-14 w-14 -rotate-90" viewBox="0 0 56 56" aria-hidden>
-        <circle cx="28" cy="28" r={r} fill="none" stroke="#e5e7eb" strokeWidth="4" />
+    <div className={cn("relative shrink-0", box)}>
+      <svg className={cn(box, "-rotate-90")} viewBox={`0 0 ${view} ${view}`} aria-hidden>
         <circle
-          cx="28"
-          cy="28"
+          cx={center}
+          cy={center}
+          r={r}
+          fill="none"
+          stroke="#dbeafe"
+          strokeWidth={large ? 5 : 4}
+        />
+        <circle
+          cx={center}
+          cy={center}
           r={r}
           fill="none"
           stroke="#2563eb"
-          strokeWidth="4"
+          strokeWidth={large ? 5 : 4}
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
         />
       </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-[12px] font-bold text-gray-900">
+      <span
+        className={cn(
+          "absolute inset-0 flex items-center justify-center font-bold text-gray-900",
+          large ? "text-[13px]" : "text-[12px]"
+        )}
+      >
         {percent}%
       </span>
+    </div>
+  );
+}
+
+const CONTRACT_STAGES = [
+  { label: "Contract Info", value: "6/8" },
+  { label: "Draft", value: "4/8" },
+  { label: "Advertiser Sign", value: "3/8" },
+  { label: "KOL Sign", value: "2/8" },
+] as const;
+
+function ContractHubOverview() {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-4 rounded-xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-white px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-700/80">
+            Countersigned
+          </p>
+          <p className="mt-1 text-[26px] font-bold leading-none text-gray-900 tabular-nums">
+            2 <span className="text-[16px] font-semibold text-gray-400">/ 8</span>
+          </p>
+          <p className="mt-1 text-[12px] text-gray-500">Fully executed contracts</p>
+        </div>
+        <ContractProgressRing percent={25} size="lg" />
+      </div>
+
+      <div>
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+          By stage
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {CONTRACT_STAGES.map((stage) => (
+            <div
+              key={stage.label}
+              className="rounded-lg border border-gray-100 bg-gray-50/90 px-3 py-2.5"
+            >
+              <p className="truncate text-[11px] font-medium text-gray-500">{stage.label}</p>
+              <p className="mt-0.5 text-[15px] font-bold tabular-nums text-gray-900">
+                {stage.value}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -238,26 +310,11 @@ export default function CampaignHub({
           icon={FileText}
           iconClassName="bg-sky-50 text-sky-600"
           badgeCount={5}
+          emphasized
           onEnter={openContract}
           onGo={openContract}
         >
-          <HubContentBox>
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[22px] font-bold leading-none text-gray-900 tabular-nums">
-                  2 <span className="text-[15px] font-semibold text-gray-400">/ 8</span>
-                </p>
-                <p className="mt-0.5 text-[12px] text-gray-500">Countersigned</p>
-              </div>
-              <ContractProgressRing percent={25} />
-            </div>
-            <HubStatusList>
-              <HubStatus label="Contract Info" value="6/8" tone="sky" />
-              <HubStatus label="Draft" value="4/8" tone="sky" />
-              <HubStatus label="Advertiser Sign" value="3/8" tone="sky" />
-              <HubStatus label="KOL Sign" value="2/8" tone="sky" />
-            </HubStatusList>
-          </HubContentBox>
+          <ContractHubOverview />
         </HubCell>
 
         <HubCell
