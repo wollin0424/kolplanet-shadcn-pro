@@ -135,8 +135,8 @@ function HubCell({
           : undefined
       }
       className={cn(
-        "flex h-full min-h-0 flex-col gap-3 p-6 transition-colors hover:bg-gray-50/80",
-        onEnter && "cursor-pointer"
+        "flex h-full min-h-0 flex-col gap-3 rounded-xl border border-gray-100 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-colors",
+        onEnter && "cursor-pointer hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
       )}
     >
       <div className="flex shrink-0 items-center justify-between gap-2">
@@ -230,9 +230,9 @@ export default function CampaignHub({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+    <div className="flex min-h-0 flex-1 flex-col overflow-auto">
       <span className="sr-only">{campaignId}</span>
-      <div className="grid min-h-0 flex-1 grid-cols-3 grid-rows-2 divide-x divide-y divide-gray-100">
+      <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-3 gap-4">
         <HubCell
           title="Contract"
           icon={FileText}
