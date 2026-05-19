@@ -1,7 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  CampaignHubInfluencerIdentity,
+  type KolRelationship,
+} from "@/components/CampaignHubInfluencerIdentity";
+import { CampaignHubSelectionBar } from "@/components/CampaignHubSelectionBar";
+import { useHubCardSelection } from "@/hooks/useHubCardSelection";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,9 +26,9 @@ import {
   ChevronDown,
   Clock,
   Copy,
-  FileText,
   Pencil,
   Search,
+  Truck,
 } from "lucide-react";
 
 type LogisticsCardStatus = "Awaiting Pickup" | "In Transit" | "Delivered";
@@ -34,6 +39,7 @@ type LogisticsCard = {
   handle: string;
   status: LogisticsCardStatus;
   manager: string;
+  relationship: KolRelationship;
   legalName?: string;
   shippingLabel: string;
   trackingNumber?: string;
@@ -64,6 +70,7 @@ const MOCK_CARDS: LogisticsCard[] = [
     handle: "@instagram.ins",
     status: "Awaiting Pickup",
     manager: "Wollin",
+    relationship: "Direct",
     shippingLabel: "Unshipped",
     completedSteps: 0,
     stepTimestamps: [null, null, null, null, null],
@@ -75,6 +82,7 @@ const MOCK_CARDS: LogisticsCard[] = [
     handle: "@foodie.my",
     status: "In Transit",
     manager: "Wollin",
+    relationship: "Manager",
     shippingLabel: "SF Express - TRK-202605-0003",
     trackingNumber: "TRK-202605-0003",
     completedSteps: 1,
@@ -88,6 +96,7 @@ const MOCK_CARDS: LogisticsCard[] = [
     handle: "@lifestyle.id",
     status: "Delivered",
     manager: "Wollin",
+    relationship: "MCN",
     legalName: "892011",
     shippingLabel: "SF Express - TRK-202605-0004",
     trackingNumber: "TRK-202605-0004",
@@ -107,6 +116,7 @@ const MOCK_CARDS: LogisticsCard[] = [
     handle: "@creator.ph",
     status: "Awaiting Pickup",
     manager: "Wollin",
+    relationship: "Direct",
     shippingLabel: "Unshipped",
     completedSteps: 0,
     stepTimestamps: [null, null, null, null, null],
@@ -118,6 +128,7 @@ const MOCK_CARDS: LogisticsCard[] = [
     handle: "@runner.in",
     status: "In Transit",
     manager: "Wollin",
+    relationship: "Manager",
     shippingLabel: "DHL Express - TRK-202605-0007",
     trackingNumber: "TRK-202605-0007",
     completedSteps: 2,
@@ -137,6 +148,7 @@ const MOCK_CARDS: LogisticsCard[] = [
     handle: "@daily.vlog",
     status: "Delivered",
     manager: "Wollin",
+    relationship: "MCN",
     legalName: "342432",
     shippingLabel: "FedEx - TRK-202605-0011",
     trackingNumber: "TRK-202605-0011",
@@ -156,6 +168,7 @@ const MOCK_CARDS: LogisticsCard[] = [
     handle: "@beauty.sg",
     status: "In Transit",
     manager: "Wollin",
+    relationship: "Direct",
     shippingLabel: "SF Express - TRK-202605-0015",
     trackingNumber: "TRK-202605-0015",
     completedSteps: 1,
@@ -169,6 +182,7 @@ const MOCK_CARDS: LogisticsCard[] = [
     handle: "@tech.tw",
     status: "Awaiting Pickup",
     manager: "Wollin",
+    relationship: "Manager",
     shippingLabel: "Unshipped",
     completedSteps: 0,
     stepTimestamps: [null, null, null, null, null],
@@ -281,7 +295,15 @@ function LogisticsStepList({
   );
 }
 
-function LogisticsInfluencerCard({ card }: { card: LogisticsCard }) {
+function LogisticsInfluencerCard({
+  card,
+  selected,
+  onSelectedChange,
+}: {
+  card: LogisticsCard;
+  selected: boolean;
+  onSelectedChange: (selected: boolean) => void;
+}) {
   const statusBadgeClass = STATUS_BADGE[card.status];
   const initials = card.name
     .split(" ")
@@ -291,32 +313,25 @@ function LogisticsInfluencerCard({ card }: { card: LogisticsCard }) {
     .toUpperCase();
 
   return (
-    <article className="flex flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+    <article
+      className={cn(
+        "flex flex-col rounded-xl border bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
+        selected ? "border-brand ring-2 ring-brand/15" : "border-gray-100"
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-3">
-          <Avatar className="h-11 w-11 shrink-0 border border-gray-100">
-            <AvatarImage src="" alt={card.name} />
-            <AvatarFallback className="bg-emerald-50 text-[11px] font-semibold text-emerald-700">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 pt-0.5">
-            <div className="flex min-w-0 items-center gap-1.5">
-              <p className="truncate text-[14px] font-semibold text-gray-900">{card.name}</p>
-              <Tooltip>
-                <TooltipTrigger
-                  type="button"
-                  className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border border-gray-200 bg-gray-50 text-[9px] font-bold uppercase text-gray-500 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:text-gray-700"
-                  aria-label={`Manager: ${card.manager}`}
-                >
-                  m
-                </TooltipTrigger>
-                <TooltipContent side="top">Manager: {card.manager}</TooltipContent>
-              </Tooltip>
-            </div>
-            <p className="truncate text-[12px] text-gray-500">{card.handle}</p>
-          </div>
-        </div>
+        <CampaignHubInfluencerIdentity
+          name={card.name}
+          handle={card.handle}
+          kolManager={card.manager}
+          relationship={card.relationship}
+          initials={initials}
+          avatarFallbackClassName="bg-emerald-50 text-emerald-700"
+          selection={{
+            checked: selected,
+            onCheckedChange: onSelectedChange,
+          }}
+        />
         <span
           className={cn(
             "inline-flex shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none whitespace-nowrap",
@@ -329,7 +344,7 @@ function LogisticsInfluencerCard({ card }: { card: LogisticsCard }) {
 
       <div className="mt-4 flex h-11 items-center gap-2 overflow-hidden rounded-lg border border-gray-100 bg-gray-50/80 px-3 text-[12px]">
         <p className="flex min-w-0 flex-1 items-center overflow-hidden">
-          <span className="shrink-0 text-gray-500">Shipping: </span>
+          <span className="shrink-0 text-gray-500">Tracking ID: </span>
           <span className="truncate font-medium text-gray-800">{card.shippingLabel}</span>
         </p>
         <div className="flex shrink-0 items-center gap-0.5">
@@ -345,7 +360,7 @@ function LogisticsInfluencerCard({ card }: { card: LogisticsCard }) {
           <button
             type="button"
             className="inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-white hover:text-gray-700"
-            aria-label="Edit shipping details"
+            aria-label="Edit tracking ID"
           >
             <Pencil size={13} />
           </button>
@@ -362,14 +377,14 @@ function LogisticsInfluencerCard({ card }: { card: LogisticsCard }) {
 
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-gray-100 pt-4 text-[12px] text-gray-500">
         <span className="flex min-w-0 flex-1 items-center gap-1.5">
-          <span className="shrink-0 text-gray-500">Legal Name:</span>
+          <span className="shrink-0 text-gray-500">Ship To:</span>
           <span className="truncate font-medium text-gray-800">
             {card.legalName ?? "—"}
           </span>
           <button
             type="button"
             className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
-            aria-label="Edit legal name"
+            aria-label="Edit ship to"
           >
             <Pencil size={13} />
           </button>
@@ -378,7 +393,7 @@ function LogisticsInfluencerCard({ card }: { card: LogisticsCard }) {
           type="button"
           className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
         >
-          <FileText size={14} className="shrink-0" />
+          <Truck size={14} className="shrink-0" />
           View Full Log
         </button>
       </div>
@@ -427,6 +442,15 @@ export default function CampaignHubLogisticsView({
 
   const statusOptions = ["All", ...Object.keys(STATUS_BADGE)] as string[];
 
+  const visibleIds = useMemo(() => filtered.map((card) => card.id), [filtered]);
+  const { selectedCount, toggle, selectAll, clear, isSelected } =
+    useHubCardSelection(visibleIds);
+
+  const handleExport = () => {
+    const selected = filtered.filter((card) => isSelected(card.id));
+    console.log("Export logistics influencers:", selected);
+  };
+
   return (
     <TooltipProvider>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -434,10 +458,19 @@ export default function CampaignHubLogisticsView({
 
         <div className="shrink-0 border-b border-gray-100 bg-gray-50/60 py-2.5">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="shrink-0 text-[12px] font-medium text-gray-500">
-              Influencer:{" "}
-              <span className="tabular-nums text-gray-900">{filtered.length}</span>
-            </span>
+            <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="shrink-0 text-[12px] font-medium text-gray-500">
+                Influencer:{" "}
+                <span className="tabular-nums text-gray-900">{filtered.length}</span>
+              </span>
+              <CampaignHubSelectionBar
+                selectedCount={selectedCount}
+                totalCount={filtered.length}
+                onSelectAll={selectAll}
+                onClear={clear}
+                onExport={handleExport}
+              />
+            </div>
             <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2">
               <FilterSelect
                 label="Logistics Status"
@@ -470,7 +503,14 @@ export default function CampaignHubLogisticsView({
         <div className="no-scrollbar min-h-0 flex-1 overflow-auto">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {filtered.map((card) => (
-              <LogisticsInfluencerCard key={card.id} card={card} />
+              <LogisticsInfluencerCard
+                key={card.id}
+                card={card}
+                selected={isSelected(card.id)}
+                onSelectedChange={(checked) => {
+                  if (checked !== isSelected(card.id)) toggle(card.id);
+                }}
+              />
             ))}
           </div>
         </div>
