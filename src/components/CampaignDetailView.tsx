@@ -2,36 +2,44 @@
 
 import { useState } from "react";
 import CampaignDetailHeader, { type CampaignTab } from "@/components/CampaignDetailHeader";
+import CampaignHub from "@/components/CampaignHub";
 import CampaignPaymentTable from "@/components/CampaignPaymentTable";
 import CampaignPipelineTable from "@/components/CampaignPipelineTable";
 import PagePlaceholder from "@/components/PagePlaceholder";
-import { FileText } from "lucide-react";
+import { CheckSquare, FileText } from "lucide-react";
 
 export default function CampaignDetailView({ campaignId }: { campaignId: string }) {
   const [tab, setTab] = useState<CampaignTab>("Pipeline");
 
   return (
-    <>
-      <div className="rounded-xl border border-gray-100 overflow-hidden bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-        <CampaignDetailHeader campaignId={campaignId} tab={tab} onTabChange={setTab} />
-      </div>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <CampaignDetailHeader campaignId={campaignId} tab={tab} onTabChange={setTab} />
 
-      {tab === "Pipeline" ? (
-        <div className="flex flex-col flex-1 min-h-0 rounded-xl border border-gray-100 overflow-hidden bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-          <CampaignPipelineTable campaignId={campaignId} />
-        </div>
-      ) : tab === "Payment" ? (
-        <div className="flex flex-col flex-1 min-h-0 rounded-xl border border-gray-100 overflow-hidden bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-          <CampaignPaymentTable campaignId={campaignId} />
-        </div>
-      ) : (
-        <PagePlaceholder
-          title="Report"
-          description="Report module placeholder for the campaign detail view."
-          icon={<FileText size={14} strokeWidth={2} />}
-        />
-      )}
-    </>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-gray-50 p-5 pt-4">
+        {tab === "Pipeline" ? (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+            <CampaignPipelineTable campaignId={campaignId} />
+          </div>
+        ) : tab === "Campaign Hub" ? (
+          <CampaignHub campaignId={campaignId} onNavigate={setTab} />
+        ) : tab === "Payment" ? (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+            <CampaignPaymentTable campaignId={campaignId} />
+          </div>
+        ) : tab === "Todo" ? (
+          <PagePlaceholder
+            title="Todo"
+            description="Campaign todo list placeholder."
+            icon={<CheckSquare size={14} strokeWidth={2} />}
+          />
+        ) : (
+          <PagePlaceholder
+            title="Report"
+            description="Report module placeholder for the campaign detail view."
+            icon={<FileText size={14} strokeWidth={2} />}
+          />
+        )}
+      </div>
+    </div>
   );
 }
-

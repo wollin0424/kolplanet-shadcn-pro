@@ -13,7 +13,7 @@ export default function AppLayout({
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <TopBar />
 
-        <main className="flex flex-col flex-1 overflow-hidden p-5 gap-4 min-h-0">
+        <main className="relative flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-5">
           {children}
         </main>
       </div>

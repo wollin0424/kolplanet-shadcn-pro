@@ -452,7 +452,7 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
       </div>
 
       {/* Table */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="no-scrollbar flex-1 min-h-0 overflow-y-auto">
         <Table className="w-full table-auto text-[13px] border-separate border-spacing-0 [&_th]:px-6 [&_td]:px-6">
           <TableHeader>
             <TableRow className="bg-gray-50/70 hover:bg-gray-50/70 border-b border-gray-100">

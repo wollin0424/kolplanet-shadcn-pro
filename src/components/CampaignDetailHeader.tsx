@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from "@/lib/utils";
 import { ChevronDown, ExternalLink, MoreHorizontal } from "lucide-react";
 
-const TABS = ["Pipeline", "Payment", "Report"] as const;
+const TABS = ["Pipeline", "Campaign Hub", "Todo", "Payment", "Report"] as const;
 export type CampaignTab = (typeof TABS)[number];
 
 export default function CampaignDetailHeader({
@@ -27,7 +27,7 @@ export default function CampaignDetailHeader({
   return (
     <div className="bg-white">
       {/* Header row */}
-      <div className="px-7 py-5 border-b border-gray-100">
+      <div className="px-5 py-5 border-b border-gray-100">
         <div className="flex items-start justify-between gap-6">
           <div className="flex items-start gap-4 min-w-0">
             <div className="w-12 h-12 rounded-full bg-gray-50 border border-gray-100 shrink-0" />
@@ -93,7 +93,7 @@ export default function CampaignDetailHeader({
       </div>
 
       {/* Tabs strip (page switcher) */}
-      <div className="px-7 border-b border-gray-100">
+      <div className="px-5 border-b border-gray-100">
         <nav className="flex items-center gap-7" aria-label="Campaign sections">
           {TABS.map((t) => {
             const isActive = tab === t;

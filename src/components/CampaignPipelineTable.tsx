@@ -305,7 +305,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
         </DropdownMenu>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-auto">
+      <div className="no-scrollbar flex-1 min-h-0 overflow-auto">
         <Table
           className="w-full table-fixed text-[13px] border-separate border-spacing-0 [&_th]:px-3 [&_td]:px-3"
           style={{ minWidth: PIPELINE_TABLE_MIN_WIDTH }}
