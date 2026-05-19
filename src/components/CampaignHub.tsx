@@ -256,7 +256,7 @@ function ContractHubOverview() {
         <ContractProgressRing percent={25} />
       </div>
 
-      <div className="grid grid-cols-2 gap-1.5">
+      <div className="grid grid-cols-2 gap-2">
           {CONTRACT_STAGES.map((stage) => (
             <div
               key={stage.label}
