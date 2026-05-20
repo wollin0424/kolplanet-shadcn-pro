@@ -143,7 +143,7 @@ export function VettingStatusSelect({
               >
                 <Checkbox
                   checked={active}
-                  className="pointer-events-none data-[state=checked]:bg-brand data-[state=checked]:border-brand border-gray-300"
+                  className="pointer-events-none border-gray-300"
                 />
                 <span className="text-[13px] text-gray-800 flex-1">{s}</span>
               </button>

@@ -47,6 +47,7 @@ import {
   ChevronRight,
   Columns3,
   MessageCircle,
+  Pencil,
   RefreshCcw,
   Search,
   SlidersHorizontal,
@@ -317,15 +318,9 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
               <TableHead className="py-3.5 align-middle">
                 <Checkbox
                   checked={allSelected}
+                  indeterminate={someSelected}
                   onCheckedChange={toggleAll}
-                  className="border-gray-300 data-[state=indeterminate]:bg-brand data-[state=checked]:bg-brand data-[state=checked]:border-brand"
-                  data-state={
-                    someSelected
-                      ? "indeterminate"
-                      : allSelected
-                        ? "checked"
-                        : "unchecked"
-                  }
+                  className="border-gray-300"
                 />
               </TableHead>
               <TableHead className="font-semibold text-gray-800 py-3.5">
@@ -382,7 +377,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={() => toggleRow(row.id)}
-                      className="border-gray-300 data-[state=checked]:bg-brand data-[state=checked]:border-brand"
+                      className="border-gray-300"
                     />
                   </TableCell>
 
@@ -461,12 +456,22 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                   </TableCell>
 
                   <TableCell className="py-4">
-                    <button
-                      type="button"
-                      className="text-[12px] text-brand hover:underline truncate max-w-[140px] block text-left"
-                    >
-                      {row.note}
-                    </button>
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <span className="min-w-0 flex-1 truncate text-left text-[12px] text-gray-500">
+                        {row.note}
+                      </span>
+                      <button
+                        type="button"
+                        className={cn(
+                          "inline-flex size-7 shrink-0 items-center justify-center rounded-full text-brand",
+                          "transition-colors hover:bg-brand-50",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/25 focus-visible:ring-offset-1"
+                        )}
+                        aria-label={`Edit internal note for ${row.handle}`}
+                      >
+                        <Pencil size={14} strokeWidth={2} aria-hidden />
+                      </button>
+                    </div>
                   </TableCell>
 
                   <TableCell className="py-4">

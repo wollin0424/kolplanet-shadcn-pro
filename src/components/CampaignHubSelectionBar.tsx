@@ -28,11 +28,9 @@ export function CampaignHubSelectionBar({
       <label className="inline-flex cursor-pointer items-center gap-2">
         <Checkbox
           checked={allSelected}
+          indeterminate={someSelected}
           onCheckedChange={handleToggleAll}
-          className="border-gray-300 data-[state=indeterminate]:border-brand data-[state=indeterminate]:bg-brand data-[state=checked]:border-brand data-[state=checked]:bg-brand"
-          data-state={
-            someSelected ? "indeterminate" : allSelected ? "checked" : "unchecked"
-          }
+          className="border-gray-300"
           aria-label={allSelected ? "Clear selection" : "Select all influencers"}
         />
         <span className="font-medium text-gray-500">

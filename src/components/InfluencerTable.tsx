@@ -508,9 +508,9 @@ export default function InfluencerTable() {
               <TableHead className="sticky left-0 z-20 bg-gray-50 w-14">
                 <Checkbox
                   checked={allSelected}
+                  indeterminate={someSelected}
                   onCheckedChange={toggleAll}
-                  className="border-gray-300 data-[state=indeterminate]:bg-brand data-[state=checked]:bg-brand data-[state=checked]:border-brand"
-                  data-state={someSelected ? "indeterminate" : allSelected ? "checked" : "unchecked"}
+                  className="border-gray-300"
                 />
               </TableHead>
               {/* Sticky left: Influencer */}
@@ -574,7 +574,7 @@ export default function InfluencerTable() {
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={() => toggleRow(row.id)}
-                      className="border-gray-300 data-[state=checked]:bg-brand data-[state=checked]:border-brand"
+                      className="border-gray-300"
                     />
                   </TableCell>
 

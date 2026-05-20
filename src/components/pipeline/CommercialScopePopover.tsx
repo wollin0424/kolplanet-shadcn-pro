@@ -81,39 +81,45 @@ export function CommercialScopePopover({
         sideOffset={8}
         onMouseEnter={handleOpen}
         onMouseLeave={scheduleClose}
-        className="z-50 w-80 rounded-xl border border-gray-100 bg-white p-0 text-[13px] text-gray-800 shadow-[0_8px_30px_rgba(0,0,0,0.08)] ring-0"
+        className="z-50 w-80 rounded-2xl border border-gray-100 bg-white p-0 text-[13px] leading-normal shadow-[0_8px_30px_rgba(0,0,0,0.08)] ring-0"
       >
-        <div className="space-y-4 p-4">
+        <div className="space-y-5 p-5">
           <section>
-            <p className="text-[12px] font-semibold text-gray-900">Deliverables (Scope):</p>
-            <p className="mt-1 text-[13px] text-gray-800">{summary.deliverables.primary}</p>
+            <p className="text-[13px] font-bold text-gray-900">Deliverables (Scope):</p>
+            <p className="mt-1.5 text-[13px] font-normal text-gray-600">
+              {summary.deliverables.primary}
+            </p>
             {summary.deliverables.secondary ? (
-              <p className="mt-0.5 text-[12px] text-gray-500">{summary.deliverables.secondary}</p>
+              <p className="mt-1 text-[13px] font-normal text-gray-600">
+                {summary.deliverables.secondary}
+              </p>
             ) : null}
           </section>
 
           <section>
-            <p className="text-[12px] font-semibold text-gray-900">Financials:</p>
-            <p className="mt-1 text-[13px] text-gray-800">
+            <p className="text-[13px] font-bold text-gray-900">Financials:</p>
+            <p className="mt-1.5 text-[13px] font-normal text-gray-600">
               Client Price:{" "}
               <span className="tabular-nums">{summary.financials.clientPrice}</span>
             </p>
-            <p className="mt-0.5 text-[13px] text-gray-800">
+            <p className="mt-1 text-[13px] font-normal text-gray-600">
               Influencer Cost:{" "}
               <span className="tabular-nums">{summary.financials.influencerCost}</span>
             </p>
-            <p className="mt-0.5 text-[13px] text-gray-800">
+            <p className="mt-1 text-[13px] font-normal text-gray-600">
               Margin: <span className="tabular-nums">{summary.financials.margin}</span>
             </p>
           </section>
         </div>
 
-        <div className="border-t border-gray-100 px-4 py-3">
-          <p className="text-[12px] text-gray-600">
-            <span className="font-semibold text-gray-800">Source:</span>{" "}
-            <span className="text-gray-500">{summary.source}</span>
+        <div className="border-t border-gray-100 px-5 py-3.5">
+          <p className="text-[13px] font-normal text-gray-600">
+            <span className="font-bold text-gray-900">Source:</span>{" "}
+            <span>{summary.source}</span>
           </p>
-          <p className="mt-2 text-[11px] leading-snug text-gray-400">{summary.footerNote}</p>
+          <p className="mt-2 text-[12px] font-normal leading-snug text-gray-400">
+            {summary.footerNote}
+          </p>
         </div>
       </PopoverContent>
     </Popover>
