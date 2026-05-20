@@ -61,6 +61,19 @@ export function getStageBadgeClass(tone: BadgeTone) {
   return badgeClass[tone];
 }
 
+const toneDotClass: Record<BadgeTone, string> = {
+  amber: "bg-amber-400",
+  green: "bg-emerald-500",
+  sky: "bg-sky-400",
+  gray: "bg-gray-400",
+  brand: "bg-brand",
+  violet: "bg-violet-400",
+};
+
+export function getStageToneDotClass(tone: BadgeTone) {
+  return toneDotClass[tone];
+}
+
 /** Colored pill styles applied on table row hover (Tailwind needs static class names). */
 const hoverPillClass: Record<BadgeTone, string> = {
   amber:

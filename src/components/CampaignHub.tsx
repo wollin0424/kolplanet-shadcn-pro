@@ -6,12 +6,16 @@ import type { CampaignTab } from "@/components/CampaignDetailHeader";
 import { cn } from "@/lib/utils";
 import { useState, type MouseEvent } from "react";
 import {
+  AlertCircle,
+  Check,
   ChevronRight,
   Clapperboard,
   CreditCard,
   FileText,
+  Hourglass,
   Info,
   List,
+  Package,
   ScrollText,
   Send,
   Truck,
@@ -19,7 +23,17 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
-type StatusTone = "green" | "sky" | "amber" | "gray" | "brand";
+type StatusTone =
+  | "green"
+  | "sky"
+  | "amber"
+  | "gray"
+  | "brand"
+  | "purple"
+  | "red"
+  | "violet";
+
+type HubStatusIcon = "hourglass" | "check" | "truck" | "alert" | "package";
 
 const statusToneClass: Record<StatusTone, string> = {
   green: "border-emerald-200 bg-emerald-50 text-emerald-800",
@@ -27,6 +41,17 @@ const statusToneClass: Record<StatusTone, string> = {
   amber: "border-amber-200 bg-amber-50 text-amber-800",
   gray: "border-gray-200 bg-gray-50 text-gray-700",
   brand: "border-brand-100 bg-brand-50 text-brand",
+  purple: "border-violet-200 bg-violet-50 text-violet-800",
+  red: "border-red-200 bg-red-50 text-red-800",
+  violet: "border-violet-200 bg-violet-50 text-violet-800",
+};
+
+const statusIcons: Record<HubStatusIcon, LucideIcon> = {
+  hourglass: Hourglass,
+  check: Check,
+  truck: Truck,
+  alert: AlertCircle,
+  package: Package,
 };
 
 function HubCountBadge({ count }: { count: number }) {
@@ -55,18 +80,25 @@ function HubStatus({
   label,
   value,
   tone = "sky",
+  icon,
 }: {
   label: string;
   value: string | number;
   tone?: StatusTone;
+  icon?: HubStatusIcon;
 }) {
+  const resolvedIcon =
+    icon ?? (tone === "amber" ? ("hourglass" as const) : undefined);
+  const Icon = resolvedIcon ? statusIcons[resolvedIcon] : null;
+
   return (
     <span
       className={cn(
-        "inline-flex w-fit max-w-full items-center rounded-full border px-3 py-2 text-[12px] font-semibold leading-none whitespace-nowrap",
+        "inline-flex w-fit max-w-full items-center gap-1.5 rounded-full border px-3 py-2 text-[12px] font-semibold leading-none whitespace-nowrap",
         statusToneClass[tone]
       )}
     >
+      {Icon ? <Icon size={12} className="shrink-0 opacity-80" /> : null}
       {label}: {value}
     </span>
   );
@@ -74,25 +106,6 @@ function HubStatus({
 
 function HubStatusList({ children }: { children: ReactNode }) {
   return <div className="mt-0 flex flex-wrap gap-x-2 gap-y-1.5">{children}</div>;
-}
-
-function HubContentBox({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "flex w-full flex-col gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4",
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
 }
 
 export type HubSection = "contract" | "logistics";
@@ -137,7 +150,7 @@ function HubCell({
           : undefined
       }
       className={cn(
-        "flex h-full min-h-0 flex-col gap-3 rounded-xl border bg-white p-6 transition-colors",
+        "flex h-full min-h-0 flex-col gap-3 rounded-xl border bg-white p-5 transition-colors",
         emphasized
           ? "border-sky-100 shadow-[0_2px_12px_rgba(37,99,235,0.08)] ring-1 ring-sky-100/80"
           : "border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
@@ -184,7 +197,7 @@ function HubCell({
   );
 }
 
-function ContractProgressRing({
+function HubProgressRing({
   percent,
   size = "md",
 }: {
@@ -234,41 +247,48 @@ function ContractProgressRing({
   );
 }
 
-const CONTRACT_STAGES = [
-  { label: "Contract Info", value: "6/8" },
-  { label: "Draft", value: "4/8" },
-  { label: "Advertiser Sign", value: "3/8" },
-  { label: "KOL Sign", value: "2/8" },
-] as const;
+function HubProgressOverview({
+  statusLabel,
+  current,
+  total,
+  percent,
+}: {
+  statusLabel: string;
+  current: number;
+  total: number;
+  percent: number;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-white px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-sky-700/80">
+          {statusLabel}
+        </p>
+        <p className="mt-0.5 text-[22px] font-bold leading-none text-gray-900 tabular-nums">
+          {current}{" "}
+          <span className="text-[14px] font-semibold text-gray-400">/ {total}</span>
+        </p>
+      </div>
+      <HubProgressRing percent={percent} />
+    </div>
+  );
+}
 
 function ContractHubOverview() {
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between gap-3 rounded-xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-white px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-sky-700/80">
-            Countersigned
-          </p>
-          <p className="mt-0.5 text-[22px] font-bold leading-none text-gray-900 tabular-nums">
-            2 <span className="text-[14px] font-semibold text-gray-400">/ 8</span>
-          </p>
-        </div>
-        <ContractProgressRing percent={25} />
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-          {CONTRACT_STAGES.map((stage) => (
-            <div
-              key={stage.label}
-              className="rounded-lg border border-gray-100 bg-gray-50/90 px-2.5 py-2"
-            >
-              <p className="truncate text-[10px] font-medium text-gray-500">{stage.label}</p>
-              <p className="mt-0.5 text-[14px] font-bold tabular-nums text-gray-900">
-                {stage.value}
-              </p>
-            </div>
-        ))}
-      </div>
+    <div className="flex flex-col gap-3">
+      <HubProgressOverview
+        statusLabel="Countersigned"
+        current={2}
+        total={8}
+        percent={25}
+      />
+      <HubStatusList>
+        <HubStatus label="Signing" value={1} tone="green" />
+        <HubStatus label="Awaiting Sending" value={1} tone="violet" />
+        <HubStatus label="Pending Draft" value={2} tone="sky" />
+        <HubStatus label="Awaiting Info" value={2} tone="amber" icon="hourglass" />
+      </HubStatusList>
     </div>
   );
 }
@@ -331,11 +351,21 @@ export default function CampaignHub({
           onEnter={openLogistics}
           onGo={openLogistics}
         >
-          <HubStatusList>
-            <HubStatus label="Delivered" value={4} tone="green" />
-            <HubStatus label="In Transit" value={1} tone="sky" />
-            <HubStatus label="To Ship" value={3} tone="amber" />
-          </HubStatusList>
+          <div className="flex flex-col gap-3">
+            <HubProgressOverview
+              statusLabel="Received"
+              current={0}
+              total={8}
+              percent={0}
+            />
+            <HubStatusList>
+              <HubStatus label="Delivered" value={4} tone="green" icon="check" />
+              <HubStatus label="In Transit" value={1} tone="sky" icon="truck" />
+              <HubStatus label="Out of Delivery" value={0} tone="purple" icon="package" />
+              <HubStatus label="Awaiting Pickup" value={3} tone="amber" icon="hourglass" />
+              <HubStatus label="Delivery Failed" value={0} tone="red" icon="alert" />
+            </HubStatusList>
+          </div>
         </HubCell>
 
         <HubCell
@@ -345,18 +375,25 @@ export default function CampaignHub({
           badgeCount={7}
           onGo={() => onNavigate?.("Payment")}
         >
-          <HubContentBox className="gap-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-              Total Paid / Approved
-            </p>
-            <p className="mt-0.5 text-[22px] font-bold leading-none text-gray-900 tabular-nums">
-              $40,000 <span className="text-[15px] font-semibold text-gray-400">/ $50,000</span>
-            </p>
-          </HubContentBox>
-          <HubStatusList>
-            <HubStatus label="Validated Influencers" value="4/5" tone="sky" />
-            <HubStatus label="Invoice Uploaded" value="2/5" tone="gray" />
-          </HubStatusList>
+          <div className="flex flex-col gap-2">
+            <HubProgressOverview
+              statusLabel="All Paid"
+              current={1}
+              total={5}
+              percent={20}
+            />
+            <HubStatusList>
+              <HubStatus label="Partially Paid" value={1} tone="sky" />
+              <HubStatus label="Validated" value={1} tone="green" icon="check" />
+              <HubStatus
+                label="Waiting for Validation"
+                value={1}
+                tone="amber"
+                icon="hourglass"
+              />
+              <HubStatus label="Rejected" value={1} tone="red" icon="alert" />
+            </HubStatusList>
+          </div>
         </HubCell>
 
         <HubCell
@@ -366,11 +403,18 @@ export default function CampaignHub({
           badgeCount={5}
           onGo={() => onNavigate?.("Pipeline")}
         >
-          <HubStatusList>
-            <HubStatus label="Approved" value={2} tone="green" />
-            <HubStatus label="Pending" value={5} tone="amber" />
-            <HubStatus label="Needs Revision" value={1} tone="gray" />
-          </HubStatusList>
+          <div className="flex flex-col gap-2">
+            <HubProgressOverview
+              statusLabel="Approved"
+              current={2}
+              total={8}
+              percent={25}
+            />
+            <HubStatusList>
+              <HubStatus label="Pending" value={5} tone="amber" icon="hourglass" />
+              <HubStatus label="Needs Revision" value={1} tone="red" icon="alert" />
+            </HubStatusList>
+          </div>
         </HubCell>
 
         <HubCell
@@ -380,11 +424,18 @@ export default function CampaignHub({
           badgeCount={6}
           onGo={() => onNavigate?.("Pipeline")}
         >
-          <HubStatusList>
-            <HubStatus label="Approved" value={3} tone="green" />
-            <HubStatus label="Video Pending" value={6} tone="amber" />
-            <HubStatus label="Copy Approved" value={3} tone="sky" />
-          </HubStatusList>
+          <div className="flex flex-col gap-2">
+            <HubProgressOverview
+              statusLabel="Approved"
+              current={3}
+              total={8}
+              percent={38}
+            />
+            <HubStatusList>
+              <HubStatus label="Video Pending" value={6} tone="amber" icon="hourglass" />
+              <HubStatus label="Copy Approved" value={3} tone="sky" />
+            </HubStatusList>
+          </div>
         </HubCell>
 
         <HubCell
@@ -394,11 +445,18 @@ export default function CampaignHub({
           badgeCount={7}
           onGo={() => onNavigate?.("Pipeline")}
         >
-          <HubStatusList>
-            <HubStatus label="Posted" value={1} tone="green" />
-            <HubStatus label="Ready" value={7} tone="sky" />
-            <HubStatus label="In Progress" value={7} tone="brand" />
-          </HubStatusList>
+          <div className="flex flex-col gap-2">
+            <HubProgressOverview
+              statusLabel="Posted"
+              current={1}
+              total={8}
+              percent={13}
+            />
+            <HubStatusList>
+              <HubStatus label="Ready" value={7} tone="sky" />
+              <HubStatus label="In Progress" value={7} tone="amber" icon="hourglass" />
+            </HubStatusList>
+          </div>
         </HubCell>
       </div>
     </div>

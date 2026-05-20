@@ -6,6 +6,7 @@ import {
   type KolRelationship,
 } from "@/components/CampaignHubInfluencerIdentity";
 import { CampaignHubSelectionBar } from "@/components/CampaignHubSelectionBar";
+import { CampaignHubStepList } from "@/components/CampaignHubStepList";
 import { useHubCardSelection } from "@/hooks/useHubCardSelection";
 import {
   DropdownMenu,
@@ -22,7 +23,6 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
-  Check,
   ChevronDown,
   FileText,
   MoreHorizontal,
@@ -45,6 +45,7 @@ type ContractCard = {
   manager: string;
   relationship: KolRelationship;
   completedSteps: number;
+  stepTimestamps: (string | null)[];
   fileCount: number;
   legalName?: string;
   contractType?: string;
@@ -75,6 +76,7 @@ const MOCK_CARDS: ContractCard[] = [
     manager: "Wollin",
     relationship: "Direct",
     completedSteps: 0,
+    stepTimestamps: [null, null, null, null],
     fileCount: 0,
     actionLabel: "Fill Contract Info",
   },
@@ -86,6 +88,7 @@ const MOCK_CARDS: ContractCard[] = [
     manager: "Wollin",
     relationship: "Manager",
     completedSteps: 1,
+    stepTimestamps: ["Mar 24, 2025 2:15 PM", null, null, null],
     fileCount: 0,
     actionLabel: "Generate Draft",
   },
@@ -97,6 +100,12 @@ const MOCK_CARDS: ContractCard[] = [
     manager: "Wollin",
     relationship: "MCN",
     completedSteps: 2,
+    stepTimestamps: [
+      "Mar 24, 2025 9:00 AM",
+      "Mar 26, 2025 11:30 AM",
+      null,
+      null,
+    ],
     fileCount: 1,
     actionLabel: "Invite to Sign",
   },
@@ -107,7 +116,13 @@ const MOCK_CARDS: ContractCard[] = [
     status: "Signing",
     manager: "Wollin",
     relationship: "Direct",
-    completedSteps: 3,
+    completedSteps: 2,
+    stepTimestamps: [
+      "Mar 25, 2025 8:00 AM",
+      "Mar 27, 2025 3:30 PM",
+      "Mar 28, 2025 10:20 AM",
+      null,
+    ],
     fileCount: 1,
     legalName: "342432",
     contractType: "Type A",
@@ -121,6 +136,12 @@ const MOCK_CARDS: ContractCard[] = [
     manager: "Wollin",
     relationship: "Manager",
     completedSteps: 4,
+    stepTimestamps: [
+      "Mar 20, 2025 10:00 AM",
+      "Mar 21, 2025 4:30 PM",
+      "Mar 22, 2025 9:15 AM",
+      "Mar 23, 2025 1:45 PM",
+    ],
     fileCount: 1,
     legalName: "892011",
     contractType: "Type A",
@@ -134,6 +155,12 @@ const MOCK_CARDS: ContractCard[] = [
     manager: "Wollin",
     relationship: "MCN",
     completedSteps: 3,
+    stepTimestamps: [
+      "Mar 22, 2025 11:00 AM",
+      "Mar 24, 2025 5:00 PM",
+      "Mar 26, 2025 8:30 AM",
+      null,
+    ],
     fileCount: 1,
     actionLabel: "Check Status",
   },
@@ -170,48 +197,6 @@ function FilterSelect({
   );
 }
 
-function ContractStepList({ completedSteps }: { completedSteps: number }) {
-  return (
-    <ul className="flex flex-col">
-      {CONTRACT_STEPS.map((step, index) => {
-        const done = index < completedSteps;
-        const isLast = index === CONTRACT_STEPS.length - 1;
-        const connectorDone = index < completedSteps;
-
-        return (
-          <li
-            key={step}
-            className={cn("relative flex items-center gap-2.5 text-[13px]", !isLast && "pb-5")}
-          >
-            {!isLast ? (
-              <span
-                className={cn(
-                  "absolute top-5 left-[9px] w-px -translate-x-1/2",
-                  connectorDone ? "bg-brand" : "bg-gray-200",
-                  "h-[calc(100%-4px)]"
-                )}
-                aria-hidden
-              />
-            ) : null}
-            <span
-              className={cn(
-                "relative z-10 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border bg-white",
-                done
-                  ? "border-brand bg-brand text-white"
-                  : "border-gray-200 text-transparent"
-              )}
-            >
-              {done ? <Check size={12} strokeWidth={3} /> : null}
-            </span>
-            <span className={done ? "font-medium text-gray-900" : "text-gray-500"}>
-              {step}
-            </span>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
 
 function ContractInfluencerCard({
   card,
@@ -233,7 +218,7 @@ function ContractInfluencerCard({
   return (
     <article
       className={cn(
-        "flex flex-col rounded-xl border bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
+        "flex flex-col gap-2 rounded-xl border bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
         selected ? "border-brand ring-2 ring-brand/15" : "border-gray-100"
       )}
     >
@@ -261,7 +246,13 @@ function ContractInfluencerCard({
       </div>
 
       <div className="mt-4 ml-2">
-        <ContractStepList completedSteps={card.completedSteps} />
+        <CampaignHubStepList
+          steps={CONTRACT_STEPS}
+          completedSteps={card.completedSteps}
+          stepTimestamps={card.stepTimestamps}
+          inferActiveStep
+          activeIcon="hourglass"
+        />
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-gray-100 pt-4 text-[12px] text-gray-500">

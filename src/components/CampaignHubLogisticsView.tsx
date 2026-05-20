@@ -6,6 +6,7 @@ import {
   type KolRelationship,
 } from "@/components/CampaignHubInfluencerIdentity";
 import { CampaignHubSelectionBar } from "@/components/CampaignHubSelectionBar";
+import { CampaignHubStepList } from "@/components/CampaignHubStepList";
 import { useHubCardSelection } from "@/hooks/useHubCardSelection";
 import {
   DropdownMenu,
@@ -22,11 +23,8 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
-  Check,
   ChevronDown,
-  Clock,
   Copy,
-  Pencil,
   Search,
   Truck,
 } from "lucide-react";
@@ -221,80 +219,6 @@ function FilterSelect({
   );
 }
 
-function LogisticsStepList({
-  completedSteps,
-  activeStepIndex,
-  stepTimestamps,
-}: {
-  completedSteps: number;
-  activeStepIndex?: number;
-  stepTimestamps: (string | null)[];
-}) {
-  return (
-    <ul className="flex flex-col">
-      {LOGISTICS_STEPS.map((step, index) => {
-        const done = index < completedSteps;
-        const active = activeStepIndex === index;
-        const isLast = index === LOGISTICS_STEPS.length - 1;
-        const connectorDone = index < completedSteps;
-        const timestamp = stepTimestamps[index];
-
-        return (
-          <li
-            key={step}
-            className={cn(
-              "relative flex items-start gap-2.5 text-[13px]",
-              !isLast && "pb-5"
-            )}
-          >
-            {!isLast ? (
-              <span
-                className={cn(
-                  "absolute top-5 left-[10px] w-px -translate-x-1/2",
-                  connectorDone ? "bg-brand" : "bg-gray-200",
-                  "h-[calc(100%-4px)]"
-                )}
-                aria-hidden
-              />
-            ) : null}
-            <span
-              className={cn(
-                "relative z-10 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border bg-white",
-                done
-                  ? "border-brand bg-brand text-white"
-                  : active
-                    ? "border-brand bg-white text-brand"
-                    : "border-gray-200 bg-white text-transparent"
-              )}
-            >
-              {done ? (
-                <Check size={12} strokeWidth={3} />
-              ) : active ? (
-                <Clock size={11} strokeWidth={2.5} />
-              ) : null}
-            </span>
-            <div className="relative z-10 flex min-w-0 flex-1 items-start justify-between gap-2 pt-0.5">
-              <span
-                className={cn(
-                  "leading-snug",
-                  done || active ? "font-medium text-gray-900" : "text-gray-500"
-                )}
-              >
-                {step}
-              </span>
-              {timestamp ? (
-                <span className="shrink-0 text-right text-[11px] leading-snug text-gray-400 tabular-nums">
-                  {timestamp}
-                </span>
-              ) : null}
-            </div>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
 function LogisticsInfluencerCard({
   card,
   selected,
@@ -315,7 +239,7 @@ function LogisticsInfluencerCard({
   return (
     <article
       className={cn(
-        "flex flex-col rounded-xl border bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
+        "flex flex-col gap-2 rounded-xl border bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
         selected ? "border-brand ring-2 ring-brand/15" : "border-gray-100"
       )}
     >
@@ -344,34 +268,27 @@ function LogisticsInfluencerCard({
 
       <div className="mt-4 flex h-11 items-center gap-2 overflow-hidden rounded-lg border border-gray-100 bg-gray-50/80 px-3 text-[12px]">
         <p className="flex min-w-0 flex-1 items-center overflow-hidden">
-          <span className="shrink-0 text-gray-500">Tracking ID: </span>
-          <span className="truncate font-medium text-gray-800">{card.shippingLabel}</span>
+          <span className="shrink-0 font-medium text-gray-700">Tracking ID: </span>
+          <span className="truncate font-normal text-gray-500">{card.shippingLabel}</span>
         </p>
-        <div className="flex shrink-0 items-center gap-0.5">
-          {card.trackingNumber ? (
-            <button
-              type="button"
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-white hover:text-gray-700"
-              aria-label="Copy tracking number"
-            >
-              <Copy size={13} />
-            </button>
-          ) : null}
+        {card.trackingNumber ? (
           <button
             type="button"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-white hover:text-gray-700"
-            aria-label="Edit tracking ID"
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-white hover:text-gray-700"
+            aria-label="Copy tracking number"
           >
-            <Pencil size={13} />
+            <Copy size={13} />
           </button>
-        </div>
+        ) : null}
       </div>
 
       <div className="mt-4 ml-2">
-        <LogisticsStepList
+        <CampaignHubStepList
+          steps={LOGISTICS_STEPS}
           completedSteps={card.completedSteps}
           activeStepIndex={card.activeStepIndex}
           stepTimestamps={card.stepTimestamps}
+          activeIcon="hourglass"
         />
       </div>
 
@@ -381,13 +298,6 @@ function LogisticsInfluencerCard({
           <span className="truncate font-medium text-gray-800">
             {card.legalName ?? "—"}
           </span>
-          <button
-            type="button"
-            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
-            aria-label="Edit ship to"
-          >
-            <Pencil size={13} />
-          </button>
         </span>
         <button
           type="button"

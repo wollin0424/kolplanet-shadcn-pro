@@ -1,43 +1,40 @@
 "use client";
 
-import StageProgressIcon from "@/components/pipeline/StageProgressIcon";
-import {
-  getStageHoverPillClass,
-  type StageBadgeConfig,
-} from "@/lib/pipeline/stageStatuses";
+import type { StageBadgeConfig } from "@/lib/pipeline/stageStatuses";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
 
 /**
- * Default: gray text + progress ring (in progress) or check (done).
- * Row hover: semantic-colored tag — padding/border always reserved to avoid column jump.
+ * Status dot + label; hover only on this control (group/stage, not table row).
+ * Brand link-style hover — no dropdown chevron.
  */
 export default function PipelineStageCell({ config }: { config: StageBadgeConfig }) {
   const isComplete = config.completed === true;
 
   return (
-    <span
+    <button
+      type="button"
       className={cn(
-        "inline-flex max-w-full items-center gap-1.5 rounded-full border border-transparent px-2.5 py-0.5",
-        "text-[12px] font-medium whitespace-nowrap transition-colors duration-150",
-        "text-gray-500",
-        getStageHoverPillClass(config.tone)
+        "group/stage inline-flex max-w-full min-w-0 items-center gap-1.5 p-0",
+        "text-left text-[12px] font-medium whitespace-nowrap text-gray-500",
+        "cursor-pointer transition-colors duration-150",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:ring-offset-1"
       )}
     >
-      {isComplete ? (
-        <Check
-          size={13}
-          strokeWidth={2.5}
-          className="shrink-0 text-gray-400 group-hover:text-current"
-          aria-hidden
-        />
-      ) : (
-        <StageProgressIcon
-          step={config.progressStep}
-          className="shrink-0 text-gray-400 group-hover:text-current"
-        />
-      )}
-      <span className="truncate">{config.label}</span>
-    </span>
+      <span
+        className={cn(
+          "h-2 w-2 shrink-0 rounded-full",
+          isComplete ? "bg-emerald-500" : "bg-amber-400"
+        )}
+        aria-hidden
+      />
+      <span
+        className={cn(
+          "min-w-0 truncate transition-colors",
+          "group-hover/stage:text-brand group-hover/stage:underline group-hover/stage:underline-offset-[3px] group-hover/stage:decoration-brand/40"
+        )}
+      >
+        {config.label}
+      </span>
+    </button>
   );
 }
