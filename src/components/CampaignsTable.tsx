@@ -198,7 +198,7 @@ function buildPageList(current: number, total: number): (number | "…")[] {
 function StatusBadge({ status }: { status: CampaignStatus }) {
   const styles =
     status === "Active"
-      ? "bg-[#e8f1fb] text-brand border-[#c5d9f5]"
+      ? "bg-brand-50 text-brand border-brand-100"
       : status === "New"
         ? "bg-amber-50 text-amber-700 border-amber-200"
         : status === "Draft"
@@ -375,9 +375,9 @@ export default function CampaignsTable() {
         <div className="flex-1" />
 
         <Button
+          variant="brand"
           size="sm"
-          className="h-8 gap-1.5 text-white text-[13px] px-4"
-          style={{ backgroundColor: "#023E8A" }}
+          className="h-8 gap-1.5 text-[13px] px-4"
         >
           <Plus size={14} />
           New Campaign
@@ -440,7 +440,7 @@ export default function CampaignsTable() {
                     router.push(href);
                   }
                 }}
-                className="border-b border-gray-50 transition-colors group bg-white hover:bg-[#f5f8fe] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
+                className="border-b border-gray-50 transition-colors group bg-white hover:bg-brand-row-hover cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
               >
                 <TableCell className="py-4">
                   <div className="flex items-center gap-3 min-w-0">

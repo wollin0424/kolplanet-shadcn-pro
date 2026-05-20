@@ -89,8 +89,8 @@ export default function AddInstallmentDialog({
             Cancel
           </Button>
           <Button
-            className="h-9 text-[13px] text-white"
-            style={{ backgroundColor: "#023E8A" }}
+            variant="brand"
+            className="h-9 text-[13px]"
             disabled={!canSubmit}
             onClick={handleAdd}
           >

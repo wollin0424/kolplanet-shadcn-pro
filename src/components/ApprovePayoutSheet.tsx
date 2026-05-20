@@ -604,8 +604,8 @@ export default function ApprovePayoutSheet({
             Cancel
           </Button>
           <Button
-            className="h-10 min-w-[160px] text-[13px] text-white"
-            style={{ backgroundColor: "#023E8A" }}
+            variant="brand"
+            className="h-10 min-w-[160px] text-[13px]"
             onClick={() => onOpenChange(false)}
           >
             Confirm & Lock

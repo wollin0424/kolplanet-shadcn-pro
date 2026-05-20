@@ -489,7 +489,7 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
               <TableRow
                 key={row.id}
                 className={cn(
-                  "border-b border-gray-50 transition-colors bg-white hover:bg-[#f5f8fe]",
+                  "border-b border-gray-50 transition-colors bg-white hover:bg-brand-row-hover",
                   canApprove && "cursor-pointer"
                 )}
                 onClick={canApprove ? () => openApprovePayout(row) : undefined}

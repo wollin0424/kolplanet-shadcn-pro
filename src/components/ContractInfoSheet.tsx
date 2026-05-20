@@ -834,8 +834,8 @@ export default function ContractInfoSheet({
               Cancel
             </Button>
             <Button
-              className="h-9 text-white"
-              style={{ backgroundColor: "#023E8A" }}
+              variant="brand"
+              className="h-9"
               onClick={() => onOpenChange(false)}
             >
               Save

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "../styles/brand.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -8,6 +9,9 @@
   --color-brand: var(--brand);
   --color-brand-50: var(--brand-50);
   --color-brand-100: var(--brand-100);
+  --color-brand-row-hover: var(--brand-row-hover);
+  --color-brand-row-selected: var(--brand-row-selected);
+  --color-brand-row-selected-hover: var(--brand-row-selected-hover);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -86,9 +90,6 @@
     "Courier New",
     monospace;
 
-  --brand: #023E8A;
-  --brand-50: #e8f1fb;
-  --brand-100: #c5d9f5;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);

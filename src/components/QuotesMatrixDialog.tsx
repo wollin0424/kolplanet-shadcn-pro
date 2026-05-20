@@ -431,7 +431,7 @@ export function QuotesMatrixDialog({
         {/* Footer */}
         <div className="shrink-0 flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-white">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="px-5">Cancel</Button>
-          <Button onClick={() => onOpenChange(false)} className="px-5 text-white" style={{ backgroundColor: "#023E8A" }}>Save</Button>
+          <Button variant="brand" onClick={() => onOpenChange(false)} className="px-5">Save</Button>
         </div>
       </DialogContent>
     </Dialog>

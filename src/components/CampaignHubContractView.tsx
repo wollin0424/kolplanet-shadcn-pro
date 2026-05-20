@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import {
   CampaignHubDetailHeader,
   CampaignHubDetailToolbar,
-  CampaignHubToolbarActionButton,
 } from "@/components/CampaignHubDetailToolbar";
 import { CampaignHubFilterSelect } from "@/components/CampaignHubFilterSelect";
 import {
@@ -12,7 +11,6 @@ import {
   type KolRelationship,
 } from "@/components/CampaignHubInfluencerIdentity";
 import { CampaignHubStepList } from "@/components/CampaignHubStepList";
-import { useHubCardSelection } from "@/hooks/useHubCardSelection";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +24,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Download, FileText, MoreHorizontal, Pencil, Upload } from "lucide-react";
+import { FileText, MoreHorizontal, Pencil } from "lucide-react";
 
 type ContractCardStatus =
   | "Awaiting Info"
@@ -46,7 +44,6 @@ type ContractCard = {
   stepTimestamps: (string | null)[];
   fileCount: number;
   legalName?: string;
-  contractType?: string;
   actionLabel: string;
 };
 
@@ -123,7 +120,6 @@ const MOCK_CARDS: ContractCard[] = [
     ],
     fileCount: 1,
     legalName: "342432",
-    contractType: "Type A",
     actionLabel: "Check Status",
   },
   {
@@ -142,7 +138,6 @@ const MOCK_CARDS: ContractCard[] = [
     ],
     fileCount: 1,
     legalName: "892011",
-    contractType: "Type A",
     actionLabel: "View Final Contract",
   },
   {
@@ -164,15 +159,7 @@ const MOCK_CARDS: ContractCard[] = [
   },
 ];
 
-function ContractInfluencerCard({
-  card,
-  selected,
-  onSelectedChange,
-}: {
-  card: ContractCard;
-  selected: boolean;
-  onSelectedChange: (selected: boolean) => void;
-}) {
+function ContractInfluencerCard({ card }: { card: ContractCard }) {
   const statusBadgeClass = STATUS_BADGE[card.status];
   const initials = card.name
     .split(" ")
@@ -184,8 +171,7 @@ function ContractInfluencerCard({
   return (
     <article
       className={cn(
-        "flex flex-col gap-2 rounded-xl border bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
-        selected ? "border-brand ring-2 ring-brand/15" : "border-gray-100"
+        "flex flex-col gap-1.5 rounded-xl border border-gray-100 bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -196,10 +182,6 @@ function ContractInfluencerCard({
           relationship={card.relationship}
           initials={initials}
           avatarFallbackClassName="bg-violet-50 text-violet-700"
-          selection={{
-            checked: selected,
-            onCheckedChange: onSelectedChange,
-          }}
         />
         <span
           className={cn(
@@ -227,11 +209,6 @@ function ContractInfluencerCard({
           <span className="truncate font-medium text-gray-800">
             {card.legalName ?? "—"}
           </span>
-          {card.contractType ? (
-            <span className="inline-flex shrink-0 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
-              {card.contractType}
-            </span>
-          ) : null}
           <button
             type="button"
             className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
@@ -300,15 +277,6 @@ export default function CampaignHubContractView({
 
   const statusOptions = ["All", ...Object.keys(STATUS_BADGE)] as string[];
 
-  const visibleIds = useMemo(() => filtered.map((card) => card.id), [filtered]);
-  const { selectedCount, toggle, selectAll, clear, isSelected } =
-    useHubCardSelection(visibleIds);
-
-  const handleExport = () => {
-    const selected = filtered.filter((card) => isSelected(card.id));
-    console.log("Export contract influencers:", selected);
-  };
-
   return (
     <TooltipProvider>
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
@@ -318,11 +286,7 @@ export default function CampaignHubContractView({
 
         <div className="shrink-0 rounded-xl border border-gray-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
           <CampaignHubDetailToolbar
-            selectedCount={selectedCount}
-            totalCount={filtered.length}
-            onSelectAll={selectAll}
-            onClear={clear}
-            onExport={handleExport}
+            influencerCount={filtered.length}
             searchValue={query}
             onSearchChange={setQuery}
             filters={
@@ -347,35 +311,13 @@ export default function CampaignHubContractView({
                 />
               </>
             }
-            actions={
-              <>
-                <CampaignHubToolbarActionButton>
-                  <Upload size={13} />
-                  Import
-                </CampaignHubToolbarActionButton>
-                <CampaignHubToolbarActionButton
-                  onClick={handleExport}
-                  disabled={selectedCount === 0}
-                >
-                  <Download size={13} />
-                  Download
-                </CampaignHubToolbarActionButton>
-              </>
-            }
           />
         </div>
 
         <div className="no-scrollbar min-h-0 flex-1 overflow-auto">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {filtered.map((card) => (
-              <ContractInfluencerCard
-                key={card.id}
-                card={card}
-                selected={isSelected(card.id)}
-                onSelectedChange={(checked) => {
-                  if (checked !== isSelected(card.id)) toggle(card.id);
-                }}
-              />
+              <ContractInfluencerCard key={card.id} card={card} />
             ))}
           </div>
         </div>

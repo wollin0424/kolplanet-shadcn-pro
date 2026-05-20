@@ -59,43 +59,56 @@ export function CampaignHubDetailHeader({
   );
 }
 
+/** When `batchSelection` is omitted (e.g. Contract view), optionally pass `influencerCount` for a plain count label (no checkbox). */
 export function CampaignHubDetailToolbar({
-  selectedCount,
-  totalCount,
-  onSelectAll,
-  onClear,
-  onExport,
+  batchSelection,
+  influencerCount,
   searchValue,
   onSearchChange,
   searchPlaceholder = "Search Influencer or Legal Name",
   filters,
   actions,
 }: {
-  selectedCount: number;
-  totalCount: number;
-  onSelectAll: () => void;
-  onClear: () => void;
-  onExport: () => void;
+  batchSelection?: {
+    selectedCount: number;
+    totalCount: number;
+    onSelectAll: () => void;
+    onClear: () => void;
+  };
+  /** Plain "Influencers: n" when not using batch selection (no checkbox). */
+  influencerCount?: number;
   searchValue: string;
   onSearchChange: (value: string) => void;
   searchPlaceholder?: string;
   filters: ReactNode;
   actions?: ReactNode;
 }) {
+  const bs = batchSelection;
+  const showBatch = Boolean(bs && bs.totalCount > 0);
+  const showCountOnly =
+    !showBatch && influencerCount !== undefined;
+
   return (
     <div className="shrink-0 px-4 py-3">
       <div className="flex flex-wrap items-center gap-2">
-        {totalCount > 0 ? (
-          <CampaignHubSelectionBar
-            selectedCount={selectedCount}
-            totalCount={totalCount}
-            onSelectAll={onSelectAll}
-            onClear={onClear}
-            onExport={onExport}
-          />
-        ) : null}
-        {totalCount > 0 ? (
-          <span className="hidden h-5 w-px shrink-0 bg-gray-200 sm:block" aria-hidden />
+        {showBatch && bs ? (
+          <>
+            <CampaignHubSelectionBar
+              selectedCount={bs.selectedCount}
+              totalCount={bs.totalCount}
+              onSelectAll={bs.onSelectAll}
+              onClear={bs.onClear}
+            />
+            <span className="hidden h-5 w-px shrink-0 bg-gray-200 sm:block" aria-hidden />
+          </>
+        ) : showCountOnly ? (
+          <>
+            <span className="shrink-0 text-[12px] font-medium text-gray-500">
+              Influencers:{" "}
+              <span className="tabular-nums font-medium text-gray-900">{influencerCount}</span>
+            </span>
+            <span className="hidden h-5 w-px shrink-0 bg-gray-200 sm:block" aria-hidden />
+          </>
         ) : null}
         {filters}
         <div className="relative min-w-[200px] flex-1 sm:max-w-[260px]">

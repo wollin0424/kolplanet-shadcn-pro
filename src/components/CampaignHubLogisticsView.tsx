@@ -201,7 +201,7 @@ function LogisticsInfluencerCard({
   return (
     <article
       className={cn(
-        "flex flex-col gap-2 rounded-xl border bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
+        "flex flex-col gap-1.5 rounded-xl border bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
         selected ? "border-brand ring-2 ring-brand/15" : "border-gray-100"
       )}
     >
@@ -335,11 +335,12 @@ export default function CampaignHubLogisticsView({
 
         <div className="shrink-0 rounded-xl border border-gray-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
           <CampaignHubDetailToolbar
-            selectedCount={selectedCount}
-            totalCount={filtered.length}
-            onSelectAll={selectAll}
-            onClear={clear}
-            onExport={handleExport}
+            batchSelection={{
+              selectedCount,
+              totalCount: filtered.length,
+              onSelectAll: selectAll,
+              onClear: clear,
+            }}
             searchValue={query}
             onSearchChange={setQuery}
             filters={

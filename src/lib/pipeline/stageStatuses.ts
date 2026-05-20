@@ -1,12 +1,37 @@
-export type LogisticsStatus = "Recruiting" | "To Ship" | "In Transit" | "Delivered";
-export type ScriptStatus = "Recruiting" | "Pending" | "Needs Revision" | "Approved";
-export type ContentStatus = "Recruiting" | "Video Pending" | "Copy Approved" | "Approved";
-export type PostingStatus = "Recruiting" | "Ready" | "In Progress" | "Posted";
-export type PaymentStatus = "Recruiting" | "Invoice Uploaded" | "Validated";
+export type ContractStatus =
+  | "Pending"
+  | "Awaiting KOL Info"
+  | "Agreement Generated"
+  | "Platform Signed"
+  | "Countersigned"
+  | "Addendum Generated";
+
+/** Aligned with Campaign Hub pipeline cards (logistics + sub-status tags). */
+export type LogisticsStatus =
+  | "Received"
+  | "Delivered"
+  | "In Transit"
+  | "Out of Delivery"
+  | "Awaiting Pickup"
+  | "Delivery Failed";
+
+export type ScriptStatus = "Pending" | "Needs Revision" | "Approved";
+
+export type ContentStatus = "Video Pending" | "Copy Approved" | "Approved";
+
+export type PostingStatus = "Ready" | "In Progress" | "Posted";
+
+export type PaymentStatus =
+  | "Partially Paid"
+  | "Validated"
+  | "All Paid"
+  | "Waiting for Validation"
+  | "Rejected";
 
 export type CollabStatus = "Pending" | "Approved" | "Posted" | "Done" | "Terminated";
 
 export type StageStatus =
+  | ContractStatus
   | LogisticsStatus
   | ScriptStatus
   | ContentStatus
@@ -16,7 +41,7 @@ export type StageStatus =
 /** Shared 5-step scale for stage progress rings in the table. */
 export const STAGE_PROGRESS_TOTAL = 5;
 
-type BadgeTone = "amber" | "green" | "sky" | "gray" | "brand" | "violet";
+type BadgeTone = "amber" | "green" | "sky" | "gray" | "brand" | "violet" | "rose";
 
 export type StageBadgeConfig = {
   label: string;
@@ -34,6 +59,7 @@ const toneTextClass: Record<BadgeTone, string> = {
   gray: "text-gray-600",
   brand: "text-brand",
   violet: "text-violet-700",
+  rose: "text-rose-700",
 };
 
 export function getStageToneTextClass(tone: BadgeTone) {
@@ -55,6 +81,7 @@ const badgeClass: Record<BadgeTone, string> = {
   gray: "bg-gray-50 text-gray-600 border-gray-200",
   brand: "bg-brand-50 text-brand border-brand-100",
   violet: "bg-violet-50 text-violet-700 border-violet-200",
+  rose: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
 export function getStageBadgeClass(tone: BadgeTone) {
@@ -68,6 +95,7 @@ const toneDotClass: Record<BadgeTone, string> = {
   gray: "bg-gray-400",
   brand: "bg-brand",
   violet: "bg-violet-400",
+  rose: "bg-rose-500",
 };
 
 export function getStageToneDotClass(tone: BadgeTone) {
@@ -85,44 +113,84 @@ const hoverPillClass: Record<BadgeTone, string> = {
   brand: "group-hover:bg-brand-50 group-hover:text-brand group-hover:border-brand-100",
   violet:
     "group-hover:bg-violet-50 group-hover:text-violet-700 group-hover:border-violet-200",
+  rose: "group-hover:bg-rose-50 group-hover:text-rose-700 group-hover:border-rose-200",
 };
 
 export function getStageHoverPillClass(tone: BadgeTone) {
   return hoverPillClass[tone];
 }
 
+export const CONTRACT_STATUS_CONFIG: Record<ContractStatus, StageBadgeConfig> = {
+  Pending: {
+    label: "Pending",
+    tone: "amber",
+    progressStep: 1,
+  },
+  "Awaiting KOL Info": {
+    label: "Awaiting KOL Info",
+    tone: "amber",
+    progressStep: 2,
+  },
+  "Agreement Generated": {
+    label: "Agreement Generated",
+    tone: "amber",
+    progressStep: 3,
+  },
+  "Platform Signed": {
+    label: "Platform Signed",
+    tone: "amber",
+    progressStep: 4,
+  },
+  Countersigned: {
+    label: "Countersigned",
+    tone: "green",
+    progressStep: 5,
+    completed: true,
+  },
+  "Addendum Generated": {
+    label: "Addendum Generated",
+    tone: "amber",
+    progressStep: 4,
+  },
+};
+
 export const LOGISTICS_STATUS_CONFIG: Record<LogisticsStatus, StageBadgeConfig> = {
-  Recruiting: { label: "Recruiting", tone: "amber", progressStep: 1 },
-  "To Ship": { label: "To Ship", tone: "amber", progressStep: 2 },
-  "In Transit": { label: "In Transit", tone: "sky", progressStep: 3 },
+  Received: { label: "Received", tone: "amber", progressStep: 1 },
   Delivered: { label: "Delivered", tone: "green", progressStep: 5, completed: true },
+  "In Transit": { label: "In Transit", tone: "sky", progressStep: 3 },
+  "Out of Delivery": { label: "Out of Delivery", tone: "violet", progressStep: 4 },
+  "Awaiting Pickup": { label: "Awaiting Pickup", tone: "amber", progressStep: 2 },
+  "Delivery Failed": { label: "Delivery Failed", tone: "rose", progressStep: 1 },
 };
 
 export const SCRIPT_STATUS_CONFIG: Record<ScriptStatus, StageBadgeConfig> = {
-  Recruiting: { label: "Recruiting", tone: "amber", progressStep: 1 },
   Pending: { label: "Pending", tone: "amber", progressStep: 2 },
-  "Needs Revision": { label: "Needs Revision", tone: "gray", progressStep: 2 },
+  "Needs Revision": { label: "Needs Revision", tone: "rose", progressStep: 2 },
   Approved: { label: "Approved", tone: "green", progressStep: 5, completed: true },
 };
 
 export const CONTENT_STATUS_CONFIG: Record<ContentStatus, StageBadgeConfig> = {
-  Recruiting: { label: "Recruiting", tone: "amber", progressStep: 1 },
   "Video Pending": { label: "Video Pending", tone: "amber", progressStep: 2 },
   "Copy Approved": { label: "Copy Approved", tone: "sky", progressStep: 4 },
   Approved: { label: "Approved", tone: "green", progressStep: 5, completed: true },
 };
 
 export const POSTING_STATUS_CONFIG: Record<PostingStatus, StageBadgeConfig> = {
-  Recruiting: { label: "Recruiting", tone: "amber", progressStep: 1 },
   Ready: { label: "Ready", tone: "sky", progressStep: 3 },
-  "In Progress": { label: "In Progress", tone: "brand", progressStep: 4 },
+  "In Progress": { label: "In Progress", tone: "amber", progressStep: 4 },
   Posted: { label: "Posted", tone: "green", progressStep: 5, completed: true },
 };
 
 export const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, StageBadgeConfig> = {
-  Recruiting: { label: "Recruiting", tone: "amber", progressStep: 1 },
-  "Invoice Uploaded": { label: "Invoice Uploaded", tone: "gray", progressStep: 3 },
-  Validated: { label: "Validated", tone: "sky", progressStep: 5, completed: true },
+  "Partially Paid": { label: "Partially Paid", tone: "sky", progressStep: 3 },
+  Validated: { label: "Validated", tone: "green", progressStep: 5, completed: true },
+  "All Paid": { label: "All Paid", tone: "green", progressStep: 5, completed: true },
+  "Waiting for Validation": {
+    label: "Waiting for Validation",
+    tone: "amber",
+    progressStep: 2,
+  },
+  Rejected: { label: "Rejected", tone: "rose", progressStep: 1 },
 };
 
 export const COLLAB_STATUS_CONFIG: Record<

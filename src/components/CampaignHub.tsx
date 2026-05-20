@@ -68,7 +68,7 @@ function HubGoButton({ onClick }: { onClick?: (e: MouseEvent<HTMLButtonElement>)
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1 rounded-lg bg-[#e8f1fb] px-3 py-1.5 text-[13px] font-semibold text-brand hover:bg-[#dce9f8] transition-colors"
+      className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-3 py-1.5 text-[13px] font-semibold text-brand hover:bg-brand-100 transition-colors"
     >
       Go
       <ChevronRight size={14} strokeWidth={2.5} />

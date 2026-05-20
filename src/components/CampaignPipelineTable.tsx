@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import CollabStatusSelect from "@/components/pipeline/CollabStatusSelect";
+import { CommercialScopePopover } from "@/components/pipeline/CommercialScopePopover";
 import PipelineStageCell from "@/components/pipeline/PipelineStageCell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,12 +23,14 @@ import {
 } from "@/components/ui/table";
 import {
   CONTENT_STATUS_CONFIG,
+  CONTRACT_STATUS_CONFIG,
   LOGISTICS_STATUS_CONFIG,
   PAYMENT_STATUS_CONFIG,
   POSTING_STATUS_CONFIG,
   SCRIPT_STATUS_CONFIG,
   type CollabStatus,
   type ContentStatus,
+  type ContractStatus,
   type LogisticsStatus,
   type PaymentStatus,
   type PostingStatus,
@@ -55,6 +58,7 @@ type PipelineRow = {
   displayName: string;
   platform: string;
   collabStatus: CollabStatus;
+  contract: ContractStatus;
   logistics: LogisticsStatus;
   script: ScriptStatus;
   content: ContentStatus;
@@ -64,34 +68,24 @@ type PipelineRow = {
   note: string;
 };
 
+/** Order matches Campaign Hub cards; mock rows cycle with `i % length`. */
 const LOGISTICS_POOL: LogisticsStatus[] = [
-  "Recruiting",
-  "To Ship",
-  "In Transit",
+  "Received",
   "Delivered",
+  "In Transit",
+  "Out of Delivery",
+  "Awaiting Pickup",
+  "Delivery Failed",
 ];
-const SCRIPT_POOL: ScriptStatus[] = [
-  "Recruiting",
-  "Pending",
-  "Needs Revision",
-  "Approved",
-];
-const CONTENT_POOL: ContentStatus[] = [
-  "Recruiting",
-  "Video Pending",
-  "Copy Approved",
-  "Approved",
-];
-const POSTING_POOL: PostingStatus[] = [
-  "Recruiting",
-  "Ready",
-  "In Progress",
-  "Posted",
-];
+const SCRIPT_POOL: ScriptStatus[] = ["Pending", "Needs Revision", "Approved"];
+const CONTENT_POOL: ContentStatus[] = ["Video Pending", "Copy Approved", "Approved"];
+const POSTING_POOL: PostingStatus[] = ["Ready", "In Progress", "Posted"];
 const PAYMENT_POOL: PaymentStatus[] = [
-  "Recruiting",
-  "Invoice Uploaded",
+  "Partially Paid",
   "Validated",
+  "All Paid",
+  "Waiting for Validation",
+  "Rejected",
 ];
 const COLLAB_POOL: CollabStatus[] = [
   "Pending",
@@ -99,6 +93,15 @@ const COLLAB_POOL: CollabStatus[] = [
   "Posted",
   "Done",
   "Terminated",
+];
+
+const CONTRACT_POOL: ContractStatus[] = [
+  "Pending",
+  "Awaiting KOL Info",
+  "Agreement Generated",
+  "Platform Signed",
+  "Countersigned",
+  "Addendum Generated",
 ];
 
 const DISPLAY_NAMES = [
@@ -130,11 +133,12 @@ function buildMockRows(count: number): PipelineRow[] {
     displayName: DISPLAY_NAMES[i % DISPLAY_NAMES.length],
     platform: "Instagram",
     collabStatus: COLLAB_POOL[i % COLLAB_POOL.length],
+    contract: CONTRACT_POOL[i % CONTRACT_POOL.length],
     logistics: LOGISTICS_POOL[i % LOGISTICS_POOL.length],
     script: SCRIPT_POOL[(i + 1) % SCRIPT_POOL.length],
     content: CONTENT_POOL[(i + 2) % CONTENT_POOL.length],
     posting: POSTING_POOL[(i + 3) % POSTING_POOL.length],
-    payment: PAYMENT_POOL[(i + 1) % PAYMENT_POOL.length],
+    payment: PAYMENT_POOL[(i + 4) % PAYMENT_POOL.length],
     manager: "Wolin",
     note: "Active user - Fr...",
   }));
@@ -143,7 +147,6 @@ function buildMockRows(count: number): PipelineRow[] {
 const MOCK_ROWS = buildMockRows(90);
 const INFLUENCER_CAP = 300;
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50];
-const TOTAL_CLIENT_PRICE = 80_000;
 
 function buildPageList(current: number, total: number): (number | "…")[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
@@ -285,12 +288,6 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
               <DropdownMenuItem variant="destructive">Remove Selected</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <span className="text-[12px] text-gray-500 shrink-0 hidden sm:inline">
-            Total Client Price (Incl. Tax):{" "}
-            <span className="text-gray-900 font-semibold tabular-nums">
-              $ {TOTAL_CLIENT_PRICE.toLocaleString()}
-            </span>
-          </span>
         </div>
 
         <DropdownMenu>
@@ -307,7 +304,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
 
       <div className="no-scrollbar flex-1 min-h-0 overflow-auto">
         <Table
-          className="w-full table-fixed text-[13px] border-separate border-spacing-0 [&_th]:px-3 [&_td]:px-3"
+          className="w-full table-fixed text-[13px] border-separate border-spacing-0 [&_th]:!px-6 [&_td]:!px-6"
           style={{ minWidth: PIPELINE_TABLE_MIN_WIDTH }}
         >
           <colgroup>
@@ -317,7 +314,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
           </colgroup>
           <TableHeader>
             <TableRow className="bg-gray-50/70 hover:bg-gray-50/70 border-b border-gray-100">
-              <TableHead className="!px-3">
+              <TableHead className="py-3.5 align-middle">
                 <Checkbox
                   checked={allSelected}
                   onCheckedChange={toggleAll}
@@ -331,37 +328,40 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                   }
                 />
               </TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">
+              <TableHead className="font-semibold text-gray-800 py-3.5">
                 Influencer
               </TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">
+              <TableHead className="font-semibold text-gray-800 py-3.5">
                 Collaboration Status
               </TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">
-                Logistics
-              </TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">
-                Script
-              </TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">
-                Content
-              </TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">
-                Posting
-              </TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">
-                Payment
-              </TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">
+              <TableHead className="font-semibold text-gray-800 py-3.5 !pr-10">
                 Commercial
               </TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">
+              <TableHead className="font-semibold text-gray-800 py-3.5">
+                Contract
+              </TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3.5">
+                Logistics
+              </TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3.5">
+                Script
+              </TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3.5">
+                Content
+              </TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3.5">
+                Posting
+              </TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3.5">
+                Payment
+              </TableHead>
+              <TableHead className="font-semibold text-gray-800 py-3.5">
                 KOL Manager
               </TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">
+              <TableHead className="font-semibold text-gray-800 py-3.5">
                 Internal Notes
               </TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">
+              <TableHead className="font-semibold text-gray-800 py-3.5">
                 Chat
               </TableHead>
             </TableRow>
@@ -374,11 +374,11 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                 <TableRow
                   key={row.id}
                   className={cn(
-                    "border-b border-gray-50 transition-colors group bg-white hover:bg-[#f5f8fe]",
-                    isSelected && "bg-[#e8f1fb] hover:bg-[#dce9f8]"
+                    "border-b border-gray-50 transition-colors group bg-white hover:bg-brand-row-hover",
+                    isSelected && "bg-brand-row-selected hover:bg-brand-row-selected-hover"
                   )}
                 >
-                  <TableCell className="py-3.5">
+                  <TableCell className="py-4">
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={() => toggleRow(row.id)}
@@ -386,7 +386,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                     />
                   </TableCell>
 
-                  <TableCell className="py-3.5 overflow-hidden">
+                  <TableCell className="py-4 overflow-hidden">
                     <div className="flex items-center gap-3 min-w-0">
                       <Avatar className="w-8 h-8 shrink-0">
                         <AvatarImage src="" />
@@ -415,43 +415,42 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                     </div>
                   </TableCell>
 
-                  <TableCell className="py-3.5 overflow-hidden">
+                  <TableCell className="py-4 overflow-hidden">
                     <CollabStatusSelect
                       status={row.collabStatus}
                       onChange={(next) => updateCollabStatus(row.id, next)}
                     />
                   </TableCell>
 
-                  <TableCell className="py-3.5 overflow-hidden">
+                  <TableCell className="py-4 !pr-10">
+                    <CommercialScopePopover />
+                  </TableCell>
+
+                  <TableCell className="py-4 overflow-hidden">
+                    <PipelineStageCell config={CONTRACT_STATUS_CONFIG[row.contract]} />
+                  </TableCell>
+
+                  <TableCell className="py-4 overflow-hidden">
                     <PipelineStageCell config={LOGISTICS_STATUS_CONFIG[row.logistics]} />
                   </TableCell>
 
-                  <TableCell className="py-3.5 overflow-hidden">
+                  <TableCell className="py-4 overflow-hidden">
                     <PipelineStageCell config={SCRIPT_STATUS_CONFIG[row.script]} />
                   </TableCell>
 
-                  <TableCell className="py-3.5 overflow-hidden">
+                  <TableCell className="py-4 overflow-hidden">
                     <PipelineStageCell config={CONTENT_STATUS_CONFIG[row.content]} />
                   </TableCell>
 
-                  <TableCell className="py-3.5 overflow-hidden">
+                  <TableCell className="py-4 overflow-hidden">
                     <PipelineStageCell config={POSTING_STATUS_CONFIG[row.posting]} />
                   </TableCell>
 
-                  <TableCell className="py-3.5 overflow-hidden">
+                  <TableCell className="py-4 overflow-hidden">
                     <PipelineStageCell config={PAYMENT_STATUS_CONFIG[row.payment]} />
                   </TableCell>
 
-                  <TableCell className="py-3.5">
-                    <button
-                      type="button"
-                      className="text-[13px] font-medium text-brand hover:underline"
-                    >
-                      View
-                    </button>
-                  </TableCell>
-
-                  <TableCell className="py-3.5">
+                  <TableCell className="py-4">
                     <button
                       type="button"
                       className="inline-flex items-center text-[13px] text-gray-800 hover:text-gray-900"
@@ -461,7 +460,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                     </button>
                   </TableCell>
 
-                  <TableCell className="py-3.5">
+                  <TableCell className="py-4">
                     <button
                       type="button"
                       className="text-[12px] text-brand hover:underline truncate max-w-[140px] block text-left"
@@ -470,7 +469,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                     </button>
                   </TableCell>
 
-                  <TableCell className="py-3.5">
+                  <TableCell className="py-4">
                     <button
                       type="button"
                       className="h-8 w-8 inline-flex items-center justify-center rounded-md text-brand hover:bg-brand-50 transition-colors"

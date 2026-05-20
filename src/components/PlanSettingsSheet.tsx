@@ -340,10 +340,10 @@ export function PlanSettingsSheet() {
             Cancel
           </SheetClose>
           <Button
+            variant="brand"
             onClick={handleConfirm}
             disabled={!marginValid}
-            className="h-9 flex-1 text-[13px] text-white disabled:opacity-50"
-            style={{ backgroundColor: "#023E8A" }}
+            className="h-9 flex-1 text-[13px] disabled:opacity-50"
           >
             Confirm Settings
           </Button>

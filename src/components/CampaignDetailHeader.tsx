@@ -64,14 +64,6 @@ export default function CampaignDetailHeader({
               <ChevronDown size={13} className="text-gray-400" />
             </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-[13px] border-gray-200 text-gray-700"
-            >
-              Activate
-            </Button>
-
             <DropdownMenu>
               <DropdownMenuTrigger className="inline-flex items-center h-8 px-3 rounded-md border border-gray-200 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
                 More

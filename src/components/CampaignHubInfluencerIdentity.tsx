@@ -61,7 +61,7 @@ export function CampaignHubInfluencerIdentity({
   relationship: KolRelationship;
   initials: string;
   avatarFallbackClassName: string;
-  selection: {
+  selection?: {
     checked: boolean;
     onCheckedChange: (checked: boolean) => void;
   };
@@ -75,13 +75,15 @@ export function CampaignHubInfluencerIdentity({
             {initials}
           </AvatarFallback>
         </Avatar>
-        <Checkbox
-          checked={selection.checked}
-          onCheckedChange={(checked) => selection.onCheckedChange(checked === true)}
-          onClick={(e) => e.stopPropagation()}
-          aria-label={`Select ${name}`}
-          className="absolute -left-1 -top-1 z-10 size-[18px] rounded-[4px] border-gray-300 bg-white shadow-sm data-checked:border-brand data-checked:bg-brand"
-        />
+        {selection ? (
+          <Checkbox
+            checked={selection.checked}
+            onCheckedChange={(checked) => selection.onCheckedChange(checked === true)}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`Select ${name}`}
+            className="absolute -left-1 -top-1 z-10 size-[18px] rounded-[4px] border-gray-300 bg-white shadow-sm data-checked:border-brand data-checked:bg-brand"
+          />
+        ) : null}
       </div>
       <div className="min-w-0 flex-1 pt-0.5">
         <Tooltip>

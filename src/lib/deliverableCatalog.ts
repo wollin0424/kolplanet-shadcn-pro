@@ -12,8 +12,8 @@ export type DeliverableType = {
   group: DeliverableGroup;
 };
 
-/** Picker dot: all standard items share one brand blue; add-ons share purple. `platform` is for table subtitles only. */
-const STANDARD_DOT = "#023E8A";
+/** Picker dot: standard items use brand primary (`--brand` in globals.css); add-ons use purple. */
+const STANDARD_DOT = "#1e4ed8";
 const ADDON_DOT = "#7c3aed";
 
 export const DELIVERABLE_CATALOGUE: DeliverableType[] = [
@@ -54,7 +54,7 @@ export const CURRENCIES = [
 ];
 
 export const SCOPE_SECTION_ACCENT: Record<DeliverableGroup | "custom", string> = {
-  standard: "#023E8A",
+  standard: "#1e4ed8",
   addon:    "#7c3aed",
   custom:   "#d97706",
 };

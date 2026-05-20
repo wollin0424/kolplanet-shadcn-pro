@@ -338,7 +338,7 @@ function AutoBadge() {
 // ─── Sticky cell bg helpers (left columns only) ──────────────────────────────
 const stickyBgDefault = "bg-white";
 const stickyBgHover = "group-hover:bg-[#f0f5fc]";
-const stickyBgSelected = "group-data-[selected=true]:bg-[#e8f1fb]";
+const stickyBgSelected = "group-data-[selected=true]:bg-brand-row-selected";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -437,9 +437,9 @@ export default function InfluencerTable() {
         <div className="flex-1" />
 
         <Button
+          variant="brand"
           size="sm"
-          className="h-8 gap-1.5 text-white text-[13px] px-4"
-          style={{ backgroundColor: "#023E8A" }}
+          className="h-8 gap-1.5 text-[13px] px-4"
         >
           <Plus size={14} />
           Add Influencers
@@ -548,8 +548,8 @@ export default function InfluencerTable() {
           <TableBody>
             {pageRows.map((row) => {
               const isSelected = selectedRows.has(row.id);
-              const rowBg = isSelected ? "bg-[#e8f1fb]" : "bg-white";
-              const rowHoverBg = isSelected ? "hover:bg-[#dce9f8]" : "hover:bg-[#f5f8fe]";
+              const rowBg = isSelected ? "bg-brand-row-selected" : "bg-white";
+              const rowHoverBg = isSelected ? "hover:bg-brand-row-selected-hover" : "hover:bg-brand-row-hover";
 
               return (
                 <TableRow
@@ -568,7 +568,7 @@ export default function InfluencerTable() {
                       stickyBgDefault,
                       stickyBgHover,
                       stickyBgSelected,
-                      isSelected && "bg-[#e8f1fb]"
+                      isSelected && "bg-brand-row-selected"
                     )}
                   >
                     <Checkbox
@@ -586,7 +586,7 @@ export default function InfluencerTable() {
                       stickyBgDefault,
                       stickyBgHover,
                       stickyBgSelected,
-                      isSelected && "bg-[#e8f1fb]"
+                      isSelected && "bg-brand-row-selected"
                     )}
                   >
                     <div className="flex items-center gap-3 min-w-[185px]">
