@@ -2,19 +2,17 @@
 
 import { useMemo, useState } from "react";
 import {
+  CampaignHubDetailHeader,
+  CampaignHubDetailToolbar,
+  CampaignHubToolbarActionButton,
+} from "@/components/CampaignHubDetailToolbar";
+import { CampaignHubFilterSelect } from "@/components/CampaignHubFilterSelect";
+import {
   CampaignHubInfluencerIdentity,
   type KolRelationship,
 } from "@/components/CampaignHubInfluencerIdentity";
-import { CampaignHubSelectionBar } from "@/components/CampaignHubSelectionBar";
 import { CampaignHubStepList } from "@/components/CampaignHubStepList";
 import { useHubCardSelection } from "@/hooks/useHubCardSelection";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
@@ -22,12 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import {
-  ChevronDown,
-  Copy,
-  Search,
-  Truck,
-} from "lucide-react";
+import { Copy, Download, Truck, Upload } from "lucide-react";
 
 type LogisticsCardStatus = "Awaiting Pickup" | "In Transit" | "Delivered";
 
@@ -188,37 +181,6 @@ const MOCK_CARDS: LogisticsCard[] = [
   },
 ];
 
-function FilterSelect({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: string[];
-  onChange: (v: string) => void;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className="flex h-8 min-w-[140px] items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 text-[13px] text-gray-700 transition-colors hover:bg-gray-50">
-        <span className="truncate">
-          <span className="text-gray-400">{label}: </span>
-          {value}
-        </span>
-        <ChevronDown size={14} className="shrink-0 text-gray-400" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="text-[13px]">
-        {options.map((opt) => (
-          <DropdownMenuItem key={opt} onClick={() => onChange(opt)}>
-            {opt}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 function LogisticsInfluencerCard({
   card,
   selected,
@@ -328,13 +290,14 @@ function LogisticsInfluencerCard({
 
 export default function CampaignHubLogisticsView({
   campaignId,
-  onBack: _onBack,
+  onBack,
 }: {
   campaignId: string;
   onBack: () => void;
 }) {
   const [statusFilter, setStatusFilter] = useState("All");
   const [managerFilter, setManagerFilter] = useState("All");
+  const [identityFilter, setIdentityFilter] = useState("All");
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -342,13 +305,15 @@ export default function CampaignHubLogisticsView({
     return MOCK_CARDS.filter((card) => {
       if (statusFilter !== "All" && card.status !== statusFilter) return false;
       if (managerFilter !== "All" && card.manager !== managerFilter) return false;
+      if (identityFilter !== "All" && card.relationship !== identityFilter) return false;
       if (!q) return true;
       return (
         card.name.toLowerCase().includes(q) ||
-        card.handle.toLowerCase().includes(q)
+        card.handle.toLowerCase().includes(q) ||
+        (card.legalName?.toLowerCase().includes(q) ?? false)
       );
     });
-  }, [statusFilter, managerFilter, query]);
+  }, [statusFilter, managerFilter, identityFilter, query]);
 
   const statusOptions = ["All", ...Object.keys(STATUS_BADGE)] as string[];
 
@@ -363,51 +328,58 @@ export default function CampaignHubLogisticsView({
 
   return (
     <TooltipProvider>
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
         <span className="sr-only">{campaignId}</span>
 
-        <div className="shrink-0 border-b border-gray-100 bg-gray-50/60 py-2.5">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-              <span className="shrink-0 text-[12px] font-medium text-gray-500">
-                Influencer:{" "}
-                <span className="tabular-nums text-gray-900">{filtered.length}</span>
-              </span>
-              <CampaignHubSelectionBar
-                selectedCount={selectedCount}
-                totalCount={filtered.length}
-                onSelectAll={selectAll}
-                onClear={clear}
-                onExport={handleExport}
-              />
-            </div>
-            <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2">
-              <FilterSelect
-                label="Logistics Status"
-                value={statusFilter}
-                options={statusOptions}
-                onChange={setStatusFilter}
-              />
-              <FilterSelect
-                label="KOL Manager"
-                value={managerFilter}
-                options={["All", "Wollin"]}
-                onChange={setManagerFilter}
-              />
-              <div className="relative w-full min-w-[180px] sm:w-[220px]">
-                <Search
-                  size={14}
-                  className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
+        <CampaignHubDetailHeader title="Logistics" onBack={onBack} />
+
+        <div className="shrink-0 rounded-xl border border-gray-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+          <CampaignHubDetailToolbar
+            selectedCount={selectedCount}
+            totalCount={filtered.length}
+            onSelectAll={selectAll}
+            onClear={clear}
+            onExport={handleExport}
+            searchValue={query}
+            onSearchChange={setQuery}
+            filters={
+              <>
+                <CampaignHubFilterSelect
+                  label="Logistics Status"
+                  value={statusFilter}
+                  options={statusOptions}
+                  onChange={setStatusFilter}
                 />
-                <Input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search Influencer"
-                  className="h-8 border-gray-200 bg-white pl-9 text-[13px]"
+                <CampaignHubFilterSelect
+                  label="KOL Manager"
+                  value={managerFilter}
+                  options={["All", "Wollin"]}
+                  onChange={setManagerFilter}
                 />
-              </div>
-            </div>
-          </div>
+                <CampaignHubFilterSelect
+                  label="Identity Type"
+                  value={identityFilter}
+                  options={["All", "Direct", "Manager", "MCN"]}
+                  onChange={setIdentityFilter}
+                />
+              </>
+            }
+            actions={
+              <>
+                <CampaignHubToolbarActionButton>
+                  <Upload size={13} />
+                  Import
+                </CampaignHubToolbarActionButton>
+                <CampaignHubToolbarActionButton
+                  onClick={handleExport}
+                  disabled={selectedCount === 0}
+                >
+                  <Download size={13} />
+                  Download
+                </CampaignHubToolbarActionButton>
+              </>
+            }
+          />
         </div>
 
         <div className="no-scrollbar min-h-0 flex-1 overflow-auto">
