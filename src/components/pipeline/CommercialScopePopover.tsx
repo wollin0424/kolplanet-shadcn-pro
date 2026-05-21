@@ -2,7 +2,7 @@
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { ScrollText } from "lucide-react";
+import { FileLock } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 
 export type CommercialScopeSummary = {
@@ -30,7 +30,7 @@ const DEFAULT_SUMMARY: CommercialScopeSummary = {
   footerNote: "Please verify if the scope matches the signed contract.",
 };
 
-/** Document icon + hover card for Pipeline “Commercial” column. */
+/** File-lock icon + hover card for Pipeline “Commercial” column. */
 export function CommercialScopePopover({
   summary = DEFAULT_SUMMARY,
   className,
@@ -72,7 +72,7 @@ export function CommercialScopePopover({
         )}
         aria-label="View commercial scope and financials"
       >
-        <ScrollText className="size-[18px]" strokeWidth={1.75} aria-hidden />
+        <FileLock className="size-[18px]" strokeWidth={1.75} aria-hidden />
       </PopoverTrigger>
 
       <PopoverContent

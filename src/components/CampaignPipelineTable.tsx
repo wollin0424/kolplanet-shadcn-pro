@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import CollabStatusSelect from "@/components/pipeline/CollabStatusSelect";
 import { CommercialScopePopover } from "@/components/pipeline/CommercialScopePopover";
+import { PipelineRowActionsMenu } from "@/components/pipeline/PipelineRowActionsMenu";
 import PipelineStageCell from "@/components/pipeline/PipelineStageCell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -46,7 +47,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Columns3,
-  MessageCircle,
   Pencil,
   RefreshCcw,
   Search,
@@ -91,7 +91,6 @@ const PAYMENT_POOL: PaymentStatus[] = [
 const COLLAB_POOL: CollabStatus[] = [
   "Pending",
   "Approved",
-  "Posted",
   "Done",
   "Terminated",
 ];
@@ -357,7 +356,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                 Internal Notes
               </TableHead>
               <TableHead className="font-semibold text-gray-800 py-3.5">
-                Chat
+                Action
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -448,7 +447,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                   <TableCell className="py-4">
                     <button
                       type="button"
-                      className="inline-flex items-center text-[13px] text-gray-800 hover:text-gray-900"
+                      className="inline-flex items-center text-[13px] text-gray-500 hover:text-gray-700"
                     >
                       {row.manager}
                       <ChevronDown size={12} className="ml-0.5 text-gray-400" />
@@ -475,13 +474,12 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                   </TableCell>
 
                   <TableCell className="py-4">
-                    <button
-                      type="button"
-                      className="h-8 w-8 inline-flex items-center justify-center rounded-md text-brand hover:bg-brand-50 transition-colors"
-                      aria-label="Open chat"
-                    >
-                      <MessageCircle size={16} />
-                    </button>
+                    <PipelineRowActionsMenu
+                      onAddToPayment={() => {
+                        console.log("Add to payment:", row.id);
+                      }}
+                      onTerminate={() => updateCollabStatus(row.id, "Terminated")}
+                    />
                   </TableCell>
                 </TableRow>
               );

@@ -13,7 +13,7 @@ export type DeliverableType = {
 };
 
 /** Picker dot: standard items use brand primary (`--brand` in globals.css); add-ons use purple. */
-const STANDARD_DOT = "#1e4ed8";
+const STANDARD_DOT = "#2a66e8";
 const ADDON_DOT = "#7c3aed";
 
 export const DELIVERABLE_CATALOGUE: DeliverableType[] = [
@@ -54,7 +54,7 @@ export const CURRENCIES = [
 ];
 
 export const SCOPE_SECTION_ACCENT: Record<DeliverableGroup | "custom", string> = {
-  standard: "#1e4ed8",
+  standard: "#2a66e8",
   addon:    "#7c3aed",
   custom:   "#d97706",
 };

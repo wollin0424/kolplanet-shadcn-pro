@@ -1,13 +1,13 @@
 /*
- * Brand palette — marketing / product primary blue (#1E4ED8).
+ * Brand palette — marketing / product primary blue (#2A66E8).
  * Exposed to Tailwind via @theme in app/globals.css (text-brand, bg-brand, …).
  * Prefer utilities over hex literals in components & TS (see lib/deliverableCatalog).
  */
 :root {
-  --brand: #1e4ed8;
-  --brand-50: #eef2ff;
-  --brand-100: #d9e4fc;
-  --brand-row-hover: #f5f7fd;
+  --brand: #2a66e8;
+  --brand-50: #eef3ff;
+  --brand-100: #d6e5fc;
+  --brand-row-hover: #f4f7fd;
   --brand-row-selected: var(--brand-50);
   --brand-row-selected-hover: var(--brand-100);
 }

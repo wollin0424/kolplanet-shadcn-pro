@@ -47,7 +47,7 @@ export default function PipelineStageCell({ config }: { config: StageBadgeConfig
       <span
         className={cn(
           "min-w-0 truncate transition-colors",
-          "text-gray-500 group-hover/stage:text-brand group-hover/stage:underline group-hover/stage:underline-offset-[3px] group-hover/stage:decoration-brand/40"
+          "text-gray-700 group-hover/stage:text-brand group-hover/stage:underline group-hover/stage:underline-offset-[3px] group-hover/stage:decoration-brand/40"
         )}
       >
         {config.label}

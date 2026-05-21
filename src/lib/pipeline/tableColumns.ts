@@ -12,7 +12,7 @@ export const PIPELINE_TABLE_COLUMNS = [
   { key: "payment", width: 156 },
   { key: "manager", width: 120 },
   { key: "notes", width: 168 },
-  { key: "chat", width: 60 },
+  { key: "action", width: 72 },
 ] as const;
 
 export const PIPELINE_TABLE_MIN_WIDTH = PIPELINE_TABLE_COLUMNS.reduce(

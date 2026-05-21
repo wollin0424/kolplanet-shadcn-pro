@@ -28,7 +28,7 @@ export type PaymentStatus =
   | "Waiting for Validation"
   | "Rejected";
 
-export type CollabStatus = "Pending" | "Approved" | "Posted" | "Done" | "Terminated";
+export type CollabStatus = "Pending" | "Approved" | "Done" | "Terminated";
 
 export type StageStatus =
   | ContractStatus
@@ -69,7 +69,6 @@ export function getStageToneTextClass(tone: BadgeTone) {
 export const COLLAB_STATUS_OPTIONS: CollabStatus[] = [
   "Pending",
   "Approved",
-  "Posted",
   "Done",
   "Terminated",
 ];
@@ -199,7 +198,6 @@ export const COLLAB_STATUS_CONFIG: Record<
 > = {
   Pending: { label: "Pending", tone: "amber" },
   Approved: { label: "Approved", tone: "brand" },
-  Posted: { label: "Posted", tone: "green", showCheck: true },
   Done: { label: "Done", tone: "green", showCheck: true },
   Terminated: { label: "Terminated", tone: "gray" },
 };
