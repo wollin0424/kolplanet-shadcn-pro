@@ -43,6 +43,7 @@ type ContractCard = {
   completedSteps: number;
   stepTimestamps: (string | null)[];
   fileCount: number;
+  files?: string[];
   legalName?: string;
   actionLabel: string;
 };
@@ -102,6 +103,7 @@ const MOCK_CARDS: ContractCard[] = [
       null,
     ],
     fileCount: 1,
+    files: ["IO_V1_Original (Signed 2026-03-31).pdf"],
     actionLabel: "Invite to Sign",
   },
   {
@@ -119,6 +121,7 @@ const MOCK_CARDS: ContractCard[] = [
       null,
     ],
     fileCount: 1,
+    files: ["NB_Contract_Draft_v2.pdf"],
     legalName: "342432",
     actionLabel: "Check Status",
   },
@@ -137,6 +140,7 @@ const MOCK_CARDS: ContractCard[] = [
       "Mar 23, 2025 1:45 PM",
     ],
     fileCount: 1,
+    files: ["SR_Final_Contract (Countersigned).pdf"],
     legalName: "892011",
     actionLabel: "View Final Contract",
   },
@@ -155,9 +159,16 @@ const MOCK_CARDS: ContractCard[] = [
       null,
     ],
     fileCount: 1,
+    files: ["LP_Signing_Agreement.pdf"],
     actionLabel: "Check Status",
   },
 ];
+
+function contractFiles(card: ContractCard): string[] {
+  if (card.files?.length) return card.files;
+  if (card.fileCount <= 0) return [];
+  return [`${card.name.replace(/\s+/g, "_")}_Contract.pdf`];
+}
 
 function ContractInfluencerCard({ card }: { card: ContractCard }) {
   const statusBadgeClass = STATUS_BADGE[card.status];
@@ -217,10 +228,37 @@ function ContractInfluencerCard({ card }: { card: ContractCard }) {
             <Pencil size={13} />
           </button>
         </span>
-        <span className="inline-flex shrink-0 items-center gap-1.5">
-          <FileText size={14} className="text-gray-400" />
-          {card.fileCount} {card.fileCount === 1 ? "file" : "files"}
-        </span>
+        {card.fileCount > 0 ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-gray-50 px-2 py-1 text-[12px] text-gray-500 transition-colors hover:bg-gray-100"
+                aria-label={`${card.fileCount} contract ${card.fileCount === 1 ? "file" : "files"}`}
+              >
+                <FileText size={14} className="text-gray-400" />
+                {card.fileCount} {card.fileCount === 1 ? "file" : "files"}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent variant="light" side="bottom" align="end" className="min-w-[200px]">
+              <ul className="flex flex-col gap-2">
+                {contractFiles(card).map((fileName) => (
+                  <li key={fileName} className="flex min-w-0 items-start gap-2">
+                    <FileText size={14} className="mt-0.5 shrink-0 text-gray-400" />
+                    <span className="min-w-0 font-medium leading-snug text-gray-800">
+                      {fileName}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <span className="inline-flex shrink-0 items-center gap-1.5 px-2 py-1 text-[12px] text-gray-500">
+            <FileText size={14} className="text-gray-400" />
+            0 files
+          </span>
+        )}
       </div>
 
       <div className="mt-4 flex items-stretch gap-2">

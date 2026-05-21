@@ -8,40 +8,44 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Briefcase, Building2, User, type LucideIcon } from "lucide-react";
+import { IdCard, User } from "lucide-react";
 
 export type KolRelationship = "Direct" | "Manager" | "MCN";
 
-const RELATIONSHIP_STYLE: Record<
-  KolRelationship,
-  { className: string; Icon: LucideIcon }
-> = {
-  Direct: {
-    className: "border-sky-200 bg-sky-50 text-sky-700",
-    Icon: User,
-  },
-  Manager: {
-    className: "border-violet-200 bg-violet-50 text-violet-700",
-    Icon: Briefcase,
-  },
-  MCN: {
-    className: "border-amber-200 bg-amber-50 text-amber-800",
-    Icon: Building2,
-  },
+/** Shown on hover only — icon stays neutral because type is unknown until then. */
+const RELATIONSHIP_LABEL: Record<KolRelationship, string> = {
+  Direct: "Individual",
+  Manager: "Individual / Manager",
+  MCN: "Company",
 };
 
-function KolRelationshipIcon({ relationship }: { relationship: KolRelationship }) {
-  const { className, Icon } = RELATIONSHIP_STYLE[relationship];
+const metaIconShell =
+  "inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-200 bg-gray-50 text-gray-500";
 
+const metaIconTriggerClass =
+  "inline-flex shrink-0 rounded-full outline-none transition-shadow hover:shadow-[0_0_0_3px_rgba(0,0,0,0.04)] focus-visible:ring-2 focus-visible:ring-brand/25";
+
+function HubHoverField({ label, value }: { label: string; value: string }) {
   return (
-    <span
-      className={cn(
-        "inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
-        className
-      )}
-      aria-hidden
-    >
-      <Icon size={10} strokeWidth={2.5} />
+    <div className="flex flex-col gap-0.5">
+      <span className="text-gray-400">{label}</span>
+      <span className="font-semibold text-gray-900">{value}</span>
+    </div>
+  );
+}
+
+function KolIdentityIcon() {
+  return (
+    <span className={metaIconShell} aria-hidden>
+      <IdCard size={10} strokeWidth={2.5} />
+    </span>
+  );
+}
+
+function KolManagerIcon() {
+  return (
+    <span className={metaIconShell} aria-hidden>
+      <User size={10} strokeWidth={2.5} />
     </span>
   );
 }
@@ -66,6 +70,8 @@ export function CampaignHubInfluencerIdentity({
     onCheckedChange: (checked: boolean) => void;
   };
 }) {
+  const relationshipLabel = RELATIONSHIP_LABEL[relationship];
+
   return (
     <div className="flex min-w-0 items-start gap-3">
       <div className="relative shrink-0">
@@ -86,31 +92,33 @@ export function CampaignHubInfluencerIdentity({
         ) : null}
       </div>
       <div className="min-w-0 flex-1 pt-0.5">
-        <Tooltip>
-          <TooltipTrigger
-            type="button"
-            className="flex max-w-full min-w-0 items-center gap-1 overflow-hidden rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
-            aria-label={`${name}, Cooperation: ${relationship}, KOL Manager: ${kolManager}`}
-          >
-            <span className="truncate text-[14px] font-semibold text-gray-900">{name}</span>
-            <KolRelationshipIcon relationship={relationship} />
-            <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border border-gray-200 bg-gray-50 text-[9px] font-bold uppercase text-gray-500">
-              m
-            </span>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="px-3 py-2 text-[12px]">
-            <div className="flex flex-col gap-1">
-              <p>
-                <span className="text-gray-400">Cooperation: </span>
-                <span className="font-medium text-gray-900">{relationship}</span>
-              </p>
-              <p>
-                <span className="text-gray-400">KOL Manager: </span>
-                <span className="font-medium text-gray-900">{kolManager}</span>
-              </p>
-            </div>
-          </TooltipContent>
-        </Tooltip>
+        <div className="flex max-w-full min-w-0 items-center gap-1">
+          <span className="truncate text-[14px] font-semibold text-gray-900">{name}</span>
+          <Tooltip>
+            <TooltipTrigger
+              type="button"
+              className={metaIconTriggerClass}
+              aria-label={`Identity type: ${relationshipLabel}`}
+            >
+              <KolIdentityIcon />
+            </TooltipTrigger>
+            <TooltipContent variant="light" side="bottom" align="start">
+              <HubHoverField label="Identity Type:" value={relationshipLabel} />
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              type="button"
+              className={metaIconTriggerClass}
+              aria-label={`KOL Manager: ${kolManager}`}
+            >
+              <KolManagerIcon />
+            </TooltipTrigger>
+            <TooltipContent variant="light" side="bottom" align="start">
+              <HubHoverField label="KOL Manager:" value={kolManager} />
+            </TooltipContent>
+          </Tooltip>
+        </div>
         <p className="mt-0.5 truncate text-[12px] text-gray-500">{handle}</p>
       </div>
     </div>
