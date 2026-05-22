@@ -3,9 +3,9 @@
 import type { StageBadgeConfig } from "@/lib/pipeline/stageStatuses";
 import { cn } from "@/lib/utils";
 import {
-  IconStageAlert,
-  IconStageComplete,
-  IconStagePending,
+  AlertCircle,
+  CheckCircle2,
+  CircleDashed,
 } from "@/lib/icons";
 
 /**
@@ -30,19 +30,19 @@ export default function PipelineStageCell({ config }: { config: StageBadgeConfig
       )}
     >
       {isComplete ? (
-        <IconStageComplete
+        <CheckCircle2
           className={cn(iconClass, "text-emerald-600")}
           strokeWidth={stroke}
           aria-hidden
         />
       ) : isFailed ? (
-        <IconStageAlert
+        <AlertCircle
           className={cn(iconClass, "text-red-600")}
           strokeWidth={stroke}
           aria-hidden
         />
       ) : (
-        <IconStagePending
+        <CircleDashed
           className={cn(iconClass, "text-orange-500")}
           strokeWidth={stroke}
           aria-hidden

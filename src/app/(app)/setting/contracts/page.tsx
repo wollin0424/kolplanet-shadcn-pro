@@ -1,4 +1,4 @@
-import { IconPageContracts } from "@/lib/icons";
+import { FileText } from "@/lib/icons";
 import PagePlaceholder from "@/components/PagePlaceholder";
 
 export default function ContractSettingsPage() {
@@ -6,7 +6,7 @@ export default function ContractSettingsPage() {
     <PagePlaceholder
       title="Contract Settings"
       description="Default contract templates, clauses, and signatory rules applied to new campaigns."
-      icon={<IconPageContracts size={14} strokeWidth={2} />}
+      icon={<FileText size={14} strokeWidth={2} />}
     />
   );
 }

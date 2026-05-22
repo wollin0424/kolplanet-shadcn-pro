@@ -6,7 +6,7 @@ import CampaignHub, { type HubSection } from "@/components/CampaignHub";
 import CampaignPaymentTable from "@/components/CampaignPaymentTable";
 import CampaignPipelineTable from "@/components/CampaignPipelineTable";
 import PagePlaceholder from "@/components/PagePlaceholder";
-import { IconChecklist, IconContractFile } from "@/lib/icons";
+import { CheckSquare, FileText } from "@/lib/icons";
 
 export default function CampaignDetailView({
   campaignId,
@@ -42,13 +42,13 @@ export default function CampaignDetailView({
           <PagePlaceholder
             title="Todo"
             description="Campaign todo list placeholder."
-            icon={<IconChecklist size={14} strokeWidth={2} />}
+            icon={<CheckSquare size={14} strokeWidth={2} />}
           />
         ) : (
           <PagePlaceholder
             title="Report"
             description="Report module placeholder for the campaign detail view."
-            icon={<IconContractFile size={14} strokeWidth={2} />}
+            icon={<FileText size={14} strokeWidth={2} />}
           />
         )}
       </div>

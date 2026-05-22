@@ -1,4 +1,4 @@
-import { IconPageInfluencerPayments } from "@/lib/icons";
+import { Wallet } from "@/lib/icons";
 import PagePlaceholder from "@/components/PagePlaceholder";
 
 export default function InfluencerPaymentsPage() {
@@ -6,7 +6,7 @@ export default function InfluencerPaymentsPage() {
     <PagePlaceholder
       title="Influencer Payments"
       description="Payouts to creators, tax withholding, currency conversion, and payment method management."
-      icon={<IconPageInfluencerPayments size={14} strokeWidth={2} />}
+      icon={<Wallet size={14} strokeWidth={2} />}
     />
   );
 }

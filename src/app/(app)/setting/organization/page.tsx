@@ -1,4 +1,4 @@
-import { IconPageOrganization } from "@/lib/icons";
+import { Building2 } from "@/lib/icons";
 import PagePlaceholder from "@/components/PagePlaceholder";
 
 export default function OrganizationPage() {
@@ -6,7 +6,7 @@ export default function OrganizationPage() {
     <PagePlaceholder
       title="Organization"
       description="Company profile, billing entity, tax information, and workspace-level branding."
-      icon={<IconPageOrganization size={14} strokeWidth={2} />}
+      icon={<Building2 size={14} strokeWidth={2} />}
     />
   );
 }

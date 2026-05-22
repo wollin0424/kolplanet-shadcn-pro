@@ -1,4 +1,4 @@
-import { IconPageRoles } from "@/lib/icons";
+import { ShieldCheck } from "@/lib/icons";
 import PagePlaceholder from "@/components/PagePlaceholder";
 
 export default function RolesPage() {
@@ -6,7 +6,7 @@ export default function RolesPage() {
     <PagePlaceholder
       title="Set Roles"
       description="Define what each role in your organisation can see and do — from viewing campaigns to approving payments."
-      icon={<IconPageRoles size={14} strokeWidth={2} />}
+      icon={<ShieldCheck size={14} strokeWidth={2} />}
     />
   );
 }

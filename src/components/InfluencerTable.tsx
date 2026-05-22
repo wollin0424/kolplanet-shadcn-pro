@@ -28,14 +28,14 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
-  IconChevronDown,
-  IconChevronLeft,
-  IconChevronRight,
-  IconEdit,
-  IconFilters,
-  IconLink,
-  IconPlus,
-  IconSearch,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Pencil,
+  SlidersHorizontal,
+  Link,
+  Plus,
+  Search,
 } from "@/lib/icons";
 import { VettingStatusSelect, type VettingStatus } from "./VettingStatusSelect";
 import { PlatformIcon, type Platform } from "./PlatformIcon";
@@ -414,7 +414,7 @@ export default function InfluencerTable() {
       {/* ── Toolbar ── */}
       <div className="flex items-center gap-3 px-5 py-3.5 border-b border-gray-100 shrink-0">
         <button className="flex items-center gap-1.5 text-[13px] text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg px-3 py-1.5 transition-colors hover:bg-gray-50">
-          <IconFilters size={13} />
+          <SlidersHorizontal size={13} />
           Filters
           <span className="w-4 h-4 rounded-full bg-brand text-white text-[9px] font-bold flex items-center justify-center">
             4
@@ -422,7 +422,7 @@ export default function InfluencerTable() {
         </button>
 
         <div className="relative flex-1 max-w-sm">
-          <IconSearch
+          <Search
             size={13}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
           />
@@ -441,7 +441,7 @@ export default function InfluencerTable() {
           size="sm"
           className="h-8 gap-1.5 text-[13px] px-4"
         >
-          <IconPlus size={14} />
+          <Plus size={14} />
           Add Influencers
         </Button>
       </div>
@@ -464,7 +464,7 @@ export default function InfluencerTable() {
               )}
             >
               Bulk Actions
-              <IconChevronDown size={11} />
+              <ChevronDown size={11} />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="text-[13px]">
               <DropdownMenuItem>Export Selected</DropdownMenuItem>
@@ -494,7 +494,7 @@ export default function InfluencerTable() {
             className="flex items-center gap-1 text-[12px] text-gray-600 border border-gray-200 rounded-md px-2.5 py-1 bg-white hover:bg-gray-50 transition-colors"
           >
             Visible Columns
-            <IconChevronDown size={11} />
+            <ChevronDown size={11} />
           </button>
         </div>
       </div>
@@ -626,7 +626,7 @@ export default function InfluencerTable() {
                   <TableCell className="py-4">
                     <div className="inline-flex items-center gap-1.5 border border-gray-200 rounded-md px-2.5 py-1.5 bg-gray-50 text-[13px] text-gray-700 cursor-pointer hover:border-gray-300 transition-colors">
                       {row.geo}
-                      <IconChevronDown size={11} className="text-gray-400" />
+                      <ChevronDown size={11} className="text-gray-400" />
                     </div>
                   </TableCell>
 
@@ -662,14 +662,14 @@ export default function InfluencerTable() {
                         onClick={() => setQuotesDialogOpen(true)}
                         className="text-brand text-[13px] font-medium hover:underline flex items-center gap-1"
                       >
-                        <IconLink size={11} />
+                        <Link size={11} />
                         {row.quotes}
                       </button>
                       <button
                         onClick={() => setQuotesDialogOpen(true)}
                         className="text-gray-400 hover:text-gray-600 transition-colors"
                       >
-                        <IconEdit size={11} />
+                        <Pencil size={11} />
                       </button>
                     </div>
                   </TableCell>
@@ -724,7 +724,7 @@ export default function InfluencerTable() {
                         {row.internalNotes}
                       </span>
                       <button className="shrink-0 text-gray-400 hover:text-brand transition-colors">
-                        <IconEdit size={11} />
+                        <Pencil size={11} />
                       </button>
                     </div>
                   </TableCell>
@@ -787,7 +787,7 @@ export default function InfluencerTable() {
             )}
             aria-label="Previous page"
           >
-            <IconChevronLeft size={13} />
+            <ChevronLeft size={13} />
           </button>
 
           {buildPageList(safePage, totalPages).map((p, i) =>
@@ -826,7 +826,7 @@ export default function InfluencerTable() {
             )}
             aria-label="Next page"
           >
-            <IconChevronRight size={13} />
+            <ChevronRight size={13} />
           </button>
         </div>
       </div>

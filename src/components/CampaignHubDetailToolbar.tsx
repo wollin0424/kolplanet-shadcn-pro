@@ -3,7 +3,7 @@
 import { CampaignHubSelectionBar } from "@/components/CampaignHubSelectionBar";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { IconBack, IconSearch } from "@/lib/icons";
+import { ChevronLeft, Search } from "@/lib/icons";
 import type { ReactNode } from "react";
 
 export function CampaignHubToolbarActionButton({
@@ -46,7 +46,7 @@ export function CampaignHubDetailHeader({
         onClick={onBack}
         className="inline-flex h-7 shrink-0 items-center gap-0.5 rounded-md px-1 text-[12px] font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800"
       >
-        <IconBack size={16} strokeWidth={2.25} />
+        <ChevronLeft size={16} strokeWidth={2.25} />
         Back
       </button>
 
@@ -112,7 +112,7 @@ export function CampaignHubDetailToolbar({
         ) : null}
         {filters}
         <div className="relative min-w-[200px] flex-1 sm:max-w-[260px]">
-          <IconSearch
+          <Search
             size={12}
             className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-gray-400"
           />

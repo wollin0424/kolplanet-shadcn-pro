@@ -43,14 +43,14 @@ import {
 } from "@/lib/pipeline/tableColumns";
 import { cn } from "@/lib/utils";
 import {
-  IconChevronDown,
-  IconChevronLeft,
-  IconChevronRight,
-  IconColumns,
-  IconEdit,
-  IconFilters,
-  IconRefresh,
-  IconSearch,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Columns3,
+  Pencil,
+  SlidersHorizontal,
+  RefreshCcw,
+  Search,
 } from "@/lib/icons";
 
 type PipelineRow = {
@@ -226,7 +226,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
             type="button"
             className="flex items-center gap-1.5 text-[13px] text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg px-3 py-1.5 transition-colors hover:bg-gray-50"
           >
-            <IconFilters size={13} />
+            <SlidersHorizontal size={13} />
             Filters
             <span className="w-4 h-4 rounded-full bg-brand text-white text-[9px] font-bold flex items-center justify-center">
               2
@@ -234,7 +234,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
           </button>
 
           <div className="relative w-[240px]">
-            <IconSearch
+            <Search
               size={13}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
             />
@@ -256,14 +256,14 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
             className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-transparent hover:border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
             aria-label="Refresh"
           >
-            <IconRefresh size={15} />
+            <RefreshCcw size={15} />
           </button>
           <button
             type="button"
             className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-transparent hover:border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
             aria-label="Columns"
           >
-            <IconColumns size={15} />
+            <Columns3 size={15} />
           </button>
         </div>
       </div>
@@ -284,7 +284,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
               )}
             >
               Bulk Actions
-              <IconChevronDown size={11} />
+              <ChevronDown size={11} />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="text-[13px]">
               <DropdownMenuItem>Export Selected</DropdownMenuItem>
@@ -297,7 +297,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-1 text-[12px] text-gray-600 border border-gray-200 rounded-md px-2.5 py-1 bg-white hover:bg-gray-50 transition-colors shrink-0">
             Visible Columns
-            <IconChevronDown size={11} className="text-gray-400" />
+            <ChevronDown size={11} className="text-gray-400" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="text-[13px] w-40">
             <DropdownMenuItem>Reset</DropdownMenuItem>
@@ -454,7 +454,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                       className="inline-flex items-center text-[13px] text-gray-500 hover:text-gray-700"
                     >
                       {row.manager}
-                      <IconChevronDown size={12} className="ml-0.5 text-gray-400" />
+                      <ChevronDown size={12} className="ml-0.5 text-gray-400" />
                     </button>
                   </TableCell>
 
@@ -472,7 +472,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                         )}
                         aria-label={`Edit internal note for ${row.handle}`}
                       >
-                        <IconEdit size={14} strokeWidth={2} aria-hidden />
+                        <Pencil size={14} strokeWidth={2} aria-hidden />
                       </button>
                     </div>
                   </TableCell>
@@ -504,7 +504,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
             <DropdownMenu>
               <DropdownMenuTrigger className="h-7 inline-flex items-center gap-1 rounded-md border border-gray-200 px-2 text-[12px] text-gray-700 hover:bg-gray-50">
                 {pageSize}
-                <IconChevronDown size={11} className="text-gray-400" />
+                <ChevronDown size={11} className="text-gray-400" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-24">
                 {PAGE_SIZE_OPTIONS.map((n) => (
@@ -536,7 +536,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
             )}
             aria-label="Previous page"
           >
-            <IconChevronLeft size={13} />
+            <ChevronLeft size={13} />
           </button>
 
           {buildPageList(safePage, totalPages).map((p, i) =>
@@ -577,7 +577,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
             )}
             aria-label="Next page"
           >
-            <IconChevronRight size={13} />
+            <ChevronRight size={13} />
           </button>
         </div>
       </div>

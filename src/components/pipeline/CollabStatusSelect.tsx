@@ -13,7 +13,7 @@ import {
   type CollabStatus,
 } from "@/lib/pipeline/stageStatuses";
 import { cn } from "@/lib/utils";
-import { IconChevronDown, IconHubStepCompleted } from "@/lib/icons";
+import { ChevronDown, Check } from "@/lib/icons";
 
 function CollabStatusPill({ status }: { status: CollabStatus }) {
   const config = COLLAB_STATUS_CONFIG[status];
@@ -24,7 +24,7 @@ function CollabStatusPill({ status }: { status: CollabStatus }) {
         getStageBadgeClass(config.tone)
       )}
     >
-      {config.showCheck ? <IconHubStepCompleted size={12} strokeWidth={2.6} /> : null}
+      {config.showCheck ? <Check size={12} strokeWidth={2.6} /> : null}
       {config.label}
     </span>
   );
@@ -48,10 +48,10 @@ export default function CollabStatusSelect({
         )}
       >
         {config.showCheck ? (
-          <IconHubStepCompleted size={12} strokeWidth={2.6} className="shrink-0" />
+          <Check size={12} strokeWidth={2.6} className="shrink-0" />
         ) : null}
         <span className="truncate">{config.label}</span>
-        <IconChevronDown size={12} className="opacity-65 shrink-0" />
+        <ChevronDown size={12} className="opacity-65 shrink-0" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-[200px] p-1">
         {COLLAB_STATUS_OPTIONS.map((opt) => (

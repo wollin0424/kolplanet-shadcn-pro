@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
-  IconChevronDown,
-  IconExternalLink,
-  IconMoreHorizontal,
+  ChevronDown,
+  ExternalLink,
+  MoreHorizontal,
 } from "@/lib/icons";
 
 const TABS = ["Pipeline", "Campaign Hub", "Todo", "Payment", "Report"] as const;
@@ -65,21 +65,21 @@ export default function CampaignDetailHeader({
               className="h-8 text-[13px] gap-1.5 border-gray-200 text-gray-700"
             >
               Campaign Settings
-              <IconChevronDown size={13} className="text-gray-400" />
+              <ChevronDown size={13} className="text-gray-400" />
             </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger className="inline-flex items-center h-8 px-3 rounded-md border border-gray-200 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
                 More
-                <IconChevronDown size={13} className="ml-1 text-gray-400" />
+                <ChevronDown size={13} className="ml-1 text-gray-400" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
                 <DropdownMenuItem>
-                  <IconExternalLink size={14} />
+                  <ExternalLink size={14} />
                   Open in new tab
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <IconMoreHorizontal size={14} />
+                  <MoreHorizontal size={14} />
                   More actions
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -107,7 +107,7 @@ export default function CampaignDetailHeader({
                 <span className="inline-flex items-center gap-1.5">
                   {t}
                   {t === "Report" && (
-                    <IconExternalLink size={12} className="text-gray-300" />
+                    <ExternalLink size={12} className="text-gray-300" />
                   )}
                 </span>
                 {isActive && (

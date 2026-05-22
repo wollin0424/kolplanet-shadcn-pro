@@ -1,32 +1,30 @@
-import { forwardRef } from "react";
+import { forwardRef, type ComponentType } from "react";
 import type { LucideIcon, LucideProps } from "lucide-react";
 
+export type AppIcon = ComponentType<LucideProps> & { displayName: string };
+
 /**
- * Wraps a Lucide glyph so DevTools / DOM show semantic names, not anonymous ForwardRef.
- * - React `displayName`: e.g. IconRefresh
- * - DOM `data-icon`: same semantic name (inspect in browser)
- * - DOM `data-lucide`: underlying Lucide export name, e.g. RefreshCcw
+ * Lucide glyph wrapped as a named React component (e.g. `Settings`).
+ * - React DevTools / component tree: node label is `Settings`, not `ForwardRef` or `svg`
+ * - DOM: inner node is still `<svg data-icon="Settings">` (HTML has no “Settings” tag)
  */
-export function createIcon(
-  LucideGlyph: LucideIcon,
-  semanticName: string,
-  lucideName: string
-): LucideIcon {
+export function createIcon(LucideGlyph: LucideIcon, name: string): AppIcon {
   const NamedIcon = forwardRef<SVGSVGElement, LucideProps>(function NamedLucideIcon(
-    { className, ...props },
+    props,
     ref
   ) {
     return (
-      <LucideGlyph
-        ref={ref}
-        data-icon={semanticName}
-        data-lucide={lucideName}
-        className={className}
-        {...props}
-      />
+      <span
+        data-slot={name}
+        className="inline-flex shrink-0 items-center justify-center leading-none"
+        aria-hidden
+      >
+        <LucideGlyph ref={ref} data-icon={name} {...props} />
+      </span>
     );
   });
 
-  NamedIcon.displayName = semanticName;
-  return NamedIcon as LucideIcon;
+  NamedIcon.displayName = name;
+
+  return NamedIcon as AppIcon;
 }

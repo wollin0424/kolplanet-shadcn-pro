@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState, type ReactNode } from "react";
-import { IconUpload } from "@/lib/icons";
+import { Upload } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 export type FileUploadZoneVariant = "amber" | "brand";
@@ -134,7 +134,7 @@ export function FileUploadZone({
               styles.iconBox
             )}
           >
-            <IconUpload size={18} strokeWidth={2} />
+            <Upload size={18} strokeWidth={2} />
           </span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">

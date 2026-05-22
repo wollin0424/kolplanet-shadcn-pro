@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import { Button } from "@/components/ui/button";
-import { IconDownload } from "@/lib/icons";
+import { Download } from "@/lib/icons";
 
 const ACCEPT_INPUT =
   ".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv";
@@ -73,7 +73,7 @@ export default function ImportLogisticsTemplateSheet({
                 className="h-9 gap-1.5 border-brand/30 bg-white text-[13px] font-medium text-brand hover:border-brand/50 hover:bg-brand-50/50 hover:text-brand"
                 onClick={() => console.log("Download logistics template")}
               >
-                <IconDownload size={15} />
+                <Download size={15} />
                 Download Template
               </Button>
             </div>

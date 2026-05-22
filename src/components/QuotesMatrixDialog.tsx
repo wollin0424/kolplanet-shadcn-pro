@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { IconSearch, IconTrash } from "@/lib/icons";
+import { Search, Trash2 } from "@/lib/icons";
 import { CURRENCIES, type DeliverableType } from "@/lib/deliverableCatalog";
 import { usePlanScope } from "@/context/PlanScopeContext";
 import { ScopeAddPopover } from "./ScopeAddPopover";
@@ -132,7 +132,7 @@ function ScopeItemRow({
         className="h-8 w-8 flex items-center justify-center rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
         aria-label="Remove"
       >
-        <IconTrash size={13} />
+        <Trash2 size={13} />
       </button>
     </div>
   );
@@ -312,7 +312,7 @@ export function QuotesMatrixDialog({
             {scopeRows.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 py-12">
                 <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                  <IconSearch size={18} className="text-gray-400" />
+                  <Search size={18} className="text-gray-400" />
                 </div>
                 <div className="text-center space-y-1">
                   <p className="text-[13px] font-medium text-gray-700">No scope in this matrix yet</p>

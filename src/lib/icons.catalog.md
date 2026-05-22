@@ -1,114 +1,80 @@
 # Lucide icon catalog
 
-Product code should import **semantic names** from [`icons.ts`](./icons.ts).  
-Search this file by feature name or `Lucide:` to find the underlying icon.
+Import icon **components by Lucide name** from [`icons.ts`](./icons.ts):
 
-Each export is a **named React component** (not a raw Lucide re-export):
+```tsx
+import { Settings, RefreshCcw, Truck } from "@/lib/icons";
 
-- **React DevTools** shows e.g. `IconRefresh`, not `ForwardRef`
-- **DOM** on the `<svg>`: `data-icon="IconRefresh"` and `data-lucide="RefreshCcw"`
-- **class** still includes Lucide’s `lucide lucide-refresh-ccw` for styling
+<Settings size={13} className="text-gray-500" />
+```
 
-## Campaign Hub — KOL card
+- **Export name** = **Lucide name** = **`data-icon`** on the inner SVG (e.g. `Settings`)
+- **React component tree** (DevTools / Cursor Components): parent node **`Settings`**, then `span[data-slot=Settings]` → `svg`
+- **DOM-only tree** (Design/CSS inspector): still shows `svg` → `path` — HTML has no Settings tag; check `data-icon` on the svg or select the **`Settings`** React parent one level up
 
-| Semantic export | Lucide | Where |
-|-----------------|--------|--------|
-| `IconKolIdentityType` | `Tag` | `CampaignHubInfluencerIdentity` — identity type |
-| `IconKolManager` | `UserRound` | `CampaignHubInfluencerIdentity` — KOL manager |
-| `IconHubStepCompleted` | `Check` | `CampaignHubStepList` — done step |
-| `IconHubStepScheduled` | `Clock` | `CampaignHubStepList` — scheduled step |
-| `IconHubStepActive` | `Hourglass` | `CampaignHubStepList` — in-progress step |
-| `IconContractFile` | `FileText` | Contract card file count / tooltip |
-| `IconLogisticsLog` | `Truck` | Logistics card “View Full Log” |
-| `IconEdit` | `Pencil` | Legal name, ship to, etc. |
-| `IconCopy` | `Copy` | Logistics tracking copy |
-| `IconMoreHorizontal` | `MoreHorizontal` | Contract card overflow menu |
+Do not import from `lucide-react` in feature code — add the icon to `icons.ts` via `createIcon` if missing.
 
-## Campaign Hub — overview & toolbar
+## All exports
 
-| Semantic export | Lucide | Where |
-|-----------------|--------|--------|
-| `IconHubContract` | `ScrollText` | Hub contract cell |
-| `IconHubLogistics` | `Truck` | Hub logistics cell |
-| `IconHubPayment` | `CreditCard` | Hub payment cell |
-| `IconHubScript` | `Clapperboard` | Hub script cell |
-| `IconHubContent` | `Stamp` | Hub content cell |
-| `IconHubPosting` | `Send` | Hub posting cell |
-| `IconHubGoChevron` | `ChevronRight` | Hub “Go” button |
-| `IconHubInfo` | `Info` | Hub generic info |
-| `IconHubList` | `List` | Hub list sections |
-| `IconBack` | `ChevronLeft` | Hub detail toolbar back |
-| `IconSearch` | `Search` | Hub detail search |
-| `IconChevronDown` | `ChevronDown` | Hub filters / selects |
-| `IconDownload` | `Download` | Logistics export / import template |
-| `IconUpload` | `Upload` | Logistics import |
+| Import | Typical use |
+|--------|-------------|
+| `AlertCircle` | Pipeline stage alert |
+| `Bell` | Top bar notifications |
+| `BookOpen` | Campaign guide |
+| `Building2` | Settings → organization page |
+| `Calendar` | Payment table date filter |
+| `Check` | Step done, collab status selected |
+| `CheckCircle2` | Pipeline stage complete |
+| `CheckSquare` | Campaign detail checklist |
+| `ChevronDown` | Selects, dropdowns |
+| `ChevronLeft` | Back, pagination prev |
+| `ChevronRight` | Hub go, pagination next |
+| `CircleDashed` | Pipeline stage pending |
+| `Clapperboard` | Hub script cell |
+| `Clock` | Scheduled step |
+| `Columns3` | Column picker |
+| `Copy` | Copy tracking / text |
+| `CreditCard` | Hub payment, sidebar, payout action |
+| `Download` | Export / template download |
+| `ExternalLink` | Campaign header links |
+| `FileLock` | Commercial scope lock |
+| `FileText` | Contract files, settings contracts |
+| `FolderKanban` | Sidebar projects |
+| `Hammer` | Page under construction |
+| `Hourglass` | Step in progress |
+| `Info` | Hints, hub info |
+| `Link` | Influencer link field |
+| `List` | Hub list sections |
+| `Mail` | Email contact channel |
+| `MoreHorizontal` | Row overflow menu |
+| `MoreVertical` | Payment row menu |
+| `Pencil` | Edit fields |
+| `Plus` | Add actions |
+| `Receipt` | Client payments page |
+| `RefreshCcw` | Table refresh |
+| `RotateCcw` | Payout undo |
+| `ScrollText` | Hub contract cell |
+| `Search` | Search inputs |
+| `Send` | Hub posting, outreach page |
+| `Settings` | Sidebar, plan settings |
+| `ShieldCheck` | Roles settings page |
+| `SlidersHorizontal` | Table filters |
+| `Sparkles` | AI fill in payout sheet |
+| `Stamp` | Hub content cell |
+| `Tag` | KOL identity type |
+| `Trash2` | Delete in quotes matrix |
+| `Truck` | Hub logistics, view full log |
+| `Upload` | File upload zones |
+| `UserRound` | KOL manager |
+| `Users` | Sidebar influencers |
+| `UsersRound` | Team settings page |
+| `Wallet` | Influencer payments page |
+| `X` | Close / clear |
 
-## Pipeline
+## shadcn UI (`src/components/ui/*`)
 
-| Semantic export | Lucide | Where |
-|-----------------|--------|--------|
-| `IconStageAlert` | `AlertCircle` | `PipelineStageCell` |
-| `IconStageComplete` | `CheckCircle2` | `PipelineStageCell` |
-| `IconStagePending` | `CircleDashed` | `PipelineStageCell` |
-| `IconCommercialScopeLock` | `FileLock` | `CommercialScopePopover` |
-| `IconPaymentAction` | `CreditCard` | `PipelineRowActionsMenu` |
-| `IconHubStepCompleted` | `Check` | `CollabStatusSelect` selected check |
-| `IconRefresh` | `RefreshCcw` | Pipeline / payment table refresh |
-| `IconColumns` | `Columns3` | Column visibility |
-| `IconFilters` | `SlidersHorizontal` | Pipeline / influencer filters |
-
-## Tables & dialogs
-
-| Semantic export | Lucide | Where |
-|-----------------|--------|--------|
-| `IconChevronLeft` / `IconChevronRight` | `ChevronLeft` / `ChevronRight` | Pagination |
-| `IconPlus` | `Plus` | Add row, scope, payout |
-| `IconClose` | `X` | Clear / close |
-| `IconLink` | `Link` | Influencer table link field |
-| `IconTrash` | `Trash2` | `QuotesMatrixDialog` |
-| `IconCalendar` | `Calendar` | `CampaignPaymentTable` |
-| `IconMoreVertical` | `MoreVertical` | Payment table row menu |
-| `IconInfo` | `Info` | Payout hints |
-| `IconSparkles` | `Sparkles` | `ApprovePayoutSheet` AI fill |
-| `IconUndo` | `RotateCcw` | `ApprovePayoutSheet` reset |
-| `IconChecklist` | `CheckSquare` | `CampaignDetailView` |
-| `IconExternalLink` | `ExternalLink` | `CampaignDetailHeader` |
-| `IconGuide` | `BookOpen` | `CampaignHeader` |
-
-## App shell & pages
-
-| Semantic export | Lucide | Where |
-|-----------------|--------|--------|
-| `IconNavInfluencers` | `Users` | Sidebar, influencer page |
-| `IconNavProjects` | `FolderKanban` | Sidebar |
-| `IconNavPayments` | `CreditCard` | Sidebar |
-| `IconNavSettings` | `Settings` | Sidebar, `PlanSettingsSheet` |
-| `IconNotifications` | `Bell` | `TopBar` |
-| `IconMail` | `Mail` | `ContactChannels` |
-| `IconUnderConstruction` | `Hammer` | `PagePlaceholder` |
-| `IconPageTeam` | `UsersRound` | Settings → team |
-| `IconPageOrganization` | `Building2` | Settings → organization |
-| `IconPageContracts` | `FileText` | Settings → contracts |
-| `IconPageRoles` | `ShieldCheck` | Settings → roles |
-| `IconPageInfluencerPayments` | `Wallet` | Payments → influencer |
-| `IconPageClientPayments` | `Receipt` | Payments → client |
-| `IconPageOutreach` | `Send` | Projects → outreach |
-
-## shadcn UI primitives (direct `lucide-react`)
-
-These stay in `src/components/ui/*` with Lucide’s `*Icon` names:
-
-| File | Lucide |
-|------|--------|
-| `checkbox.tsx` | `CheckIcon` |
-| `command.tsx` | `SearchIcon`, `CheckIcon` |
-| `dialog.tsx`, `sheet.tsx` | `XIcon` |
-| `dropdown-menu.tsx` | `ChevronRightIcon`, `CheckIcon` |
-| `pagination.tsx` | `ChevronLeftIcon`, `ChevronRightIcon`, `MoreHorizontalIcon` |
-| `select.tsx` | `ChevronDownIcon`, `CheckIcon`, `ChevronUpIcon` |
+Keep Lucide `*Icon` imports in primitives only (`CheckIcon`, `XIcon`, …).
 
 ## Non-Lucide
 
-| Component | Notes |
-|-----------|--------|
-| `PlatformIcon.tsx` | Custom SVG per platform (IG, TT, YT, FB) |
+`PlatformIcon.tsx` — custom SVG per platform (IG, TT, YT, FB).

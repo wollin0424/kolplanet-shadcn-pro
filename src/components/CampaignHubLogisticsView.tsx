@@ -22,11 +22,11 @@ import { useHubCardSelection } from "@/hooks/useHubCardSelection";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
-  IconCopy,
-  IconDownload,
-  IconEdit,
-  IconLogisticsLog,
-  IconUpload,
+  Copy,
+  Download,
+  Pencil,
+  Truck,
+  Upload,
 } from "@/lib/icons";
 
 type LogisticsCardStatus = "Awaiting Pickup" | "In Transit" | "Delivered";
@@ -291,7 +291,7 @@ function LogisticsInfluencerCard({
             className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-white hover:text-gray-700"
             aria-label="Copy tracking number"
           >
-            <IconCopy size={13} />
+            <Copy size={13} />
           </button>
         ) : null}
       </div>
@@ -316,10 +316,10 @@ function LogisticsInfluencerCard({
             className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
             aria-label="Edit shipping details"
           >
-            <IconEdit size={13} />
+            <Pencil size={13} />
           </button>
         </span>
-        <CampaignHubCardMetaAction icon={IconLogisticsLog} className="whitespace-nowrap">
+        <CampaignHubCardMetaAction icon={Truck} className="whitespace-nowrap">
           View Full Log
         </CampaignHubCardMetaAction>
       </div>
@@ -430,14 +430,14 @@ export default function CampaignHubLogisticsView({
             actions={
               <>
                 <CampaignHubToolbarActionButton onClick={() => setImportOpen(true)}>
-                  <IconUpload size={13} />
+                  <Upload size={13} />
                   Import
                 </CampaignHubToolbarActionButton>
                 <CampaignHubToolbarActionButton
                   onClick={handleExport}
                   disabled={selectedCount === 0}
                 >
-                  <IconDownload size={13} />
+                  <Download size={13} />
                   Download
                 </CampaignHubToolbarActionButton>
               </>

@@ -1,6 +1,6 @@
 "use client";
 
-import { IconMail } from "@/lib/icons";
+import { Mail } from "@/lib/icons";
 
 export type ContactChannel = "Email" | "WhatsApp" | "Telegram" | "Line" | "Viber";
 
@@ -22,7 +22,7 @@ function EmailIcon({ size = SIZE }: { size?: number }) {
       aria-label="Email"
       title="Email"
     >
-      <IconMail size={Math.round(size * 0.55)} strokeWidth={2} />
+      <Mail size={Math.round(size * 0.55)} strokeWidth={2} />
     </span>
   );
 }

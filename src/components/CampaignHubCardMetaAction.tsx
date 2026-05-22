@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { LucideIcon } from "@/lib/icons";
+import type { AppIcon } from "@/lib/icons";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 /** Secondary chip action on Contract / Logistics influencer cards (e.g. files, view log). */
@@ -11,7 +11,7 @@ export function CampaignHubCardMetaAction({
   className,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
-  icon: LucideIcon;
+  icon: AppIcon;
   children: ReactNode;
 }) {
   return (

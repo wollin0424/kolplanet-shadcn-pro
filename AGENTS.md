@@ -6,8 +6,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Icons (Lucide)
 
-- Product / page components: import semantic icon **components** from `@/lib/icons` (e.g. `<IconRefresh />` → Lucide `RefreshCcw`).
-- Icons are wrapped with `displayName` + `data-icon` / `data-lucide` on the SVG for DevTools and DOM inspection.
-- Lookup: `src/lib/icons.catalog.md` lists semantic name, Lucide name, and usage.
-- Do not import `lucide-react` directly in feature code; add `createIcon(...)` in `src/lib/icons.ts` first.
+- Product / page components: import Lucide-named icons from `@/lib/icons` (e.g. `Settings`, `RefreshCcw` — same names as lucide-react).
+- Each export sets `displayName` and `data-icon` to that Lucide name for DevTools / DOM inspection.
+- Lookup: `src/lib/icons.catalog.md`.
+- Do not import `lucide-react` directly in feature code; add `createIcon(LucideX, "X")` in `src/lib/icons.ts` if missing.
 - shadcn primitives under `src/components/ui/*` may keep Lucide `*Icon` imports.

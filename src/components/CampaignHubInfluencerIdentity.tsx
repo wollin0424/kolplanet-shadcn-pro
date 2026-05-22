@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
-  IconKolIdentityType,
-  IconKolManager,
-  type LucideIcon,
+  Tag,
+  UserRound,
+  type AppIcon,
 } from "@/lib/icons";
 
 export type KolRelationship = "Direct" | "Manager" | "MCN";
@@ -40,7 +40,7 @@ function KolMetaIcon({
   icon: Icon,
   variant,
 }: {
-  icon: LucideIcon;
+  icon: AppIcon;
   variant: keyof typeof metaIconVariantClass;
 }) {
   return (
@@ -109,7 +109,7 @@ export function CampaignHubInfluencerIdentity({
               className={metaIconTriggerClass}
               aria-label={`Identity type: ${relationshipLabel}`}
             >
-              <KolMetaIcon icon={IconKolIdentityType} variant="identity" />
+              <KolMetaIcon icon={Tag} variant="identity" />
             </TooltipTrigger>
             <TooltipContent variant="light" side="bottom" align="start">
               <HubHoverField label="Identity Type: " value={relationshipLabel} />
@@ -121,7 +121,7 @@ export function CampaignHubInfluencerIdentity({
               className={metaIconTriggerClass}
               aria-label={`KOL Manager: ${kolManager}`}
             >
-              <KolMetaIcon icon={IconKolManager} variant="manager" />
+              <KolMetaIcon icon={UserRound} variant="manager" />
             </TooltipTrigger>
             <TooltipContent variant="light" side="bottom" align="start">
               <HubHoverField label="KOL Manager: " value={kolManager} />

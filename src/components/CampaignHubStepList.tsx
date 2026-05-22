@@ -2,9 +2,9 @@
 
 import { cn } from "@/lib/utils";
 import {
-  IconHubStepActive,
-  IconHubStepCompleted,
-  IconHubStepScheduled,
+  Hourglass,
+  Check,
+  Clock,
 } from "@/lib/icons";
 
 type CampaignHubStepListProps = {
@@ -43,7 +43,7 @@ export function CampaignHubStepList({
     inferActiveStep
   );
   const ActiveIcon =
-    activeIcon === "hourglass" ? IconHubStepActive : IconHubStepScheduled;
+    activeIcon === "hourglass" ? Hourglass : Clock;
 
   return (
     <ul className="flex flex-col">
@@ -83,7 +83,7 @@ export function CampaignHubStepList({
               )}
             >
               {done ? (
-                <IconHubStepCompleted size={12} strokeWidth={2.5} />
+                <Check size={12} strokeWidth={2.5} />
               ) : active ? (
                 <ActiveIcon size={11} strokeWidth={2.5} />
               ) : (

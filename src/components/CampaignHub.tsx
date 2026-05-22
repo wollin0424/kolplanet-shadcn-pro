@@ -6,16 +6,16 @@ import type { CampaignTab } from "@/components/CampaignDetailHeader";
 import { cn } from "@/lib/utils";
 import { useState, type MouseEvent } from "react";
 import {
-  IconHubContent,
-  IconHubContract,
-  IconHubGoChevron,
-  IconHubInfo,
-  IconHubList,
-  IconHubLogistics,
-  IconHubPayment,
-  IconHubPosting,
-  IconHubScript,
-  type LucideIcon,
+  Stamp,
+  ScrollText,
+  ChevronRight,
+  Info,
+  List,
+  Truck,
+  CreditCard,
+  Send,
+  Clapperboard,
+  type AppIcon,
 } from "@/lib/icons";
 import type { ReactNode } from "react";
 
@@ -43,7 +43,7 @@ const statusToneClass: Record<StatusTone, string> = {
 function HubCountBadge({ count }: { count: number }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-amber-200/80 bg-amber-50 px-2.5 py-1 text-[12px] font-semibold text-amber-700">
-      <IconHubList size={12} className="opacity-75" />
+      <List size={12} className="opacity-75" />
       {count}
     </span>
   );
@@ -57,7 +57,7 @@ function HubGoButton({ onClick }: { onClick?: (e: MouseEvent<HTMLButtonElement>)
       className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-[13px] font-medium text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50"
     >
       Go
-      <IconHubGoChevron size={14} strokeWidth={2.5} />
+      <ChevronRight size={14} strokeWidth={2.5} />
     </button>
   );
 }
@@ -100,7 +100,7 @@ function HubCell({
   onEnter,
 }: {
   title: string;
-  icon: LucideIcon;
+  icon: AppIcon;
   iconClassName: string;
   badgeCount: number;
   children: ReactNode;
@@ -144,7 +144,7 @@ function HubCell({
           </span>
           <span className="flex min-w-0 items-center gap-1.5">
             <h3 className="truncate text-[14px] font-semibold text-gray-900">{title}</h3>
-            <IconHubInfo size={14} className="shrink-0 text-gray-300" aria-hidden />
+            <Info size={14} className="shrink-0 text-gray-300" aria-hidden />
           </span>
         </div>
         <HubCountBadge count={badgeCount} />
@@ -296,7 +296,7 @@ export default function CampaignHub({
       <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-3 gap-4">
         <HubCell
           title="Contract"
-          icon={IconHubContent}
+          icon={Stamp}
           iconClassName="bg-sky-50 text-sky-600"
           badgeCount={5}
           onEnter={openContract}
@@ -307,7 +307,7 @@ export default function CampaignHub({
 
         <HubCell
           title="Logistics"
-          icon={IconHubLogistics}
+          icon={Truck}
           iconClassName="bg-emerald-50 text-emerald-600"
           badgeCount={4}
           onEnter={openLogistics}
@@ -332,7 +332,7 @@ export default function CampaignHub({
 
         <HubCell
           title="Payment"
-          icon={IconHubPayment}
+          icon={CreditCard}
           iconClassName="bg-violet-50 text-violet-600"
           badgeCount={7}
           onGo={() => onNavigate?.("Payment")}
@@ -355,7 +355,7 @@ export default function CampaignHub({
 
         <HubCell
           title="Script"
-          icon={IconHubContract}
+          icon={ScrollText}
           iconClassName="bg-sky-50 text-sky-600"
           badgeCount={5}
           onGo={() => onNavigate?.("Pipeline")}
@@ -376,7 +376,7 @@ export default function CampaignHub({
 
         <HubCell
           title="Content"
-          icon={IconHubScript}
+          icon={Clapperboard}
           iconClassName="bg-amber-50 text-amber-600"
           badgeCount={6}
           onGo={() => onNavigate?.("Pipeline")}
@@ -397,7 +397,7 @@ export default function CampaignHub({
 
         <HubCell
           title="Posting"
-          icon={IconHubPosting}
+          icon={Send}
           iconClassName="bg-emerald-50 text-emerald-600"
           badgeCount={7}
           onGo={() => onNavigate?.("Pipeline")}

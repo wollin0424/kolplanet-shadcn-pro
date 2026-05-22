@@ -10,11 +10,11 @@ import { cn } from "@/lib/utils";
 import AddInstallmentDialog from "@/components/AddInstallmentDialog";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import {
-  IconContractFile,
-  IconInfo,
-  IconPlus,
-  IconSparkles,
-  IconUndo,
+  FileText,
+  Info,
+  Plus,
+  Sparkles,
+  RotateCcw,
 } from "@/lib/icons";
 
 const CURRENCY = "USD";
@@ -75,7 +75,7 @@ function InstallmentStatusBadge({ status }: { status: InstallmentStatus }) {
       )}
     >
       {config.label}
-      {status === "failed" ? <IconInfo size={12} className="opacity-80" /> : null}
+      {status === "failed" ? <Info size={12} className="opacity-80" /> : null}
     </span>
   );
 }
@@ -160,7 +160,7 @@ function InstallmentRow({
             type="button"
             className="inline-flex items-center gap-1 rounded px-1 py-0.5 text-[11px] text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
           >
-            <IconUndo size={12} />
+            <RotateCcw size={12} />
             Void
           </button>
         ) : null}
@@ -389,7 +389,7 @@ export default function ApprovePayoutSheet({
                     className="flex w-full items-center gap-3 py-2 text-left transition-colors hover:text-brand"
                   >
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-50 text-gray-500">
-                      <IconContractFile size={15} />
+                      <FileText size={15} />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-[11px] text-gray-400">
@@ -465,7 +465,7 @@ export default function ApprovePayoutSheet({
                   onClick={() => setAddInstallmentOpen(true)}
                   className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 bg-white text-[13px] font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50"
                 >
-                  <IconPlus size={14} className="text-gray-600" />
+                  <Plus size={14} className="text-gray-600" />
                   Add Installment
                 </button>
               </PanelCard>
@@ -483,7 +483,7 @@ export default function ApprovePayoutSheet({
                   variant="amber"
                   badge={
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-100/80 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
-                      <IconSparkles size={10} />
+                      <Sparkles size={10} />
                       AI Fast Fill Enabled
                     </span>
                   }

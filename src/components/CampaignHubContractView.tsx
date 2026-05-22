@@ -28,7 +28,7 @@ import {
   CampaignHubCardMetaAction,
   campaignHubCardMetaActionMutedClass,
 } from "@/components/CampaignHubCardMetaAction";
-import { IconContractFile, IconEdit, IconMoreHorizontal } from "@/lib/icons";
+import { FileText, Pencil, MoreHorizontal } from "@/lib/icons";
 
 type ContractCardStatus =
   | "Awaiting Info"
@@ -227,7 +227,7 @@ function ContractInfluencerCard({ card }: { card: ContractCard }) {
             className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
             aria-label="Edit legal name"
           >
-            <IconEdit size={13} />
+            <Pencil size={13} />
           </button>
         </span>
         {card.fileCount > 0 ? (
@@ -235,7 +235,7 @@ function ContractInfluencerCard({ card }: { card: ContractCard }) {
             <TooltipTrigger
               render={
                 <CampaignHubCardMetaAction
-                  icon={IconContractFile}
+                  icon={FileText}
                   aria-label={`${card.fileCount} contract ${card.fileCount === 1 ? "file" : "files"}`}
                 >
                   {card.fileCount} {card.fileCount === 1 ? "file" : "files"}
@@ -246,7 +246,7 @@ function ContractInfluencerCard({ card }: { card: ContractCard }) {
               <ul className="flex flex-col gap-2">
                 {contractFiles(card).map((fileName) => (
                   <li key={fileName} className="flex min-w-0 items-start gap-2">
-                    <IconContractFile size={14} className="mt-0.5 shrink-0 text-gray-400" />
+                    <FileText size={14} className="mt-0.5 shrink-0 text-gray-400" />
                     <span className="min-w-0 font-medium leading-snug text-gray-800">
                       {fileName}
                     </span>
@@ -257,7 +257,7 @@ function ContractInfluencerCard({ card }: { card: ContractCard }) {
           </Tooltip>
         ) : (
           <span className={campaignHubCardMetaActionMutedClass}>
-            <IconContractFile size={14} className="shrink-0 text-gray-400" aria-hidden />
+            <FileText size={14} className="shrink-0 text-gray-400" aria-hidden />
             0 files
           </span>
         )}
@@ -275,7 +275,7 @@ function ContractInfluencerCard({ card }: { card: ContractCard }) {
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition-colors hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
             aria-label="More actions"
           >
-            <IconMoreHorizontal size={16} />
+            <MoreHorizontal size={16} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52 text-[13px]">
             <DropdownMenuItem>View contract history</DropdownMenuItem>

@@ -5,11 +5,11 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
-  IconChevronDown,
-  IconNavInfluencers,
-  IconNavPayments,
-  IconNavProjects,
-  IconNavSettings,
+  ChevronDown,
+  Users,
+  CreditCard,
+  FolderKanban,
+  Settings,
 } from "@/lib/icons";
 
 type NavItem = {
@@ -22,12 +22,12 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     label: "Influencer",
-    icon: <IconNavInfluencers size={16} strokeWidth={2} />,
+    icon: <Users size={16} strokeWidth={2} />,
     href: "/influencer",
   },
   {
     label: "Projects",
-    icon: <IconNavProjects size={16} strokeWidth={2} />,
+    icon: <FolderKanban size={16} strokeWidth={2} />,
     children: [
       { label: "Plans", href: "/projects/plans" },
       { label: "Outreach", href: "/projects/outreach" },
@@ -36,7 +36,7 @@ const navItems: NavItem[] = [
   },
   {
     label: "My Payments",
-    icon: <IconNavPayments size={16} strokeWidth={2} />,
+    icon: <CreditCard size={16} strokeWidth={2} />,
     children: [
       { label: "Client Billing", href: "/payments/client" },
       { label: "Influencer Payments", href: "/payments/influencer" },
@@ -44,7 +44,7 @@ const navItems: NavItem[] = [
   },
   {
     label: "Setting",
-    icon: <IconNavSettings size={16} strokeWidth={2} />,
+    icon: <Settings size={16} strokeWidth={2} />,
     children: [
       { label: "Set Roles", href: "/setting/roles" },
       { label: "Team", href: "/setting/team" },
@@ -147,7 +147,7 @@ export default function Sidebar() {
                   <span className="text-gray-500">{item.icon}</span>
                   {item.label}
                 </span>
-                <IconChevronDown
+                <ChevronDown
                   size={13}
                   strokeWidth={2.2}
                   className={cn(

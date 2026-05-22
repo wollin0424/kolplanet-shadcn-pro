@@ -17,7 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { FileUploadZone } from "@/components/FileUploadZone";
-import { IconCopy } from "@/lib/icons";
+import { Copy } from "@/lib/icons";
 
 type Tab = "Collaboration Details" | "KOL Information";
 
@@ -499,7 +499,7 @@ export default function ContractInfoSheet({
                     </a>
                   </span>
                   <button className="text-[11px] text-gray-500 hover:text-gray-700 inline-flex items-center gap-1">
-                    <IconCopy size={12} />
+                    <Copy size={12} />
                     Copy
                   </button>
                 </div>
