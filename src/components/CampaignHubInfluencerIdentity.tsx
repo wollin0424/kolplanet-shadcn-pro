@@ -8,7 +8,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { IdCard, User } from "lucide-react";
+import {
+  IconKolIdentityType,
+  IconKolManager,
+  type LucideIcon,
+} from "@/lib/icons";
 
 export type KolRelationship = "Direct" | "Manager" | "MCN";
 
@@ -19,11 +23,32 @@ const RELATIONSHIP_LABEL: Record<KolRelationship, string> = {
   MCN: "Company",
 };
 
-const metaIconShell =
-  "inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-200 bg-gray-50 text-gray-500";
+const metaIconBase =
+  "inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border transition-colors";
+
+const metaIconVariantClass = {
+  identity:
+    "border-violet-200 bg-violet-50 text-violet-600 group-hover:border-violet-300 group-hover:bg-violet-100",
+  manager:
+    "border-brand-100 bg-brand-50 text-brand group-hover:border-brand-200 group-hover:bg-brand-100",
+} as const;
 
 const metaIconTriggerClass =
-  "inline-flex shrink-0 rounded-full outline-none transition-shadow hover:shadow-[0_0_0_3px_rgba(0,0,0,0.04)] focus-visible:ring-2 focus-visible:ring-brand/25";
+  "group inline-flex shrink-0 rounded-full outline-none transition-shadow hover:shadow-[0_0_0_3px_rgba(0,0,0,0.04)] focus-visible:ring-2 focus-visible:ring-brand/25";
+
+function KolMetaIcon({
+  icon: Icon,
+  variant,
+}: {
+  icon: LucideIcon;
+  variant: keyof typeof metaIconVariantClass;
+}) {
+  return (
+    <span className={cn(metaIconBase, metaIconVariantClass[variant])} aria-hidden>
+      <Icon size={12} strokeWidth={2} />
+    </span>
+  );
+}
 
 function HubHoverField({ label, value }: { label: string; value: string }) {
   return (
@@ -31,22 +56,6 @@ function HubHoverField({ label, value }: { label: string; value: string }) {
       <span className="text-gray-400">{label}</span>
       <span className="font-semibold text-gray-900">{value}</span>
     </div>
-  );
-}
-
-function KolIdentityIcon() {
-  return (
-    <span className={metaIconShell} aria-hidden>
-      <IdCard size={10} strokeWidth={2.5} />
-    </span>
-  );
-}
-
-function KolManagerIcon() {
-  return (
-    <span className={metaIconShell} aria-hidden>
-      <User size={10} strokeWidth={2.5} />
-    </span>
   );
 }
 
@@ -100,10 +109,10 @@ export function CampaignHubInfluencerIdentity({
               className={metaIconTriggerClass}
               aria-label={`Identity type: ${relationshipLabel}`}
             >
-              <KolIdentityIcon />
+              <KolMetaIcon icon={IconKolIdentityType} variant="identity" />
             </TooltipTrigger>
             <TooltipContent variant="light" side="bottom" align="start">
-              <HubHoverField label="Identity Type:" value={relationshipLabel} />
+              <HubHoverField label="Identity Type: " value={relationshipLabel} />
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -112,10 +121,10 @@ export function CampaignHubInfluencerIdentity({
               className={metaIconTriggerClass}
               aria-label={`KOL Manager: ${kolManager}`}
             >
-              <KolManagerIcon />
+              <KolMetaIcon icon={IconKolManager} variant="manager" />
             </TooltipTrigger>
             <TooltipContent variant="light" side="bottom" align="start">
-              <HubHoverField label="KOL Manager:" value={kolManager} />
+              <HubHoverField label="KOL Manager: " value={kolManager} />
             </TooltipContent>
           </Tooltip>
         </div>

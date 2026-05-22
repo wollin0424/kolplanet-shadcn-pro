@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, BookOpen } from "lucide-react";
+import { IconEdit, IconGuide } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { PlanSettingsSheet } from "@/components/PlanSettingsSheet";
 
@@ -17,7 +17,7 @@ export default function CampaignHeader() {
               Domino&apos;s Q2 Mega Campaign SG
             </h1>
             <button className="text-gray-400 hover:text-gray-600 transition-colors">
-              <Pencil size={14} />
+              <IconEdit size={14} />
             </button>
             <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600 border border-gray-200">
               IN
@@ -46,7 +46,7 @@ export default function CampaignHeader() {
             size="sm"
             className="h-8 text-[13px] gap-1.5 border-gray-200 text-gray-700"
           >
-            <BookOpen size={13} />
+            <IconGuide size={13} />
             Planning Resource
           </Button>
         </div>

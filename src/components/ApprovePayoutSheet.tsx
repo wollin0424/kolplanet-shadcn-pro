@@ -8,7 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import AddInstallmentDialog from "@/components/AddInstallmentDialog";
-import { FileText, Info, Plus, RotateCcw, Sparkles, Upload } from "lucide-react";
+import { FileUploadZone } from "@/components/FileUploadZone";
+import {
+  IconContractFile,
+  IconInfo,
+  IconPlus,
+  IconSparkles,
+  IconUndo,
+} from "@/lib/icons";
 
 const CURRENCY = "USD";
 const CONTRACT_TOTAL = 10_000;
@@ -68,7 +75,7 @@ function InstallmentStatusBadge({ status }: { status: InstallmentStatus }) {
       )}
     >
       {config.label}
-      {status === "failed" ? <Info size={12} className="opacity-80" /> : null}
+      {status === "failed" ? <IconInfo size={12} className="opacity-80" /> : null}
     </span>
   );
 }
@@ -153,7 +160,7 @@ function InstallmentRow({
             type="button"
             className="inline-flex items-center gap-1 rounded px-1 py-0.5 text-[11px] text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
           >
-            <RotateCcw size={12} />
+            <IconUndo size={12} />
             Void
           </button>
         ) : null}
@@ -382,7 +389,7 @@ export default function ApprovePayoutSheet({
                     className="flex w-full items-center gap-3 py-2 text-left transition-colors hover:text-brand"
                   >
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-50 text-gray-500">
-                      <FileText size={15} />
+                      <IconContractFile size={15} />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-[11px] text-gray-400">
@@ -458,7 +465,7 @@ export default function ApprovePayoutSheet({
                   onClick={() => setAddInstallmentOpen(true)}
                   className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 bg-white text-[13px] font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50"
                 >
-                  <Plus size={14} className="text-gray-600" />
+                  <IconPlus size={14} className="text-gray-600" />
                   Add Installment
                 </button>
               </PanelCard>
@@ -470,30 +477,17 @@ export default function ApprovePayoutSheet({
               />
 
               <PanelCard className="p-6 flex flex-col gap-6">
-                <button
-                  type="button"
-                  className="w-full rounded-lg border-2 border-dashed border-amber-200/90 bg-amber-50/30 p-4 text-left transition-colors hover:border-amber-300 hover:bg-amber-50/50"
-                >
-                <div className="flex items-start gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white border border-amber-100 text-amber-600">
-                    <Upload size={18} />
-                  </span>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[13px] font-semibold text-amber-800">
-                        Upload Invoice
-                      </span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100/80 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
-                        <Sparkles size={10} />
-                        AI Fast Fill Enabled
-                      </span>
-                    </div>
-                    <p className="mt-1 text-[11px] text-gray-500">
-                      Drop file or click to upload — fields below will auto-fill when ready.
-                    </p>
-                  </div>
-                </div>
-                </button>
+                <FileUploadZone
+                  title="Upload Invoice"
+                  hint="Drop file or click to upload — fields below will auto-fill when ready."
+                  variant="amber"
+                  badge={
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100/80 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+                      <IconSparkles size={10} />
+                      AI Fast Fill Enabled
+                    </span>
+                  }
+                />
 
                 <div className="pt-6 border-t border-gray-100 grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">

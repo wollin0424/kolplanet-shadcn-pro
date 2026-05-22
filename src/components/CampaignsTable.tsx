@@ -28,12 +28,12 @@ import {
 import { cn } from "@/lib/utils";
 import { PlatformIcon, type Platform } from "@/components/PlatformIcon";
 import {
-  ChevronLeft,
-  ChevronRight,
-  MoreHorizontal,
-  Plus,
-  Search,
-} from "lucide-react";
+  IconChevronLeft,
+  IconChevronRight,
+  IconMoreHorizontal,
+  IconPlus,
+  IconSearch,
+} from "@/lib/icons";
 
 type CampaignStatus = "Active" | "New" | "Draft" | "Terminated";
 
@@ -357,7 +357,7 @@ export default function CampaignsTable() {
         </Select>
 
         <div className="relative flex-1 max-w-sm ml-1">
-          <Search
+          <IconSearch
             size={13}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
           />
@@ -379,7 +379,7 @@ export default function CampaignsTable() {
           size="sm"
           className="h-8 gap-1.5 text-[13px] px-4"
         >
-          <Plus size={14} />
+          <IconPlus size={14} />
           New Campaign
         </Button>
       </div>
@@ -516,7 +516,7 @@ export default function CampaignsTable() {
                       onClick={(e) => e.stopPropagation()}
                       className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-transparent hover:border-gray-200 hover:bg-gray-50 transition-colors text-gray-500"
                     >
-                      <MoreHorizontal size={16} />
+                      <IconMoreHorizontal size={16} />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40">
                       <DropdownMenuItem>Open</DropdownMenuItem>
@@ -577,7 +577,7 @@ export default function CampaignsTable() {
             )}
             aria-label="Previous page"
           >
-            <ChevronLeft size={13} />
+            <IconChevronLeft size={13} />
           </button>
 
           {buildPageList(safePage, totalPages).map((p, i) =>
@@ -614,7 +614,7 @@ export default function CampaignsTable() {
             )}
             aria-label="Next page"
           >
-            <ChevronRight size={13} />
+            <IconChevronRight size={13} />
           </button>
         </div>
       </div>

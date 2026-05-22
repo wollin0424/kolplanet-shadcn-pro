@@ -16,7 +16,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Copy, Upload } from "lucide-react";
+import { FileUploadZone } from "@/components/FileUploadZone";
+import { IconCopy } from "@/lib/icons";
 
 type Tab = "Collaboration Details" | "KOL Information";
 
@@ -112,25 +113,6 @@ function SubtleCard({ children }: { children: React.ReactNode }) {
     <div className="rounded-xl border border-gray-100 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)] p-4">
       {children}
     </div>
-  );
-}
-
-function UploadCard({ label, hint }: { label: string; hint: string }) {
-  return (
-    <button
-      type="button"
-      className="w-full text-left rounded-xl border border-gray-100 bg-gradient-to-r from-amber-50/40 to-white p-4 hover:bg-gray-50 transition-colors"
-    >
-      <div className="flex items-start gap-3">
-        <span className="w-9 h-9 rounded-lg bg-white border border-amber-100 flex items-center justify-center text-amber-700">
-          <Upload size={16} />
-        </span>
-        <div className="min-w-0">
-          <div className="text-[12px] font-semibold text-amber-700">{label}</div>
-          <div className="mt-1 text-[11px] text-gray-500 leading-relaxed">{hint}</div>
-        </div>
-      </div>
-    </button>
   );
 }
 
@@ -517,7 +499,7 @@ export default function ContractInfoSheet({
                     </a>
                   </span>
                   <button className="text-[11px] text-gray-500 hover:text-gray-700 inline-flex items-center gap-1">
-                    <Copy size={12} />
+                    <IconCopy size={12} />
                     Copy
                   </button>
                 </div>
@@ -550,23 +532,11 @@ export default function ContractInfoSheet({
                     </Select>
                   </div>
 
-                  <div className="rounded-xl border border-gray-100 bg-brand-50/35 p-4">
-                    <div className="flex items-start gap-3">
-                      <span className="w-9 h-9 rounded-lg bg-white border border-brand-100 flex items-center justify-center text-brand">
-                        <Upload size={16} />
-                      </span>
-                      <div className="min-w-0">
-                        <div className="text-[12px] font-semibold text-brand">
-                          Upload ID/Passport
-                        </div>
-                        <div className="mt-1 text-[11px] text-gray-500 leading-relaxed">
-                          PDF, PNG, JPG. Passport, National ID, Tax ID/VQ2, PAN, Aadhaar.
-                          <br />
-                          AI will auto-fill: Legal Name, GOV ID Number, and Address.
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <FileUploadZone
+                    title="Upload ID/Passport"
+                    hint="PDF, PNG, JPG. Passport, National ID, Tax ID/VQ2, PAN, Aadhaar. AI will auto-fill: Legal Name, GOV ID Number, and Address."
+                    variant="brand"
+                  />
 
                   <div className="space-y-2">
                     <FieldLabel>Contract Entity (Legal Name) *</FieldLabel>
@@ -677,9 +647,10 @@ export default function ContractInfoSheet({
                 />
 
                 <div className="mt-4 space-y-4">
-                  <UploadCard
-                    label="Upload Bank Record"
+                  <FileUploadZone
+                    title="Upload Bank Record"
                     hint="PDF, PNG, JPG. Bank passbook, statement, or cancelled cheque. AI will auto-fill: Beneficiary Name, Bank Name, Account Number, and IFSC/SWIFT Code."
+                    variant="amber"
                   />
 
                   <div className="space-y-2">

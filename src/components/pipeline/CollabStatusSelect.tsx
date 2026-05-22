@@ -13,7 +13,7 @@ import {
   type CollabStatus,
 } from "@/lib/pipeline/stageStatuses";
 import { cn } from "@/lib/utils";
-import { Check, ChevronDown } from "lucide-react";
+import { IconChevronDown, IconHubStepCompleted } from "@/lib/icons";
 
 function CollabStatusPill({ status }: { status: CollabStatus }) {
   const config = COLLAB_STATUS_CONFIG[status];
@@ -24,7 +24,7 @@ function CollabStatusPill({ status }: { status: CollabStatus }) {
         getStageBadgeClass(config.tone)
       )}
     >
-      {config.showCheck ? <Check size={12} strokeWidth={2.6} /> : null}
+      {config.showCheck ? <IconHubStepCompleted size={12} strokeWidth={2.6} /> : null}
       {config.label}
     </span>
   );
@@ -47,11 +47,13 @@ export default function CollabStatusSelect({
           getStageBadgeClass(config.tone)
         )}
       >
-        {config.showCheck ? <Check size={12} strokeWidth={2.6} className="shrink-0" /> : null}
+        {config.showCheck ? (
+          <IconHubStepCompleted size={12} strokeWidth={2.6} className="shrink-0" />
+        ) : null}
         <span className="truncate">{config.label}</span>
-        <ChevronDown size={12} className="opacity-65 shrink-0" />
+        <IconChevronDown size={12} className="opacity-65 shrink-0" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-[168px] p-1">
+      <DropdownMenuContent align="start" className="min-w-[200px] p-1">
         {COLLAB_STATUS_OPTIONS.map((opt) => (
           <DropdownMenuItem
             key={opt}

@@ -2,7 +2,7 @@
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { FileLock } from "lucide-react";
+import { IconCommercialScopeLock } from "@/lib/icons";
 import { useCallback, useRef, useState } from "react";
 
 export type CommercialScopeSummary = {
@@ -72,7 +72,7 @@ export function CommercialScopePopover({
         )}
         aria-label="View commercial scope and financials"
       >
-        <FileLock className="size-[18px]" strokeWidth={1.75} aria-hidden />
+        <IconCommercialScopeLock className="size-[18px]" strokeWidth={1.75} aria-hidden />
       </PopoverTrigger>
 
       <PopoverContent

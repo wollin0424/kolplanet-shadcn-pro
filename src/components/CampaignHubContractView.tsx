@@ -24,7 +24,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { FileText, MoreHorizontal, Pencil } from "lucide-react";
+import {
+  CampaignHubCardMetaAction,
+  campaignHubCardMetaActionMutedClass,
+} from "@/components/CampaignHubCardMetaAction";
+import { IconContractFile, IconEdit, IconMoreHorizontal } from "@/lib/icons";
 
 type ContractCardStatus =
   | "Awaiting Info"
@@ -216,35 +220,33 @@ function ContractInfluencerCard({ card }: { card: ContractCard }) {
 
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-gray-100 pt-4 text-[12px] text-gray-500">
         <span className="flex min-w-0 items-center gap-1.5">
-          <span className="shrink-0 text-gray-500">Legal Name:</span>
-          <span className="truncate font-medium text-gray-800">
-            {card.legalName ?? "—"}
-          </span>
+          <span className="shrink-0 font-medium text-gray-700">Legal Name: </span>
+          <span className="truncate text-gray-500">{card.legalName ?? "—"}</span>
           <button
             type="button"
             className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
             aria-label="Edit legal name"
           >
-            <Pencil size={13} />
+            <IconEdit size={13} />
           </button>
         </span>
         {card.fileCount > 0 ? (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-gray-50 px-2 py-1 text-[12px] text-gray-500 transition-colors hover:bg-gray-100"
-                aria-label={`${card.fileCount} contract ${card.fileCount === 1 ? "file" : "files"}`}
-              >
-                <FileText size={14} className="text-gray-400" />
-                {card.fileCount} {card.fileCount === 1 ? "file" : "files"}
-              </button>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <CampaignHubCardMetaAction
+                  icon={IconContractFile}
+                  aria-label={`${card.fileCount} contract ${card.fileCount === 1 ? "file" : "files"}`}
+                >
+                  {card.fileCount} {card.fileCount === 1 ? "file" : "files"}
+                </CampaignHubCardMetaAction>
+              }
+            />
             <TooltipContent variant="light" side="bottom" align="end" className="min-w-[200px]">
               <ul className="flex flex-col gap-2">
                 {contractFiles(card).map((fileName) => (
                   <li key={fileName} className="flex min-w-0 items-start gap-2">
-                    <FileText size={14} className="mt-0.5 shrink-0 text-gray-400" />
+                    <IconContractFile size={14} className="mt-0.5 shrink-0 text-gray-400" />
                     <span className="min-w-0 font-medium leading-snug text-gray-800">
                       {fileName}
                     </span>
@@ -254,8 +256,8 @@ function ContractInfluencerCard({ card }: { card: ContractCard }) {
             </TooltipContent>
           </Tooltip>
         ) : (
-          <span className="inline-flex shrink-0 items-center gap-1.5 px-2 py-1 text-[12px] text-gray-500">
-            <FileText size={14} className="text-gray-400" />
+          <span className={campaignHubCardMetaActionMutedClass}>
+            <IconContractFile size={14} className="shrink-0 text-gray-400" aria-hidden />
             0 files
           </span>
         )}
@@ -273,7 +275,7 @@ function ContractInfluencerCard({ card }: { card: ContractCard }) {
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition-colors hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
             aria-label="More actions"
           >
-            <MoreHorizontal size={16} />
+            <IconMoreHorizontal size={16} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52 text-[13px]">
             <DropdownMenuItem>View contract history</DropdownMenuItem>

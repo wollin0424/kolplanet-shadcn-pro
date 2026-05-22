@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { Settings, ChevronDown, X } from "lucide-react";
+import { IconChevronDown, IconClose, IconNavSettings } from "@/lib/icons";
 import {
   CURRENCIES,
   UNIT_OPTIONS,
@@ -114,7 +114,7 @@ function DeliverableRow({
         className="justify-self-center p-1 rounded-md text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
         aria-label="Remove"
       >
-        <X size={13} />
+        <IconClose size={13} />
       </button>
     </div>
   );
@@ -179,9 +179,9 @@ export function PlanSettingsSheet() {
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-gray-200 text-[13px] text-gray-700 bg-white hover:bg-gray-50 transition-colors font-medium"
       >
-        <Settings size={13} className="text-gray-500" />
+        <IconNavSettings size={13} className="text-gray-500" />
         Plan Settings
-        <ChevronDown size={11} className="text-gray-400" />
+        <IconChevronDown size={11} className="text-gray-400" />
       </button>
 
       <SheetContent
@@ -206,7 +206,7 @@ export function PlanSettingsSheet() {
               />
             }
           >
-            <X size={15} />
+            <IconClose size={15} />
           </SheetClose>
         </div>
 

@@ -1,7 +1,11 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Check, Clock, Hourglass } from "lucide-react";
+import {
+  IconHubStepActive,
+  IconHubStepCompleted,
+  IconHubStepScheduled,
+} from "@/lib/icons";
 
 type CampaignHubStepListProps = {
   steps: readonly string[];
@@ -38,7 +42,8 @@ export function CampaignHubStepList({
     activeStepIndex,
     inferActiveStep
   );
-  const ActiveIcon = activeIcon === "hourglass" ? Hourglass : Clock;
+  const ActiveIcon =
+    activeIcon === "hourglass" ? IconHubStepActive : IconHubStepScheduled;
 
   return (
     <ul className="flex flex-col">
@@ -78,7 +83,7 @@ export function CampaignHubStepList({
               )}
             >
               {done ? (
-                <Check size={12} strokeWidth={2.5} />
+                <IconHubStepCompleted size={12} strokeWidth={2.5} />
               ) : active ? (
                 <ActiveIcon size={11} strokeWidth={2.5} />
               ) : (

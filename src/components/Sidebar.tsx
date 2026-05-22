@@ -5,12 +5,12 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
-  ChevronDown,
-  Users,
-  FolderKanban,
-  CreditCard,
-  Settings,
-} from "lucide-react";
+  IconChevronDown,
+  IconNavInfluencers,
+  IconNavPayments,
+  IconNavProjects,
+  IconNavSettings,
+} from "@/lib/icons";
 
 type NavItem = {
   label: string;
@@ -22,12 +22,12 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     label: "Influencer",
-    icon: <Users size={16} strokeWidth={2} />,
+    icon: <IconNavInfluencers size={16} strokeWidth={2} />,
     href: "/influencer",
   },
   {
     label: "Projects",
-    icon: <FolderKanban size={16} strokeWidth={2} />,
+    icon: <IconNavProjects size={16} strokeWidth={2} />,
     children: [
       { label: "Plans", href: "/projects/plans" },
       { label: "Outreach", href: "/projects/outreach" },
@@ -36,7 +36,7 @@ const navItems: NavItem[] = [
   },
   {
     label: "My Payments",
-    icon: <CreditCard size={16} strokeWidth={2} />,
+    icon: <IconNavPayments size={16} strokeWidth={2} />,
     children: [
       { label: "Client Billing", href: "/payments/client" },
       { label: "Influencer Payments", href: "/payments/influencer" },
@@ -44,7 +44,7 @@ const navItems: NavItem[] = [
   },
   {
     label: "Setting",
-    icon: <Settings size={16} strokeWidth={2} />,
+    icon: <IconNavSettings size={16} strokeWidth={2} />,
     children: [
       { label: "Set Roles", href: "/setting/roles" },
       { label: "Team", href: "/setting/team" },
@@ -147,7 +147,7 @@ export default function Sidebar() {
                   <span className="text-gray-500">{item.icon}</span>
                   {item.label}
                 </span>
-                <ChevronDown
+                <IconChevronDown
                   size={13}
                   strokeWidth={2.2}
                   className={cn(

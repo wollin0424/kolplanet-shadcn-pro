@@ -11,16 +11,23 @@ import {
   CampaignHubInfluencerIdentity,
   type KolRelationship,
 } from "@/components/CampaignHubInfluencerIdentity";
+import { CampaignHubCardMetaAction } from "@/components/CampaignHubCardMetaAction";
 import { CampaignHubStepList } from "@/components/CampaignHubStepList";
+import ImportLogisticsTemplateSheet from "@/components/ImportLogisticsTemplateSheet";
+import ShippingDetailsSheet, {
+  type ShippingAddress,
+  type ShippingFulfillment,
+} from "@/components/ShippingDetailsSheet";
 import { useHubCardSelection } from "@/hooks/useHubCardSelection";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Copy, Download, Truck, Upload } from "lucide-react";
+import {
+  IconCopy,
+  IconDownload,
+  IconEdit,
+  IconLogisticsLog,
+  IconUpload,
+} from "@/lib/icons";
 
 type LogisticsCardStatus = "Awaiting Pickup" | "In Transit" | "Delivered";
 
@@ -32,6 +39,9 @@ type LogisticsCard = {
   manager: string;
   relationship: KolRelationship;
   legalName?: string;
+  shipToDisplay: string;
+  contractShipping: ShippingAddress;
+  fulfillment?: ShippingFulfillment;
   shippingLabel: string;
   trackingNumber?: string;
   completedSteps: number;
@@ -54,34 +64,68 @@ const LOGISTICS_STEPS = [
   "Received",
 ] as const;
 
+const DEFAULT_CONTRACT_SHIPPING: ShippingAddress = {
+  recipientName: "342432",
+  recipientPhone: "432432",
+  countryRegion: "Indonesia",
+  city: "432",
+  zipPostalCode: "432",
+  streetAddress: "4324",
+};
+
+function makeCard(
+  card: Omit<LogisticsCard, "contractShipping" | "shipToDisplay"> & {
+    contractShipping?: ShippingAddress;
+    shipToDisplay?: string;
+  }
+): LogisticsCard {
+  const contractShipping = card.contractShipping ?? DEFAULT_CONTRACT_SHIPPING;
+  return {
+    ...card,
+    contractShipping,
+    shipToDisplay:
+      card.shipToDisplay ??
+      (contractShipping.countryRegion ? contractShipping.countryRegion.slice(0, 2).toUpperCase() : "—"),
+  };
+}
+
 const MOCK_CARDS: LogisticsCard[] = [
-  {
+  makeCard({
     id: "l1",
     name: "Amelia Stone",
     handle: "@instagram.ins",
     status: "Awaiting Pickup",
     manager: "Wollin",
     relationship: "Direct",
+    shipToDisplay: "ID",
     shippingLabel: "Unshipped",
     completedSteps: 0,
     stepTimestamps: [null, null, null, null, null],
     canConfirmReceipt: false,
-  },
-  {
+  }),
+  makeCard({
     id: "l2",
     name: "Ethan Carter",
     handle: "@foodie.my",
     status: "In Transit",
     manager: "Wollin",
     relationship: "Manager",
+    shipToDisplay: "MY",
     shippingLabel: "SF Express - TRK-202605-0003",
     trackingNumber: "TRK-202605-0003",
     completedSteps: 1,
     activeStepIndex: 1,
     stepTimestamps: ["May 13, 2026 10:00 AM", null, null, null, null],
     canConfirmReceipt: false,
-  },
-  {
+    fulfillment: {
+      useContractDefault: true,
+      address: DEFAULT_CONTRACT_SHIPPING,
+      courier: "SF Express",
+      trackingId: "TRK-202605-0003",
+      goodsContent: "",
+    },
+  }),
+  makeCard({
     id: "l3",
     name: "Maya Lin",
     handle: "@lifestyle.id",
@@ -89,6 +133,7 @@ const MOCK_CARDS: LogisticsCard[] = [
     manager: "Wollin",
     relationship: "MCN",
     legalName: "892011",
+    shipToDisplay: "ID",
     shippingLabel: "SF Express - TRK-202605-0004",
     trackingNumber: "TRK-202605-0004",
     completedSteps: 4,
@@ -100,26 +145,28 @@ const MOCK_CARDS: LogisticsCard[] = [
       null,
     ],
     canConfirmReceipt: true,
-  },
-  {
+  }),
+  makeCard({
     id: "l4",
     name: "Noah Brooks",
     handle: "@creator.ph",
     status: "Awaiting Pickup",
     manager: "Wollin",
     relationship: "Direct",
+    shipToDisplay: "PH",
     shippingLabel: "Unshipped",
     completedSteps: 0,
     stepTimestamps: [null, null, null, null, null],
     canConfirmReceipt: false,
-  },
-  {
+  }),
+  makeCard({
     id: "l5",
     name: "Sofia Reyes",
     handle: "@runner.in",
     status: "In Transit",
     manager: "Wollin",
     relationship: "Manager",
+    shipToDisplay: "IN",
     shippingLabel: "DHL Express - TRK-202605-0007",
     trackingNumber: "TRK-202605-0007",
     completedSteps: 2,
@@ -132,8 +179,8 @@ const MOCK_CARDS: LogisticsCard[] = [
       null,
     ],
     canConfirmReceipt: false,
-  },
-  {
+  }),
+  makeCard({
     id: "l6",
     name: "Liam Park",
     handle: "@daily.vlog",
@@ -141,6 +188,7 @@ const MOCK_CARDS: LogisticsCard[] = [
     manager: "Wollin",
     relationship: "MCN",
     legalName: "342432",
+    shipToDisplay: "ID",
     shippingLabel: "FedEx - TRK-202605-0011",
     trackingNumber: "TRK-202605-0011",
     completedSteps: 4,
@@ -152,43 +200,47 @@ const MOCK_CARDS: LogisticsCard[] = [
       null,
     ],
     canConfirmReceipt: true,
-  },
-  {
+  }),
+  makeCard({
     id: "l7",
     name: "Zoe Tan",
     handle: "@beauty.sg",
     status: "In Transit",
     manager: "Wollin",
     relationship: "Direct",
+    shipToDisplay: "SG",
     shippingLabel: "SF Express - TRK-202605-0015",
     trackingNumber: "TRK-202605-0015",
     completedSteps: 1,
     activeStepIndex: 1,
     stepTimestamps: ["May 14, 2026 11:30 AM", null, null, null, null],
     canConfirmReceipt: false,
-  },
-  {
+  }),
+  makeCard({
     id: "l8",
     name: "James Wu",
     handle: "@tech.tw",
     status: "Awaiting Pickup",
     manager: "Wollin",
     relationship: "Manager",
+    shipToDisplay: "TW",
     shippingLabel: "Unshipped",
     completedSteps: 0,
     stepTimestamps: [null, null, null, null, null],
     canConfirmReceipt: false,
-  },
+  }),
 ];
 
 function LogisticsInfluencerCard({
   card,
   selected,
   onSelectedChange,
+  onEditShipping,
 }: {
   card: LogisticsCard;
   selected: boolean;
   onSelectedChange: (selected: boolean) => void;
+  onEditShipping: () => void;
 }) {
   const statusBadgeClass = STATUS_BADGE[card.status];
   const initials = card.name
@@ -229,7 +281,7 @@ function LogisticsInfluencerCard({
       </div>
 
       <div className="mt-4 flex h-11 items-center gap-2 overflow-hidden rounded-lg border border-gray-100 bg-gray-50/80 px-3 text-[12px]">
-        <p className="flex min-w-0 flex-1 items-center overflow-hidden">
+        <p className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
           <span className="shrink-0 font-medium text-gray-700">Tracking ID: </span>
           <span className="truncate font-normal text-gray-500">{card.shippingLabel}</span>
         </p>
@@ -239,7 +291,7 @@ function LogisticsInfluencerCard({
             className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-white hover:text-gray-700"
             aria-label="Copy tracking number"
           >
-            <Copy size={13} />
+            <IconCopy size={13} />
           </button>
         ) : null}
       </div>
@@ -254,20 +306,22 @@ function LogisticsInfluencerCard({
         />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-gray-100 pt-4 text-[12px] text-gray-500">
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-gray-100 pt-4 text-[12px] text-gray-500">
         <span className="flex min-w-0 flex-1 items-center gap-1.5">
-          <span className="shrink-0 text-gray-500">Ship To:</span>
-          <span className="truncate font-medium text-gray-800">
-            {card.legalName ?? "—"}
-          </span>
+          <span className="shrink-0 font-medium text-gray-700">Ship To: </span>
+          <span className="truncate text-gray-500">{card.shipToDisplay}</span>
+          <button
+            type="button"
+            onClick={onEditShipping}
+            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
+            aria-label="Edit shipping details"
+          >
+            <IconEdit size={13} />
+          </button>
         </span>
-        <button
-          type="button"
-          className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
-        >
-          <Truck size={14} className="shrink-0" />
+        <CampaignHubCardMetaAction icon={IconLogisticsLog} className="whitespace-nowrap">
           View Full Log
-        </button>
+        </CampaignHubCardMetaAction>
       </div>
 
       <div className="mt-4">
@@ -299,10 +353,18 @@ export default function CampaignHubLogisticsView({
   const [managerFilter, setManagerFilter] = useState("All");
   const [identityFilter, setIdentityFilter] = useState("All");
   const [query, setQuery] = useState("");
+  const [importOpen, setImportOpen] = useState(false);
+  const [shippingCardId, setShippingCardId] = useState<string | null>(null);
+  const [cards, setCards] = useState(MOCK_CARDS);
+
+  const shippingCard = useMemo(
+    () => cards.find((card) => card.id === shippingCardId) ?? null,
+    [cards, shippingCardId]
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return MOCK_CARDS.filter((card) => {
+    return cards.filter((card) => {
       if (statusFilter !== "All" && card.status !== statusFilter) return false;
       if (managerFilter !== "All" && card.manager !== managerFilter) return false;
       if (identityFilter !== "All" && card.relationship !== identityFilter) return false;
@@ -313,7 +375,7 @@ export default function CampaignHubLogisticsView({
         (card.legalName?.toLowerCase().includes(q) ?? false)
       );
     });
-  }, [statusFilter, managerFilter, identityFilter, query]);
+  }, [cards, statusFilter, managerFilter, identityFilter, query]);
 
   const statusOptions = ["All", ...Object.keys(STATUS_BADGE)] as string[];
 
@@ -367,15 +429,15 @@ export default function CampaignHubLogisticsView({
             }
             actions={
               <>
-                <CampaignHubToolbarActionButton>
-                  <Upload size={13} />
+                <CampaignHubToolbarActionButton onClick={() => setImportOpen(true)}>
+                  <IconUpload size={13} />
                   Import
                 </CampaignHubToolbarActionButton>
                 <CampaignHubToolbarActionButton
                   onClick={handleExport}
                   disabled={selectedCount === 0}
                 >
-                  <Download size={13} />
+                  <IconDownload size={13} />
                   Download
                 </CampaignHubToolbarActionButton>
               </>
@@ -393,11 +455,43 @@ export default function CampaignHubLogisticsView({
                 onSelectedChange={(checked) => {
                   if (checked !== isSelected(card.id)) toggle(card.id);
                 }}
+                onEditShipping={() => setShippingCardId(card.id)}
               />
             ))}
           </div>
         </div>
       </div>
+
+      <ImportLogisticsTemplateSheet open={importOpen} onOpenChange={setImportOpen} />
+
+      {shippingCard ? (
+        <ShippingDetailsSheet
+          open={shippingCardId !== null}
+          onOpenChange={(open) => {
+            if (!open) setShippingCardId(null);
+          }}
+          influencerName={shippingCard.name}
+          contractShipping={shippingCard.contractShipping}
+          initialFulfillment={shippingCard.fulfillment}
+          onSave={(fulfillment) => {
+            setCards((prev) =>
+              prev.map((card) =>
+                card.id === shippingCard.id
+                  ? {
+                      ...card,
+                      fulfillment,
+                      trackingNumber: fulfillment.trackingId || undefined,
+                      shippingLabel: fulfillment.trackingId
+                        ? `${fulfillment.courier || "Courier"} - ${fulfillment.trackingId}`
+                        : card.shippingLabel,
+                    }
+                  : card
+              )
+            );
+            setShippingCardId(null);
+          }}
+        />
+      ) : null}
     </TooltipProvider>
   );
 }

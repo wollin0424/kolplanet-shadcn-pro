@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { ChevronDown, X } from "lucide-react";
+import { IconChevronDown, IconClose } from "@/lib/icons";
 
 export type VettingStatus =
   | "Shortlisted"
@@ -71,7 +71,7 @@ function StatusBadge({
           className="opacity-0 group-hover/sb:opacity-100 transition-opacity hover:text-gray-900"
           aria-label={`Remove ${status}`}
         >
-          <X size={10} />
+          <IconClose size={10} />
         </button>
       )}
     </span>
@@ -123,7 +123,7 @@ export function VettingStatusSelect({
             </>
           )}
         </div>
-        <ChevronDown size={12} className="text-gray-400 mt-1.5 shrink-0" />
+        <IconChevronDown size={12} className="text-gray-400 mt-1.5 shrink-0" />
       </PopoverTrigger>
 
       <PopoverContent

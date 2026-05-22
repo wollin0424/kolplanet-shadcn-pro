@@ -2,7 +2,11 @@
 
 import type { StageBadgeConfig } from "@/lib/pipeline/stageStatuses";
 import { cn } from "@/lib/utils";
-import { AlertCircle, CheckCircle2, CircleDashed } from "lucide-react";
+import {
+  IconStageAlert,
+  IconStageComplete,
+  IconStagePending,
+} from "@/lib/icons";
 
 /**
  * Incomplete: orange dashed ring. Done: green check icon + gray label (same hover as others);
@@ -26,19 +30,19 @@ export default function PipelineStageCell({ config }: { config: StageBadgeConfig
       )}
     >
       {isComplete ? (
-        <CheckCircle2
+        <IconStageComplete
           className={cn(iconClass, "text-emerald-600")}
           strokeWidth={stroke}
           aria-hidden
         />
       ) : isFailed ? (
-        <AlertCircle
+        <IconStageAlert
           className={cn(iconClass, "text-red-600")}
           strokeWidth={stroke}
           aria-hidden
         />
       ) : (
-        <CircleDashed
+        <IconStagePending
           className={cn(iconClass, "text-orange-500")}
           strokeWidth={stroke}
           aria-hidden

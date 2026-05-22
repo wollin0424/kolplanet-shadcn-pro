@@ -4,7 +4,12 @@ import { useState, useMemo } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Check, Plus, Search, X } from "lucide-react";
+import {
+  IconClose,
+  IconHubStepCompleted,
+  IconPlus,
+  IconSearch,
+} from "@/lib/icons";
 import { DELIVERABLE_CATALOGUE, type DeliverableType } from "@/lib/deliverableCatalog";
 
 type AddedType = DeliverableType | {
@@ -115,7 +120,7 @@ export function ScopeAddPopover({
               : "border border-brand-100 bg-brand-50 text-brand hover:bg-brand-100"
           )}
         >
-          <Plus size={12} strokeWidth={2.5} />
+          <IconPlus size={12} strokeWidth={2.5} />
           Add Scope
         </PopoverTrigger>
 
@@ -129,7 +134,10 @@ export function ScopeAddPopover({
           {/* Search — fixed */}
           <div className="shrink-0 border-b border-border/60 px-3 py-2.5">
             <div className="relative">
-              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <IconSearch
+                size={12}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -175,7 +183,10 @@ export function ScopeAddPopover({
                           </span>
                           <span className="w-4 flex justify-end shrink-0">
                             {disabled ? (
-                              <Check className="size-3.5 text-gray-400" strokeWidth={2.5} />
+                              <IconHubStepCompleted
+                                className="size-3.5 text-gray-400"
+                                strokeWidth={2.5}
+                              />
                             ) : null}
                           </span>
                         </button>
@@ -209,7 +220,12 @@ export function ScopeAddPopover({
                           <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
                           <span className={cn("flex-1 min-w-0 truncate", disabled ? "text-gray-500" : "text-gray-800")}>{t.label}</span>
                           <span className="w-4 flex justify-end shrink-0">
-                            {disabled ? <Check className="size-3.5 text-violet-500" strokeWidth={2.5} /> : null}
+                            {disabled ? (
+                              <IconHubStepCompleted
+                                className="size-3.5 text-violet-500"
+                                strokeWidth={2.5}
+                              />
+                            ) : null}
                           </span>
                         </button>
                       );
@@ -257,7 +273,7 @@ export function ScopeAddPopover({
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-amber-900/60 transition-colors hover:bg-white/60 hover:text-amber-950"
                   aria-label="Close"
                 >
-                  <X size={14} strokeWidth={2} />
+                  <IconClose size={14} strokeWidth={2} />
                 </button>
               </div>
             ) : (
@@ -271,7 +287,7 @@ export function ScopeAddPopover({
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/60"
                 )}
               >
-                <Plus size={13} strokeWidth={2.5} className="shrink-0" />
+                <IconPlus size={13} strokeWidth={2.5} className="shrink-0" />
                 Add custom type
               </button>
             )}

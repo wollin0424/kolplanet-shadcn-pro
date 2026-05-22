@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { ChevronDown } from "lucide-react";
+import { IconChevronDown } from "@/lib/icons";
 
 export function CampaignHubFilterSelect({
   label,
@@ -39,7 +39,7 @@ export function CampaignHubFilterSelect({
             </>
           ) : null}
         </span>
-        <ChevronDown size={13} className="shrink-0 text-gray-400" />
+        <IconChevronDown size={13} className="shrink-0 text-gray-400" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="text-[13px]">
         {options.map((opt) => (

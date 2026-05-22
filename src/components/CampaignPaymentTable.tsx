@@ -21,18 +21,18 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import {
-  Calendar,
-  Check,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Columns3,
-  Info,
-  MoreVertical,
-  RefreshCcw,
-  Search,
-  X,
-} from "lucide-react";
+  IconCalendar,
+  IconChevronDown,
+  IconChevronLeft,
+  IconChevronRight,
+  IconClose,
+  IconColumns,
+  IconHubStepCompleted,
+  IconInfo,
+  IconMoreVertical,
+  IconRefresh,
+  IconSearch,
+} from "@/lib/icons";
 
 type InvoiceStatus = "Pending" | "Submitted";
 type SettlementStatus =
@@ -286,7 +286,7 @@ function SettlementStatusBadge({ status }: { status: SettlementStatus }) {
       )}
     >
       {status}
-      {status === "Rejected" && <Info size={12} className="opacity-80" />}
+      {status === "Rejected" && <IconInfo size={12} className="opacity-80" />}
     </span>
   );
 }
@@ -306,7 +306,7 @@ function FilterDropdown({
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center gap-1.5 text-[13px] text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg px-3 py-1.5 transition-colors hover:bg-gray-50 bg-white min-w-[140px] justify-between">
         <span className="truncate">{value === "All" ? label : value}</span>
-        <ChevronDown size={13} className="text-gray-400 shrink-0" />
+        <IconChevronDown size={13} className="text-gray-400 shrink-0" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="text-[13px] min-w-[180px]">
         {options.map((opt) => (
@@ -400,11 +400,11 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
             type="button"
             className="flex items-center gap-2 text-[13px] text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap"
           >
-            <Calendar size={13} className="text-gray-400 shrink-0" />
+            <IconCalendar size={13} className="text-gray-400 shrink-0" />
             Start Due Date — End Due Date
           </button>
           <div className="relative w-[200px]">
-            <Search
+            <IconSearch
               size={13}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
             />
@@ -425,7 +425,7 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
           className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-transparent hover:border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors shrink-0"
           aria-label="Refresh"
         >
-          <RefreshCcw size={15} />
+          <IconRefresh size={15} />
         </button>
       </div>
 
@@ -439,11 +439,11 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-1 text-[12px] text-gray-600 border border-gray-200 rounded-md px-2.5 py-1 bg-white hover:bg-gray-50 transition-colors">
             Visible Columns
-            <ChevronDown size={11} className="text-gray-400" />
+            <IconChevronDown size={11} className="text-gray-400" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="text-[13px] w-44">
             <DropdownMenuItem>
-              <Columns3 size={14} className="text-gray-400" />
+              <IconColumns size={14} className="text-gray-400" />
               Reset columns
             </DropdownMenuItem>
             <DropdownMenuItem>Save view</DropdownMenuItem>
@@ -570,7 +570,7 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
                       aria-label="Row actions"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <MoreVertical size={14} />
+                      <IconMoreVertical size={14} />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-52 p-1.5">
                       {row.settlementStatus === "Waiting for Validation" ? (
@@ -579,7 +579,11 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
                             className="gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-gray-900"
                             onClick={() => openApprovePayout(row)}
                           >
-                            <Check size={15} className="text-gray-900" strokeWidth={2.25} />
+                            <IconHubStepCompleted
+                              size={15}
+                              className="text-gray-900"
+                              strokeWidth={2.25}
+                            />
                             Approve Payout
                           </DropdownMenuItem>
                           <DropdownMenuItem
@@ -590,7 +594,7 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
                               setRejectOpen(true);
                             }}
                           >
-                            <X size={15} strokeWidth={2.25} />
+                            <IconClose size={15} strokeWidth={2.25} />
                             Reject
                           </DropdownMenuItem>
                         </>
@@ -627,7 +631,7 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
             <DropdownMenu>
               <DropdownMenuTrigger className="h-7 inline-flex items-center gap-1 rounded-md border border-gray-200 px-2 text-[12px] text-gray-700 hover:bg-gray-50">
                 {pageSize}
-                <ChevronDown size={11} className="text-gray-400" />
+                <IconChevronDown size={11} className="text-gray-400" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-24">
                 {PAGE_SIZE_OPTIONS.map((n) => (
@@ -659,7 +663,7 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
             )}
             aria-label="Previous page"
           >
-            <ChevronLeft size={13} />
+            <IconChevronLeft size={13} />
           </button>
 
           {buildPageList(safePage, totalPages).map((p, i) =>
@@ -700,7 +704,7 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
             )}
             aria-label="Next page"
           >
-            <ChevronRight size={13} />
+            <IconChevronRight size={13} />
           </button>
 
           <span className="ml-2 text-[12px] text-gray-500 tabular-nums">{pageSize} / page</span>

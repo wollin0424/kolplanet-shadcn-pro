@@ -1,4 +1,4 @@
-import { Users } from "lucide-react";
+import { IconNavInfluencers } from "@/lib/icons";
 import PagePlaceholder from "@/components/PagePlaceholder";
 
 export default function InfluencerPage() {
@@ -6,7 +6,7 @@ export default function InfluencerPage() {
     <PagePlaceholder
       title="Influencer"
       description="Centralised roster of all KOLs across every platform, with vetting history, pricing, and engagement signals."
-      icon={<Users size={14} strokeWidth={2} />}
+      icon={<IconNavInfluencers size={14} strokeWidth={2} />}
     />
   );
 }

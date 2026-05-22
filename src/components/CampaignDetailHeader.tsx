@@ -4,7 +4,11 @@ import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ExternalLink, MoreHorizontal } from "lucide-react";
+import {
+  IconChevronDown,
+  IconExternalLink,
+  IconMoreHorizontal,
+} from "@/lib/icons";
 
 const TABS = ["Pipeline", "Campaign Hub", "Todo", "Payment", "Report"] as const;
 export type CampaignTab = (typeof TABS)[number];
@@ -61,21 +65,21 @@ export default function CampaignDetailHeader({
               className="h-8 text-[13px] gap-1.5 border-gray-200 text-gray-700"
             >
               Campaign Settings
-              <ChevronDown size={13} className="text-gray-400" />
+              <IconChevronDown size={13} className="text-gray-400" />
             </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger className="inline-flex items-center h-8 px-3 rounded-md border border-gray-200 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
                 More
-                <ChevronDown size={13} className="ml-1 text-gray-400" />
+                <IconChevronDown size={13} className="ml-1 text-gray-400" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
                 <DropdownMenuItem>
-                  <ExternalLink size={14} />
+                  <IconExternalLink size={14} />
                   Open in new tab
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <MoreHorizontal size={14} />
+                  <IconMoreHorizontal size={14} />
                   More actions
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -103,7 +107,7 @@ export default function CampaignDetailHeader({
                 <span className="inline-flex items-center gap-1.5">
                   {t}
                   {t === "Report" && (
-                    <ExternalLink size={12} className="text-gray-300" />
+                    <IconExternalLink size={12} className="text-gray-300" />
                   )}
                 </span>
                 {isActive && (

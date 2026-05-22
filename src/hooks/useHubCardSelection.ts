@@ -1,18 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 export function useHubCardSelection(visibleIds: string[]) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
 
   const visibleIdSet = useMemo(() => new Set(visibleIds), [visibleIds]);
-
-  useEffect(() => {
-    setSelectedIds((prev) => {
-      const next = new Set([...prev].filter((id) => visibleIdSet.has(id)));
-      return next.size === prev.size ? prev : next;
-    });
-  }, [visibleIdSet]);
 
   const toggle = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -31,11 +24,14 @@ export function useHubCardSelection(visibleIds: string[]) {
     setSelectedIds(new Set());
   }, []);
 
-  const isSelected = useCallback((id: string) => selectedIds.has(id), [selectedIds]);
+  const isSelected = useCallback(
+    (id: string) => visibleIdSet.has(id) && selectedIds.has(id),
+    [selectedIds, visibleIdSet]
+  );
 
   const selectedCount = useMemo(
-    () => [...selectedIds].filter((id) => visibleIdSet.has(id)).length,
-    [selectedIds, visibleIdSet]
+    () => visibleIds.filter((id) => selectedIds.has(id)).length,
+    [visibleIds, selectedIds]
   );
 
   return { selectedCount, toggle, selectAll, clear, isSelected };

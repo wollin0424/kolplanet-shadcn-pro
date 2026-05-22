@@ -8,6 +8,11 @@
   --brand-50: #eef3ff;
   --brand-100: #d6e5fc;
   --brand-row-hover: #f4f7fd;
+  /** Contract Snapshot column in Shipping Details sheet */
+  --hub-snapshot-bg: #f4f7f9;
+  --hub-snapshot-field-bg: #ffffff;
+  --hub-locked-field-bg: #eef2f7;
+  --hub-locked-field-border: #dbe3ee;
   --brand-row-selected: var(--brand-50);
   --brand-row-selected-hover: var(--brand-100);
 }

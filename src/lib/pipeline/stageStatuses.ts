@@ -28,7 +28,15 @@ export type PaymentStatus =
   | "Waiting for Validation"
   | "Rejected";
 
-export type CollabStatus = "Pending" | "Approved" | "Done" | "Terminated";
+export type CollabStatus =
+  | "Pending"
+  | "Invited"
+  | "In Negotiation"
+  | "Approved"
+  | "Active"
+  | "On Hold"
+  | "Completed"
+  | "Terminated";
 
 export type StageStatus =
   | ContractStatus
@@ -41,7 +49,31 @@ export type StageStatus =
 /** Shared 5-step scale for stage progress rings in the table. */
 export const STAGE_PROGRESS_TOTAL = 5;
 
-type BadgeTone = "amber" | "green" | "sky" | "gray" | "brand" | "violet" | "rose";
+/**
+ * Canonical 8-hue pill palette — all status tags map to one of these (no orange/teal;
+ * they were too close to amber and green/sky). Semantic reuse is OK across columns.
+ */
+export type BadgeTone =
+  | "amber"
+  | "sky"
+  | "violet"
+  | "brand"
+  | "green"
+  | "rose"
+  | "indigo"
+  | "gray";
+
+/** Preview / docs: one status per tone in Collaboration column */
+export const BADGE_TONE_PALETTE: { tone: BadgeTone; hint: string }[] = [
+  { tone: "amber", hint: "Pending / warning" },
+  { tone: "sky", hint: "Info / invited" },
+  { tone: "violet", hint: "Review / negotiation" },
+  { tone: "brand", hint: "Approved / primary" },
+  { tone: "indigo", hint: "Active / in progress" },
+  { tone: "green", hint: "Completed / success" },
+  { tone: "rose", hint: "Risk / on hold" },
+  { tone: "gray", hint: "Terminated / inactive" },
+];
 
 export type StageBadgeConfig = {
   label: string;
@@ -54,12 +86,13 @@ export type StageBadgeConfig = {
 
 const toneTextClass: Record<BadgeTone, string> = {
   amber: "text-amber-700",
-  green: "text-emerald-700",
   sky: "text-sky-700",
-  gray: "text-gray-600",
-  brand: "text-brand",
   violet: "text-violet-700",
+  brand: "text-brand",
+  green: "text-emerald-700",
   rose: "text-rose-700",
+  indigo: "text-indigo-700",
+  gray: "text-gray-600",
 };
 
 export function getStageToneTextClass(tone: BadgeTone) {
@@ -68,19 +101,24 @@ export function getStageToneTextClass(tone: BadgeTone) {
 
 export const COLLAB_STATUS_OPTIONS: CollabStatus[] = [
   "Pending",
+  "Invited",
+  "In Negotiation",
   "Approved",
-  "Done",
+  "Active",
+  "On Hold",
+  "Completed",
   "Terminated",
 ];
 
 const badgeClass: Record<BadgeTone, string> = {
   amber: "bg-amber-50 text-amber-700 border-amber-200",
-  green: "bg-emerald-50 text-emerald-700 border-emerald-200",
   sky: "bg-sky-50 text-sky-700 border-sky-200",
-  gray: "bg-gray-50 text-gray-600 border-gray-200",
-  brand: "bg-brand-50 text-brand border-brand-100",
   violet: "bg-violet-50 text-violet-700 border-violet-200",
+  brand: "bg-brand-50 text-brand border-brand-100",
+  green: "bg-emerald-50 text-emerald-700 border-emerald-200",
   rose: "bg-rose-50 text-rose-700 border-rose-200",
+  indigo: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  gray: "bg-gray-50 text-gray-600 border-gray-200",
 };
 
 export function getStageBadgeClass(tone: BadgeTone) {
@@ -89,12 +127,13 @@ export function getStageBadgeClass(tone: BadgeTone) {
 
 const toneDotClass: Record<BadgeTone, string> = {
   amber: "bg-amber-400",
-  green: "bg-emerald-500",
   sky: "bg-sky-400",
-  gray: "bg-gray-400",
-  brand: "bg-brand",
   violet: "bg-violet-400",
+  brand: "bg-brand",
+  green: "bg-emerald-500",
   rose: "bg-rose-500",
+  indigo: "bg-indigo-500",
+  gray: "bg-gray-400",
 };
 
 export function getStageToneDotClass(tone: BadgeTone) {
@@ -105,14 +144,16 @@ export function getStageToneDotClass(tone: BadgeTone) {
 const hoverPillClass: Record<BadgeTone, string> = {
   amber:
     "group-hover:bg-amber-50 group-hover:text-amber-700 group-hover:border-amber-200",
-  green:
-    "group-hover:bg-emerald-50 group-hover:text-emerald-700 group-hover:border-emerald-200",
   sky: "group-hover:bg-sky-50 group-hover:text-sky-700 group-hover:border-sky-200",
-  gray: "group-hover:bg-gray-50 group-hover:text-gray-600 group-hover:border-gray-200",
-  brand: "group-hover:bg-brand-50 group-hover:text-brand group-hover:border-brand-100",
   violet:
     "group-hover:bg-violet-50 group-hover:text-violet-700 group-hover:border-violet-200",
+  brand: "group-hover:bg-brand-50 group-hover:text-brand group-hover:border-brand-100",
+  green:
+    "group-hover:bg-emerald-50 group-hover:text-emerald-700 group-hover:border-emerald-200",
   rose: "group-hover:bg-rose-50 group-hover:text-rose-700 group-hover:border-rose-200",
+  indigo:
+    "group-hover:bg-indigo-50 group-hover:text-indigo-700 group-hover:border-indigo-200",
+  gray: "group-hover:bg-gray-50 group-hover:text-gray-600 group-hover:border-gray-200",
 };
 
 export function getStageHoverPillClass(tone: BadgeTone) {
@@ -197,7 +238,11 @@ export const COLLAB_STATUS_CONFIG: Record<
   { label: string; tone: BadgeTone; showCheck?: boolean }
 > = {
   Pending: { label: "Pending", tone: "amber" },
+  Invited: { label: "Invited", tone: "sky" },
+  "In Negotiation": { label: "In Negotiation", tone: "violet" },
   Approved: { label: "Approved", tone: "brand" },
-  Done: { label: "Done", tone: "green", showCheck: true },
+  Active: { label: "Active", tone: "indigo" },
+  "On Hold": { label: "On Hold", tone: "rose" },
+  Completed: { label: "Completed", tone: "green", showCheck: true },
   Terminated: { label: "Terminated", tone: "gray" },
 };
