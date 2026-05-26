@@ -180,3 +180,39 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /** Hidden scrollbar; use on tables/lists that should never show a bar */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /** Overlay scrollbar — transparent until hover or while scrolling (.scrollbar-active) */
+  .scrollbar-overlay {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+  .scrollbar-overlay:hover,
+  .scrollbar-overlay.scrollbar-active {
+    scrollbar-color: rgb(156 163 175 / 0.45) transparent;
+  }
+  .scrollbar-overlay::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-overlay::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-overlay::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 9999px;
+  }
+  .scrollbar-overlay:hover::-webkit-scrollbar-thumb,
+  .scrollbar-overlay.scrollbar-active::-webkit-scrollbar-thumb {
+    background-color: rgb(156 163 175 / 0.45);
+  }
+}

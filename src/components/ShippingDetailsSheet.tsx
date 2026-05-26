@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ScrollFade } from "@/components/ScrollFade";
 import { cn } from "@/lib/utils";
 
 export type ShippingAddress = {
@@ -261,20 +262,32 @@ export default function ShippingDetailsSheet({
   const [trackingId, setTrackingId] = useState("");
   const [goodsContent, setGoodsContent] = useState("");
 
-  useEffect(() => {
-    if (!open) return;
-    setUseContractDefault(initialFulfillment?.useContractDefault ?? true);
-    setAddress(initialFulfillment?.address ?? { ...contractShipping });
+  const resetFromProps = () => {
+    const useDefault = initialFulfillment?.useContractDefault ?? true;
+    setUseContractDefault(useDefault);
+    setAddress(
+      useDefault
+        ? { ...contractShipping }
+        : (initialFulfillment?.address ?? { ...contractShipping })
+    );
     setCourier(initialFulfillment?.courier ?? "");
     setTrackingId(initialFulfillment?.trackingId ?? "");
     setGoodsContent(initialFulfillment?.goodsContent ?? "");
-  }, [open, contractShipping, initialFulfillment]);
+  };
 
-  useEffect(() => {
-    if (useContractDefault) {
+  const handleUseContractDefaultChange = (checked: boolean) => {
+    setUseContractDefault(checked);
+    if (checked) {
       setAddress({ ...contractShipping });
     }
-  }, [useContractDefault, contractShipping]);
+  };
+
+  const handleSheetOpenChange = (next: boolean) => {
+    if (next) {
+      resetFromProps();
+    }
+    onOpenChange(next);
+  };
 
   const updateAddress = (patch: Partial<ShippingAddress>) => {
     if (useContractDefault) return;
@@ -301,7 +314,7 @@ export default function ShippingDetailsSheet({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={handleSheetOpenChange}>
       <SheetContent
         side="right"
         className="flex h-full gap-0 bg-white p-0 data-[side=right]:w-full data-[side=right]:max-w-[800px] data-[side=right]:sm:max-w-[800px]"
@@ -317,13 +330,13 @@ export default function ShippingDetailsSheet({
         </SheetHeader>
 
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-          <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--hub-snapshot-bg)] px-6 py-6 lg:border-r lg:border-[#e2e8f0]">
+          <ScrollFade className="min-h-0 flex-1 overflow-y-auto bg-[var(--hub-snapshot-bg)] px-6 py-6 lg:border-r lg:border-[#e2e8f0]">
             <ContractSnapshotPanel contractShipping={contractShipping} />
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto bg-white px-6 py-6">
+          </ScrollFade>
+          <ScrollFade className="min-h-0 flex-1 overflow-y-auto bg-white px-6 py-6">
             <FulfillmentDetailsPanel
               useContractDefault={useContractDefault}
-              onUseContractDefaultChange={setUseContractDefault}
+              onUseContractDefaultChange={handleUseContractDefaultChange}
               address={address}
               onAddressChange={updateAddress}
               courier={courier}
@@ -333,7 +346,7 @@ export default function ShippingDetailsSheet({
               goodsContent={goodsContent}
               onGoodsContentChange={setGoodsContent}
             />
-          </div>
+          </ScrollFade>
         </div>
 
         <SheetFooter className="shrink-0 flex-row justify-between gap-3 border-t border-gray-100 bg-white px-6 py-4">

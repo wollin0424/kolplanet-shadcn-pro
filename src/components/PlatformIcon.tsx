@@ -4,6 +4,26 @@ import { cn } from "@/lib/utils";
 
 export type Platform = "IG" | "TT" | "YT" | "FB";
 
+const PLATFORM_LABELS: Record<Platform, string[]> = {
+  IG: ["ig", "instagram"],
+  TT: ["tt", "tiktok"],
+  YT: ["yt", "youtube"],
+  FB: ["fb", "facebook"],
+};
+
+/** Maps display names or codes (e.g. "Instagram", "IG") to a platform code. */
+export function platformFromLabel(label: string): Platform | undefined {
+  const normalized = label.trim().toLowerCase();
+  if (!normalized) return undefined;
+  const entries = Object.entries(PLATFORM_LABELS) as [Platform, string[]][];
+  for (const [code, aliases] of entries) {
+    if (aliases.some((a) => normalized === a || normalized.includes(a))) {
+      return code;
+    }
+  }
+  return undefined;
+}
+
 const InstagramIcon = ({ size = 14 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" aria-label="Instagram">
     <defs>

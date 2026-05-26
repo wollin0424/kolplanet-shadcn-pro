@@ -21,7 +21,7 @@ export function CampaignHubToolbarActionButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border px-2.5 text-[12px] font-medium transition-colors",
+        "inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border px-3 text-xs font-medium transition-colors",
         disabled
           ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400"
           : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900"
@@ -40,19 +40,19 @@ export function CampaignHubDetailHeader({
   onBack: () => void;
 }) {
   return (
-    <div className="flex shrink-0 flex-wrap items-center gap-x-2.5 gap-y-1">
+    <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1">
       <button
         type="button"
         onClick={onBack}
-        className="inline-flex h-7 shrink-0 items-center gap-0.5 rounded-md px-1 text-[12px] font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800"
+        className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md px-1 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800"
       >
-        <ChevronLeft size={16} strokeWidth={2.25} />
+        <ChevronLeft size={16} strokeWidth={2} />
         Back
       </button>
 
-      <span className="hidden h-3.5 w-px shrink-0 bg-gray-200 sm:block" aria-hidden />
+      <span className="hidden h-4 w-px shrink-0 bg-gray-200 sm:block" aria-hidden />
 
-      <h2 className="shrink-0 text-[15px] font-semibold leading-none text-gray-900">
+      <h2 className="shrink-0 text-base font-semibold leading-none text-gray-900">
         {title}
       </h2>
     </div>
@@ -103,7 +103,7 @@ export function CampaignHubDetailToolbar({
           </>
         ) : showCountOnly ? (
           <>
-            <span className="shrink-0 text-[12px] font-medium text-gray-500">
+            <span className="shrink-0 text-xs font-medium text-gray-500">
               Influencers:{" "}
               <span className="tabular-nums font-medium text-gray-900">{influencerCount}</span>
             </span>
@@ -114,17 +114,17 @@ export function CampaignHubDetailToolbar({
         <div className="relative min-w-[200px] flex-1 sm:max-w-[260px]">
           <Search
             size={12}
-            className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-gray-400"
+            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
           />
           <Input
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={searchPlaceholder}
-            className="h-8 border-gray-200 bg-gray-50/80 py-0 pl-8 text-[12px] leading-8 placeholder:text-[12px] focus:bg-white md:text-[12px]"
+            className="h-8 border-gray-200 bg-gray-50/80 py-0 pl-8 text-xs leading-8 placeholder:text-xs focus:bg-white md:text-xs"
           />
         </div>
         {actions ? (
-          <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:ml-auto">
+          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:ml-auto">
             {actions}
           </div>
         ) : null}

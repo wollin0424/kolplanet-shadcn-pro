@@ -5,7 +5,7 @@ import CollabStatusSelect from "@/components/pipeline/CollabStatusSelect";
 import { CommercialScopePopover } from "@/components/pipeline/CommercialScopePopover";
 import { PipelineRowActionsMenu } from "@/components/pipeline/PipelineRowActionsMenu";
 import PipelineStageCell from "@/components/pipeline/PipelineStageCell";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -386,26 +386,21 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
 
                   <TableCell className="py-4 overflow-hidden">
                     <div className="flex items-center gap-3 min-w-0">
-                      <Avatar className="w-8 h-8 shrink-0">
-                        <AvatarImage src="" />
-                        <AvatarFallback className="text-[10px] font-semibold bg-violet-100 text-violet-700">
-                          {row.displayName
-                            .split(" ")
-                            .map((p) => p[0])
-                            .join("")
-                            .slice(0, 2)
-                            .toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                      <InfluencerAvatar
+                        alt={row.displayName}
+                        platform={row.platform}
+                        fallback={row.displayName
+                          .split(" ")
+                          .map((p) => p[0])
+                          .join("")
+                          .slice(0, 2)
+                          .toUpperCase()}
+                        fallbackClassName="bg-violet-100 text-violet-700"
+                      />
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="text-[10px] font-semibold text-pink-600 bg-pink-50 border border-pink-100 rounded px-1 py-0.5 shrink-0">
-                            IG
-                          </span>
-                          <p className="text-[13px] font-medium text-gray-900 truncate">
-                            {row.handle}
-                          </p>
-                        </div>
+                        <p className="text-[13px] font-medium text-gray-900 truncate">
+                          {row.handle}
+                        </p>
                         <p className="text-[11px] text-gray-400 truncate">
                           {row.displayName}
                         </p>

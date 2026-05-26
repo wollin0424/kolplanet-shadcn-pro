@@ -11,6 +11,7 @@ import { Settings, RefreshCcw, Truck } from "@/lib/icons";
 - **Export name** = **Lucide name** = **`data-icon`** on the inner SVG (e.g. `Settings`)
 - **React component tree** (DevTools / Cursor Components): parent node **`Settings`**, then `span[data-slot=Settings]` → `svg`
 - **DOM-only tree** (Design/CSS inspector): still shows `svg` → `path` — HTML has no Settings tag; check `data-icon` on the svg or select the **`Settings`** React parent one level up
+- **Sizing**: pass `size={12}` or Tailwind `size-*` on the component. The outer box is locked so flex parents (e.g. `h-7 w-7` pagination buttons) do not stretch chevrons. `createIcon` scales stroke down slightly at ≤16px to reduce clipping.
 
 Do not import from `lucide-react` in feature code — add the icon to `icons.ts` via `createIcon` if missing.
 

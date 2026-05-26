@@ -24,7 +24,9 @@ import {
   CreditCard as LucideCreditCard,
   Download as LucideDownload,
   ExternalLink as LucideExternalLink,
+  Eye as LucideEye,
   FileLock as LucideFileLock,
+  Flag as LucideFlag,
   FileText as LucideFileText,
   FolderKanban as LucideFolderKanban,
   Hammer as LucideHammer,
@@ -82,7 +84,9 @@ export const Copy = createIcon(LucideCopy, "Copy");
 export const CreditCard = createIcon(LucideCreditCard, "CreditCard");
 export const Download = createIcon(LucideDownload, "Download");
 export const ExternalLink = createIcon(LucideExternalLink, "ExternalLink");
+export const Eye = createIcon(LucideEye, "Eye");
 export const FileLock = createIcon(LucideFileLock, "FileLock");
+export const Flag = createIcon(LucideFlag, "Flag");
 export const FileText = createIcon(LucideFileText, "FileText");
 export const FolderKanban = createIcon(LucideFolderKanban, "FolderKanban");
 export const Hammer = createIcon(LucideHammer, "Hammer");

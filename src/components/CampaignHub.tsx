@@ -42,7 +42,7 @@ const statusToneClass: Record<StatusTone, string> = {
 
 function HubCountBadge({ count }: { count: number }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-amber-200/80 bg-amber-50 px-2.5 py-1 text-[12px] font-semibold text-amber-700">
+    <span className="inline-flex items-center gap-1 rounded-full border border-amber-200/80 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
       <List size={12} className="opacity-75" />
       {count}
     </span>
@@ -54,10 +54,10 @@ function HubGoButton({ onClick }: { onClick?: (e: MouseEvent<HTMLButtonElement>)
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-[13px] font-medium text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50"
+      className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50"
     >
       Go
-      <ChevronRight size={14} strokeWidth={2.5} />
+      <ChevronRight size={14} strokeWidth={2} />
     </button>
   );
 }
@@ -75,7 +75,7 @@ function HubStatus({
   return (
     <span
       className={cn(
-        "inline-flex w-fit max-w-full items-center rounded-full border px-3 py-2 text-[12px] font-semibold leading-none whitespace-nowrap",
+        "inline-flex w-fit max-w-full items-center rounded-full border px-3 py-2 text-xs font-semibold leading-none whitespace-nowrap",
         statusToneClass[tone]
       )}
     >
@@ -85,7 +85,7 @@ function HubStatus({
 }
 
 function HubStatusList({ children }: { children: ReactNode }) {
-  return <div className="mt-0 flex flex-wrap gap-x-2 gap-y-1.5">{children}</div>;
+  return <div className="mt-0 flex flex-wrap gap-x-2 gap-y-2">{children}</div>;
 }
 
 export type HubSection = "contract" | "logistics";
@@ -140,10 +140,10 @@ function HubCell({
               iconClassName
             )}
           >
-            <Icon size={17} strokeWidth={2} />
+            <Icon size={16} strokeWidth={2} />
           </span>
-          <span className="flex min-w-0 items-center gap-1.5">
-            <h3 className="truncate text-[14px] font-semibold text-gray-900">{title}</h3>
+          <span className="flex min-w-0 items-center gap-2">
+            <h3 className="truncate text-sm font-semibold text-gray-900">{title}</h3>
             <Info size={14} className="shrink-0 text-gray-300" aria-hidden />
           </span>
         </div>
@@ -201,7 +201,7 @@ function HubProgressRing({
       <span
         className={cn(
           "absolute inset-0 flex items-center justify-center font-bold text-gray-900",
-          large ? "text-[13px]" : "text-[12px]"
+          large ? "text-sm" : "text-xs"
         )}
       >
         {percent}%
@@ -227,9 +227,9 @@ function HubProgressOverview({
         <p className="text-xs font-semibold uppercase tracking-wide text-brand">
           {statusLabel}
         </p>
-        <p className="mt-1.5 text-[22px] font-bold leading-none text-gray-900 tabular-nums">
+        <p className="mt-2 text-[22px] font-bold leading-none text-gray-900 tabular-nums">
           {current}{" "}
-          <span className="text-[14px] font-semibold text-gray-400">/ {total}</span>
+          <span className="text-sm font-semibold text-gray-400">/ {total}</span>
         </p>
       </div>
       <HubProgressRing percent={percent} />

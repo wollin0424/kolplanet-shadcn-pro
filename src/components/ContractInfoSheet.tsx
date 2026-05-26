@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { cn } from "@/lib/utils";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import { Copy } from "@/lib/icons";
@@ -232,20 +232,16 @@ export default function ContractInfoSheet({
 
           <div className="mt-3 flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <Avatar className="w-9 h-9">
-                <AvatarImage src="" />
-                <AvatarFallback className="text-[10px] font-semibold bg-violet-100 text-violet-700">
-                  {headerHandle.slice(1, 3).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <InfluencerAvatar
+                alt={influencerName}
+                platform="Instagram"
+                size="md"
+                fallback={headerHandle.slice(1, 3).toUpperCase()}
+                fallbackClassName="bg-violet-100 text-violet-700"
+              />
               <div className="min-w-0">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="text-[13px] font-semibold text-gray-900 truncate">
-                    {headerHandle}
-                  </div>
-                  <span className="inline-flex items-center rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand border border-brand-100">
-                    IG
-                  </span>
+                <div className="text-[13px] font-semibold text-gray-900 truncate">
+                  {headerHandle}
                 </div>
                 <div className="text-[11px] text-gray-500 truncate">
                   {influencerName}

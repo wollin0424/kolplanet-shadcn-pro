@@ -20,6 +20,7 @@ import ShippingDetailsSheet, {
 } from "@/components/ShippingDetailsSheet";
 import { useHubCardSelection } from "@/hooks/useHubCardSelection";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { platformFromLabel } from "@/components/PlatformIcon";
 import { cn } from "@/lib/utils";
 import {
   Copy,
@@ -253,7 +254,7 @@ function LogisticsInfluencerCard({
   return (
     <article
       className={cn(
-        "flex flex-col gap-1.5 rounded-xl border bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
+        "flex flex-col gap-2 rounded-xl border bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
         selected ? "border-brand ring-2 ring-brand/15" : "border-gray-100"
       )}
     >
@@ -261,6 +262,7 @@ function LogisticsInfluencerCard({
         <CampaignHubInfluencerIdentity
           name={card.name}
           handle={card.handle}
+          platform={platformFromLabel(card.handle) ?? "IG"}
           kolManager={card.manager}
           relationship={card.relationship}
           initials={initials}
@@ -272,7 +274,7 @@ function LogisticsInfluencerCard({
         />
         <span
           className={cn(
-            "inline-flex shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none whitespace-nowrap",
+            "inline-flex shrink-0 rounded-full border px-3 py-1 text-xs font-semibold leading-none whitespace-nowrap",
             statusBadgeClass
           )}
         >
@@ -291,7 +293,7 @@ function LogisticsInfluencerCard({
             className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-white hover:text-gray-700"
             aria-label="Copy tracking number"
           >
-            <Copy size={13} />
+            <Copy size={14} />
           </button>
         ) : null}
       </div>
@@ -306,8 +308,8 @@ function LogisticsInfluencerCard({
         />
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-gray-100 pt-4 text-[12px] text-gray-500">
-        <span className="flex min-w-0 flex-1 items-center gap-1.5">
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-gray-100 pt-4 text-xs text-gray-500">
+        <span className="flex min-w-0 flex-1 items-center gap-2">
           <span className="shrink-0 font-medium text-gray-700">Ship To: </span>
           <span className="truncate text-gray-500">{card.shipToDisplay}</span>
           <button
@@ -316,7 +318,7 @@ function LogisticsInfluencerCard({
             className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
             aria-label="Edit shipping details"
           >
-            <Pencil size={13} />
+            <Pencil size={14} />
           </button>
         </span>
         <CampaignHubCardMetaAction icon={Truck} className="whitespace-nowrap">

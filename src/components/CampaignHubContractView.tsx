@@ -23,6 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { platformFromLabel } from "@/components/PlatformIcon";
 import { cn } from "@/lib/utils";
 import {
   CampaignHubCardMetaAction,
@@ -186,13 +187,14 @@ function ContractInfluencerCard({ card }: { card: ContractCard }) {
   return (
     <article
       className={cn(
-        "flex flex-col gap-1.5 rounded-xl border border-gray-100 bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+        "flex flex-col gap-2 rounded-xl border border-gray-100 bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <CampaignHubInfluencerIdentity
           name={card.name}
           handle={card.handle}
+          platform={platformFromLabel(card.handle) ?? "IG"}
           kolManager={card.manager}
           relationship={card.relationship}
           initials={initials}
@@ -200,7 +202,7 @@ function ContractInfluencerCard({ card }: { card: ContractCard }) {
         />
         <span
           className={cn(
-            "inline-flex shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none whitespace-nowrap",
+            "inline-flex shrink-0 rounded-full border px-3 py-1 text-xs font-semibold leading-none whitespace-nowrap",
             statusBadgeClass
           )}
         >
@@ -218,8 +220,8 @@ function ContractInfluencerCard({ card }: { card: ContractCard }) {
         />
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-gray-100 pt-4 text-[12px] text-gray-500">
-        <span className="flex min-w-0 items-center gap-1.5">
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-gray-100 pt-4 text-xs text-gray-500">
+        <span className="flex min-w-0 items-center gap-2">
           <span className="shrink-0 font-medium text-gray-700">Legal Name: </span>
           <span className="truncate text-gray-500">{card.legalName ?? "—"}</span>
           <button
@@ -227,7 +229,7 @@ function ContractInfluencerCard({ card }: { card: ContractCard }) {
             className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
             aria-label="Edit legal name"
           >
-            <Pencil size={13} />
+            <Pencil size={14} />
           </button>
         </span>
         {card.fileCount > 0 ? (
@@ -246,7 +248,7 @@ function ContractInfluencerCard({ card }: { card: ContractCard }) {
               <ul className="flex flex-col gap-2">
                 {contractFiles(card).map((fileName) => (
                   <li key={fileName} className="flex min-w-0 items-start gap-2">
-                    <FileText size={14} className="mt-0.5 shrink-0 text-gray-400" />
+                    <FileText size={14} className="mt-1 shrink-0 text-gray-400" />
                     <span className="min-w-0 font-medium leading-snug text-gray-800">
                       {fileName}
                     </span>
@@ -266,7 +268,7 @@ function ContractInfluencerCard({ card }: { card: ContractCard }) {
       <div className="mt-4 flex items-stretch gap-2">
         <button
           type="button"
-          className="flex h-10 min-w-0 flex-1 items-center justify-center rounded-lg border border-brand bg-white px-3 text-[13px] font-semibold text-brand transition-colors hover:bg-brand hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
+          className="flex h-10 min-w-0 flex-1 items-center justify-center rounded-lg border border-brand bg-white px-3 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
         >
           {card.actionLabel}
         </button>

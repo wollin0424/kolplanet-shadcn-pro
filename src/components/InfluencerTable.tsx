@@ -9,7 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { InfluencerAvatar } from "@/components/InfluencerAvatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -590,12 +591,13 @@ export default function InfluencerTable() {
                     )}
                   >
                     <div className="flex items-center gap-3 min-w-[185px]">
-                      <Avatar className="w-8 h-8 shrink-0">
-                        <AvatarImage src={row.avatarUrl} />
-                        <AvatarFallback className="text-[10px] font-semibold bg-violet-100 text-violet-700">
-                          {row.handle.slice(1, 3).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                      <InfluencerAvatar
+                        src={row.avatarUrl}
+                        alt={row.handle}
+                        platform={row.platform}
+                        fallback={row.handle.slice(1, 3).toUpperCase()}
+                        fallbackClassName="bg-violet-100 text-violet-700"
+                      />
                       <div className="min-w-0">
                         <p className="text-[13px] font-medium text-gray-900 truncate max-w-[130px]">
                           {row.handle}

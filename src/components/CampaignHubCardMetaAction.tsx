@@ -18,7 +18,7 @@ export function CampaignHubCardMetaAction({
     <button
       type="button"
       className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium text-brand transition-colors",
+        "inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-xs font-medium text-brand transition-colors",
         "hover:bg-brand-50",
         className
       )}
@@ -31,4 +31,4 @@ export function CampaignHubCardMetaAction({
 }
 
 export const campaignHubCardMetaActionMutedClass =
-  "inline-flex shrink-0 items-center gap-1.5 px-2 py-1 text-[12px] text-gray-500";
+  "inline-flex shrink-0 items-center gap-2 px-2 py-1 text-xs text-gray-500";

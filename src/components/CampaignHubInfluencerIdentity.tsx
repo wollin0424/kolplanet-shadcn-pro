@@ -1,6 +1,7 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { InfluencerAvatar } from "@/components/InfluencerAvatar";
+import type { Platform } from "@/components/PlatformIcon";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Tooltip,
@@ -24,7 +25,7 @@ const RELATIONSHIP_LABEL: Record<KolRelationship, string> = {
 };
 
 const metaIconBase =
-  "inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border transition-colors";
+  "inline-flex size-5 items-center justify-center rounded-full border transition-colors";
 
 const metaIconVariantClass = {
   identity:
@@ -52,7 +53,7 @@ function KolMetaIcon({
 
 function HubHoverField({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-0.5">
+    <div className="flex flex-col gap-1">
       <span className="text-gray-400">{label}</span>
       <span className="font-semibold text-gray-900">{value}</span>
     </div>
@@ -62,6 +63,7 @@ function HubHoverField({ label, value }: { label: string; value: string }) {
 export function CampaignHubInfluencerIdentity({
   name,
   handle,
+  platform,
   kolManager,
   relationship,
   initials,
@@ -70,6 +72,7 @@ export function CampaignHubInfluencerIdentity({
 }: {
   name: string;
   handle: string;
+  platform?: Platform | string;
   kolManager: string;
   relationship: KolRelationship;
   initials: string;
@@ -84,25 +87,26 @@ export function CampaignHubInfluencerIdentity({
   return (
     <div className="flex min-w-0 items-start gap-3">
       <div className="relative shrink-0">
-        <Avatar className="h-11 w-11 border border-gray-100">
-          <AvatarImage src="" alt={name} />
-          <AvatarFallback className={cn("text-[11px] font-semibold", avatarFallbackClassName)}>
-            {initials}
-          </AvatarFallback>
-        </Avatar>
+        <InfluencerAvatar
+          alt={name}
+          fallback={initials}
+          platform={platform}
+          size="lg"
+          fallbackClassName={avatarFallbackClassName}
+        />
         {selection ? (
           <Checkbox
             checked={selection.checked}
             onCheckedChange={(checked) => selection.onCheckedChange(checked === true)}
             onClick={(e) => e.stopPropagation()}
             aria-label={`Select ${name}`}
-            className="absolute -left-1 -top-1 z-10 size-[18px] rounded-[4px] border-gray-300 bg-white shadow-sm data-checked:border-brand data-checked:bg-brand"
+            className="absolute -left-1 -top-1 z-10 size-5 rounded border-gray-300 bg-white shadow-sm data-checked:border-brand data-checked:bg-brand"
           />
         ) : null}
       </div>
-      <div className="min-w-0 flex-1 pt-0.5">
+      <div className="min-w-0 flex-1 pt-1">
         <div className="flex max-w-full min-w-0 items-center gap-1">
-          <span className="truncate text-[14px] font-semibold text-gray-900">{name}</span>
+          <span className="truncate text-sm font-semibold text-gray-900">{name}</span>
           <Tooltip>
             <TooltipTrigger
               type="button"
@@ -128,7 +132,7 @@ export function CampaignHubInfluencerIdentity({
             </TooltipContent>
           </Tooltip>
         </div>
-        <p className="mt-0.5 truncate text-[12px] text-gray-500">{handle}</p>
+        <p className="mt-1 truncate text-xs text-gray-500">{handle}</p>
       </div>
     </div>
   );

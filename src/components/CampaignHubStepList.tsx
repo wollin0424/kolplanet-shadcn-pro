@@ -58,7 +58,7 @@ export function CampaignHubStepList({
           <li
             key={step}
             className={cn(
-              "relative flex items-start gap-2.5 text-[13px]",
+              "relative flex items-start gap-3 text-sm",
               !isLast && "pb-5"
             )}
           >

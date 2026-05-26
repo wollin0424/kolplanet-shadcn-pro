@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import ApprovePayoutSheet from "@/components/ApprovePayoutSheet";
 import RejectSettlementDialog from "@/components/RejectSettlementDialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -509,12 +509,13 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
               >
                 <TableCell className="py-4 !pl-6">
                   <div className="flex items-center gap-3 min-w-[180px]">
-                    <Avatar className="w-7 h-7 shrink-0">
-                      <AvatarImage src="" />
-                      <AvatarFallback className="text-[10px] font-semibold bg-violet-100 text-violet-700">
-                        {row.handle.replace("@", "").slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <InfluencerAvatar
+                      alt={row.handle}
+                      platform={row.platform}
+                      size="sm"
+                      fallback={row.handle.replace("@", "").slice(0, 2).toUpperCase()}
+                      fallbackClassName="bg-violet-100 text-violet-700"
+                    />
                     <div className="min-w-0">
                       <p className="text-[13px] font-medium text-gray-900 truncate">
                         {row.handle}
