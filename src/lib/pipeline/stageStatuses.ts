@@ -28,15 +28,7 @@ export type PaymentStatus =
   | "Waiting for Validation"
   | "Rejected";
 
-export type CollabStatus =
-  | "Pending"
-  | "Invited"
-  | "In Negotiation"
-  | "Approved"
-  | "Active"
-  | "On Hold"
-  | "Completed"
-  | "Terminated";
+export type CollabStatus = "Pending" | "Approved" | "Done" | "Terminated";
 
 export type StageStatus =
   | ContractStatus
@@ -101,12 +93,8 @@ export function getStageToneTextClass(tone: BadgeTone) {
 
 export const COLLAB_STATUS_OPTIONS: CollabStatus[] = [
   "Pending",
-  "Invited",
-  "In Negotiation",
   "Approved",
-  "Active",
-  "On Hold",
-  "Completed",
+  "Done",
   "Terminated",
 ];
 
@@ -238,11 +226,7 @@ export const COLLAB_STATUS_CONFIG: Record<
   { label: string; tone: BadgeTone; showCheck?: boolean }
 > = {
   Pending: { label: "Pending", tone: "amber" },
-  Invited: { label: "Invited", tone: "sky" },
-  "In Negotiation": { label: "In Negotiation", tone: "violet" },
-  Approved: { label: "Approved", tone: "brand" },
-  Active: { label: "Active", tone: "indigo" },
-  "On Hold": { label: "On Hold", tone: "rose" },
-  Completed: { label: "Completed", tone: "green", showCheck: true },
-  Terminated: { label: "Terminated", tone: "gray" },
+  Approved: { label: "Approved", tone: "sky" },
+  Done: { label: "Done", tone: "green", showCheck: true },
+  Terminated: { label: "Terminated", tone: "rose" },
 };

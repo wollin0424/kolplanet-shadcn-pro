@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { InfluencerIdentityCell } from "@/components/InfluencerIdentityCell";
+import type { KolRelationship } from "@/components/InfluencerMetaIcons";
 import CollabStatusSelect from "@/components/pipeline/CollabStatusSelect";
 import { CommercialScopePopover } from "@/components/pipeline/CommercialScopePopover";
 import { PipelineRowActionsMenu } from "@/components/pipeline/PipelineRowActionsMenu";
 import PipelineStageCell from "@/components/pipeline/PipelineStageCell";
-import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -66,8 +67,11 @@ type PipelineRow = {
   posting: PostingStatus;
   payment: PaymentStatus;
   manager: string;
+  relationship: KolRelationship;
   note: string;
 };
+
+const RELATIONSHIP_POOL: KolRelationship[] = ["Direct", "Manager", "MCN"];
 
 /** Order matches Campaign Hub cards; mock rows cycle with `i % length`. */
 const LOGISTICS_POOL: LogisticsStatus[] = [
@@ -88,16 +92,7 @@ const PAYMENT_POOL: PaymentStatus[] = [
   "Waiting for Validation",
   "Rejected",
 ];
-const COLLAB_POOL: CollabStatus[] = [
-  "Pending",
-  "Invited",
-  "In Negotiation",
-  "Approved",
-  "Active",
-  "On Hold",
-  "Completed",
-  "Terminated",
-];
+const COLLAB_POOL: CollabStatus[] = ["Pending", "Approved", "Done", "Terminated"];
 
 const CONTRACT_POOL: ContractStatus[] = [
   "Pending",
@@ -144,6 +139,7 @@ function buildMockRows(count: number): PipelineRow[] {
     posting: POSTING_POOL[(i + 3) % POSTING_POOL.length],
     payment: PAYMENT_POOL[(i + 4) % PAYMENT_POOL.length],
     manager: "Wolin",
+    relationship: RELATIONSHIP_POOL[i % RELATIONSHIP_POOL.length],
     note: "Active user - Fr...",
   }));
 }
@@ -385,27 +381,13 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                   </TableCell>
 
                   <TableCell className="py-4 overflow-hidden">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <InfluencerAvatar
-                        alt={row.displayName}
-                        platform={row.platform}
-                        fallback={row.displayName
-                          .split(" ")
-                          .map((p) => p[0])
-                          .join("")
-                          .slice(0, 2)
-                          .toUpperCase()}
-                        fallbackClassName="bg-violet-100 text-violet-700"
-                      />
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-medium text-gray-900 truncate">
-                          {row.handle}
-                        </p>
-                        <p className="text-[11px] text-gray-400 truncate">
-                          {row.displayName}
-                        </p>
-                      </div>
-                    </div>
+                    <InfluencerIdentityCell
+                      name={row.displayName}
+                      handle={row.handle}
+                      platform={row.platform}
+                      kolManager={row.manager}
+                      relationship={row.relationship}
+                    />
                   </TableCell>
 
                   <TableCell className="py-4 overflow-hidden">

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import ProcessPayoutSheet from "@/components/ProcessPayoutSheet";
 import { InfluencerIdentityCell } from "@/components/InfluencerIdentityCell";
+import type { KolRelationship } from "@/components/InfluencerMetaIcons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,12 +26,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import type { ClientSettlementStatus } from "@/lib/clientBilling";
 import {
-  getSettlementRows,
-  type ClientSettlementRow,
-  type ClientSettlementStatus,
-} from "@/lib/clientBilling";
+  getInfluencerCampaignRows,
+  type InfluencerPaymentCampaignRow,
+} from "@/lib/influencerPayments";
+import { cn } from "@/lib/utils";
 import {
   Calendar,
   ChevronDown,
@@ -39,9 +40,13 @@ import {
   Columns3,
   Info,
   MoreVertical,
-  RefreshCcw,
   Search,
 } from "@/lib/icons";
+
+const PAGE_SIZE_OPTIONS = [10, 20, 30] as const;
+
+const TOOLBAR_CONTROL =
+  "h-8 rounded-lg border border-gray-200 bg-white text-[12.5px] shadow-none";
 
 const SETTLEMENT_FILTER_OPTIONS = [
   "All",
@@ -52,8 +57,17 @@ const SETTLEMENT_FILTER_OPTIONS = [
   "Rejected",
 ] as const;
 
-function formatUsd(amount: number) {
-  return `USD ${amount.toLocaleString("en-US")}`;
+const PROCESSABLE_STATUSES: ClientSettlementStatus[] = [
+  "Waiting for Validation",
+  "Partially Paid",
+  "Validated",
+];
+
+function formatAmount(currency: "USD" | "INR", amount: number) {
+  if (currency === "INR") {
+    return `INR ${amount.toLocaleString("en-IN")}`;
+  }
+  return `$${amount.toLocaleString("en-US")}`;
 }
 
 function SettlementStatusBadge({ status }: { status: ClientSettlementStatus }) {
@@ -68,7 +82,7 @@ function SettlementStatusBadge({ status }: { status: ClientSettlementStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+        "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap",
         styles[status]
       )}
     >
@@ -90,36 +104,36 @@ function buildPageList(current: number, total: number): (number | "…")[] {
   return pages;
 }
 
-const PAGE_SIZE_OPTIONS = [10, 20, 30] as const;
-
-const PROCESSABLE_STATUSES: ClientSettlementStatus[] = [
-  "Waiting for Validation",
-  "Partially Paid",
-  "Validated",
-];
-
-export default function ClientBillingSettlementTable({
-  billingId,
-  campaignTitle,
+export default function InfluencerPaymentCampaignsTable({
+  influencerId,
+  influencerName,
+  influencerHandle,
+  platform,
+  kolManager,
+  relationship,
 }: {
-  billingId: string;
-  campaignTitle: string;
+  influencerId: string;
+  influencerName: string;
+  influencerHandle: string;
+  platform: string;
+  kolManager: string;
+  relationship: KolRelationship;
 }) {
-  const allRows = getSettlementRows(billingId);
+  const allRows = getInfluencerCampaignRows(influencerId);
   const [query, setQuery] = useState("");
   const [settlementFilter, setSettlementFilter] = useState("All");
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(30);
   const [currentPage, setCurrentPage] = useState(1);
   const [processOpen, setProcessOpen] = useState(false);
-  const [activeRow, setActiveRow] = useState<ClientSettlementRow | null>(null);
+  const [activeRow, setActiveRow] = useState<InfluencerPaymentCampaignRow | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allRows.filter((row) => {
       const matchesQuery =
         q.length === 0 ||
-        row.name.toLowerCase().includes(q) ||
-        row.handle.toLowerCase().includes(q);
+        row.campaignName.toLowerCase().includes(q) ||
+        row.campaignId.toLowerCase().includes(q);
       const matchesStatus =
         settlementFilter === "All" || row.settlementStatus === settlementFilter;
       return matchesQuery && matchesStatus;
@@ -134,7 +148,7 @@ export default function ClientBillingSettlementTable({
 
   const goToPage = (p: number) => setCurrentPage(Math.min(Math.max(1, p), totalPages));
 
-  const openProcess = (row: ClientSettlementRow) => {
+  const openProcess = (row: InfluencerPaymentCampaignRow) => {
     setActiveRow(row);
     setProcessOpen(true);
   };
@@ -144,21 +158,22 @@ export default function ClientBillingSettlementTable({
       <ProcessPayoutSheet
         open={processOpen}
         onOpenChange={setProcessOpen}
-        influencerName={activeRow?.name ?? "Amelia Stone"}
-        influencerHandle={activeRow?.handle ?? "@instagram ins"}
-        approvedAmount={activeRow?.approvedAmount ?? 4_100}
+        influencerName={influencerName}
+        influencerHandle={influencerHandle}
+        approvedAmount={activeRow?.approvedAmount ?? 30_000}
         amountPaid={activeRow?.amountPaid ?? 0}
-        dueDate={activeRow?.dueDate ?? "Feb 11, 2024"}
+        dueDate={activeRow?.dueDate ?? "Sep 02, 2026"}
         settlementStatus={activeRow?.settlementStatus ?? "Waiting for Validation"}
       />
 
       <div className="shrink-0 border-b border-gray-100 px-6 py-4">
-        <h1 className="text-[20px] font-semibold tracking-tight text-gray-900">
-          {campaignTitle}
-        </h1>
+        <p className="text-[13px] text-gray-600">
+          Influencer ID:{" "}
+          <span className="font-semibold tabular-nums text-gray-900">{influencerId}</span>
+        </p>
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-gray-100 px-6 py-3">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-gray-100 px-5 py-3">
         <Select
           value={settlementFilter}
           onValueChange={(v) => {
@@ -166,7 +181,7 @@ export default function ClientBillingSettlementTable({
             setCurrentPage(1);
           }}
         >
-          <SelectTrigger className="h-8 w-[170px] border-gray-200 bg-gray-50 text-[12.5px]">
+          <SelectTrigger className={cn(TOOLBAR_CONTROL, "h-8 w-[170px] text-gray-600")}>
             <SelectValue placeholder="Settlement Status" />
           </SelectTrigger>
           <SelectContent>
@@ -180,13 +195,16 @@ export default function ClientBillingSettlementTable({
 
         <button
           type="button"
-          className="inline-flex h-8 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-[12.5px] text-gray-500"
+          className={cn(
+            TOOLBAR_CONTROL,
+            "inline-flex items-center gap-2 px-3 text-gray-500"
+          )}
         >
           <Calendar size={13} className="text-gray-400" />
-          Start Due Date — End Due Date
+          Start Date — End Date
         </button>
 
-        <div className="relative min-w-[200px] flex-1 max-w-xs">
+        <div className="relative min-w-[200px] flex-1 max-w-sm">
           <Search
             size={13}
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -197,45 +215,44 @@ export default function ClientBillingSettlementTable({
               setQuery(e.target.value);
               setCurrentPage(1);
             }}
-            placeholder="Search Influencer or Legal Name"
-            className="h-8 border-gray-200 bg-gray-50 pl-8 text-[13px] focus:bg-white"
+            placeholder="Search Campaign"
+            className={cn(
+              TOOLBAR_CONTROL,
+              "h-8 w-full pl-8 text-gray-800 placeholder:text-gray-400 focus-visible:ring-brand/30"
+            )}
           />
         </div>
 
-        <button
-          type="button"
-          className="ml-auto inline-flex size-8 items-center justify-center rounded-md border border-transparent text-gray-500 hover:border-gray-200 hover:bg-gray-50"
-          aria-label="Refresh"
-        >
-          <RefreshCcw size={15} />
-        </button>
-      </div>
-
-      <div className="flex shrink-0 items-center justify-between border-b border-gray-100 bg-gray-50/60 px-6 py-2.5">
-        <span className="text-[12px] font-medium text-gray-500">
-          Influencer: <span className="tabular-nums text-gray-900">{filtered.length}</span>
-        </span>
-        <button
-          type="button"
-          className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-[12px] text-gray-600"
-        >
-          <Columns3 size={13} className="text-gray-400" />
-          Visible Columns
-          <ChevronDown size={11} className="text-gray-400" />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className={cn(
+              TOOLBAR_CONTROL,
+              "ml-auto inline-flex shrink-0 items-center gap-1 px-2.5 text-gray-600 transition-colors hover:bg-gray-50"
+            )}
+          >
+            <Columns3 size={13} className="text-gray-400" />
+            Visible Columns
+            <ChevronDown size={11} className="text-gray-400" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="text-[13px]">
+            <DropdownMenuItem>Reset columns</DropdownMenuItem>
+            <DropdownMenuItem>Save view</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="no-scrollbar flex-1 min-h-0 overflow-auto [&_[data-slot=table-container]]:no-scrollbar">
-        <Table className="w-full min-w-[1100px] table-auto border-separate border-spacing-0 text-[13px] [&_td]:px-5 [&_th]:px-5">
+        <Table className="w-full min-w-[1280px] table-auto border-separate border-spacing-0 text-[13px] [&_td]:px-5 [&_th]:px-5">
           <TableHeader>
-            <TableRow className="border-b border-gray-100 bg-gray-50/70 hover:bg-gray-50/70">
-              <TableHead className="py-3 font-semibold text-gray-800">Influencer</TableHead>
-              <TableHead className="py-3 font-semibold text-gray-800">Settlement Status</TableHead>
-              <TableHead className="py-3 font-semibold text-gray-800">Approved Amount</TableHead>
-              <TableHead className="py-3 font-semibold text-gray-800">Amount Paid</TableHead>
-              <TableHead className="py-3 font-semibold text-gray-800">Balance</TableHead>
-              <TableHead className="py-3 font-semibold text-gray-800">Due Date</TableHead>
-              <TableHead className="py-3 font-semibold text-gray-800">Notes</TableHead>
+            <TableRow className="border-b border-gray-100 bg-gray-50/80 hover:bg-gray-50/80">
+              <TableHead className="py-3 font-semibold text-gray-700">Campaign Name</TableHead>
+              <TableHead className="py-3 font-semibold text-gray-700">Influencer Account</TableHead>
+              <TableHead className="py-3 font-semibold text-gray-700">Settlement Status</TableHead>
+              <TableHead className="py-3 font-semibold text-gray-700">Approved Amount</TableHead>
+              <TableHead className="py-3 font-semibold text-gray-700">Amount Paid</TableHead>
+              <TableHead className="py-3 font-semibold text-gray-700">Balance</TableHead>
+              <TableHead className="py-3 font-semibold text-gray-700">Due Date</TableHead>
+              <TableHead className="py-3 font-semibold text-gray-700">Notes</TableHead>
               <TableHead className="w-10 py-3" />
             </TableRow>
           </TableHeader>
@@ -263,48 +280,42 @@ export default function ClientBillingSettlementTable({
                   tabIndex={canProcess ? 0 : undefined}
                   role={canProcess ? "button" : undefined}
                 >
-                  <TableCell className="py-4">
+                  <TableCell className="py-3.5">
+                    <button
+                      type="button"
+                      className="text-[13px] font-medium text-brand hover:text-brand/80"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {row.campaignName}
+                    </button>
+                  </TableCell>
+                  <TableCell className="py-3.5">
                     <InfluencerIdentityCell
-                      name={row.name}
-                      handle={row.handle}
-                      platform={row.platform}
-                      kolManager={row.kolManager}
-                      relationship={row.relationship}
+                      name={influencerName}
+                      handle={influencerHandle}
+                      platform={platform}
+                      kolManager={kolManager}
+                      relationship={relationship}
+                      avatarSize="md"
                     />
                   </TableCell>
-                  <TableCell className="py-4">
+                  <TableCell className="py-3.5">
                     <SettlementStatusBadge status={row.settlementStatus} />
                   </TableCell>
-                  <TableCell className="py-4 tabular-nums text-gray-800">
-                    {formatUsd(row.approvedAmount)}
+                  <TableCell className="py-3.5 tabular-nums text-gray-800">
+                    {formatAmount(row.currency, row.approvedAmount)}
                   </TableCell>
-                  <TableCell className="py-4 tabular-nums">
-                    <span
-                      className={cn(
-                        "font-medium",
-                        row.amountPaid === 0 ? "text-red-500" : "text-gray-800"
-                      )}
-                    >
-                      {formatUsd(row.amountPaid)}
-                    </span>
+                  <TableCell className="py-3.5 tabular-nums text-gray-800">
+                    {formatAmount(row.currency, row.amountPaid)}
                   </TableCell>
-                  <TableCell className="py-4 tabular-nums font-medium text-gray-900">
-                    {formatUsd(row.balance)}
+                  <TableCell className="py-3.5 tabular-nums font-medium text-gray-900">
+                    {formatAmount(row.currency, row.balance)}
                   </TableCell>
-                  <TableCell
-                    className={cn(
-                      "py-4 tabular-nums",
-                      row.balance > 0 && row.settlementStatus !== "All Paid"
-                        ? "text-red-500"
-                        : "text-gray-600"
-                    )}
-                  >
-                    {row.dueDate}
-                  </TableCell>
-                  <TableCell className="max-w-[200px] py-4">
+                  <TableCell className="py-3.5 tabular-nums text-gray-600">{row.dueDate}</TableCell>
+                  <TableCell className="max-w-[180px] py-3.5">
                     <p className="truncate text-[12px] text-gray-500">{row.note}</p>
                   </TableCell>
-                  <TableCell className="py-4" onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="py-3.5" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         className="inline-flex size-8 items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50"
@@ -314,7 +325,7 @@ export default function ClientBillingSettlementTable({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="text-[13px]">
                         {canProcess ? (
-                          <DropdownMenuItem onClick={() => openProcess(row)}>
+                          <DropdownMenuItem onSelect={() => openProcess(row)}>
                             Process Payout
                           </DropdownMenuItem>
                         ) : null}

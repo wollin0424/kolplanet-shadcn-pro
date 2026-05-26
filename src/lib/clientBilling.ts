@@ -84,11 +84,15 @@ export type ClientSettlementStatus =
   | "All Paid"
   | "Rejected";
 
+export type KolRelationship = "Direct" | "Manager" | "MCN";
+
 export type ClientSettlementRow = {
   id: string;
   name: string;
   handle: string;
   platform: string;
+  kolManager: string;
+  relationship: KolRelationship;
   settlementStatus: ClientSettlementStatus;
   approvedAmount: number;
   amountPaid: number;
@@ -265,6 +269,8 @@ const BASE_SETTLEMENT_ROWS: ClientSettlementRow[] = [
       name: "Amelia Stone",
       handle: "@instagram ins",
       platform: "Instagram",
+      kolManager: "Moca",
+      relationship: "Manager",
       settlementStatus: "Waiting for Validation",
       approvedAmount: 4_100,
       amountPaid: 0,
@@ -277,6 +283,8 @@ const BASE_SETTLEMENT_ROWS: ClientSettlementRow[] = [
       name: "Lucas Turner",
       handle: "@lucasturner",
       platform: "Instagram",
+      kolManager: "Chris",
+      relationship: "Direct",
       settlementStatus: "Partially Paid",
       approvedAmount: 10_000,
       amountPaid: 0,
@@ -289,6 +297,8 @@ const BASE_SETTLEMENT_ROWS: ClientSettlementRow[] = [
       name: "Mia Chen",
       handle: "@miachen",
       platform: "Instagram",
+      kolManager: "Moca",
+      relationship: "MCN",
       settlementStatus: "Validated",
       approvedAmount: 6_500,
       amountPaid: 3_200,
@@ -301,6 +311,8 @@ const BASE_SETTLEMENT_ROWS: ClientSettlementRow[] = [
       name: "Jordan Lee",
       handle: "@jordanlee",
       platform: "Instagram",
+      kolManager: "Wollin",
+      relationship: "Manager",
       settlementStatus: "All Paid",
       approvedAmount: 2_800,
       amountPaid: 2_800,
@@ -313,6 +325,8 @@ const BASE_SETTLEMENT_ROWS: ClientSettlementRow[] = [
       name: "Priya Sharma",
       handle: "@priyasharma",
       platform: "Instagram",
+      kolManager: "Chris",
+      relationship: "Direct",
       settlementStatus: "Rejected",
       approvedAmount: 5_000,
       amountPaid: 0,
@@ -361,6 +375,8 @@ function buildSettlementExtras(billingId: string, count: number): ClientSettleme
     "Completed — proof uploaded.",
     "Missing deliverable evidence.",
   ];
+  const managers = ["Moca", "Chris", "Wollin"];
+  const relationships: KolRelationship[] = ["Direct", "Manager", "MCN"];
 
   return Array.from({ length: count }, (_, i) => {
     const status = pick(statuses, i);
@@ -377,6 +393,8 @@ function buildSettlementExtras(billingId: string, count: number): ClientSettleme
       name: pick(names, i),
       handle: pick(handles, i),
       platform: "Instagram",
+      kolManager: pick(managers, i),
+      relationship: pick(relationships, i),
       settlementStatus: status,
       approvedAmount,
       amountPaid,
