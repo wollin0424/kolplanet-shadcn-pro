@@ -23,6 +23,8 @@ export type PaymentExecutionDraft = {
   submissionDate: string;
   proofFileName: string | null;
   proofRequiredHint: boolean;
+  failureReasons: string[];
+  failureReasonRequiredHint: boolean;
 };
 
 /** Automated API Payout — provider options shown in Process Payout */
@@ -166,6 +168,8 @@ export function createExecutionDrafts(
       submissionDate: "2026/05/27",
       proofFileName: null,
       proofRequiredHint: false,
+      failureReasons: [],
+      failureReasonRequiredHint: false,
     };
   }
   return drafts;

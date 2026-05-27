@@ -31,6 +31,7 @@ import {
   FileText as LucideFileText,
   FolderKanban as LucideFolderKanban,
   Hammer as LucideHammer,
+  History as LucideHistory,
   Hourglass as LucideHourglass,
   Info as LucideInfo,
   Link as LucideLink,
@@ -55,6 +56,7 @@ import {
   Trash2 as LucideTrash2,
   Truck as LucideTruck,
   Upload as LucideUpload,
+  UserPlus as LucideUserPlus,
   UserRound as LucideUserRound,
   Users as LucideUsers,
   UsersRound as LucideUsersRound,
@@ -92,6 +94,7 @@ export const Flag = createIcon(LucideFlag, "Flag");
 export const FileText = createIcon(LucideFileText, "FileText");
 export const FolderKanban = createIcon(LucideFolderKanban, "FolderKanban");
 export const Hammer = createIcon(LucideHammer, "Hammer");
+export const History = createIcon(LucideHistory, "History");
 export const Hourglass = createIcon(LucideHourglass, "Hourglass");
 export const Info = createIcon(LucideInfo, "Info");
 export const Link = createIcon(LucideLink, "Link");
@@ -116,6 +119,7 @@ export const Tag = createIcon(LucideTag, "Tag");
 export const Trash2 = createIcon(LucideTrash2, "Trash2");
 export const Truck = createIcon(LucideTruck, "Truck");
 export const Upload = createIcon(LucideUpload, "Upload");
+export const UserPlus = createIcon(LucideUserPlus, "UserPlus");
 export const UserRound = createIcon(LucideUserRound, "UserRound");
 export const Users = createIcon(LucideUsers, "Users");
 export const UsersRound = createIcon(LucideUsersRound, "UsersRound");

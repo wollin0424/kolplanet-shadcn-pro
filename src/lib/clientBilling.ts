@@ -1,3 +1,5 @@
+import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
+
 export type ContractStatus =
   | "Pending"
   | "Drafting"
@@ -90,6 +92,7 @@ export type ClientSettlementRow = {
   id: string;
   name: string;
   handle: string;
+  avatarUrl: string;
   platform: string;
   kolManager: string;
   relationship: KolRelationship;
@@ -268,6 +271,7 @@ const BASE_SETTLEMENT_ROWS: ClientSettlementRow[] = [
       id: "CS-01",
       name: "Amelia Stone",
       handle: "@instagram ins",
+      avatarUrl: getMockInfluencerAvatar("CS-01"),
       platform: "Instagram",
       kolManager: "Moca",
       relationship: "Manager",
@@ -282,6 +286,7 @@ const BASE_SETTLEMENT_ROWS: ClientSettlementRow[] = [
       id: "CS-02",
       name: "Lucas Turner",
       handle: "@lucasturner",
+      avatarUrl: getMockInfluencerAvatar("CS-02"),
       platform: "Instagram",
       kolManager: "Chris",
       relationship: "Direct",
@@ -296,6 +301,7 @@ const BASE_SETTLEMENT_ROWS: ClientSettlementRow[] = [
       id: "CS-03",
       name: "Mia Chen",
       handle: "@miachen",
+      avatarUrl: getMockInfluencerAvatar("CS-03"),
       platform: "Instagram",
       kolManager: "Moca",
       relationship: "MCN",
@@ -310,6 +316,7 @@ const BASE_SETTLEMENT_ROWS: ClientSettlementRow[] = [
       id: "CS-04",
       name: "Jordan Lee",
       handle: "@jordanlee",
+      avatarUrl: getMockInfluencerAvatar("CS-04"),
       platform: "Instagram",
       kolManager: "Wollin",
       relationship: "Manager",
@@ -324,6 +331,7 @@ const BASE_SETTLEMENT_ROWS: ClientSettlementRow[] = [
       id: "CS-05",
       name: "Priya Sharma",
       handle: "@priyasharma",
+      avatarUrl: getMockInfluencerAvatar("CS-05"),
       platform: "Instagram",
       kolManager: "Chris",
       relationship: "Direct",
@@ -388,10 +396,12 @@ function buildSettlementExtras(billingId: string, count: number): ClientSettleme
           ? Math.round(approvedAmount * (0.2 + (i % 4) * 0.15))
           : 0;
     const balance = Math.max(0, approvedAmount - amountPaid);
+    const id = `${billingId}-CS-${String(i + 6).padStart(2, "0")}`;
     return {
-      id: `${billingId}-CS-${String(i + 6).padStart(2, "0")}`,
+      id,
       name: pick(names, i),
       handle: pick(handles, i),
+      avatarUrl: getMockInfluencerAvatar(id),
       platform: "Instagram",
       kolManager: pick(managers, i),
       relationship: pick(relationships, i),

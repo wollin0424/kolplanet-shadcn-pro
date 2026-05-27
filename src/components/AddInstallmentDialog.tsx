@@ -16,6 +16,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar, Plus, X } from "@/lib/icons";
+import {
+  denseAmountFieldShellClass,
+  denseDateInputClass,
+  denseSelectTriggerClass,
+  TOOLBAR_CONTROL_HEIGHT,
+} from "@/lib/toolbarControls";
 import { cn } from "@/lib/utils";
 
 export type InstallmentDraft = {
@@ -172,29 +178,26 @@ export default function AddInstallmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden border border-gray-200/80 bg-white p-0 shadow-[0_12px_40px_rgba(15,23,42,0.14)] sm:max-w-[600px]">
-        <DialogHeader className="flex-row items-center justify-between gap-3 space-y-0 border-b border-gray-100 px-5 py-3.5 pr-12">
+      <DialogContent className="gap-0 overflow-hidden border border-gray-200/80 bg-white p-0 shadow-[0_12px_40px_rgba(15,23,42,0.14)] sm:max-w-[640px]">
+        <DialogHeader className="border-b border-gray-100 px-5 py-3.5 pr-12">
           <DialogTitle className="text-[16px] font-semibold text-gray-900">
-            Add Installment
+            Add New Installment
           </DialogTitle>
-          {remainingToAllocate > 0 ? (
-            <p className="shrink-0 text-[11px] font-medium tabular-nums text-gray-500">
-              <span className="text-gray-900">{formatMoneyLabel(currency, budgetLeft)}</span>{" "}
-              remaining
-            </p>
-          ) : null}
         </DialogHeader>
 
-        <div className="no-scrollbar max-h-[min(52vh,360px)] overflow-y-auto px-5 py-3">
-          <div className="divide-y divide-gray-100">
+        <div className="no-scrollbar max-h-[min(52vh,360px)] overflow-y-auto px-5 py-4">
+          <div>
             {rows.map((row, index) => {
               const isLast = index === rows.length - 1;
               const amountId = `${baseId}-amount-${row.id}`;
               const dateId = `${baseId}-date-${row.id}`;
 
               return (
-                <div key={row.id} className="py-2.5 first:pt-0 last:pb-0">
-                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                <div
+                  key={row.id}
+                  className={cn(index > 0 && "mt-5 border-t border-gray-100 pt-5")}
+                >
+                  <div className="mb-2.5 flex items-center justify-between gap-2">
                     <p className="text-[12px] font-semibold text-gray-900">{row.label}</p>
                     <div className="flex items-center gap-0.5">
                       <button
@@ -218,78 +221,90 @@ export default function AddInstallmentDialog({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-[minmax(0,1fr)_118px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-2">
-                    <div>
-                      <label htmlFor={amountId} className="sr-only">
-                        Amount for {row.label}
-                      </label>
-                      <div className="flex h-8 overflow-hidden rounded-md border border-gray-200 bg-white">
-                        <span className="flex shrink-0 items-center border-r border-gray-200 bg-gray-50 px-2 text-[11px] font-medium text-gray-500">
-                          {currency}
-                        </span>
+                  <div className="space-y-2.5">
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div>
+                        <label htmlFor={amountId} className="sr-only">
+                          Amount for {row.label}
+                        </label>
+                        <div className={denseAmountFieldShellClass()}>
+                          <span
+                            className={cn(
+                              TOOLBAR_CONTROL_HEIGHT,
+                              "flex shrink-0 items-center border-r border-gray-200 bg-gray-50 px-2 text-[11px] font-medium text-gray-500"
+                            )}
+                          >
+                            {currency}
+                          </span>
+                          <input
+                            id={amountId}
+                            value={row.amount}
+                            onChange={(e) => updateRow(row.id, { amount: e.target.value })}
+                            placeholder="Amount"
+                            inputMode="decimal"
+                            className={cn(
+                              TOOLBAR_CONTROL_HEIGHT,
+                              "min-w-0 flex-1 bg-transparent px-2 text-[12px] leading-none text-gray-900 outline-none placeholder:text-gray-400"
+                            )}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="relative">
+                        <label htmlFor={dateId} className="sr-only">
+                          Due date for {row.label}
+                        </label>
                         <input
-                          id={amountId}
-                          value={row.amount}
-                          onChange={(e) => updateRow(row.id, { amount: e.target.value })}
-                          placeholder="Amount"
-                          inputMode="decimal"
-                          className="min-w-0 flex-1 bg-transparent px-2 text-[12px] text-gray-900 outline-none placeholder:text-gray-400"
+                          id={dateId}
+                          type="date"
+                          value={row.dueDate}
+                          onChange={(e) => updateRow(row.id, { dueDate: e.target.value })}
+                          className={cn(
+                            denseDateInputClass(),
+                            !row.dueDate && "text-gray-400"
+                          )}
+                        />
+                        <Calendar
+                          size={13}
+                          strokeWidth={2}
+                          className="pointer-events-none absolute top-1/2 right-1.5 -translate-y-1/2 text-gray-400"
                         />
                       </div>
                     </div>
 
-                    <div className="relative">
-                      <label htmlFor={dateId} className="sr-only">
-                        Due date for {row.label}
-                      </label>
-                      <input
-                        id={dateId}
-                        type="date"
-                        value={row.dueDate}
-                        onChange={(e) => updateRow(row.id, { dueDate: e.target.value })}
-                        className={cn(
-                          "h-8 w-full rounded-md border border-gray-200 bg-white px-2 pr-7 text-[12px] text-gray-900 outline-none",
-                          !row.dueDate && "text-gray-400"
-                        )}
-                      />
-                      <Calendar
-                        size={13}
-                        strokeWidth={2}
-                        className="pointer-events-none absolute top-1/2 right-1.5 -translate-y-1/2 text-gray-400"
-                      />
+                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                      <Select
+                        value={row.accountId}
+                        onValueChange={(value) => updateRow(row.id, { accountId: value ?? "" })}
+                      >
+                        <SelectTrigger size="sm" className={denseSelectTriggerClass()}>
+                          <SelectValue placeholder="Account" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {accountOptions.map((option) => (
+                            <SelectItem key={option.id} value={option.id} className="text-[12px]">
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Select
+                        value={row.invoiceId}
+                        onValueChange={(value) => updateRow(row.id, { invoiceId: value ?? "" })}
+                      >
+                        <SelectTrigger size="sm" className={denseSelectTriggerClass()}>
+                          <SelectValue placeholder="Invoice" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MOCK_INVOICE_OPTIONS.map((option) => (
+                            <SelectItem key={option.id} value={option.id} className="text-[12px]">
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-
-                    <Select
-                      value={row.accountId}
-                      onValueChange={(value) => updateRow(row.id, { accountId: value ?? "" })}
-                    >
-                      <SelectTrigger className="h-8 w-full min-w-0 border-gray-200 bg-white px-2 text-[11px]">
-                        <SelectValue placeholder="Account" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {accountOptions.map((option) => (
-                          <SelectItem key={option.id} value={option.id} className="text-[12px]">
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    <Select
-                      value={row.invoiceId}
-                      onValueChange={(value) => updateRow(row.id, { invoiceId: value ?? "" })}
-                    >
-                      <SelectTrigger className="h-8 w-full min-w-0 border-gray-200 bg-white px-2 text-[11px]">
-                        <SelectValue placeholder="Invoice" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {MOCK_INVOICE_OPTIONS.map((option) => (
-                          <SelectItem key={option.id} value={option.id} className="text-[12px]">
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
                 </div>
               );
@@ -317,8 +332,4 @@ export default function AddInstallmentDialog({
       </DialogContent>
     </Dialog>
   );
-}
-
-function formatMoneyLabel(currency: string, amount: number) {
-  return `${currency} ${amount.toLocaleString("en-US")}`;
 }

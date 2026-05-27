@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
 import { cn } from "@/lib/utils";
 import {
   Calendar,
@@ -44,7 +45,9 @@ type SettlementStatus =
 
 type PaymentRow = {
   id: string;
+  name: string;
   handle: string;
+  avatarUrl: string;
   platform: string;
   invoiceStatus: InvoiceStatus;
   settlementStatus: SettlementStatus;
@@ -55,7 +58,34 @@ type PaymentRow = {
   note: string;
 };
 
-const MOCK_ROWS: PaymentRow[] = [
+const PAYMENT_ROW_NAMES = [
+  "Amelia Stone",
+  "Lucas Turner",
+  "Mia Chen",
+  "Jordan Lee",
+  "Priya Sharma",
+  "Maya Lim",
+  "Noah Williams",
+  "Emma Davis",
+  "Oliver Brown",
+  "Sophia Wilson",
+  "Liam Martinez",
+  "Ava Anderson",
+  "Ethan Thomas",
+  "Isabella Taylor",
+] as const;
+
+type PaymentRowSeed = Omit<PaymentRow, "name" | "avatarUrl">;
+
+function toPaymentRow(seed: PaymentRowSeed, index: number): PaymentRow {
+  return {
+    ...seed,
+    name: PAYMENT_ROW_NAMES[index % PAYMENT_ROW_NAMES.length],
+    avatarUrl: getMockInfluencerAvatar(seed.id),
+  };
+}
+
+const MOCK_ROW_SEEDS: PaymentRowSeed[] = [
   {
     id: "PAY-01",
     handle: "@instagram ins",
@@ -226,6 +256,8 @@ const MOCK_ROWS: PaymentRow[] = [
   },
 ];
 
+const MOCK_ROWS: PaymentRow[] = MOCK_ROW_SEEDS.map(toPaymentRow);
+
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50];
 
 const INVOICE_FILTER_OPTIONS = ["All", "Pending", "Submitted"] as const;
@@ -368,12 +400,13 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
         open={approvePayoutOpen}
         onOpenChange={setApprovePayoutOpen}
         influencerHandle={activeRow?.handle ?? "@instagram ins"}
-        influencerName="Amelia Stone"
+        influencerName={activeRow?.name ?? "Amelia Stone"}
+        influencerAvatarUrl={activeRow?.avatarUrl}
       />
       <RejectSettlementDialog
         open={rejectOpen}
         onOpenChange={setRejectOpen}
-        influencerName="Amelia Stone"
+        influencerName={activeRow?.name ?? "Amelia Stone"}
       />
       {/* Filters */}
       <div className="flex items-center justify-between gap-3 px-6 py-3 border-b border-gray-100 shrink-0">
@@ -510,17 +543,22 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
                 <TableCell className="py-4 !pl-6">
                   <div className="flex items-center gap-3 min-w-[180px]">
                     <InfluencerAvatar
-                      alt={row.handle}
+                      src={row.avatarUrl}
+                      alt={row.name}
                       platform={row.platform}
-                      size="sm"
-                      fallback={row.handle.replace("@", "").slice(0, 2).toUpperCase()}
+                      size="md"
+                      fallback={row.name
+                        .split(" ")
+                        .map((p) => p[0])
+                        .join("")
+                        .slice(0, 2)}
                       fallbackClassName="bg-violet-100 text-violet-700"
                     />
                     <div className="min-w-0">
                       <p className="text-[13px] font-medium text-gray-900 truncate">
-                        {row.handle}
+                        {row.name}
                       </p>
-                      <p className="text-[11px] text-gray-400">{row.platform}</p>
+                      <p className="text-[11px] text-gray-400">{row.handle}</p>
                     </div>
                   </div>
                 </TableCell>

@@ -16,6 +16,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -42,16 +49,20 @@ import {
   PIPELINE_TABLE_COLUMNS,
   PIPELINE_TABLE_MIN_WIDTH,
 } from "@/lib/pipeline/tableColumns";
+import {
+  toolbarIconButtonClass,
+  toolbarInputClass,
+  toolbarSelectClass,
+} from "@/lib/toolbarControls";
 import { cn } from "@/lib/utils";
 import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Columns3,
+  History,
   Pencil,
-  SlidersHorizontal,
-  RefreshCcw,
   Search,
+  UserPlus,
 } from "@/lib/icons";
 
 type PipelineRow = {
@@ -147,6 +158,7 @@ function buildMockRows(count: number): PipelineRow[] {
 const MOCK_ROWS = buildMockRows(90);
 const INFLUENCER_CAP = 300;
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50];
+const KOL_MANAGERS = ["Wolin", "Moca", "Chris", "Sarah"] as const;
 
 function buildPageList(current: number, total: number): (number | "…")[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
@@ -162,6 +174,8 @@ function buildPageList(current: number, total: number): (number | "…")[] {
 
 export default function CampaignPipelineTable({ campaignId }: { campaignId: string }) {
   const [query, setQuery] = useState("");
+  const [collabFilter, setCollabFilter] = useState<CollabStatus | "All">("All");
+  const [managerFilter, setManagerFilter] = useState<string>("All");
   const [pageSize, setPageSize] = useState(30);
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -174,14 +188,21 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
   };
 
   const filtered = useMemo(() => {
+    let list = rows;
+    if (collabFilter !== "All") {
+      list = list.filter((r) => r.collabStatus === collabFilter);
+    }
+    if (managerFilter !== "All") {
+      list = list.filter((r) => r.manager === managerFilter);
+    }
     const q = query.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter(
+    if (!q) return list;
+    return list.filter(
       (r) =>
         r.handle.toLowerCase().includes(q) ||
         r.displayName.toLowerCase().includes(q)
     );
-  }, [query, rows]);
+  }, [query, rows, collabFilter, managerFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
@@ -216,23 +237,50 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
 
   return (
     <div className="flex flex-col flex-1 min-h-0 bg-white overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-6 py-3 border-b border-gray-100 shrink-0">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="flex items-center gap-1.5 text-[13px] text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg px-3 py-1.5 transition-colors hover:bg-gray-50"
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 bg-gray-50/80 px-6 py-3">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5">
+          <Select
+            value={collabFilter === "All" ? "" : collabFilter}
+            onValueChange={(v) => {
+              setCollabFilter(v ? (v as CollabStatus) : "All");
+              setCurrentPage(1);
+            }}
           >
-            <SlidersHorizontal size={13} />
-            Filters
-            <span className="w-4 h-4 rounded-full bg-brand text-white text-[9px] font-bold flex items-center justify-center">
-              2
-            </span>
-          </button>
+            <SelectTrigger size="sm" className={toolbarSelectClass("w-[180px]")}>
+              <SelectValue placeholder="Collaboration Status" />
+            </SelectTrigger>
+            <SelectContent>
+              {COLLAB_POOL.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          <div className="relative w-[240px]">
+          <Select
+            value={managerFilter === "All" ? "" : managerFilter}
+            onValueChange={(v) => {
+              setManagerFilter(v ?? "All");
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger size="sm" className={toolbarSelectClass("w-[150px]")}>
+              <SelectValue placeholder="KOL Manager" />
+            </SelectTrigger>
+            <SelectContent>
+              {KOL_MANAGERS.map((manager) => (
+                <SelectItem key={manager} value={manager}>
+                  {manager}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="relative min-w-[220px] flex-1 max-w-md">
             <Search
               size={13}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
             />
             <Input
               value={query}
@@ -240,31 +288,31 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                 setQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              placeholder="Search for Influencer"
-              className="pl-8 h-8 text-[13px] border-gray-200 bg-gray-50 focus:bg-white"
+              placeholder="Search Influencer by Name or Handle"
+              className={toolbarInputClass("pl-8")}
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
-            className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-transparent hover:border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
-            aria-label="Refresh"
+            className={toolbarIconButtonClass()}
+            aria-label="View history"
           >
-            <RefreshCcw size={15} />
+            <History size={16} strokeWidth={1.75} />
           </button>
           <button
             type="button"
-            className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-transparent hover:border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
-            aria-label="Columns"
+            className={toolbarIconButtonClass()}
+            aria-label="Add influencer"
           >
-            <Columns3 size={15} />
+            <UserPlus size={16} strokeWidth={1.75} />
           </button>
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3 px-6 py-2.5 border-b border-gray-100 shrink-0 bg-gray-50/60">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 bg-gray-50/60 px-6 py-2.5">
         <div className="flex items-center gap-3 min-w-0">
           <span className="text-[12px] text-gray-500 font-medium shrink-0">
             Influencer:{" "}
@@ -313,7 +361,7 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
             ))}
           </colgroup>
           <TableHeader>
-            <TableRow className="bg-gray-50/70 hover:bg-gray-50/70 border-b border-gray-100">
+            <TableRow className="border-b border-gray-100 bg-gray-50/70 hover:bg-gray-50/70">
               <TableHead className="py-3.5 align-middle">
                 <Checkbox
                   checked={allSelected}

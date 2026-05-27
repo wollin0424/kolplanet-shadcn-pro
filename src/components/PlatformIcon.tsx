@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { cn } from "@/lib/utils";
 
 export type Platform = "IG" | "TT" | "YT" | "FB";
@@ -24,10 +25,12 @@ export function platformFromLabel(label: string): Platform | undefined {
   return undefined;
 }
 
-const InstagramIcon = ({ size = 14 }: { size?: number }) => (
+const InstagramIcon = ({ size = 14 }: { size?: number }) => {
+  const gradientId = useId();
+  return (
   <svg width={size} height={size} viewBox="0 0 24 24" aria-label="Instagram">
     <defs>
-      <linearGradient id="igGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <linearGradient id={gradientId} x1="0%" y1="100%" x2="100%" y2="0%">
         <stop offset="0%" stopColor="#FEDA75" />
         <stop offset="25%" stopColor="#FA7E1E" />
         <stop offset="50%" stopColor="#D62976" />
@@ -35,7 +38,7 @@ const InstagramIcon = ({ size = 14 }: { size?: number }) => (
         <stop offset="100%" stopColor="#4F5BD5" />
       </linearGradient>
     </defs>
-    <rect x="2" y="2" width="20" height="20" rx="5" fill="url(#igGradient)" />
+    <rect x="2" y="2" width="20" height="20" rx="5" fill={`url(#${gradientId})`} />
     <rect
       x="5.5"
       y="5.5"
@@ -49,7 +52,8 @@ const InstagramIcon = ({ size = 14 }: { size?: number }) => (
     <circle cx="12" cy="12" r="3.4" fill="none" stroke="white" strokeWidth="1.6" />
     <circle cx="17.3" cy="6.7" r="1" fill="white" />
   </svg>
-);
+  );
+};
 
 const TikTokIcon = ({ size = 14 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" aria-label="TikTok">

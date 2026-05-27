@@ -11,22 +11,22 @@ import { cn } from "@/lib/utils";
 
 const sizeStyles = {
   sm: {
-    avatar: "size-7",
-    fallback: "text-[10px]",
-    badge: "size-4",
-    icon: 12,
+    avatar: "size-9",
+    fallback: "text-[11px]",
+    icon: 14,
+    badgeOffset: "-bottom-px -right-px",
   },
   md: {
-    avatar: "size-8",
-    fallback: "text-[10px]",
-    badge: "size-[18px]",
-    icon: 14,
+    avatar: "size-10",
+    fallback: "text-xs",
+    icon: 16,
+    badgeOffset: "-bottom-0.5 -right-0.5",
   },
   lg: {
-    avatar: "size-11",
-    fallback: "text-xs",
-    badge: "size-5",
-    icon: 16,
+    avatar: "size-12",
+    fallback: "text-sm",
+    icon: 18,
+    badgeOffset: "-bottom-0.5 -right-0.5",
   },
 } as const;
 
@@ -62,7 +62,7 @@ export function InfluencerAvatar({
 
   return (
     <div className={cn("relative shrink-0", className)}>
-      <Avatar className={cn(styles.avatar, "border border-gray-100")}>
+      <Avatar className={cn(styles.avatar, "border border-gray-200/80")}>
         <AvatarImage src={src} alt={alt} />
         <AvatarFallback
           className={cn("font-semibold", styles.fallback, fallbackClassName)}
@@ -73,8 +73,8 @@ export function InfluencerAvatar({
       {platformCode ? (
         <span
           className={cn(
-            "absolute bottom-0 right-0 z-10 inline-flex items-center justify-center rounded-full ring-2 ring-white",
-            styles.badge
+            "absolute z-10 inline-flex overflow-hidden rounded-full shadow-[0_0_0_2px_#fff]",
+            styles.badgeOffset
           )}
           aria-hidden
         >

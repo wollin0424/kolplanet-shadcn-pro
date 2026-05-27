@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
-import { platformFromLabel } from "@/components/PlatformIcon";
+import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -127,17 +127,27 @@ const PAYMENT_PROOF_HINT =
   "Upload payment proof to enable Confirm Transfer below.";
 const PAYMENT_PROOF_REQUIRED_HINT =
   "Please upload payment proof before confirming this transfer.";
+const FAILURE_REASON_REQUIRED_HINT =
+  "Failure Reason is required when status is Failed.";
+const FAILURE_REASON_OPTIONS = [
+  "Incorrect Bank Account Details",
+  "Payee Information Mismatch",
+  "Account Frozen or Restricted",
+  "Transaction Limit Exceeded",
+  "Payment System/Bank Maintenance",
+  "Network Connectivity Issue",
+  "Bank Rejection or Risk Control",
+  "Other Reasons",
+] as const;
 
 const PAYMENT_MODE_OPTIONS = [
   {
     id: "manual" as const,
     title: "Manual Transfer",
-    description: "Upload proof after your bank transfer",
   },
   {
     id: "api" as const,
     title: "Automated API Payout",
-    description: "Send via a connected payout provider",
   },
 ];
 
@@ -191,9 +201,6 @@ function PaymentMethodSection({
                 </span>
                 <span className="min-w-0">
                   <span className="block text-[13px] font-medium text-gray-900">{option.title}</span>
-                  <span className="mt-0.5 block text-[11px] leading-snug text-gray-500">
-                    {option.description}
-                  </span>
                 </span>
               </div>
             </button>
@@ -241,7 +248,12 @@ function ExecutionInstallmentRow({
   const showDetails = draft.checked && !locked;
 
   const applyChange = (patch: Partial<PaymentExecutionDraft>) => {
-    onChange({ ...draft, ...patch, proofRequiredHint: false });
+    onChange({
+      ...draft,
+      ...patch,
+      proofRequiredHint: false,
+      failureReasonRequiredHint: false,
+    });
   };
 
   return (
@@ -299,9 +311,15 @@ function ExecutionInstallmentRow({
               <p className="text-[11px] font-medium text-gray-500">Payment Status</p>
               <Select
                 value={draft.paymentStatus}
-                onValueChange={(v) =>
-                  applyChange({ paymentStatus: (v as PaymentExecutionStatus) ?? "Pending" })
-                }
+                onValueChange={(v) => {
+                  const nextStatus = (v as PaymentExecutionStatus) ?? "Pending";
+                  applyChange({
+                    paymentStatus: nextStatus,
+                    ...(nextStatus === "Failed"
+                      ? {}
+                      : { failureReasons: [], failureReasonRequiredHint: false }),
+                  });
+                }}
               >
                 <SelectTrigger className="h-9 w-full border-gray-200 text-[13px]">
                   <SelectValue />
@@ -347,6 +365,40 @@ function ExecutionInstallmentRow({
               <p className="text-[11px] text-gray-500">{PAYMENT_PROOF_HINT}</p>
             )}
           </div>
+          {draft.paymentStatus === "Failed" ? (
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-medium text-gray-500">Failure Reason</p>
+              <div className="flex flex-wrap gap-2">
+                {FAILURE_REASON_OPTIONS.map((reason) => {
+                  const selected = draft.failureReasons.includes(reason);
+                  return (
+                    <button
+                      key={reason}
+                      type="button"
+                      onClick={() =>
+                        applyChange({
+                          failureReasons: selected
+                            ? draft.failureReasons.filter((item) => item !== reason)
+                            : [...draft.failureReasons, reason],
+                        })
+                      }
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-[12px] transition-colors",
+                        selected
+                          ? "border-red-200 bg-red-50 text-red-600"
+                          : "border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300 hover:bg-gray-100"
+                      )}
+                    >
+                      {reason}
+                    </button>
+                  );
+                })}
+              </div>
+              {draft.failureReasonRequiredHint ? (
+                <p className="text-[11px] font-medium text-red-500">{FAILURE_REASON_REQUIRED_HINT}</p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -364,6 +416,7 @@ export default function ProcessPayoutSheet({
   onOpenChange,
   influencerName = "Amelia Stone",
   influencerHandle = "@instagram ins",
+  influencerAvatarUrl,
   approvedAmount = 20_000,
   amountPaid: _amountPaid = 0,
   dueDate: _dueDate = "Feb 11, 2024",
@@ -374,6 +427,7 @@ export default function ProcessPayoutSheet({
   onOpenChange: (open: boolean) => void;
   influencerName?: string;
   influencerHandle?: string;
+  influencerAvatarUrl?: string;
   approvedAmount?: number;
   amountPaid?: number;
   dueDate?: string;
@@ -441,7 +495,12 @@ export default function ProcessPayoutSheet({
     if (paymentMode === "api" && !apiProvider) return false;
     const checked = executionRows.filter((row) => executionById[row.id]?.checked);
     if (checked.length === 0) return false;
-    return checked.every((row) => Boolean(executionById[row.id]?.proofFileName));
+    return checked.every((row) => {
+      const draft = executionById[row.id];
+      if (!draft?.proofFileName) return false;
+      if (draft.paymentStatus === "Failed" && draft.failureReasons.length === 0) return false;
+      return true;
+    });
   }, [executionRows, executionById, paymentMode, apiProvider]);
 
   const handleConfirmTransfer = () => {
@@ -449,12 +508,20 @@ export default function ProcessPayoutSheet({
     if (checked.length === 0) return;
 
     const missingProof = checked.filter((row) => !executionById[row.id]?.proofFileName);
-    if (missingProof.length > 0) {
+    const missingFailureReason = checked.filter((row) => {
+      const draft = executionById[row.id];
+      return draft?.paymentStatus === "Failed" && draft.failureReasons.length === 0;
+    });
+    if (missingProof.length > 0 || missingFailureReason.length > 0) {
       setExecutionById((prev) => {
         const next = { ...prev };
         for (const row of missingProof) {
           const draft = next[row.id];
           if (draft) next[row.id] = { ...draft, proofRequiredHint: true };
+        }
+        for (const row of missingFailureReason) {
+          const draft = next[row.id];
+          if (draft) next[row.id] = { ...draft, failureReasonRequiredHint: true };
         }
         return next;
       });
@@ -497,24 +564,23 @@ export default function ProcessPayoutSheet({
         className="flex flex-col gap-0 p-0 data-[side=right]:w-[min(920px,96vw)] data-[side=right]:max-w-[96vw] data-[side=right]:sm:max-w-[920px]"
       >
         <div className="shrink-0 border-b border-gray-100 bg-white px-7 py-5">
-          <div className="flex items-start justify-between gap-6 pr-8">
+          <div className="flex items-center justify-between gap-6 pr-8">
             <div className="min-w-0 flex-1">
               <h2 className="text-[17px] font-semibold tracking-tight text-gray-900">
                 Process Payout
               </h2>
-              <p className="mt-1 whitespace-nowrap text-[12px] text-gray-500">
-                Review the approved payout details on the left and complete the payment execution
-                on the right.
+              <p className="mt-1 text-[12px] text-gray-500">
+                Review approved payout details and complete payment execution.
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50/80 px-3 py-2">
               <InfluencerAvatar
+                src={influencerAvatarUrl ?? getMockInfluencerAvatar(influencerHandle)}
                 alt={influencerName}
-                platform={platformFromLabel(influencerHandle) ?? "IG"}
                 fallback={initials}
                 fallbackClassName="bg-violet-100 text-violet-700"
               />
-              <div className="min-w-0 text-right">
+              <div className="min-w-0 text-left">
                 <p className="truncate text-[13px] font-semibold text-gray-900">
                   {influencerName}
                 </p>

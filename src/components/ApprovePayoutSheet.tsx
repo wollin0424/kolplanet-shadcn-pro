@@ -4,6 +4,14 @@ import { useState, type ReactNode } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -14,10 +22,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
-import { platformFromLabel } from "@/components/PlatformIcon";
+import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import AddInstallmentDialog, { type InstallmentDraft } from "@/components/AddInstallmentDialog";
-import { Check, Eye, FileText, Flag, Info, Plus, RotateCcw, Sparkles, Trash2 } from "@/lib/icons";
+import { Check, Eye, FileLock, FileText, Flag, Info, Plus, RotateCcw, Sparkles, Trash2 } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 const PAYOUT_STEPS = ["Invoice", "Account Pool", "Approved Amount"] as const;
@@ -36,6 +44,7 @@ const AGREEMENT_SNAPSHOT = {
     beneficiaryBank: "DBS Singapore",
     accountNumber: "1234567890",
     swiftCode: "DBSSSGSG",
+    ifscCode: "",
     bankAddress: "12 Marina Boulevard, Singapore 018982",
   },
 } as const;
@@ -183,11 +192,15 @@ function formatUploadedAt(date: Date) {
 function parseInvoiceFromAgreement() {
   return {
     issuedParty: AGREEMENT_SNAPSHOT.legalName,
+    currency: AGREEMENT_SNAPSHOT.currency,
     amount: formatAmountInput(AGREEMENT_SNAPSHOT.contractTotal),
     invoiceNumber: AGREEMENT_SNAPSHOT.invoiceNumber,
     bank: { ...AGREEMENT_SNAPSHOT.bank },
   };
 }
+
+const invoiceMoneyCurrencyTrigger =
+  "!h-10 w-[108px] shrink-0 border-gray-200 bg-white px-3 text-[13px] shadow-none data-[size=default]:!h-10";
 
 function MatchedBadge() {
   return (
@@ -310,12 +323,31 @@ function FormField({
   );
 }
 
+function NoMorePayoutRequestsField({
+  checked,
+  onCheckedChange,
+}: {
+  checked: boolean;
+  onCheckedChange: (value: boolean) => void;
+}) {
+  return (
+    <label className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg border border-amber-200/90 bg-amber-50/70 px-3.5 py-2.5">
+      <Checkbox
+        checked={checked}
+        onCheckedChange={(c) => onCheckedChange(c === true)}
+      />
+      <Flag size={15} className="shrink-0 text-red-500" strokeWidth={2} />
+      <span className="text-[12px] font-medium text-gray-800">
+        No more payout requests after this.
+      </span>
+    </label>
+  );
+}
+
 function PayoutDetailsFooter({
   step,
   invoicePhase,
   selectedAccountId,
-  noMorePayoutRequests,
-  onNoMorePayoutRequestsChange,
   onCancel,
   onNext,
   isLastStep,
@@ -323,8 +355,6 @@ function PayoutDetailsFooter({
   step: number;
   invoicePhase: InvoicePhase;
   selectedAccountId: string;
-  noMorePayoutRequests: boolean;
-  onNoMorePayoutRequestsChange: (value: boolean) => void;
   onCancel: () => void;
   onNext: () => void;
   isLastStep: boolean;
@@ -334,36 +364,22 @@ function PayoutDetailsFooter({
     (step === 0 && !invoiceComplete) || (step === 1 && !selectedAccountId);
 
   return (
-    <div className="flex shrink-0 items-center gap-4 border-t border-gray-100 bg-white px-7 py-4">
-      {step === 2 ? (
-        <label className="flex shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-amber-200/90 bg-amber-50/70 px-3 py-2.5">
-          <Checkbox
-            checked={noMorePayoutRequests}
-            onCheckedChange={(checked) => onNoMorePayoutRequestsChange(checked === true)}
-          />
-          <Flag size={15} className="shrink-0 text-red-500" strokeWidth={2} />
-          <span className="whitespace-nowrap text-[12px] font-medium text-gray-800">
-            No more payout requests after this.
-          </span>
-        </label>
-      ) : null}
-      <div className="ml-auto flex shrink-0 items-center gap-3">
-        <Button
-          variant="outline"
-          className="h-10 min-w-[100px] border-gray-200 text-[13px]"
-          onClick={onCancel}
-        >
-          Cancel
-        </Button>
-        <Button
-          variant="brand"
-          className="h-10 min-w-[100px] text-[13px]"
-          onClick={onNext}
-          disabled={nextDisabled}
-        >
-          {isLastStep ? "Confirm & Lock" : "Next"}
-        </Button>
-      </div>
+    <div className="flex shrink-0 items-center justify-end gap-3 border-t border-gray-100 bg-white px-7 py-4">
+      <Button
+        variant="outline"
+        className="h-10 min-w-[100px] border-gray-200 text-[13px]"
+        onClick={onCancel}
+      >
+        {step > 0 ? "Back" : "Cancel"}
+      </Button>
+      <Button
+        variant="brand"
+        className="h-10 min-w-[100px] text-[13px]"
+        onClick={onNext}
+        disabled={nextDisabled}
+      >
+        {isLastStep ? "Confirm & Lock" : "Next"}
+      </Button>
     </div>
   );
 }
@@ -384,6 +400,8 @@ function PayoutDetailsPanel({
   onInvoiceConfirm,
   paymentRemarks,
   onPaymentRemarksChange,
+  noMorePayoutRequests,
+  onNoMorePayoutRequestsChange,
 }: {
   step: number;
   onStepChange: (index: number) => void;
@@ -400,6 +418,8 @@ function PayoutDetailsPanel({
   onInvoiceConfirm: () => void;
   paymentRemarks: string;
   onPaymentRemarksChange: (value: string) => void;
+  noMorePayoutRequests: boolean;
+  onNoMorePayoutRequestsChange: (value: boolean) => void;
 }) {
   const invoiceComplete = invoicePhase === "confirmed";
 
@@ -468,6 +488,8 @@ function PayoutDetailsPanel({
                 currency={currency}
                 paymentRemarks={paymentRemarks}
                 onPaymentRemarksChange={onPaymentRemarksChange}
+                noMorePayoutRequests={noMorePayoutRequests}
+                onNoMorePayoutRequestsChange={onNoMorePayoutRequestsChange}
               />
             )}
           </div>
@@ -519,6 +541,10 @@ function AgreementSummaryPanel() {
           />
           <BankDetailRow label="Swift Code" value={AGREEMENT_SNAPSHOT.bank.swiftCode} />
           <BankDetailRow
+            label="IFSC Code"
+            value={AGREEMENT_SNAPSHOT.bank.ifscCode || "—"}
+          />
+          <BankDetailRow
             label="Bank Address"
             value={AGREEMENT_SNAPSHOT.bank.bankAddress}
           />
@@ -527,10 +553,6 @@ function AgreementSummaryPanel() {
 
       <div className="mt-6">
         <p className="text-[11px] font-semibold text-gray-500">Agreement</p>
-        <p className="mt-3 text-[12px] font-semibold text-gray-800">Updated Attachments</p>
-        <p className="mt-0.5 text-[11px] text-gray-400 truncate">
-          Prev: Signed_Contract_V1.pdf
-        </p>
         <button
           type="button"
           className="mt-3 flex w-full items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 text-left shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-colors hover:border-gray-200"
@@ -539,7 +561,7 @@ function AgreementSummaryPanel() {
             <FileText size={16} strokeWidth={2} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-medium text-gray-900 truncate">
+            <span className="block truncate text-[13px] font-medium text-gray-900">
               Signed_Contract_V2.pdf
             </span>
             <span className="mt-0.5 block text-[11px] text-gray-400">
@@ -547,6 +569,7 @@ function AgreementSummaryPanel() {
             </span>
           </span>
         </button>
+        <p className="mt-2 truncate text-[11px] text-gray-400">Prev: Signed_Contract_V1.pdf</p>
       </div>
     </section>
   );
@@ -663,6 +686,7 @@ function InvoicePendingConfirmation({
   onConfirm: () => void;
 }) {
   return (
+    <div className="space-y-3">
     <div className="rounded-xl border border-sky-200/90 bg-sky-50/45 px-5 py-5">
       <h4 className="text-[14px] font-semibold text-gray-900">Invoice Pending Confirmation</h4>
       <p className="mt-1 text-[12px] leading-relaxed text-gray-500">
@@ -676,7 +700,28 @@ function InvoicePendingConfirmation({
 
         <ConfirmFieldRow label="Invoice Amount">
           <div className="space-y-2">
-            <Input readOnly value={parsed.amount} className={cn(invoiceFieldClass, "tabular-nums")} />
+            <div className="flex items-center gap-2.5">
+              <Select value={parsed.currency} disabled>
+                <SelectTrigger
+                  className={cn(
+                    invoiceMoneyCurrencyTrigger,
+                    "disabled:cursor-default disabled:opacity-100"
+                  )}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="SGD">SGD</SelectItem>
+                  <SelectItem value="EUR">EUR</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                readOnly
+                value={parsed.amount}
+                className={cn(invoiceFieldClass, "min-w-0 flex-1 tabular-nums")}
+              />
+            </div>
             <MatchedBadge />
           </div>
         </ConfirmFieldRow>
@@ -693,6 +738,7 @@ function InvoicePendingConfirmation({
                 ["Beneficiary Bank", parsed.bank.beneficiaryBank, true],
                 ["Account Number", parsed.bank.accountNumber, true],
                 ["Swift Code", parsed.bank.swiftCode, true],
+                ["IFSC Code", parsed.bank.ifscCode || "—", true],
               ] as const
             ).map(([label, value, matched]) => (
               <div key={label} className="space-y-2">
@@ -719,10 +765,19 @@ function InvoicePendingConfirmation({
       </div>
 
       <div className="mt-5 flex justify-end">
-        <Button variant="brand" className="h-9 min-w-[96px] text-[13px]" onClick={onConfirm}>
+        <Button
+          variant="outline"
+          className="h-9 min-w-[96px] border-brand/35 bg-white text-[13px] font-medium text-brand hover:border-brand/50 hover:bg-brand-50/50 hover:text-brand"
+          onClick={onConfirm}
+        >
           Confirm
         </Button>
       </div>
+    </div>
+
+      <p className="rounded-lg border border-amber-200/90 bg-amber-50/75 px-4 py-3 text-[12px] leading-relaxed text-amber-900">
+        New bank account detected in Invoice. It will be added to the Account Pool in Step 2.
+      </p>
     </div>
   );
 }
@@ -770,7 +825,7 @@ function InvoiceStepPanel({
         </p>
         <div className="flex items-center gap-2.5">
           <Select value={currency} onValueChange={(v) => v && onCurrencyChange(v)}>
-            <SelectTrigger className="!h-10 w-[108px] shrink-0 border-gray-200 bg-white px-3 text-[13px] shadow-none data-[size=default]:!h-10">
+            <SelectTrigger className={invoiceMoneyCurrencyTrigger}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -783,7 +838,7 @@ function InvoiceStepPanel({
             value={amount}
             onChange={(e) => onAmountChange(e.target.value)}
             placeholder="10,000"
-            className="h-10 flex-1 border-gray-200 bg-white text-[13px] tabular-nums shadow-none"
+            className={cn(invoiceFieldClass, "min-w-0 flex-1 tabular-nums")}
           />
         </div>
       </div>
@@ -875,7 +930,8 @@ function AccountPoolStepPanel({
             <button
               key={account.id}
               type="button"
-              onClick={() => onSelectAccount(account.id)}
+              onClick={() => onSelectAccount(selected ? "" : account.id)}
+              aria-pressed={selected}
               className={cn(
                 "relative w-full rounded-xl border-2 px-5 py-5 text-left transition-colors",
                 selected
@@ -906,7 +962,13 @@ function AccountPoolStepPanel({
                     className="tabular-nums"
                   />
                 </div>
-                <AccountPoolField label="Swift / IFSC Code" value={account.swiftCode} />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-x-8">
+                  <AccountPoolField label="Swift Code" value={account.swiftCode} />
+                  <AccountPoolField
+                    label="IFSC Code"
+                    value={account.ifscCode || "—"}
+                  />
+                </div>
                 <AccountPoolField label="Bank Address" value={account.bankAddress} />
               </div>
             </button>
@@ -1065,10 +1127,14 @@ function ApprovedAmountStepPanel({
   currency,
   paymentRemarks,
   onPaymentRemarksChange,
+  noMorePayoutRequests,
+  onNoMorePayoutRequestsChange,
 }: {
   currency: string;
   paymentRemarks: string;
   onPaymentRemarksChange: (value: string) => void;
+  noMorePayoutRequests: boolean;
+  onNoMorePayoutRequestsChange: (value: boolean) => void;
 }) {
   const [removedInstallmentIds, setRemovedInstallmentIds] = useState<string[]>([]);
   const [voidedInstallmentIds, setVoidedInstallmentIds] = useState<string[]>([]);
@@ -1124,20 +1190,20 @@ function ApprovedAmountStepPanel({
         <div className="grid grid-cols-1 divide-y divide-gray-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           <div className="px-4 py-3.5">
             <p className="text-[11px] font-medium text-gray-500">
-              Payout Amount <span className="text-red-500">*</span>
+              Contract Value <span className="text-red-500">*</span>
             </p>
             <p className="mt-1 text-[16px] font-semibold tabular-nums text-gray-900">
               {formatMoney(currency, payoutAmount)}
             </p>
           </div>
           <div className="px-4 py-3.5">
-            <p className="text-[11px] font-medium text-gray-500">Total Payable</p>
+            <p className="text-[11px] font-medium text-gray-500">Total Approved Amount</p>
             <p className="mt-1 text-[16px] font-semibold tabular-nums text-gray-900">
               {formatMoney(currency, totalPayable)}
             </p>
           </div>
           <div className="px-4 py-3.5">
-            <p className="text-[11px] font-medium text-gray-500">Remaining to Allocate</p>
+            <p className="text-[11px] font-medium text-gray-500">Remaining Balance</p>
             <p className="mt-1 text-[16px] font-semibold tabular-nums text-red-600">
               {formatMoney(currency, remainingToAllocate)}
             </p>
@@ -1171,18 +1237,43 @@ function ApprovedAmountStepPanel({
             onRemove={() => handleRemoveInstallment(item.id)}
           />
         ))}
+        <NoMorePayoutRequestsField
+          checked={noMorePayoutRequests}
+          onCheckedChange={onNoMorePayoutRequestsChange}
+        />
       </InstallmentSection>
 
-      {canAddInstallment ? (
+      <section>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <h5 className="text-[13px] font-semibold text-gray-900">New Request Draft</h5>
+          <p className="text-[12px] tabular-nums">
+            <span className="text-gray-500">Remaining to Allocate: </span>
+            <span
+              className={cn(
+                "font-semibold",
+                remainingToAllocate > 0 ? "text-gray-900" : "text-red-600"
+              )}
+            >
+              {formatMoney(currency, remainingToAllocate)}
+            </span>
+          </p>
+        </div>
+
         <button
           type="button"
+          disabled={!canAddInstallment}
           onClick={() => setAddDialogOpen(true)}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 bg-white py-3.5 text-[13px] font-medium text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50/80"
+          className={cn(
+            "mt-2.5 inline-flex items-center gap-1 text-[13px] font-medium transition-colors",
+            canAddInstallment
+              ? "text-brand hover:text-brand/80"
+              : "cursor-not-allowed text-gray-400"
+          )}
         >
-          <Plus size={16} strokeWidth={2} />
-          Add Installment
+          <Plus size={14} strokeWidth={2} />
+          Add New Installment
         </button>
-      ) : null}
+      </section>
 
       <AddInstallmentDialog
         open={addDialogOpen}
@@ -1211,11 +1302,13 @@ export default function ApprovePayoutSheet({
   onOpenChange,
   influencerHandle = "@instagram ins",
   influencerName = "Ava Collins",
+  influencerAvatarUrl,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   influencerHandle?: string;
   influencerName?: string;
+  influencerAvatarUrl?: string;
 }) {
   const [step, setStep] = useState(0);
   const [currency, setCurrency] = useState<string>(AGREEMENT_SNAPSHOT.currency);
@@ -1226,9 +1319,11 @@ export default function ApprovePayoutSheet({
   const [selectedAccountId, setSelectedAccountId] = useState<string>(ACCOUNT_POOL_ENTRIES[0].id);
   const [paymentRemarks, setPaymentRemarks] = useState("");
   const [noMorePayoutRequests, setNoMorePayoutRequests] = useState(false);
+  const [confirmLockOpen, setConfirmLockOpen] = useState(false);
 
   const handleSheetOpenChange = (next: boolean) => {
     if (!next) {
+      setConfirmLockOpen(false);
       setStep(0);
       setCurrency(AGREEMENT_SNAPSHOT.currency);
       setAmount(formatAmountInput(AGREEMENT_SNAPSHOT.contractTotal));
@@ -1250,17 +1345,25 @@ export default function ApprovePayoutSheet({
     .toUpperCase();
 
   const isLastStep = step === PAYOUT_STEPS.length - 1;
+  const parsedAmount = Number(amount.replace(/,/g, ""));
+  const confirmAmount = Number.isFinite(parsedAmount) && parsedAmount > 0 ? parsedAmount : 0;
 
   const handleNext = () => {
     if (step < PAYOUT_STEPS.length - 1) {
       setStep((s) => s + 1);
       return;
     }
+    setConfirmLockOpen(true);
+  };
+
+  const handleConfirmLock = () => {
+    setConfirmLockOpen(false);
     onOpenChange(false);
   };
 
   return (
-    <Sheet open={open} onOpenChange={handleSheetOpenChange}>
+    <>
+      <Sheet open={open} onOpenChange={handleSheetOpenChange}>
       <SheetContent
         side="right"
         showCloseButton
@@ -1278,12 +1381,12 @@ export default function ApprovePayoutSheet({
             </div>
             <div className="flex shrink-0 items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50/80 px-3 py-2">
               <InfluencerAvatar
+                src={influencerAvatarUrl ?? getMockInfluencerAvatar(influencerHandle)}
                 alt={influencerName}
-                platform={platformFromLabel(influencerHandle) ?? "IG"}
                 fallback={initials}
                 fallbackClassName="bg-violet-100 text-violet-700"
               />
-              <div className="min-w-0 text-right">
+              <div className="min-w-0 text-left">
                 <p className="truncate text-[13px] font-semibold text-gray-900">
                   {influencerName}
                 </p>
@@ -1328,6 +1431,8 @@ export default function ApprovePayoutSheet({
               }}
               paymentRemarks={paymentRemarks}
               onPaymentRemarksChange={setPaymentRemarks}
+              noMorePayoutRequests={noMorePayoutRequests}
+              onNoMorePayoutRequestsChange={setNoMorePayoutRequests}
             />
           </div>
 
@@ -1335,14 +1440,45 @@ export default function ApprovePayoutSheet({
             step={step}
             invoicePhase={invoicePhase}
             selectedAccountId={selectedAccountId}
-            noMorePayoutRequests={noMorePayoutRequests}
-            onNoMorePayoutRequestsChange={setNoMorePayoutRequests}
-            onCancel={() => onOpenChange(false)}
+            onCancel={() => {
+              if (step > 0) setStep((s) => s - 1);
+              else onOpenChange(false);
+            }}
             onNext={handleNext}
             isLastStep={isLastStep}
           />
         </div>
       </SheetContent>
-    </Sheet>
+      </Sheet>
+
+      <Dialog open={confirmLockOpen} onOpenChange={setConfirmLockOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="space-y-2">
+            <DialogTitle className="text-base">Confirm Payout Amount</DialogTitle>
+            <DialogDescription>
+              This action will lock the payment details and sync them to Finance. You cannot modify
+              it after confirmation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+              Total Amount
+            </p>
+            <p className="mt-1 text-[20px] font-semibold tabular-nums text-brand">
+              {formatMoney(currency, confirmAmount)}
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:justify-end">
+            <Button variant="outline" className="min-w-[110px]" onClick={() => setConfirmLockOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="brand" className="min-w-[130px]" onClick={handleConfirmLock}>
+              <FileLock size={16} />
+              Confirm & Lock
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

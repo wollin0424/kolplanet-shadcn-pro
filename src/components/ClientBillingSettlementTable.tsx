@@ -146,6 +146,7 @@ export default function ClientBillingSettlementTable({
         onOpenChange={setProcessOpen}
         influencerName={activeRow?.name ?? "Amelia Stone"}
         influencerHandle={activeRow?.handle ?? "@instagram ins"}
+        influencerAvatarUrl={activeRow?.avatarUrl}
         approvedAmount={activeRow?.approvedAmount ?? 4_100}
         amountPaid={activeRow?.amountPaid ?? 0}
         dueDate={activeRow?.dueDate ?? "Feb 11, 2024"}
@@ -267,6 +268,7 @@ export default function ClientBillingSettlementTable({
                     <InfluencerIdentityCell
                       name={row.name}
                       handle={row.handle}
+                      avatarSrc={row.avatarUrl}
                       platform={row.platform}
                       kolManager={row.kolManager}
                       relationship={row.relationship}

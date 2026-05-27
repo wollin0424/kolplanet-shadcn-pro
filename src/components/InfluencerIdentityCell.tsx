@@ -11,6 +11,7 @@ export function InfluencerIdentityCell({
   name,
   handle,
   platform,
+  avatarSrc,
   kolManager = "Moca",
   relationship = "Manager",
   avatarSize = "sm",
@@ -18,6 +19,7 @@ export function InfluencerIdentityCell({
   name: string;
   handle: string;
   platform?: string;
+  avatarSrc?: string;
   kolManager?: string;
   relationship?: KolRelationship;
   avatarSize?: "sm" | "md";
@@ -31,6 +33,7 @@ export function InfluencerIdentityCell({
   return (
     <div className="flex min-w-[180px] items-center gap-3">
       <InfluencerAvatar
+        src={avatarSrc}
         alt={name}
         platform={platformFromLabel(platform ?? handle) ?? platform}
         size={avatarSize}
