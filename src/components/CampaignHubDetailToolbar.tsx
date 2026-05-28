@@ -90,42 +90,43 @@ export function CampaignHubDetailToolbar({
 
   return (
     <div className="shrink-0 px-4 py-3">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {filters}
+          <div className="relative min-w-[200px] flex-1 sm:max-w-[260px]">
+            <Search
+              size={12}
+              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
+            />
+            <Input
+              value={searchValue}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder={searchPlaceholder}
+              className="h-8 border-gray-200 bg-gray-50/80 py-0 pl-8 text-xs leading-8 placeholder:text-xs focus:bg-white md:text-xs"
+            />
+          </div>
+          {actions ? (
+            <div className="flex shrink-0 flex-wrap items-center gap-2 sm:ml-auto">
+              {actions}
+            </div>
+          ) : null}
+        </div>
+
         {showBatch && bs ? (
-          <>
+          <div className="flex items-center">
             <CampaignHubSelectionBar
               selectedCount={bs.selectedCount}
               totalCount={bs.totalCount}
               onSelectAll={bs.onSelectAll}
               onClear={bs.onClear}
             />
-            <span className="hidden h-5 w-px shrink-0 bg-gray-200 sm:block" aria-hidden />
-          </>
+          </div>
         ) : showCountOnly ? (
-          <>
+          <div className="flex items-center">
             <span className="shrink-0 text-xs font-medium text-gray-500">
               Influencers:{" "}
               <span className="tabular-nums font-medium text-gray-900">{influencerCount}</span>
             </span>
-            <span className="hidden h-5 w-px shrink-0 bg-gray-200 sm:block" aria-hidden />
-          </>
-        ) : null}
-        {filters}
-        <div className="relative min-w-[200px] flex-1 sm:max-w-[260px]">
-          <Search
-            size={12}
-            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
-          />
-          <Input
-            value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={searchPlaceholder}
-            className="h-8 border-gray-200 bg-gray-50/80 py-0 pl-8 text-xs leading-8 placeholder:text-xs focus:bg-white md:text-xs"
-          />
-        </div>
-        {actions ? (
-          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:ml-auto">
-            {actions}
           </div>
         ) : null}
       </div>

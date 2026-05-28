@@ -210,6 +210,37 @@ function MatchedBadge() {
   );
 }
 
+function DiffersBadge() {
+  return (
+    <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+      Differs from Contract
+    </span>
+  );
+}
+
+function NoDetectedBadge() {
+  return (
+    <span className="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
+      No Detected
+    </span>
+  );
+}
+
+type FieldValidationStatus = "matched" | "differs" | "missing";
+
+function normalizeComparableValue(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, "");
+}
+
+function getFieldValidationStatus(parsedValue: string, contractValue: string): FieldValidationStatus {
+  if (!parsedValue.trim()) {
+    return "missing";
+  }
+  return normalizeComparableValue(parsedValue) === normalizeComparableValue(contractValue)
+    ? "matched"
+    : "differs";
+}
+
 function SummaryRow({
   label,
   value,
@@ -609,7 +640,7 @@ function InvoicePoolCard({
           Invoice A
         </span>
         <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-          Confirmed
+          Verified
         </span>
       </div>
 
@@ -685,6 +716,39 @@ function InvoicePendingConfirmation({
   parsed: ReturnType<typeof parseInvoiceFromAgreement>;
   onConfirm: () => void;
 }) {
+  const bankFields = [
+    {
+      label: "Beneficiary Name",
+      value: parsed.bank.beneficiaryName,
+      contractValue: AGREEMENT_SNAPSHOT.bank.beneficiaryName,
+      weak: false,
+    },
+    {
+      label: "Beneficiary Bank",
+      value: parsed.bank.beneficiaryBank,
+      contractValue: AGREEMENT_SNAPSHOT.bank.beneficiaryBank,
+      weak: true,
+    },
+    {
+      label: "Account Number",
+      value: parsed.bank.accountNumber,
+      contractValue: AGREEMENT_SNAPSHOT.bank.accountNumber,
+      weak: true,
+    },
+    {
+      label: "Swift Code",
+      value: parsed.bank.swiftCode,
+      contractValue: AGREEMENT_SNAPSHOT.bank.swiftCode,
+      weak: true,
+    },
+    {
+      label: "IFSC Code",
+      value: parsed.bank.ifscCode,
+      contractValue: AGREEMENT_SNAPSHOT.bank.ifscCode,
+      weak: true,
+    },
+  ] as const;
+
   return (
     <div className="space-y-3">
     <div className="rounded-xl border border-sky-200/90 bg-sky-50/45 px-5 py-5">
@@ -732,23 +796,28 @@ function InvoicePendingConfirmation({
 
         <ConfirmFieldRow label="Bank Details">
           <div className="space-y-4 rounded-xl border border-sky-100 bg-white px-4 py-4">
-            {(
-              [
-                ["Beneficiary Name", parsed.bank.beneficiaryName, true],
-                ["Beneficiary Bank", parsed.bank.beneficiaryBank, true],
-                ["Account Number", parsed.bank.accountNumber, true],
-                ["Swift Code", parsed.bank.swiftCode, true],
-                ["IFSC Code", parsed.bank.ifscCode || "—", true],
-              ] as const
-            ).map(([label, value, matched]) => (
-              <div key={label} className="space-y-2">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-sky-600/80">
-                  {label}
-                </p>
-                <Input readOnly value={value} className={invoiceFieldClass} />
-                {matched ? <MatchedBadge /> : null}
-              </div>
-            ))}
+            {bankFields.map((field) => {
+              const status = getFieldValidationStatus(field.value, field.contractValue);
+              return (
+                <div key={field.label} className="space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-sky-600/80">
+                    {field.label}
+                  </p>
+                  <Input readOnly value={field.value || "—"} className={invoiceFieldClass} />
+                  {field.weak ? (
+                    status === "missing" ? (
+                      <NoDetectedBadge />
+                    ) : status === "differs" ? (
+                      <DiffersBadge />
+                    ) : (
+                      <MatchedBadge />
+                    )
+                  ) : (
+                    <MatchedBadge />
+                  )}
+                </div>
+              );
+            })}
             <div className="space-y-2">
               <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-sky-600/80">
                 Bank Address
@@ -770,7 +839,7 @@ function InvoicePendingConfirmation({
           className="h-9 min-w-[96px] border-brand/35 bg-white text-[13px] font-medium text-brand hover:border-brand/50 hover:bg-brand-50/50 hover:text-brand"
           onClick={onConfirm}
         >
-          Confirm
+          Verify
         </Button>
       </div>
     </div>
@@ -845,7 +914,7 @@ function InvoiceStepPanel({
 
       <div className="space-y-3">
         <FileUploadZone
-          title="Upload New Invoice"
+          title="Upload Invoice"
           hint="Drop file or click to upload — fields will auto-fill when ready."
           accept=".pdf,.png,.jpg,.jpeg"
           acceptedExtensions={[".pdf", ".png", ".jpg", ".jpeg"]}
@@ -918,8 +987,7 @@ function AccountPoolStepPanel({
       <div>
         <h4 className="text-[15px] font-semibold text-gray-900">Account Pool</h4>
         <p className="mt-1.5 text-[12px] leading-relaxed text-gray-500">
-          Choose one compliant receiving account as the default payout account for this batch. The
-          selected account will be used as the default in Step 3.
+          Select a compliant account as the default payout account for Step 3.
         </p>
       </div>
 
@@ -1370,29 +1438,25 @@ export default function ApprovePayoutSheet({
         className="flex flex-col gap-0 p-0 data-[side=right]:w-[min(920px,96vw)] data-[side=right]:max-w-[96vw] data-[side=right]:sm:max-w-[920px]"
       >
         <div className="shrink-0 border-b border-gray-100 bg-white px-7 py-5">
-          <div className="flex items-center justify-between gap-6 pr-8">
-            <div className="min-w-0 flex-1">
+          <div className="min-w-0 pr-8">
+            <div className="flex flex-wrap items-center gap-2.5">
               <h2 className="text-[17px] font-semibold tracking-tight text-gray-900">
                 Approve Payout
               </h2>
-              <p className="mt-1 text-[12px] text-gray-500">
-                Review contract data and submit to lock the payout snapshot for finance.
-              </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50/80 px-3 py-1.5">
-              <InfluencerAvatar
-                src={influencerAvatarUrl ?? getMockInfluencerAvatar(influencerHandle)}
-                alt={influencerName}
-                fallback={initials}
-                fallbackClassName="bg-violet-100 text-violet-700"
-              />
-              <div className="min-w-0 text-left">
-                <p className="truncate text-[13px] font-semibold text-gray-900">
-                  {influencerName}
-                </p>
-                <p className="truncate text-[11px] text-gray-400">{influencerHandle}</p>
+              <div className="inline-flex min-w-0 items-center gap-2">
+                <InfluencerAvatar
+                  src={influencerAvatarUrl ?? getMockInfluencerAvatar(influencerHandle)}
+                  alt={influencerName}
+                  fallback={initials}
+                  fallbackClassName="bg-violet-100 text-violet-700"
+                  size="sm"
+                />
+                <p className="truncate text-[13px] font-semibold text-gray-900">{influencerName}</p>
               </div>
             </div>
+            <p className="mt-1 text-[12px] text-gray-500">
+              Review contract data and submit to lock the payout snapshot for finance.
+            </p>
           </div>
         </div>
 
