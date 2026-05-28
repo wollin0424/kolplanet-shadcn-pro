@@ -54,7 +54,7 @@ function HubGoButton({ onClick }: { onClick?: (e: MouseEvent<HTMLButtonElement>)
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50"
+      className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand"
     >
       Go
       <ChevronRight size={14} strokeWidth={2} />
@@ -227,8 +227,8 @@ function HubProgressOverview({
         <p className="text-xs font-semibold uppercase tracking-wide text-brand">
           {statusLabel}
         </p>
-        <p className="mt-2 text-[22px] font-bold leading-none text-gray-900 tabular-nums">
-          {current}{" "}
+        <p className="mt-2 text-[22px] font-bold leading-none tabular-nums">
+          <span className="text-brand">{current}</span>{" "}
           <span className="text-sm font-semibold text-gray-400">/ {total}</span>
         </p>
       </div>
