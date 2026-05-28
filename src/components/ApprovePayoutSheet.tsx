@@ -1379,7 +1379,7 @@ export default function ApprovePayoutSheet({
                 Review contract data and submit to lock the payout snapshot for finance.
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50/80 px-3 py-2">
+            <div className="flex shrink-0 items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50/80 px-3 py-1.5">
               <InfluencerAvatar
                 src={influencerAvatarUrl ?? getMockInfluencerAvatar(influencerHandle)}
                 alt={influencerName}
