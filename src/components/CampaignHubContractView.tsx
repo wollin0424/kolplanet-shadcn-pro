@@ -30,6 +30,10 @@ import {
   campaignHubCardMetaActionMutedClass,
 } from "@/components/CampaignHubCardMetaAction";
 import { FileText, Pencil, MoreHorizontal } from "@/lib/icons";
+import ShippingDetailsSheet, {
+  type ShippingAddress,
+  type ShippingFulfillment,
+} from "@/components/ShippingDetailsSheet";
 
 type ContractCardStatus =
   | "Awaiting Info"
@@ -50,7 +54,18 @@ type ContractCard = {
   fileCount: number;
   files?: string[];
   legalName?: string;
+  contractShipping?: ShippingAddress;
+  fulfillment?: ShippingFulfillment;
   actionLabel: string;
+};
+
+const DEFAULT_CONTRACT_SHIPPING: ShippingAddress = {
+  recipientName: "342432",
+  recipientPhone: "432432",
+  countryRegion: "Indonesia",
+  city: "432",
+  zipPostalCode: "432",
+  streetAddress: "4324",
 };
 
 const STATUS_BADGE: Record<ContractCardStatus, string> = {
@@ -92,6 +107,13 @@ const MOCK_CARDS: ContractCard[] = [
     stepTimestamps: ["Mar 24, 2025 2:15 PM", null, null, null],
     fileCount: 0,
     actionLabel: "Generate Draft",
+    fulfillment: {
+      useContractDefault: true,
+      address: DEFAULT_CONTRACT_SHIPPING,
+      courier: "SF Express",
+      trackingId: "TRK-202605-0003",
+      goodsContent: "",
+    },
   },
   {
     id: "c3",
@@ -175,7 +197,13 @@ function contractFiles(card: ContractCard): string[] {
   return [`${card.name.replace(/\s+/g, "_")}_Contract.pdf`];
 }
 
-function ContractInfluencerCard({ card }: { card: ContractCard }) {
+function ContractInfluencerCard({
+  card,
+  onEditShipping,
+}: {
+  card: ContractCard;
+  onEditShipping: () => void;
+}) {
   const statusBadgeClass = STATUS_BADGE[card.status];
   const initials = card.name
     .split(" ")
@@ -226,8 +254,9 @@ function ContractInfluencerCard({ card }: { card: ContractCard }) {
           <span className="truncate text-gray-500">{card.legalName ?? "—"}</span>
           <button
             type="button"
+            onClick={onEditShipping}
             className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
-            aria-label="Edit legal name"
+            aria-label="Edit shipping details"
           >
             <Pencil size={14} />
           </button>
@@ -301,10 +330,14 @@ export default function CampaignHubContractView({
   const [managerFilter, setManagerFilter] = useState("All");
   const [identityFilter, setIdentityFilter] = useState("All");
   const [query, setQuery] = useState("");
+  const [shippingCardId, setShippingCardId] = useState<string | null>(null);
+  const [cards, setCards] = useState(MOCK_CARDS);
+
+  const shippingCard = cards.find((card) => card.id === shippingCardId) ?? null;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return MOCK_CARDS.filter((card) => {
+    return cards.filter((card) => {
       if (statusFilter !== "All" && card.status !== statusFilter) return false;
       if (managerFilter !== "All" && card.manager !== managerFilter) return false;
       if (identityFilter !== "All" && card.relationship !== identityFilter) return false;
@@ -315,7 +348,7 @@ export default function CampaignHubContractView({
         (card.legalName?.toLowerCase().includes(q) ?? false)
       );
     });
-  }, [statusFilter, managerFilter, identityFilter, query]);
+  }, [statusFilter, managerFilter, identityFilter, query, cards]);
 
   const statusOptions = ["All", ...Object.keys(STATUS_BADGE)] as string[];
 
@@ -359,11 +392,35 @@ export default function CampaignHubContractView({
         <div className="no-scrollbar min-h-0 flex-1 overflow-auto">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {filtered.map((card) => (
-              <ContractInfluencerCard key={card.id} card={card} />
+              <ContractInfluencerCard
+                key={card.id}
+                card={card}
+                onEditShipping={() => setShippingCardId(card.id)}
+              />
             ))}
           </div>
         </div>
       </div>
+
+      {shippingCard ? (
+        <ShippingDetailsSheet
+          open={shippingCardId !== null}
+          onOpenChange={(open) => {
+            if (!open) setShippingCardId(null);
+          }}
+          influencerName={shippingCard.name}
+          contractShipping={shippingCard.contractShipping ?? DEFAULT_CONTRACT_SHIPPING}
+          initialFulfillment={shippingCard.fulfillment}
+          onSave={(fulfillment) => {
+            setCards((prev) =>
+              prev.map((card) =>
+                card.id === shippingCard.id ? { ...card, fulfillment } : card
+              )
+            );
+            setShippingCardId(null);
+          }}
+        />
+      ) : null}
     </TooltipProvider>
   );
 }

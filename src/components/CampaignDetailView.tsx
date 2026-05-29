@@ -17,10 +17,18 @@ export default function CampaignDetailView({
   initialHubSection?: HubSection;
 }) {
   const [tab, setTab] = useState<CampaignTab>(initialTab ?? "Pipeline");
+  const [hubMountKey, setHubMountKey] = useState(0);
+
+  const handleTabChange = (next: CampaignTab) => {
+    if (next === "Campaign Hub") {
+      setHubMountKey((key) => key + 1);
+    }
+    setTab(next);
+  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <CampaignDetailHeader campaignId={campaignId} tab={tab} onTabChange={setTab} />
+      <CampaignDetailHeader campaignId={campaignId} tab={tab} onTabChange={handleTabChange} />
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-gray-50 p-5 pt-4">
         {tab === "Pipeline" ? (
@@ -29,9 +37,10 @@ export default function CampaignDetailView({
           </div>
         ) : tab === "Campaign Hub" ? (
           <CampaignHub
+            key={hubMountKey}
             campaignId={campaignId}
             onNavigate={setTab}
-            initialSection={initialHubSection}
+            initialSection={hubMountKey === 0 ? initialHubSection : undefined}
           />
         ) : (
           <PagePlaceholder

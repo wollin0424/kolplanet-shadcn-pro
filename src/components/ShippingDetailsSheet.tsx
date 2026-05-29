@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -41,6 +41,16 @@ export type ShippingFulfillment = {
 };
 
 const COURIER_OPTIONS = ["SF Express", "DHL Express", "FedEx", "J&T Express", "Ninja Van"];
+
+const COUNTRY_OPTIONS = [
+  "Indonesia",
+  "Malaysia",
+  "Singapore",
+  "Philippines",
+  "Taiwan",
+  "Thailand",
+  "United States",
+];
 
 const fieldInputClass = "h-9 border-gray-200 bg-white text-[13px]";
 const fieldTextareaClass = "resize-none border-gray-200 bg-white text-[13px]";
@@ -162,12 +172,24 @@ function FulfillmentDetailsPanel({
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <FieldLabel muted={useContractDefault}>Country / Region</FieldLabel>
-            <Input
+            <Select
               value={address.countryRegion}
-              onChange={(e) => onAddressChange({ countryRegion: e.target.value })}
               disabled={useContractDefault}
-              className={cn(fieldInputClass, disabledFieldClass)}
-            />
+              onValueChange={(v) => onAddressChange({ countryRegion: v ?? "" })}
+            >
+              <SelectTrigger
+                className={cn("w-full", fieldInputClass, disabledFieldClass)}
+              >
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                {COUNTRY_OPTIONS.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             <FieldLabel muted={useContractDefault}>City</FieldLabel>
@@ -275,6 +297,12 @@ export default function ShippingDetailsSheet({
     setGoodsContent(initialFulfillment?.goodsContent ?? "");
   };
 
+  useEffect(() => {
+    if (open) {
+      resetFromProps();
+    }
+  }, [open, contractShipping, initialFulfillment]);
+
   const handleUseContractDefaultChange = (checked: boolean) => {
     setUseContractDefault(checked);
     if (checked) {
@@ -283,9 +311,6 @@ export default function ShippingDetailsSheet({
   };
 
   const handleSheetOpenChange = (next: boolean) => {
-    if (next) {
-      resetFromProps();
-    }
     onOpenChange(next);
   };
 
@@ -349,7 +374,7 @@ export default function ShippingDetailsSheet({
           </ScrollFade>
         </div>
 
-        <SheetFooter className="shrink-0 flex-row justify-between gap-3 border-t border-gray-100 bg-white px-6 py-4">
+        <SheetFooter className="shrink-0 flex-row justify-end gap-3 border-t border-gray-100 bg-white px-6 py-4">
           <Button
             type="button"
             variant="outline"
