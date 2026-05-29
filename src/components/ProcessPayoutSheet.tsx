@@ -38,8 +38,12 @@ const PAYMENT_STATUS_OPTIONS: PaymentExecutionStatus[] = [
   "Pending",
 ];
 
+function formatMoney(currency: string, amount: number) {
+  return `${currency} ${amount.toLocaleString("en-US")}`;
+}
+
 function formatUsd(amount: number) {
-  return `USD ${amount.toLocaleString("en-US")}`;
+  return formatMoney("USD", amount);
 }
 
 function BasisField({ label, value }: { label: string; value: string }) {
@@ -63,7 +67,7 @@ function BasisInstallmentCard({ installment }: { installment: PayoutBasisInstall
         : "border-amber-200 bg-amber-50 text-amber-800";
 
   const metaLine = isSuccessful && installment.paidAt
-    ? `Successful paid: ${installment.paidAt}`
+    ? `Paid: ${installment.paidAt}`
     : `Due: ${installment.dueDate}`;
 
   return (
@@ -73,51 +77,55 @@ function BasisInstallmentCard({ installment }: { installment: PayoutBasisInstall
         isVoided ? "border-red-200/80 bg-red-50/40" : "border-gray-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]"
       )}
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-2">
-        <p
-          className={cn(
-            "truncate text-[13px] font-semibold text-gray-900",
-            isVoided && "text-gray-500 line-through"
-          )}
-        >
-          {installment.title}
-        </p>
-        <p
-          className={cn(
-            "text-right text-[13px] font-semibold leading-tight tabular-nums text-gray-900 sm:text-[14px]",
-            isVoided && "text-gray-400 line-through"
-          )}
-        >
-          {formatUsd(installment.amount)}
-        </p>
-        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <span
+      <div>
+        <div className="flex items-start justify-between gap-3">
+          <p
             className={cn(
-              "inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
-              badgeClass
+              "min-w-0 flex-1 truncate text-[13px] font-semibold text-gray-900",
+              isVoided && "text-gray-500 line-through"
             )}
           >
-            {installment.status}
-          </span>
-          {!isVoided ? (
-            <button
-              type="button"
-              className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-brand hover:text-brand/80"
-            >
-              <Eye size={14} strokeWidth={2} />
-              View
-            </button>
-          ) : null}
+            {installment.title}
+          </p>
+          <p
+            className={cn(
+              "shrink-0 text-[13px] font-semibold leading-tight tabular-nums text-gray-900 sm:text-[14px]",
+              isVoided && "text-gray-400 line-through"
+            )}
+          >
+            {formatUsd(installment.amount)}
+          </p>
         </div>
-        <p
-          className={cn(
-            "col-span-2 text-[11px] leading-snug",
-            isSuccessful ? "text-emerald-700" : "text-gray-500",
-            isVoided && "line-through text-gray-500"
-          )}
-        >
-          {metaLine}
-        </p>
+        <div className="mt-1 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-x-2">
+            <span
+              className={cn(
+                "inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
+                badgeClass
+              )}
+            >
+              {installment.status}
+            </span>
+            {!isVoided ? (
+              <button
+                type="button"
+                className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-brand hover:text-brand/80"
+              >
+                <Eye size={14} strokeWidth={2} />
+                View
+              </button>
+            ) : null}
+          </div>
+          <span
+            className={cn(
+              "shrink-0 text-[11px] leading-snug",
+              isSuccessful ? "text-emerald-700" : "text-gray-500",
+              isVoided && "line-through text-gray-500"
+            )}
+          >
+            {metaLine}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -564,29 +572,25 @@ export default function ProcessPayoutSheet({
         className="flex flex-col gap-0 p-0 data-[side=right]:w-[min(920px,96vw)] data-[side=right]:max-w-[96vw] data-[side=right]:sm:max-w-[920px]"
       >
         <div className="shrink-0 border-b border-gray-100 bg-white px-7 py-5">
-          <div className="flex items-center justify-between gap-6 pr-8">
-            <div className="min-w-0 flex-1">
+          <div className="min-w-0 pr-8">
+            <div className="flex flex-wrap items-center gap-2.5">
               <h2 className="text-[17px] font-semibold tracking-tight text-gray-900">
                 Process Payout
               </h2>
-              <p className="mt-1 text-[12px] text-gray-500">
-                Review approved payout details and complete payment execution.
-              </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50/80 px-3 py-1.5">
-              <InfluencerAvatar
-                src={influencerAvatarUrl ?? getMockInfluencerAvatar(influencerHandle)}
-                alt={influencerName}
-                fallback={initials}
-                fallbackClassName="bg-violet-100 text-violet-700"
-              />
-              <div className="min-w-0 text-left">
-                <p className="truncate text-[13px] font-semibold text-gray-900">
-                  {influencerName}
-                </p>
-                <p className="truncate text-[11px] text-gray-400">{influencerHandle}</p>
+              <div className="inline-flex min-w-0 items-center gap-2">
+                <InfluencerAvatar
+                  src={influencerAvatarUrl ?? getMockInfluencerAvatar(influencerHandle)}
+                  alt={influencerName}
+                  fallback={initials}
+                  fallbackClassName="bg-violet-100 text-violet-700"
+                  size="sm"
+                />
+                <p className="truncate text-[13px] font-semibold text-gray-900">{influencerName}</p>
               </div>
             </div>
+            <p className="mt-1 text-[12px] text-gray-500">
+              Review approved payout details and complete payment execution.
+            </p>
           </div>
         </div>
 
@@ -599,14 +603,24 @@ export default function ProcessPayoutSheet({
                 Locked data from approved payout data and contract reference.
               </p>
 
-              <div className="mt-4 rounded-xl border border-gray-200 bg-white px-4 py-3">
-                <p className="text-[11px] font-medium text-gray-500">Total Approved Amount</p>
-                <p className="mt-1 text-[14px] font-semibold tabular-nums text-gray-900">
-                  {formatUsd(approvedAmount)}{" "}
-                  <span className="text-[12px] font-normal text-gray-400">
-                    / {formatUsd(snap.contractTotal)} (Contract)
-                  </span>
-                </p>
+              <div className="mt-4">
+                <p className="text-[11px] font-medium text-gray-500">Approved Amount</p>
+                <div className="mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+                  <div className="grid grid-cols-1 divide-y divide-gray-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+                    <div className="px-4 py-3.5">
+                      <p className="text-[11px] font-medium text-gray-500">Total Approved</p>
+                      <p className="mt-1 text-[16px] font-semibold tabular-nums text-gray-900">
+                        {formatMoney(snap.currency, approvedAmount)}
+                      </p>
+                    </div>
+                    <div className="px-4 py-3.5">
+                      <p className="text-[11px] font-medium text-gray-500">Contract Amount</p>
+                      <p className="mt-1 text-[16px] font-semibold tabular-nums text-gray-900">
+                        {formatMoney(snap.currency, snap.contractTotal)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="mt-3 space-y-2">

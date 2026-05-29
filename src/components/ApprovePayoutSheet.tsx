@@ -26,6 +26,12 @@ import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import AddInstallmentDialog, { type InstallmentDraft } from "@/components/AddInstallmentDialog";
 import { Check, Eye, FileLock, FileText, Flag, Info, Plus, RotateCcw, Sparkles, Trash2 } from "@/lib/icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 const PAYOUT_STEPS = ["Invoice", "Account Pool", "Approved Amount"] as const;
@@ -369,7 +375,7 @@ function NoMorePayoutRequestsField({
       />
       <Flag size={15} className="shrink-0 text-red-500" strokeWidth={2} />
       <span className="text-[12px] font-medium text-gray-800">
-        No more payout requests after this.
+        Mark as final installment
       </span>
     </label>
   );
@@ -711,9 +717,11 @@ function InvoicePoolSection({
 
 function InvoicePendingConfirmation({
   parsed,
+  fileName,
   onConfirm,
 }: {
   parsed: ReturnType<typeof parseInvoiceFromAgreement>;
+  fileName: string | null;
   onConfirm: () => void;
 }) {
   const bankFields = [
@@ -752,10 +760,25 @@ function InvoicePendingConfirmation({
   return (
     <div className="space-y-3">
     <div className="rounded-xl border border-sky-200/90 bg-sky-50/45 px-5 py-5">
-      <h4 className="text-[14px] font-semibold text-gray-900">Invoice Pending Confirmation</h4>
-      <p className="mt-1 text-[12px] leading-relaxed text-gray-500">
-        Review the parsed invoice details, then confirm to add it into the Invoice Pool.
-      </p>
+      <div>
+        <div className="flex items-center justify-between gap-3">
+          <h4 className="shrink-0 text-[14px] font-semibold text-gray-900">
+            Invoice Pending Confirmation
+          </h4>
+          {fileName ? (
+            <span
+              className="inline-flex min-w-0 max-w-[50%] items-center gap-1 text-[11px] text-gray-500"
+              title={fileName}
+            >
+              <FileText size={12} strokeWidth={2} className="shrink-0 text-gray-400" />
+              <span className="truncate">{fileName}</span>
+            </span>
+          ) : null}
+        </div>
+        <p className="mt-1 text-[12px] leading-relaxed text-gray-500">
+          Review the parsed invoice details, then verify to add it into the Invoice Pool.
+        </p>
+      </div>
 
       <div className="mt-5 space-y-5">
         <ConfirmFieldRow label="Invoice Issued Party">
@@ -836,9 +859,10 @@ function InvoicePendingConfirmation({
       <div className="mt-5 flex justify-end">
         <Button
           variant="outline"
-          className="h-9 min-w-[96px] border-brand/35 bg-white text-[13px] font-medium text-brand hover:border-brand/50 hover:bg-brand-50/50 hover:text-brand"
+          className="h-9 min-w-[96px] border-gray-200 bg-white text-[13px] font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900"
           onClick={onConfirm}
         >
+          <Check size={14} strokeWidth={2.5} className="text-emerald-600" />
           Verify
         </Button>
       </div>
@@ -938,7 +962,11 @@ function InvoiceStepPanel({
         ) : null}
 
         {invoicePhase === "parsed" ? (
-          <InvoicePendingConfirmation parsed={parsed} onConfirm={onInvoiceConfirm} />
+          <InvoicePendingConfirmation
+            parsed={parsed}
+            fileName={uploadedFileName}
+            onConfirm={onInvoiceConfirm}
+          />
         ) : null}
 
         {invoicePhase === "confirmed" && uploadedFileName && confirmedAt ? (
@@ -1060,6 +1088,30 @@ function InstallmentViewButton({ title }: { title: string }) {
   );
 }
 
+function InstallmentIconAction({
+  label,
+  icon: Icon,
+  onClick,
+}: {
+  label: string;
+  icon: typeof Trash2;
+  onClick?: () => void;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        type="button"
+        className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
+        aria-label={label}
+        onClick={onClick}
+      >
+        <Icon size={14} strokeWidth={2} />
+      </TooltipTrigger>
+      <TooltipContent side="left">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 function InstallmentCard({
   installment,
   currency,
@@ -1091,29 +1143,39 @@ function InstallmentCard({
     inactiveState === "removed" ||
     (!isInactive && (installment.status === "Pending" || installment.status === "Failed"));
 
+  const showRemove = !isInactive && installment.status === "Pending";
+  const showVoid = !isInactive && installment.status === "Failed" && installment.canVoid;
+
   return (
-    <div
-      className={cn(
-        "rounded-xl border border-gray-200 px-4 py-2.5",
-        isInactive
-          ? "bg-gray-50"
-          : cn(
-              "border-l-4 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]",
-              statusStyles.border
-            )
-      )}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p
-              className={cn(
-                "text-[13px] font-semibold text-gray-900",
-                isInactive && "text-gray-400 line-through"
-              )}
-            >
-              {installment.title}
-            </p>
+    <div className="flex items-center gap-2">
+      <div
+        className={cn(
+          "min-w-0 flex-1 rounded-xl border border-gray-200 px-4 py-3",
+          isInactive
+            ? "bg-gray-50"
+            : "bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]"
+        )}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <p
+            className={cn(
+              "min-w-0 flex-1 truncate text-[13px] font-semibold text-gray-900",
+              isInactive && "text-gray-400 line-through"
+            )}
+          >
+            {installment.title}
+          </p>
+          <p
+            className={cn(
+              "shrink-0 text-[13px] font-semibold leading-tight tabular-nums text-gray-900 sm:text-[14px]",
+              isInactive && "text-gray-400 line-through"
+            )}
+          >
+            {formatMoney(currency, installment.amount)}
+          </p>
+        </div>
+        <div className="mt-1 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-x-2">
             <span
               className={cn(
                 "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
@@ -1127,46 +1189,22 @@ function InstallmentCard({
             </span>
             {showView ? <InstallmentViewButton title={installment.title} /> : null}
           </div>
-          <p
+          <span
             className={cn(
-              "mt-1 text-[11px] text-gray-400",
+              "shrink-0 text-[11px] leading-snug text-gray-500",
               isInactive && "line-through"
             )}
           >
-            Due {installment.dueDate}
-          </p>
-        </div>
-        <div className="shrink-0 text-right">
-          <p
-            className={cn(
-              "text-[14px] font-semibold tabular-nums text-gray-900",
-              isInactive && "text-gray-400 line-through"
-            )}
-          >
-            {formatMoney(currency, installment.amount)}
-          </p>
-          {!isInactive && installment.status === "Pending" ? (
-            <button
-              type="button"
-              className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-red-500 transition-colors hover:text-red-600"
-              onClick={onRemove}
-            >
-              <Trash2 size={12} strokeWidth={2} />
-              Remove
-            </button>
-          ) : null}
-          {!isInactive && installment.status === "Failed" && installment.canVoid ? (
-            <button
-              type="button"
-              className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-red-500 transition-colors hover:text-red-600"
-              onClick={onVoid}
-            >
-              <RotateCcw size={12} strokeWidth={2} />
-              Void
-            </button>
-          ) : null}
+            Due: {installment.dueDate}
+          </span>
         </div>
       </div>
+      {showRemove ? (
+        <InstallmentIconAction label="Remove" icon={Trash2} onClick={onRemove} />
+      ) : null}
+      {showVoid ? (
+        <InstallmentIconAction label="Void" icon={RotateCcw} onClick={onVoid} />
+      ) : null}
     </div>
   );
 }
@@ -1186,7 +1224,9 @@ function InstallmentSection({
         <h5 className="text-[13px] font-semibold text-gray-900">{title}</h5>
         <span className="text-[11px] text-gray-400">{subtitle}</span>
       </div>
-      <div className="mt-3 space-y-3">{children}</div>
+      <TooltipProvider>
+        <div className="mt-3 space-y-3">{children}</div>
+      </TooltipProvider>
     </section>
   );
 }
@@ -1255,7 +1295,7 @@ function ApprovedAmountStepPanel({
   return (
     <div className="flex flex-col gap-6">
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <div className="grid grid-cols-1 divide-y divide-gray-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <div className="grid grid-cols-1 divide-y divide-gray-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
           <div className="px-4 py-3.5">
             <p className="text-[11px] font-medium text-gray-500">
               Contract Value <span className="text-red-500">*</span>
@@ -1268,12 +1308,6 @@ function ApprovedAmountStepPanel({
             <p className="text-[11px] font-medium text-gray-500">Total Approved Amount</p>
             <p className="mt-1 text-[16px] font-semibold tabular-nums text-gray-900">
               {formatMoney(currency, totalPayable)}
-            </p>
-          </div>
-          <div className="px-4 py-3.5">
-            <p className="text-[11px] font-medium text-gray-500">Remaining Balance</p>
-            <p className="mt-1 text-[16px] font-semibold tabular-nums text-red-600">
-              {formatMoney(currency, remainingToAllocate)}
             </p>
           </div>
         </div>
@@ -1516,23 +1550,18 @@ export default function ApprovePayoutSheet({
       </Sheet>
 
       <Dialog open={confirmLockOpen} onOpenChange={setConfirmLockOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader className="space-y-2">
-            <DialogTitle className="text-base">Confirm Payout Amount</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="gap-6 px-6 py-6 sm:max-w-md">
+          <DialogHeader className="space-y-4 text-center">
+            <DialogTitle className="text-base font-semibold">Confirm Payout Amount</DialogTitle>
+            <p className="text-[15px] font-semibold tabular-nums text-brand">
+              Total Amount: {formatMoney(currency, confirmAmount)}
+            </p>
+            <DialogDescription className="px-2 text-[13px] leading-relaxed text-gray-500">
               This action will lock the payment details and sync them to Finance. You cannot modify
               it after confirmation.
             </DialogDescription>
           </DialogHeader>
-          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-              Total Amount
-            </p>
-            <p className="mt-1 text-[20px] font-semibold tabular-nums text-brand">
-              {formatMoney(currency, confirmAmount)}
-            </p>
-          </div>
-          <DialogFooter className="gap-2 sm:justify-end">
+          <DialogFooter className="-mx-6 -mb-6 justify-center gap-3 border-0 bg-transparent px-6 pb-6 pt-1 sm:justify-center">
             <Button variant="outline" className="min-w-[110px]" onClick={() => setConfirmLockOpen(false)}>
               Cancel
             </Button>

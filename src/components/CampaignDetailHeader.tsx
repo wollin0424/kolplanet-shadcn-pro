@@ -10,7 +10,7 @@ import {
   MoreHorizontal,
 } from "@/lib/icons";
 
-const TABS = ["Pipeline", "Campaign Hub", "Todo", "Payment", "Report"] as const;
+const TABS = ["Pipeline", "Campaign Hub", "Report"] as const;
 export type CampaignTab = (typeof TABS)[number];
 
 export default function CampaignDetailHeader({

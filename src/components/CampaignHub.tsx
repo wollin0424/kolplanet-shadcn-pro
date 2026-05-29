@@ -2,6 +2,8 @@
 
 import CampaignHubContractView from "@/components/CampaignHubContractView";
 import CampaignHubLogisticsView from "@/components/CampaignHubLogisticsView";
+import { CampaignHubDetailHeader } from "@/components/CampaignHubDetailToolbar";
+import CampaignPaymentTable from "@/components/CampaignPaymentTable";
 import type { CampaignTab } from "@/components/CampaignDetailHeader";
 import { cn } from "@/lib/utils";
 import { useState, type MouseEvent } from "react";
@@ -88,7 +90,7 @@ function HubStatusList({ children }: { children: ReactNode }) {
   return <div className="mt-0 flex flex-wrap gap-x-2 gap-y-2">{children}</div>;
 }
 
-export type HubSection = "contract" | "logistics";
+export type HubSection = "contract" | "logistics" | "payment";
 
 function HubCell({
   title,
@@ -271,6 +273,7 @@ export default function CampaignHub({
 
   const openContract = () => setActiveSection("contract");
   const openLogistics = () => setActiveSection("logistics");
+  const openPayment = () => setActiveSection("payment");
 
   if (activeSection === "contract") {
     return (
@@ -287,6 +290,18 @@ export default function CampaignHub({
         campaignId={campaignId}
         onBack={() => setActiveSection(null)}
       />
+    );
+  }
+
+  if (activeSection === "payment") {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+        <span className="sr-only">{campaignId}</span>
+        <CampaignHubDetailHeader title="Payment" onBack={() => setActiveSection(null)} />
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+          <CampaignPaymentTable campaignId={campaignId} />
+        </div>
+      </div>
     );
   }
 
@@ -335,7 +350,8 @@ export default function CampaignHub({
           icon={CreditCard}
           iconClassName="bg-violet-50 text-violet-600"
           badgeCount={7}
-          onGo={() => onNavigate?.("Payment")}
+          onEnter={openPayment}
+          onGo={openPayment}
         >
           <>
             <HubProgressOverview
