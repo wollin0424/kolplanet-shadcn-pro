@@ -65,10 +65,14 @@ export function InfluencerMetaIcons({
     <>
       <Tooltip>
         <TooltipTrigger
-          type="button"
-          className={metaIconTriggerClass}
-          aria-label={`Identity type: ${relationshipLabel}`}
-          onClick={(e) => e.stopPropagation()}
+          render={
+            <span
+              className={metaIconTriggerClass}
+              aria-label={`Identity type: ${relationshipLabel}`}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+            />
+          }
         >
           <KolMetaIcon icon={Tag} variant="identity" />
         </TooltipTrigger>
@@ -78,10 +82,14 @@ export function InfluencerMetaIcons({
       </Tooltip>
       <Tooltip>
         <TooltipTrigger
-          type="button"
-          className={metaIconTriggerClass}
-          aria-label={`KOL Manager: ${kolManager}`}
-          onClick={(e) => e.stopPropagation()}
+          render={
+            <span
+              className={metaIconTriggerClass}
+              aria-label={`KOL Manager: ${kolManager}`}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+            />
+          }
         >
           <KolMetaIcon icon={UserRound} variant="manager" />
         </TooltipTrigger>
