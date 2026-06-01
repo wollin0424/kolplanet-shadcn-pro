@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import ProcessPayoutSheet from "@/components/ProcessPayoutSheet";
 import { InfluencerIdentityCell } from "@/components/InfluencerIdentityCell";
+import { TableNotesCell } from "@/components/TableNotesCell";
 import type { KolRelationship } from "@/components/InfluencerMetaIcons";
 import {
   DropdownMenu,
@@ -182,12 +183,14 @@ export default function InfluencerPaymentCampaignsTable({
           }}
         >
           <SelectTrigger className={cn(TOOLBAR_CONTROL, "h-8 w-[170px] text-gray-600")}>
-            <SelectValue placeholder="Settlement Status" />
+            <span className="truncate">
+              {settlementFilter === "All" ? "Settlement Status" : settlementFilter}
+            </span>
           </SelectTrigger>
           <SelectContent>
             {SETTLEMENT_FILTER_OPTIONS.map((opt) => (
               <SelectItem key={opt} value={opt}>
-                {opt === "All" ? "Settlement Status" : opt}
+                {opt === "All" ? "All Settlement Status" : opt}
               </SelectItem>
             ))}
           </SelectContent>
@@ -313,7 +316,10 @@ export default function InfluencerPaymentCampaignsTable({
                   </TableCell>
                   <TableCell className="py-3.5 tabular-nums text-gray-600">{row.dueDate}</TableCell>
                   <TableCell className="max-w-[180px] py-3.5">
-                    <p className="truncate text-[12px] text-gray-500">{row.note}</p>
+                    <TableNotesCell
+                      value={row.note}
+                      ariaLabel={`Edit notes for ${row.campaignName}`}
+                    />
                   </TableCell>
                   <TableCell className="py-3.5" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>

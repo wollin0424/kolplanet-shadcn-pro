@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { TableNotesCell } from "@/components/TableNotesCell";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -507,7 +508,10 @@ export default function CampaignsTable() {
                 </TableCell>
 
                 <TableCell className="py-4">
-                  <span className="text-[13px] text-gray-500">{row.notes}</span>
+                  <TableNotesCell
+                    value={row.notes}
+                    ariaLabel={`Edit notes for ${row.name}`}
+                  />
                 </TableCell>
 
                 <TableCell className="py-4 text-right">

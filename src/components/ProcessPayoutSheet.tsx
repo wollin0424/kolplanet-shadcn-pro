@@ -426,8 +426,6 @@ export default function ProcessPayoutSheet({
   influencerHandle = "@instagram ins",
   influencerAvatarUrl,
   approvedAmount = 20_000,
-  amountPaid: _amountPaid = 0,
-  dueDate: _dueDate = "Feb 11, 2024",
   settlementStatus = "Waiting for Validation",
   basisInstallments: initialBasisInstallments = DEFAULT_BASIS_INSTALLMENTS,
 }: {

@@ -13,7 +13,7 @@ import {
   type CollabStatus,
 } from "@/lib/pipeline/stageStatuses";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Check } from "@/lib/icons";
+import { ChevronDown } from "@/lib/icons";
 
 function CollabStatusPill({ status }: { status: CollabStatus }) {
   const config = COLLAB_STATUS_CONFIG[status];
@@ -24,7 +24,6 @@ function CollabStatusPill({ status }: { status: CollabStatus }) {
         getStageBadgeClass(config.tone)
       )}
     >
-      {config.showCheck ? <Check size={12} strokeWidth={2.6} /> : null}
       {config.label}
     </span>
   );
@@ -42,18 +41,18 @@ export default function CollabStatusSelect({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
+        type="button"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
         className={cn(
-          "inline-flex max-w-full items-center gap-0.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap cursor-pointer transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:ring-offset-1",
+          "inline-flex max-w-full min-w-0 cursor-pointer items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:ring-offset-1",
           getStageBadgeClass(config.tone)
         )}
       >
-        {config.showCheck ? (
-          <Check size={12} strokeWidth={2.6} className="shrink-0" />
-        ) : null}
-        <span className="truncate">{config.label}</span>
-        <ChevronDown size={12} className="opacity-65 shrink-0" />
+        <span className="min-w-0 truncate">{config.label}</span>
+        <ChevronDown size={12} className="shrink-0 opacity-65" strokeWidth={2} />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-[200px] p-1">
+      <DropdownMenuContent align="start" className="min-w-[220px] p-1">
         {COLLAB_STATUS_OPTIONS.map((opt) => (
           <DropdownMenuItem
             key={opt}

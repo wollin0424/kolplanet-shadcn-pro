@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
+import { TableNotesCell } from "@/components/TableNotesCell";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -721,14 +722,10 @@ export default function InfluencerTable() {
 
                   {/* Internal Notes */}
                   <TableCell className={`py-4 ${COL_INTERNAL_NOTES_W}`}>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-[13px] text-gray-500 truncate min-w-0 max-w-[170px]">
-                        {row.internalNotes}
-                      </span>
-                      <button className="shrink-0 text-gray-400 hover:text-brand transition-colors">
-                        <Pencil size={11} />
-                      </button>
-                    </div>
+                    <TableNotesCell
+                      value={row.internalNotes}
+                      ariaLabel={`Edit internal notes for ${row.handle}`}
+                    />
                   </TableCell>
                 </TableRow>
               );

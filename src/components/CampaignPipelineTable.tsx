@@ -7,6 +7,7 @@ import CollabStatusSelect from "@/components/pipeline/CollabStatusSelect";
 import { CommercialScopePopover } from "@/components/pipeline/CommercialScopePopover";
 import { PipelineRowActionsMenu } from "@/components/pipeline/PipelineRowActionsMenu";
 import PipelineStageCell from "@/components/pipeline/PipelineStageCell";
+import { TableNotesCell } from "@/components/TableNotesCell";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -37,6 +38,7 @@ import {
   PAYMENT_STATUS_CONFIG,
   POSTING_STATUS_CONFIG,
   SCRIPT_STATUS_CONFIG,
+  COLLAB_STATUS_OPTIONS,
   type CollabStatus,
   type ContentStatus,
   type ContractStatus,
@@ -60,7 +62,6 @@ import {
   ChevronLeft,
   ChevronRight,
   History,
-  Pencil,
   Search,
   UserPlus,
 } from "@/lib/icons";
@@ -103,7 +104,16 @@ const PAYMENT_POOL: PaymentStatus[] = [
   "Waiting for Validation",
   "Rejected",
 ];
-const COLLAB_POOL: CollabStatus[] = ["Pending", "Approved", "Done", "Terminated"];
+const COLLAB_POOL: CollabStatus[] = [
+  "Pending",
+  "Invited",
+  "In Negotiation",
+  "Approved",
+  "Active",
+  "Completed",
+  "On Hold",
+  "Terminated",
+];
 
 const CONTRACT_POOL: ContractStatus[] = [
   "Pending",
@@ -246,11 +256,11 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
               setCurrentPage(1);
             }}
           >
-            <SelectTrigger size="sm" className={toolbarSelectClass("w-[180px]")}>
+            <SelectTrigger size="sm" className={toolbarSelectClass("w-[200px]")}>
               <SelectValue placeholder="Collaboration Status" />
             </SelectTrigger>
             <SelectContent>
-              {COLLAB_POOL.map((status) => (
+              {COLLAB_STATUS_OPTIONS.map((status) => (
                 <SelectItem key={status} value={status}>
                   {status}
                 </SelectItem>
@@ -484,22 +494,10 @@ export default function CampaignPipelineTable({ campaignId }: { campaignId: stri
                   </TableCell>
 
                   <TableCell className="py-4">
-                    <div className="flex min-w-0 items-center gap-1.5">
-                      <span className="min-w-0 flex-1 truncate text-left text-[12px] text-gray-500">
-                        {row.note}
-                      </span>
-                      <button
-                        type="button"
-                        className={cn(
-                          "inline-flex size-7 shrink-0 items-center justify-center rounded-full text-brand",
-                          "transition-colors hover:bg-brand-50",
-                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/25 focus-visible:ring-offset-1"
-                        )}
-                        aria-label={`Edit internal note for ${row.handle}`}
-                      >
-                        <Pencil size={14} strokeWidth={2} aria-hidden />
-                      </button>
-                    </div>
+                    <TableNotesCell
+                      value={row.note}
+                      ariaLabel={`Edit internal note for ${row.handle}`}
+                    />
                   </TableCell>
 
                   <TableCell className="py-4">

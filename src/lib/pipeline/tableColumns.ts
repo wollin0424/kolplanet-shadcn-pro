@@ -2,7 +2,7 @@
 export const PIPELINE_TABLE_COLUMNS = [
   { key: "select", width: 52 },
   { key: "influencer", width: 244 },
-  { key: "collab", width: 172 },
+  { key: "collab", width: 196 },
   { key: "commercial", width: 124 },
   { key: "contract", width: 200 },
   { key: "logistics", width: 152 },

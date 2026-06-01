@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -278,40 +278,70 @@ export default function ShippingDetailsSheet({
   initialFulfillment?: Partial<ShippingFulfillment>;
   onSave?: (fulfillment: ShippingFulfillment) => void;
 }) {
-  const [useContractDefault, setUseContractDefault] = useState(true);
-  const [address, setAddress] = useState<ShippingAddress>(contractShipping);
-  const [courier, setCourier] = useState("");
-  const [trackingId, setTrackingId] = useState("");
-  const [goodsContent, setGoodsContent] = useState("");
+  const editorKey = open
+    ? `${influencerName}:${initialFulfillment?.trackingId ?? "new"}:${contractShipping.streetAddress}`
+    : "closed";
 
-  const resetFromProps = () => {
-    const useDefault = initialFulfillment?.useContractDefault ?? true;
-    setUseContractDefault(useDefault);
-    setAddress(
-      useDefault
-        ? { ...contractShipping }
-        : (initialFulfillment?.address ?? { ...contractShipping })
-    );
-    setCourier(initialFulfillment?.courier ?? "");
-    setTrackingId(initialFulfillment?.trackingId ?? "");
-    setGoodsContent(initialFulfillment?.goodsContent ?? "");
-  };
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="flex h-full gap-0 bg-white p-0 data-[side=right]:w-full data-[side=right]:max-w-[800px] data-[side=right]:sm:max-w-[800px]"
+      >
+        <SheetHeader className="shrink-0 gap-1.5 border-b border-gray-100 bg-white px-6 py-5 text-left">
+          <SheetTitle className="text-[18px] font-semibold text-gray-900">
+            Shipping Details
+          </SheetTitle>
+          <SheetDescription className="text-[13px] leading-relaxed text-gray-500">
+            Review contract shipping info and update logistics fulfillment details for{" "}
+            <span className="font-medium text-gray-700">{influencerName}</span>.
+          </SheetDescription>
+        </SheetHeader>
 
-  useEffect(() => {
-    if (open) {
-      resetFromProps();
-    }
-  }, [open, contractShipping, initialFulfillment]);
+        {open ? (
+          <ShippingDetailsEditor
+            key={editorKey}
+            contractShipping={contractShipping}
+            initialFulfillment={initialFulfillment}
+            influencerName={influencerName}
+            onSave={onSave}
+            onClose={() => onOpenChange(false)}
+          />
+        ) : null}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function ShippingDetailsEditor({
+  contractShipping,
+  initialFulfillment,
+  influencerName,
+  onSave,
+  onClose,
+}: {
+  contractShipping: ShippingAddress;
+  initialFulfillment?: Partial<ShippingFulfillment>;
+  influencerName: string;
+  onSave?: (fulfillment: ShippingFulfillment) => void;
+  onClose: () => void;
+}) {
+  const useDefault = initialFulfillment?.useContractDefault ?? true;
+  const [useContractDefault, setUseContractDefault] = useState(useDefault);
+  const [address, setAddress] = useState<ShippingAddress>(() =>
+    useDefault
+      ? { ...contractShipping }
+      : (initialFulfillment?.address ?? { ...contractShipping })
+  );
+  const [courier, setCourier] = useState(initialFulfillment?.courier ?? "");
+  const [trackingId, setTrackingId] = useState(initialFulfillment?.trackingId ?? "");
+  const [goodsContent, setGoodsContent] = useState(initialFulfillment?.goodsContent ?? "");
 
   const handleUseContractDefaultChange = (checked: boolean) => {
     setUseContractDefault(checked);
     if (checked) {
       setAddress({ ...contractShipping });
     }
-  };
-
-  const handleSheetOpenChange = (next: boolean) => {
-    onOpenChange(next);
   };
 
   const updateAddress = (patch: Partial<ShippingAddress>) => {
@@ -335,64 +365,49 @@ export default function ShippingDetailsSheet({
       trackingId,
       goodsContent,
     });
-    onOpenChange(false);
+    onClose();
   };
 
   return (
-    <Sheet open={open} onOpenChange={handleSheetOpenChange}>
-      <SheetContent
-        side="right"
-        className="flex h-full gap-0 bg-white p-0 data-[side=right]:w-full data-[side=right]:max-w-[800px] data-[side=right]:sm:max-w-[800px]"
-      >
-        <SheetHeader className="shrink-0 gap-1.5 border-b border-gray-100 bg-white px-6 py-5 text-left">
-          <SheetTitle className="text-[18px] font-semibold text-gray-900">
-            Shipping Details
-          </SheetTitle>
-          <SheetDescription className="text-[13px] leading-relaxed text-gray-500">
-            Review contract shipping info and update logistics fulfillment details for{" "}
-            <span className="font-medium text-gray-700">{influencerName}</span>.
-          </SheetDescription>
-        </SheetHeader>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <ScrollFade className="min-h-0 flex-1 overflow-y-auto bg-[var(--hub-snapshot-bg)] px-6 py-6 lg:border-r lg:border-[#e2e8f0]">
+          <ContractSnapshotPanel contractShipping={contractShipping} />
+        </ScrollFade>
+        <ScrollFade className="min-h-0 flex-1 overflow-y-auto bg-white px-6 py-6">
+          <FulfillmentDetailsPanel
+            useContractDefault={useContractDefault}
+            onUseContractDefaultChange={handleUseContractDefaultChange}
+            address={address}
+            onAddressChange={updateAddress}
+            courier={courier}
+            onCourierChange={setCourier}
+            trackingId={trackingId}
+            onTrackingIdChange={setTrackingId}
+            goodsContent={goodsContent}
+            onGoodsContentChange={setGoodsContent}
+          />
+        </ScrollFade>
+      </div>
 
-        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-          <ScrollFade className="min-h-0 flex-1 overflow-y-auto bg-[var(--hub-snapshot-bg)] px-6 py-6 lg:border-r lg:border-[#e2e8f0]">
-            <ContractSnapshotPanel contractShipping={contractShipping} />
-          </ScrollFade>
-          <ScrollFade className="min-h-0 flex-1 overflow-y-auto bg-white px-6 py-6">
-            <FulfillmentDetailsPanel
-              useContractDefault={useContractDefault}
-              onUseContractDefaultChange={handleUseContractDefaultChange}
-              address={address}
-              onAddressChange={updateAddress}
-              courier={courier}
-              onCourierChange={setCourier}
-              trackingId={trackingId}
-              onTrackingIdChange={setTrackingId}
-              goodsContent={goodsContent}
-              onGoodsContentChange={setGoodsContent}
-            />
-          </ScrollFade>
-        </div>
-
-        <SheetFooter className="shrink-0 flex-row justify-end gap-3 border-t border-gray-100 bg-white px-6 py-4">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-9 min-w-[88px] border-gray-200 text-[13px] text-gray-700"
-            onClick={() => onOpenChange(false)}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            variant="brand"
-            className="h-9 min-w-[88px] text-[13px]"
-            onClick={handleSave}
-          >
-            Save
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+      <SheetFooter className="shrink-0 flex-row justify-end gap-3 border-t border-gray-100 bg-white px-6 py-4">
+        <Button
+          type="button"
+          variant="outline"
+          className="h-9 min-w-[88px] border-gray-200 text-[13px] text-gray-700"
+          onClick={onClose}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          variant="brand"
+          className="h-9 min-w-[88px] text-[13px]"
+          onClick={handleSave}
+        >
+          Save
+        </Button>
+      </SheetFooter>
+    </div>
   );
 }

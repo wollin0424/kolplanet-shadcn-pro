@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import ApprovePayoutSheet from "@/components/ApprovePayoutSheet";
 import RejectSettlementDialog from "@/components/RejectSettlementDialog";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
+import { TableNotesCell } from "@/components/TableNotesCell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -593,9 +594,11 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
                 <TableCell className="py-4 text-gray-700">{row.manager}</TableCell>
 
                 <TableCell className="py-4">
-                  <div className="text-[12px] text-gray-500 truncate max-w-[140px]">
-                    {row.note}
-                  </div>
+                  <TableNotesCell
+                    value={row.note}
+                    ariaLabel={`Edit notes for ${row.name}`}
+                    className="max-w-[140px]"
+                  />
                 </TableCell>
 
                 <TableCell

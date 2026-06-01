@@ -66,13 +66,13 @@ export function CommercialScopePopover({
         onMouseLeave={scheduleClose}
         className={cn(
           "inline-flex size-8 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors",
-          "hover:text-brand hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30",
-          open && "text-brand bg-brand-50",
+          "hover:bg-brand-50 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30",
+          open && "bg-brand-50 text-brand",
           className
         )}
         aria-label="View commercial scope and financials"
       >
-        <FileLock className="size-[18px]" strokeWidth={1.75} aria-hidden />
+        <FileLock size={18} strokeWidth={1.75} aria-hidden />
       </PopoverTrigger>
 
       <PopoverContent

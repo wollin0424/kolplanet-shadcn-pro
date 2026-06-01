@@ -91,43 +91,47 @@ export function CampaignHubDetailToolbar({
   const showInfluencerMeta = showBatch || showCountOnly;
 
   return (
-    <div className="shrink-0 px-4 py-3">
-      <div className="flex flex-wrap items-center gap-2">
-        {showBatch && bs ? (
-          <CampaignHubSelectionBar
-            selectedCount={bs.selectedCount}
-            totalCount={bs.totalCount}
-            onSelectAll={bs.onSelectAll}
-            onClear={bs.onClear}
-          />
-        ) : showCountOnly ? (
-          <span className="shrink-0 text-xs font-medium text-gray-500">
-            Influencers:{" "}
-            <span className="tabular-nums font-medium text-gray-900">{influencerCount}</span>
-          </span>
-        ) : null}
-        {showInfluencerMeta ? (
-          <span className="h-4 w-px shrink-0 bg-gray-200" aria-hidden />
-        ) : null}
-        {filters}
-        <div className="relative min-w-[200px] flex-1 sm:max-w-[260px]">
-          <Search
-            size={12}
-            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
-          />
-          <Input
-            value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={searchPlaceholder}
-            className="h-8 border-gray-200 bg-gray-50/80 py-0 pl-8 text-xs leading-8 placeholder:text-xs focus:bg-white md:text-xs"
-          />
-        </div>
-        {actions ? (
-          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:ml-auto">
-            {actions}
+    <div className="flex shrink-0 flex-col gap-3">
+      <div className="shrink-0 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+        <div className="flex flex-wrap items-center gap-2">
+          {filters}
+          <div className="relative min-w-[200px] flex-1 sm:max-w-[260px]">
+            <Search
+              size={12}
+              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
+            />
+            <Input
+              value={searchValue}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder={searchPlaceholder}
+              className="h-8 border-gray-200 bg-gray-50/80 py-0 pl-8 text-xs leading-8 placeholder:text-xs focus:bg-white md:text-xs"
+            />
           </div>
-        ) : null}
+          {actions ? (
+            <div className="flex shrink-0 flex-wrap items-center gap-2 sm:ml-auto">
+              {actions}
+            </div>
+          ) : null}
+        </div>
       </div>
+
+      {showInfluencerMeta ? (
+        <div className="shrink-0 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+          {showBatch && bs ? (
+            <CampaignHubSelectionBar
+              selectedCount={bs.selectedCount}
+              totalCount={bs.totalCount}
+              onSelectAll={bs.onSelectAll}
+              onClear={bs.onClear}
+            />
+          ) : showCountOnly ? (
+            <span className="text-xs font-medium text-gray-500">
+              Influencers:{" "}
+              <span className="tabular-nums font-medium text-gray-900">{influencerCount}</span>
+            </span>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

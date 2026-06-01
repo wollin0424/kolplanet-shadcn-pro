@@ -77,6 +77,8 @@ export type ClientBillingRow = {
   dueDate: string;
   paymentProofCount: number;
   internalNotes: string;
+  sales: string;
+  pm: string;
 };
 
 export type ClientSettlementStatus =
@@ -119,6 +121,8 @@ const BASE_CLIENT_BILLING_ROWS: ClientBillingRow[] = [
     dueDate: "2024/03/15",
     paymentProofCount: 2,
     internalNotes: "Client requested split billing across two entities.",
+    sales: "Mia",
+    pm: "Lucas",
   },
   {
     id: "B3045",
@@ -134,6 +138,8 @@ const BASE_CLIENT_BILLING_ROWS: ClientBillingRow[] = [
     dueDate: "2024/04/01",
     paymentProofCount: 0,
     internalNotes: "Awaiting countersigned contract before invoice issue.",
+    sales: "Chris",
+    pm: "Moca",
   },
   {
     id: "B3038",
@@ -149,6 +155,8 @@ const BASE_CLIENT_BILLING_ROWS: ClientBillingRow[] = [
     dueDate: "2024/02/10",
     paymentProofCount: 3,
     internalNotes: "Closed loop — all influencers paid.",
+    sales: "Moca",
+    pm: "Chris",
   },
   {
     id: "B3031",
@@ -164,6 +172,8 @@ const BASE_CLIENT_BILLING_ROWS: ClientBillingRow[] = [
     dueDate: "2024/03/30",
     paymentProofCount: 0,
     internalNotes: "Scope revision pending legal review.",
+    sales: "Alex",
+    pm: "Lucas",
   },
   {
     id: "B3024",
@@ -179,6 +189,8 @@ const BASE_CLIENT_BILLING_ROWS: ClientBillingRow[] = [
     dueDate: "2024/01/20",
     paymentProofCount: 1,
     internalNotes: "Partial wire received — reconcile with finance.",
+    sales: "Mia",
+    pm: "Jordan",
   },
   {
     id: "B3017",
@@ -194,6 +206,8 @@ const BASE_CLIENT_BILLING_ROWS: ClientBillingRow[] = [
     dueDate: "2024/02/28",
     paymentProofCount: 2,
     internalNotes: "KOL list expanded — update settlement schedule.",
+    sales: "Chris",
+    pm: "Lucas",
   },
 ];
 
@@ -225,6 +239,8 @@ function buildClientBillingExtras(): ClientBillingRow[] {
     "Unilever SEA",
   ];
   const months = ["2024-02", "2024-01", "2023-12", "2023-11"];
+  const salesReps = ["Mia", "Chris", "Moca", "Alex"] as const;
+  const projectManagers = ["Lucas", "Chris", "Moca", "Jordan"] as const;
   const contractStatuses = CONTRACT_STATUS_OPTIONS;
   const invoiceStatuses = INVOICE_STATUS_OPTIONS;
   const collectionStatuses = COLLECTION_STATUS_OPTIONS;
@@ -257,6 +273,8 @@ function buildClientBillingExtras(): ClientBillingRow[] {
         ],
         i
       ),
+      sales: pick(salesReps, i),
+      pm: pick(projectManagers, i + 1),
     };
   });
 }

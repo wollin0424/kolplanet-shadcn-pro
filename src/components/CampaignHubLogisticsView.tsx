@@ -397,8 +397,7 @@ export default function CampaignHubLogisticsView({
 
         <CampaignHubDetailHeader title="Logistics" onBack={onBack} />
 
-        <div className="shrink-0 rounded-xl border border-gray-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-          <CampaignHubDetailToolbar
+        <CampaignHubDetailToolbar
             batchSelection={{
               selectedCount,
               totalCount: filtered.length,
@@ -445,7 +444,6 @@ export default function CampaignHubLogisticsView({
               </>
             }
           />
-        </div>
 
         <div className="no-scrollbar min-h-0 flex-1 overflow-auto">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">

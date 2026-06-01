@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { InfluencerIdentityCell } from "@/components/InfluencerIdentityCell";
+import { TableNotesCell } from "@/components/TableNotesCell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -218,7 +219,10 @@ export default function InfluencerPaymentsTable() {
                   {formatUsd(row.balance)}
                 </TableCell>
                 <TableCell className="max-w-[180px] py-3.5">
-                  <p className="truncate text-[12px] text-gray-500">{row.notes}</p>
+                  <TableNotesCell
+                    value={row.notes}
+                    ariaLabel={`Edit notes for ${row.name}`}
+                  />
                 </TableCell>
                 <TableCell className="py-3.5" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>

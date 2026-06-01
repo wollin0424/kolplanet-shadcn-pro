@@ -2,6 +2,7 @@
 
 import CampaignHubContractView from "@/components/CampaignHubContractView";
 import CampaignHubLogisticsView from "@/components/CampaignHubLogisticsView";
+import CampaignHubScriptView from "@/components/CampaignHubScriptView";
 import { CampaignHubDetailHeader } from "@/components/CampaignHubDetailToolbar";
 import CampaignPaymentTable from "@/components/CampaignPaymentTable";
 import type { CampaignTab } from "@/components/CampaignDetailHeader";
@@ -90,7 +91,7 @@ function HubStatusList({ children }: { children: ReactNode }) {
   return <div className="mt-0 flex flex-wrap gap-x-2 gap-y-2">{children}</div>;
 }
 
-export type HubSection = "contract" | "logistics" | "payment";
+export type HubSection = "contract" | "logistics" | "payment" | "script";
 
 function HubCell({
   title,
@@ -274,6 +275,7 @@ export default function CampaignHub({
   const openContract = () => setActiveSection("contract");
   const openLogistics = () => setActiveSection("logistics");
   const openPayment = () => setActiveSection("payment");
+  const openScript = () => setActiveSection("script");
 
   if (activeSection === "contract") {
     return (
@@ -287,6 +289,15 @@ export default function CampaignHub({
   if (activeSection === "logistics") {
     return (
       <CampaignHubLogisticsView
+        campaignId={campaignId}
+        onBack={() => setActiveSection(null)}
+      />
+    );
+  }
+
+  if (activeSection === "script") {
+    return (
+      <CampaignHubScriptView
         campaignId={campaignId}
         onBack={() => setActiveSection(null)}
       />
@@ -362,7 +373,7 @@ export default function CampaignHub({
             />
             <HubStatusList>
               <HubStatus label="Partially Paid" value={1} tone="sky" />
-              <HubStatus label="Validated" value={1} tone="green" />
+              <HubStatus label="Validated" value={1} tone="amber" />
               <HubStatus label="Waiting for Validation" value={1} tone="amber" />
               <HubStatus label="Rejected" value={1} tone="red" />
             </HubStatusList>
@@ -374,7 +385,8 @@ export default function CampaignHub({
           icon={ScrollText}
           iconClassName="bg-sky-50 text-sky-600"
           badgeCount={5}
-          onGo={() => onNavigate?.("Pipeline")}
+          onEnter={openScript}
+          onGo={openScript}
         >
           <>
             <HubProgressOverview

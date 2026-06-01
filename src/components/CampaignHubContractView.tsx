@@ -359,8 +359,7 @@ export default function CampaignHubContractView({
 
         <CampaignHubDetailHeader title="Contract" onBack={onBack} />
 
-        <div className="shrink-0 rounded-xl border border-gray-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-          <CampaignHubDetailToolbar
+        <CampaignHubDetailToolbar
             influencerCount={filtered.length}
             searchValue={query}
             onSearchChange={setQuery}
@@ -387,7 +386,6 @@ export default function CampaignHubContractView({
               </>
             }
           />
-        </div>
 
         <div className="no-scrollbar min-h-0 flex-1 overflow-auto">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">

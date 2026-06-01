@@ -25,7 +25,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import BillingStatusSelect from "@/components/BillingStatusSelect";
+import { CampaignStaffIcons } from "@/components/CampaignStaffIcons";
+import { TableNotesCell } from "@/components/TableNotesCell";
 import { cn } from "@/lib/utils";
 import {
   CLIENT_BILLING_ROWS,
@@ -41,7 +44,6 @@ import {
   type ContractStatus,
 } from "@/lib/clientBilling";
 import {
-  CheckCircle2,
   Calendar,
   ChevronDown,
   ChevronLeft,
@@ -166,7 +168,8 @@ export default function ClientBillingTable() {
   }, [contractStatus, invoiceStatus, collectionStatus]);
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 overflow-hidden bg-white">
+    <TooltipProvider>
+      <div className="flex flex-col flex-1 min-h-0 overflow-hidden bg-white">
       <div className="flex shrink-0 items-center gap-2 border-b border-gray-100 px-5 py-3">
         <div className="flex min-w-0 items-center gap-2">
         <Popover>
@@ -387,19 +390,7 @@ export default function ClientBillingTable() {
                           <span className="font-medium text-gray-900">
                             {row.id} {row.campaignName}
                           </span>
-                          {row.contractStatus === "Countersigned" ? (
-                            <CheckCircle2
-                              size={14}
-                              className="shrink-0 text-emerald-500"
-                              strokeWidth={2}
-                            />
-                          ) : (
-                            <FileText
-                              size={14}
-                              className="shrink-0 text-sky-500"
-                              strokeWidth={2}
-                            />
-                          )}
+                          <CampaignStaffIcons sales={row.sales} pm={row.pm} />
                         </div>
                       </div>
                     </div>
@@ -478,7 +469,10 @@ export default function ClientBillingTable() {
                     )}
                   </TableCell>
                   <TableCell className="max-w-[200px] py-3.5">
-                    <p className="line-clamp-2 text-[12px] text-gray-500">{row.internalNotes}</p>
+                    <TableNotesCell
+                      value={row.internalNotes}
+                      ariaLabel={`Edit internal notes for ${row.id}`}
+                    />
                   </TableCell>
                   <TableCell className="py-3.5" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
@@ -591,5 +585,6 @@ export default function ClientBillingTable() {
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 }

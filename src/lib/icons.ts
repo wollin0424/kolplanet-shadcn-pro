@@ -6,6 +6,7 @@
 
 import {
   AlertCircle as LucideAlertCircle,
+  ArrowRight as LucideArrowRight,
   Bell as LucideBell,
   BookOpen as LucideBookOpen,
   Briefcase as LucideBriefcase,
@@ -35,6 +36,7 @@ import {
   Hourglass as LucideHourglass,
   Info as LucideInfo,
   Link as LucideLink,
+  Languages as LucideLanguages,
   List as LucideList,
   Mail as LucideMail,
   MoreHorizontal as LucideMoreHorizontal,
@@ -69,6 +71,7 @@ export type { LucideIcon, LucideProps } from "lucide-react";
 export type { AppIcon };
 
 export const AlertCircle = createIcon(LucideAlertCircle, "AlertCircle");
+export const ArrowRight = createIcon(LucideArrowRight, "ArrowRight");
 export const Bell = createIcon(LucideBell, "Bell");
 export const BookOpen = createIcon(LucideBookOpen, "BookOpen");
 export const Briefcase = createIcon(LucideBriefcase, "Briefcase");
@@ -97,6 +100,7 @@ export const Hammer = createIcon(LucideHammer, "Hammer");
 export const History = createIcon(LucideHistory, "History");
 export const Hourglass = createIcon(LucideHourglass, "Hourglass");
 export const Info = createIcon(LucideInfo, "Info");
+export const Languages = createIcon(LucideLanguages, "Languages");
 export const Link = createIcon(LucideLink, "Link");
 export const List = createIcon(LucideList, "List");
 export const Mail = createIcon(LucideMail, "Mail");

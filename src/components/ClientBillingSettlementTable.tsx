@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import ProcessPayoutSheet from "@/components/ProcessPayoutSheet";
 import { InfluencerIdentityCell } from "@/components/InfluencerIdentityCell";
+import { TableNotesCell } from "@/components/TableNotesCell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -167,13 +168,15 @@ export default function ClientBillingSettlementTable({
             setCurrentPage(1);
           }}
         >
-          <SelectTrigger className="h-8 w-[170px] border-gray-200 bg-gray-50 text-[12.5px]">
-            <SelectValue placeholder="Settlement Status" />
+          <SelectTrigger className="h-8 w-[170px] border-gray-200 bg-gray-50 text-[12.5px] text-gray-600">
+            <span className="truncate">
+              {settlementFilter === "All" ? "Settlement Status" : settlementFilter}
+            </span>
           </SelectTrigger>
           <SelectContent>
             {SETTLEMENT_FILTER_OPTIONS.map((opt) => (
               <SelectItem key={opt} value={opt}>
-                {opt === "All" ? "Settlement Status" : opt}
+                {opt === "All" ? "All Settlement Status" : opt}
               </SelectItem>
             ))}
           </SelectContent>
@@ -304,7 +307,10 @@ export default function ClientBillingSettlementTable({
                     {row.dueDate}
                   </TableCell>
                   <TableCell className="max-w-[200px] py-4">
-                    <p className="truncate text-[12px] text-gray-500">{row.note}</p>
+                    <TableNotesCell
+                      value={row.note}
+                      ariaLabel={`Edit notes for ${row.name}`}
+                    />
                   </TableCell>
                   <TableCell className="py-4" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
