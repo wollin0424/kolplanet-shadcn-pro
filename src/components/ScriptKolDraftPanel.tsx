@@ -1,0 +1,634 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  addScriptDraftMessage,
+  approveScriptDraft,
+  getScriptDraftSubmissions,
+  subscribeScriptDraftChanges,
+  type ScriptDraftMessageAuthor,
+  type ScriptDraftSubmission,
+} from "@/lib/scriptDraftSubmissions";
+import { cn } from "@/lib/utils";
+import {
+  ArrowRight,
+  ChevronDown,
+  ChevronUp,
+  MessageSquare,
+  Plus,
+  X,
+} from "@/lib/icons";
+
+function formatDraftStatus(status: ScriptDraftSubmission["status"]) {
+  if (status === "Under Review") return "Under review";
+  return status;
+}
+
+type KolScriptStatus = "Pending" | "Waiting for Approval" | "Approved";
+
+const KOL_STATUS_BADGE: Record<KolScriptStatus, string> = {
+  Pending: "border-gray-200 bg-gray-50 text-gray-600",
+  "Waiting for Approval": "border-brand/20 bg-brand-50 text-brand",
+  Approved: "border-emerald-200 bg-emerald-50 text-emerald-700",
+};
+
+function formatKolStatusLabel(status: KolScriptStatus) {
+  return status;
+}
+
+function draftStatusToKolStatus(status: ScriptDraftSubmission["status"]): KolScriptStatus {
+  if (status === "Approved") return "Approved";
+  if (status === "Revision Needed") return "Waiting for Approval";
+  return "Pending";
+}
+
+function KolStatusBadge({ status }: { status: KolScriptStatus }) {
+  return (
+    <span
+      className={cn(
+        "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-tight",
+        KOL_STATUS_BADGE[status]
+      )}
+    >
+      {formatKolStatusLabel(status)}
+    </span>
+  );
+}
+
+function KolScriptPanel({ content }: { content: string }) {
+  return (
+    <div className="flex min-h-[200px] min-w-0 flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <p className="text-xs font-semibold text-gray-800">KOL Script</p>
+      <p className="mt-3 min-h-0 flex-1 whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700">
+        {content}
+      </p>
+    </div>
+  );
+}
+
+function ChatMessage({ message }: { message: ScriptDraftSubmission["messages"][number] }) {
+  const isClient = message.author === "client";
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+        <span
+          className={cn(
+            "text-[11px] font-semibold",
+            isClient ? "text-brand" : "text-violet-700"
+          )}
+        >
+          {isClient ? "From **" : "From H5"}
+        </span>
+        <span className="text-[11px] text-gray-400">{message.sentAt}</span>
+      </div>
+      <div className="rounded-lg border border-gray-100 bg-white px-3 py-2.5">
+        {message.content ? (
+          <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-gray-800">
+            {message.content}
+          </p>
+        ) : null}
+        {message.images?.length ? (
+          <div className={cn("flex flex-wrap gap-2", message.content && "mt-2")}>
+            {message.images.map((src, imageIndex) => (
+              <img
+                key={`${message.id}-img-${imageIndex}`}
+                src={src}
+                alt={`Attachment ${imageIndex + 1}`}
+                className="size-14 rounded-md border border-gray-200 object-cover"
+              />
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function DiscussionThread({
+  messages,
+  emptyLabel = "No replies yet. Start the conversation below.",
+}: {
+  messages: ScriptDraftSubmission["messages"];
+  emptyLabel?: string;
+}) {
+  if (messages.length === 0) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center py-6 text-center">
+        <span className="mb-2 inline-flex size-9 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+          <MessageSquare size={16} strokeWidth={2} />
+        </span>
+        <p className="max-w-[200px] text-[12px] leading-relaxed text-gray-400">{emptyLabel}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-0.5">
+      {messages.map((message) => (
+        <ChatMessage key={message.id} message={message} />
+      ))}
+    </div>
+  );
+}
+
+function DiscussionComposer({
+  kolId,
+  version,
+  author,
+  authorLabel,
+  readOnly = false,
+  placeholder = "Write feedback...",
+}: {
+  kolId: string;
+  version: number;
+  author: ScriptDraftMessageAuthor;
+  authorLabel: string;
+  readOnly?: boolean;
+  placeholder?: string;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [draft, setDraft] = useState("");
+  const [pendingImages, setPendingImages] = useState<string[]>([]);
+
+  const canCompose = !readOnly;
+  const canSend = draft.trim().length > 0 || pendingImages.length > 0;
+
+  const handleImagePick = (files: FileList | null) => {
+    if (!files?.length || !canCompose) return;
+
+    Array.from(files).forEach((file) => {
+      if (!file.type.startsWith("image/")) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          setPendingImages((prev) => [...prev, reader.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleSend = () => {
+    if (!canCompose || !canSend) return;
+    addScriptDraftMessage(kolId, version, {
+      author,
+      authorLabel,
+      content: draft,
+      images: pendingImages,
+    });
+    setDraft("");
+    setPendingImages([]);
+  };
+
+  if (!canCompose) return null;
+
+  return (
+    <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="sr-only"
+        onChange={(e) => {
+          handleImagePick(e.target.files);
+          e.target.value = "";
+        }}
+      />
+
+      {pendingImages.length > 0 ? (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {pendingImages.map((src, index) => (
+            <div key={`pending-${index}`} className="relative">
+              <img
+                src={src}
+                alt={`Pending attachment ${index + 1}`}
+                className="size-9 rounded-md border border-gray-200 object-cover"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  setPendingImages((prev) => prev.filter((_, imageIndex) => imageIndex !== index))
+                }
+                className="absolute -top-1 -right-1 inline-flex size-3.5 items-center justify-center rounded-full bg-gray-800 text-white"
+                aria-label="Remove image"
+              >
+                <X size={8} strokeWidth={2.5} />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="rounded-full border border-gray-200 bg-white px-2 py-1">
+        <div className="flex items-center gap-0.5">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
+            aria-label="Add image"
+          >
+            <Plus size={18} strokeWidth={1.75} />
+          </button>
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && canSend) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            placeholder={placeholder}
+            className="h-9 min-w-0 flex-1 border-0 bg-transparent px-1 text-[13px] outline-none placeholder:text-gray-400"
+          />
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={!canSend}
+            className={cn(
+              "inline-flex size-8 shrink-0 items-center justify-center rounded-full transition-colors",
+              canSend
+                ? "bg-brand-50 text-brand hover:bg-brand hover:text-white"
+                : "bg-brand-50/60 text-brand/40"
+            )}
+            aria-label="Send message"
+          >
+            <ArrowRight size={16} strokeWidth={2} />
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function VersionDiscussionSection({
+  kolId,
+  submission,
+  composerAuthor,
+  composerLabel,
+  readOnly = false,
+  placeholder,
+  emptyLabel,
+}: {
+  kolId: string;
+  submission: ScriptDraftSubmission;
+  composerAuthor: ScriptDraftMessageAuthor;
+  composerLabel: string;
+  readOnly?: boolean;
+  placeholder?: string;
+  emptyLabel?: string;
+}) {
+  const replyCount = submission.messages.length;
+
+  return (
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col space-y-2">
+      <div className="flex items-center gap-2">
+        <MessageSquare size={14} className="text-brand" strokeWidth={2} />
+        <p className="text-xs font-semibold text-gray-800">Client Feedback</p>
+        <span className="text-[11px] text-gray-400">
+          {replyCount} {replyCount === 1 ? "reply" : "replies"}
+        </span>
+      </div>
+
+      <div className="flex min-h-[200px] min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-gray-50/90">
+        <div className="flex min-h-0 flex-1 flex-col p-3">
+          <DiscussionThread messages={submission.messages} emptyLabel={emptyLabel} />
+        </div>
+        {!readOnly ? (
+          <div className="shrink-0 border-t border-gray-200/80 bg-white/70 px-3 py-2.5">
+            <DiscussionComposer
+              kolId={kolId}
+              version={submission.version}
+              author={composerAuthor}
+              authorLabel={composerLabel}
+              placeholder={placeholder}
+            />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function VersionReviewSplit({
+  kolId,
+  submission,
+  composerAuthor,
+  composerLabel,
+  readOnly = false,
+  placeholder,
+  emptyLabel,
+}: {
+  kolId: string;
+  submission: ScriptDraftSubmission;
+  composerAuthor: ScriptDraftMessageAuthor;
+  composerLabel: string;
+  readOnly?: boolean;
+  placeholder?: string;
+  emptyLabel?: string;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <KolScriptPanel content={submission.content} />
+      <VersionDiscussionSection
+        kolId={kolId}
+        submission={submission}
+        composerAuthor={composerAuthor}
+        composerLabel={composerLabel}
+        readOnly={readOnly}
+        placeholder={placeholder}
+        emptyLabel={emptyLabel}
+      />
+    </div>
+  );
+}
+
+export function H5ScriptSubmissionCard({
+  submission,
+  kolId,
+  kolName,
+}: {
+  submission: ScriptDraftSubmission;
+  kolId: string;
+  kolName: string;
+}) {
+  const isApproved = submission.status === "Approved";
+
+  return (
+    <div className="mt-4 rounded-2xl border border-brand/15 bg-brand-50/20 p-4">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[14px] font-semibold text-gray-900">Version {submission.version}</p>
+          <p className="mt-0.5 text-[11px] text-gray-500">{submission.submittedAt}</p>
+        </div>
+        <span className="rounded-full border border-brand/15 bg-brand-50 px-2.5 py-1 text-[10px] font-semibold text-brand">
+          {formatDraftStatus(submission.status)}
+        </span>
+      </div>
+
+      <div className="mt-4 space-y-4">
+        <KolScriptPanel content={submission.content} />
+        <VersionDiscussionSection
+          kolId={kolId}
+          submission={submission}
+          composerAuthor="kol"
+          composerLabel={kolName}
+          readOnly={isApproved}
+          placeholder="Write feedback..."
+          emptyLabel="The client hasn't replied yet. You can still leave a note here."
+        />
+      </div>
+    </div>
+  );
+}
+
+function ScriptApprovalConfirmDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+  alreadyApproved = false,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+  alreadyApproved?: boolean;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-[520px]" showCloseButton>
+        <div className="border-b border-gray-100 px-6 py-5 text-center">
+          <DialogTitle className="text-lg font-semibold text-gray-900">
+            Confirm Script Approval
+          </DialogTitle>
+        </div>
+
+        <div className="space-y-4 px-6 py-6 text-center">
+          <DialogDescription className="text-[13px] leading-relaxed text-gray-600">
+            Are you sure you want to approve this script?
+          </DialogDescription>
+          <p className="text-[13px] leading-relaxed text-gray-600">
+            Once approved, the status{" "}
+            <span className="font-semibold text-gray-900">
+              will be locked and CANNOT be modified
+            </span>
+            . The influencer will proceed with video shooting based strictly on this version.
+          </p>
+          <p className="text-[13px] leading-relaxed text-gray-500">
+            Please review the content carefully before proceeding.
+          </p>
+          {alreadyApproved ? (
+            <p className="text-[13px] font-medium text-emerald-700">
+              This script has already been approved.
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 min-w-[88px] border-gray-200 bg-white px-4 text-[13px] font-medium text-gray-600"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="brand"
+            className="h-9 px-4 text-[13px]"
+            disabled={alreadyApproved}
+            onClick={() => {
+              onConfirm();
+              onOpenChange(false);
+            }}
+          >
+            Confirm &amp; Approve
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function KolDraftReviewCard({
+  kolId,
+  kolName,
+  submission,
+  displayStatus,
+  defaultExpanded = true,
+  collapsible = false,
+  isLatest = false,
+  onApproved,
+}: {
+  kolId: string;
+  kolName: string;
+  submission: ScriptDraftSubmission;
+  displayStatus: KolScriptStatus;
+  defaultExpanded?: boolean;
+  collapsible?: boolean;
+  isLatest?: boolean;
+  onApproved?: () => void;
+}) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const isApproved = submission.status === "Approved";
+
+  useEffect(() => {
+    setExpanded(defaultExpanded);
+  }, [defaultExpanded, submission.version]);
+
+  const handleConfirmApprove = () => {
+    if (isApproved) return;
+    approveScriptDraft(kolId, submission.version);
+    onApproved?.();
+  };
+
+  const header = (
+    <div className="flex flex-1 items-start justify-between gap-3">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <p className="text-sm font-semibold text-gray-900">Version {submission.version}</p>
+        <p className="text-xs text-gray-500">{submission.submittedAt}</p>
+      </div>
+      <div className="flex items-center gap-2">
+        <KolStatusBadge status={displayStatus} />
+        {collapsible ? (
+          expanded ? (
+            <ChevronUp size={16} className="text-gray-400" strokeWidth={2} />
+          ) : (
+            <ChevronDown size={16} className="text-gray-400" strokeWidth={2} />
+          )
+        ) : null}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="rounded-xl border border-brand/15 bg-brand-50/20 p-4">
+      {collapsible ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+          className="flex w-full items-start text-left"
+        >
+          {header}
+        </button>
+      ) : (
+        <div className="mb-4">{header}</div>
+      )}
+
+      {expanded ? (
+        <div className={cn(collapsible && "mt-4")}>
+          <VersionReviewSplit
+            kolId={kolId}
+            submission={submission}
+            composerAuthor="client"
+            composerLabel="Client"
+            readOnly={isApproved}
+            placeholder="Write feedback..."
+            emptyLabel="No replies yet. Share your feedback or questions about this script."
+          />
+
+          {isLatest ? (
+            <>
+              <div className="mt-3 flex justify-end">
+                <Button
+                  type="button"
+                  variant="brand"
+                  className="h-9 px-5 text-[13px]"
+                  onClick={() => setApproveDialogOpen(true)}
+                >
+                  Approve
+                </Button>
+              </div>
+              <ScriptApprovalConfirmDialog
+                open={approveDialogOpen}
+                onOpenChange={setApproveDialogOpen}
+                alreadyApproved={isApproved}
+                onConfirm={handleConfirmApprove}
+              />
+            </>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function ScriptKolDraftPanel({
+  kolId,
+  kolName,
+  kolStatus,
+  onApproved,
+  onNeedsRevision,
+}: {
+  kolId: string;
+  kolName: string;
+  kolStatus: KolScriptStatus;
+  onApproved?: () => void;
+  onNeedsRevision?: () => void;
+}) {
+  const [submissions, setSubmissions] = useState<ScriptDraftSubmission[]>([]);
+  const syncedStatusRef = useRef("");
+
+  useEffect(() => {
+    syncedStatusRef.current = "";
+    const sync = () => setSubmissions(getScriptDraftSubmissions(kolId));
+    sync();
+    return subscribeScriptDraftChanges(sync);
+  }, [kolId]);
+
+  useEffect(() => {
+    if (!submissions.length) return;
+    const latest = submissions[submissions.length - 1];
+    const syncKey = `${latest.version}:${latest.status}`;
+    if (syncKey === syncedStatusRef.current) return;
+    syncedStatusRef.current = syncKey;
+
+    if (latest.status === "Approved") {
+      onApproved?.();
+      return;
+    }
+    if (latest.status === "Revision Needed") {
+      onNeedsRevision?.();
+    }
+  }, [submissions, onApproved, onNeedsRevision]);
+
+  if (submissions.length === 0) {
+    return (
+      <div className="flex w-full min-w-0 flex-col gap-4">
+        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/50 px-4 py-12 text-center text-xs text-gray-400">
+          Waiting for the KOL to submit a script from the H5 brief link.
+        </div>
+      </div>
+    );
+  }
+
+  const reversed = [...submissions].reverse();
+
+  return (
+    <div className="flex w-full min-w-0 flex-col gap-3">
+      {reversed.map((submission, index) => (
+        <KolDraftReviewCard
+          key={submission.version}
+          kolId={kolId}
+          kolName={kolName}
+          submission={submission}
+          displayStatus={index === 0 ? kolStatus : draftStatusToKolStatus(submission.status)}
+          defaultExpanded={index === 0}
+          collapsible={index > 0}
+          isLatest={index === 0}
+          onApproved={onApproved}
+        />
+      ))}
+    </div>
+  );
+}

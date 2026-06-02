@@ -19,6 +19,7 @@ import {
   ChevronDown as LucideChevronDown,
   ChevronLeft as LucideChevronLeft,
   ChevronRight as LucideChevronRight,
+  ChevronUp as LucideChevronUp,
   CircleDashed as LucideCircleDashed,
   Clapperboard as LucideClapperboard,
   Clock as LucideClock,
@@ -40,6 +41,7 @@ import {
   Languages as LucideLanguages,
   List as LucideList,
   Mail as LucideMail,
+  MessageSquare as LucideMessageSquare,
   MoreHorizontal as LucideMoreHorizontal,
   MoreVertical as LucideMoreVertical,
   Pencil as LucidePencil,
@@ -50,6 +52,7 @@ import {
   ScrollText as LucideScrollText,
   Search as LucideSearch,
   Send as LucideSend,
+  Share2 as LucideShare2,
   Settings as LucideSettings,
   ShieldCheck as LucideShieldCheck,
   SlidersHorizontal as LucideSlidersHorizontal,
@@ -57,6 +60,7 @@ import {
   Stamp as LucideStamp,
   Tag as LucideTag,
   Trash2 as LucideTrash2,
+  TrendingUp as LucideTrendingUp,
   Truck as LucideTruck,
   Upload as LucideUpload,
   UserPlus as LucideUserPlus,
@@ -85,6 +89,7 @@ export const CheckSquare = createIcon(LucideCheckSquare, "CheckSquare");
 export const ChevronDown = createIcon(LucideChevronDown, "ChevronDown");
 export const ChevronLeft = createIcon(LucideChevronLeft, "ChevronLeft");
 export const ChevronRight = createIcon(LucideChevronRight, "ChevronRight");
+export const ChevronUp = createIcon(LucideChevronUp, "ChevronUp");
 export const CircleDashed = createIcon(LucideCircleDashed, "CircleDashed");
 export const Clapperboard = createIcon(LucideClapperboard, "Clapperboard");
 export const Clock = createIcon(LucideClock, "Clock");
@@ -106,6 +111,7 @@ export const Languages = createIcon(LucideLanguages, "Languages");
 export const Link = createIcon(LucideLink, "Link");
 export const List = createIcon(LucideList, "List");
 export const Mail = createIcon(LucideMail, "Mail");
+export const MessageSquare = createIcon(LucideMessageSquare, "MessageSquare");
 export const MoreHorizontal = createIcon(LucideMoreHorizontal, "MoreHorizontal");
 export const MoreVertical = createIcon(LucideMoreVertical, "MoreVertical");
 export const Pencil = createIcon(LucidePencil, "Pencil");
@@ -116,6 +122,7 @@ export const RotateCcw = createIcon(LucideRotateCcw, "RotateCcw");
 export const ScrollText = createIcon(LucideScrollText, "ScrollText");
 export const Search = createIcon(LucideSearch, "Search");
 export const Send = createIcon(LucideSend, "Send");
+export const Share2 = createIcon(LucideShare2, "Share2");
 export const Settings = createIcon(LucideSettings, "Settings");
 export const ShieldCheck = createIcon(LucideShieldCheck, "ShieldCheck");
 export const SlidersHorizontal = createIcon(LucideSlidersHorizontal, "SlidersHorizontal");
@@ -123,6 +130,7 @@ export const Sparkles = createIcon(LucideSparkles, "Sparkles");
 export const Stamp = createIcon(LucideStamp, "Stamp");
 export const Tag = createIcon(LucideTag, "Tag");
 export const Trash2 = createIcon(LucideTrash2, "Trash2");
+export const TrendingUp = createIcon(LucideTrendingUp, "TrendingUp");
 export const Truck = createIcon(LucideTruck, "Truck");
 export const Upload = createIcon(LucideUpload, "Upload");
 export const UserPlus = createIcon(LucideUserPlus, "UserPlus");

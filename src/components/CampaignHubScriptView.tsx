@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CampaignHubDetailHeader,
   CampaignHubToolbarActionButton,
@@ -10,8 +10,16 @@ import {
   InfluencerMetaIcons,
   type KolRelationship,
 } from "@/components/InfluencerMetaIcons";
+import { ScriptKolDraftPanel } from "@/components/ScriptKolDraftPanel";
+import { getScriptDraftSubmissions } from "@/lib/scriptDraftSubmissions";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -36,7 +44,6 @@ import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
 import { denseDateInputClass, denseSelectTriggerClass } from "@/lib/toolbarControls";
 import { cn } from "@/lib/utils";
 import {
-  ArrowLeftRight,
   ArrowRight,
   Calendar,
   Check,
@@ -124,12 +131,21 @@ function buildMockH5Link(influencerId: string) {
   return `kolp.la/s/${slug}`;
 }
 
-function ScriptH5LinkBar({ link }: { link: string }) {
-  const href = link.startsWith("http") ? link : `https://${link}`;
+function getH5PreviewPath(influencerId: string) {
+  return `/h5/kol-info/${encodeURIComponent(influencerId)}`;
+}
+
+function ScriptH5LinkBar({ link, influencerId }: { link: string; influencerId: string }) {
+  const previewPath = getH5PreviewPath(influencerId);
+  const previewUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}${previewPath}`
+      : previewPath;
+  const copyValue = link.startsWith("http") ? link : `https://${link}`;
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(href);
+      await navigator.clipboard.writeText(copyValue);
     } catch {
       // Clipboard may be unavailable outside secure context.
     }
@@ -143,11 +159,12 @@ function ScriptH5LinkBar({ link }: { link: string }) {
         <span className="font-medium text-gray-800">{link}</span>
       </p>
       <a
-        href={href}
+        href={previewPath}
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-brand transition-colors hover:bg-brand-50"
         aria-label="Open H5 link"
+        title={previewUrl}
       >
         <ExternalLink size={14} strokeWidth={2} />
       </a>
@@ -164,12 +181,10 @@ function ScriptH5LinkBar({ link }: { link: string }) {
 }
 
 function SectionTranslatorButton({
-  active,
   onClick,
   disabled = false,
   className,
 }: {
-  active: boolean;
   onClick: () => void;
   disabled?: boolean;
   className?: string;
@@ -181,13 +196,12 @@ function SectionTranslatorButton({
       disabled={disabled}
       className={cn(
         sectionActionLinkClass,
-        active && "rounded-md bg-brand-50 px-2 py-1",
         disabled && "cursor-not-allowed opacity-45",
         className
       )}
     >
       <Languages size={13} className="text-brand" strokeWidth={2} />
-      {active ? "Close translator" : "Translator"}
+      Translator
     </button>
   );
 }
@@ -201,7 +215,7 @@ const STATUS_FILTERS: StatusFilter[] = [
 
 const STATUS_BADGE: Record<ScriptStatus, string> = {
   Pending: "border-gray-200 bg-gray-50 text-gray-600",
-  "Waiting for Approval": "border-amber-200 bg-amber-50 text-amber-800",
+  "Waiting for Approval": "border-brand/20 bg-brand-50 text-brand",
   Approved: "border-emerald-200 bg-emerald-50 text-emerald-700",
 };
 
@@ -226,13 +240,18 @@ const SOURCE_LANGUAGE_OPTIONS = [
   })),
 ] as const;
 
-const TARGET_LANGUAGE_OPTIONS = TRANSLATION_LANGUAGES.map((lang) => ({
-  value: lang,
-  label: lang,
-}));
+const TARGET_LANGUAGE_OPTIONS = [
+  { value: "English", label: "English" },
+  { value: "Bahasa Indonesia", label: "Bahasa Indonesia" },
+  ...TRANSLATION_LANGUAGES.filter(
+    (lang) => lang !== "English" && lang !== "Bahasa Indonesia"
+  ).map((lang) => ({
+    value: lang,
+    label: lang,
+  })),
+];
 
 const DEFAULT_SOURCE_LANGUAGE = AUTO_DETECT_LANGUAGE;
-const DEFAULT_TARGET_LANGUAGE = "Bahasa Indonesia";
 
 function mockTranslateText(
   source: string,
@@ -242,39 +261,6 @@ function mockTranslateText(
   const detected =
     sourceLanguage === AUTO_DETECT_LANGUAGE ? "English" : sourceLanguage;
   return `[${targetLanguage} · from ${detected}] ${source}`;
-}
-
-function TranslatorLanguageSelect({
-  value,
-  onValueChange,
-  options,
-  className,
-}: {
-  value: string;
-  onValueChange: (value: string) => void;
-  options: readonly { value: string; label: string }[];
-  className?: string;
-}) {
-  return (
-    <Select value={value} onValueChange={(v) => v && onValueChange(v)} modal={false}>
-      <SelectTrigger
-        size="sm"
-        className={cn(
-          "h-8 w-full min-w-0 border-0 bg-transparent px-0 text-[13px] font-medium text-gray-800 shadow-none hover:bg-transparent focus-visible:ring-0",
-          className
-        )}
-      >
-        <SelectValue placeholder="Language" />
-      </SelectTrigger>
-      <SelectContent alignItemWithTrigger={false}>
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value} className="text-xs">
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
 }
 
 const GENERATION_TAGS = [
@@ -508,7 +494,7 @@ const MOCK_INFLUENCERS: ScriptInfluencer[] = [
     deadline: "Jun 12, 2026",
     deadlineDate: "2026-06-12",
     deadlineTime: "12:00",
-    timezone: "UTC+08:00",
+    timezone: "GMT+8",
     guidelines: "Highlight summer collection drop.",
     overdue: false,
   },
@@ -523,7 +509,7 @@ const MOCK_INFLUENCERS: ScriptInfluencer[] = [
     deadline: "Jun 8, 2026",
     deadlineDate: "2026-06-08",
     deadlineTime: "09:00",
-    timezone: "UTC+08:00",
+    timezone: "GMT+8",
     guidelines: "",
     overdue: true,
   },
@@ -538,7 +524,7 @@ const MOCK_INFLUENCERS: ScriptInfluencer[] = [
     deadline: "Jun 15, 2026",
     deadlineDate: "2026-06-15",
     deadlineTime: "15:30",
-    timezone: "UTC+08:00",
+    timezone: "GMT+8",
     guidelines: "Keep tone energetic and product-first.",
     overdue: false,
   },
@@ -553,7 +539,7 @@ const MOCK_INFLUENCERS: ScriptInfluencer[] = [
     deadline: "Jun 11, 2026",
     deadlineDate: "2026-06-11",
     deadlineTime: "20:00",
-    timezone: "UTC+08:00",
+    timezone: "GMT+8",
     guidelines: "",
     overdue: false,
   },
@@ -568,7 +554,7 @@ const MOCK_INFLUENCERS: ScriptInfluencer[] = [
     deadline: "Jun 9, 2026",
     deadlineDate: "2026-06-09",
     deadlineTime: "11:00",
-    timezone: "UTC+08:00",
+    timezone: "GMT+8",
     guidelines: "Include CTA in first 5 seconds.",
     overdue: false,
   },
@@ -583,7 +569,7 @@ const MOCK_INFLUENCERS: ScriptInfluencer[] = [
     deadline: "Jun 14, 2026",
     deadlineDate: "2026-06-14",
     deadlineTime: "10:00",
-    timezone: "UTC+08:00",
+    timezone: "GMT+8",
     guidelines: "",
     overdue: false,
   },
@@ -598,7 +584,7 @@ const MOCK_INFLUENCERS: ScriptInfluencer[] = [
     deadline: "Jun 16, 2026",
     deadlineDate: "2026-06-16",
     deadlineTime: "16:00",
-    timezone: "UTC+08:00",
+    timezone: "GMT+8",
     guidelines: "",
     overdue: false,
   },
@@ -613,7 +599,7 @@ const MOCK_INFLUENCERS: ScriptInfluencer[] = [
     deadline: "Jun 17, 2026",
     deadlineDate: "2026-06-17",
     deadlineTime: "14:00",
-    timezone: "UTC+08:00",
+    timezone: "GMT+8",
     guidelines: "Focus on unboxing and first impressions.",
     overdue: false,
   },
@@ -628,7 +614,7 @@ const MOCK_INFLUENCERS: ScriptInfluencer[] = [
     deadline: "Jun 18, 2026",
     deadlineDate: "2026-06-18",
     deadlineTime: "17:30",
-    timezone: "UTC+08:00",
+    timezone: "GMT+8",
     guidelines: "",
     overdue: false,
   },
@@ -760,75 +746,222 @@ function ScriptEmptyWorkspace() {
   );
 }
 
-const TRANSLATOR_PANE_MIN_HEIGHT = 120;
+const TRANSLATOR_VISIBLE_LANGUAGE_COUNT = 2;
 
-function InlineTranslatorPanel({
+function detectSourceLanguageLabel(source: string) {
+  if (/[\u4e00-\u9fff]/.test(source)) return "Chinese";
+  if (/[\u0600-\u06ff]/.test(source)) return "Arabic";
+  if (/[\u0e00-\u0e7f]/.test(source)) return "Thai";
+  return "English";
+}
+
+function stripMockTranslationPrefix(text: string) {
+  return text.replace(/^\[[^\]]+\]\s*/, "");
+}
+
+function resolveSourceLanguageLabel(sourceLanguage: string, source: string) {
+  if (sourceLanguage === AUTO_DETECT_LANGUAGE) {
+    return detectSourceLanguageLabel(source);
+  }
+  return sourceLanguage;
+}
+
+type ScriptTranslatorResult = {
+  source: string;
+  sourceLanguage: string;
+  translation: string;
+  targetLanguage: string;
+};
+
+type ScriptBilingualTranslation = {
+  sourceLanguage: string;
+  translation: string;
+  targetLanguage: string;
+};
+
+function ScriptBilingualPanel({
   source,
+  sourceLanguage,
+  translation,
+  targetLanguage,
   onSourceChange,
-  sourceReadOnly = false,
-  defaultSourceLanguage = DEFAULT_SOURCE_LANGUAGE,
-  defaultTargetLanguage = DEFAULT_TARGET_LANGUAGE,
-  sourcePlaceholder = "Type to translate.",
-  translationPlaceholder = "Translation",
+  onTranslationChange,
+  sourcePlaceholder,
+  minHeightClass = "min-h-[120px]",
 }: {
   source: string;
-  onSourceChange?: (value: string) => void;
-  sourceReadOnly?: boolean;
-  defaultSourceLanguage?: string;
-  defaultTargetLanguage?: string;
+  sourceLanguage: string;
+  translation: string;
+  targetLanguage: string;
+  onSourceChange: (value: string) => void;
+  onTranslationChange: (value: string) => void;
   sourcePlaceholder?: string;
-  translationPlaceholder?: string;
+  minHeightClass?: string;
 }) {
-  const sourceRef = useRef<HTMLTextAreaElement>(null);
-  const translationRef = useRef<HTMLTextAreaElement>(null);
+  const sourceLabel = resolveSourceLanguageLabel(sourceLanguage, source);
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-gray-200">
+      <div className="grid grid-cols-1 lg:grid-cols-2">
+        <div className="border-b border-gray-200 lg:border-b-0 lg:border-r">
+          <div className="border-b border-gray-100 bg-gray-50/60 px-3 py-2 text-xs font-medium text-gray-600">
+            Original ({sourceLabel})
+          </div>
+          <Textarea
+            value={source}
+            onChange={(e) => onSourceChange(e.target.value)}
+            placeholder={sourcePlaceholder}
+            className={cn(
+              "resize-none rounded-none border-0 bg-white text-[13px] leading-relaxed shadow-none focus-visible:ring-0",
+              minHeightClass
+            )}
+          />
+        </div>
+        <div>
+          <div className="border-b border-gray-100 bg-gray-50/60 px-3 py-2 text-xs font-medium text-gray-600">
+            Translation ({targetLanguage})
+          </div>
+          <Textarea
+            value={translation}
+            onChange={(e) => onTranslationChange(e.target.value)}
+            className={cn(
+              "resize-none rounded-none border-0 bg-gray-50/40 text-[13px] leading-relaxed shadow-none focus-visible:ring-0",
+              minHeightClass
+            )}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const TRANSLATOR_TAB_ROW_CLASS =
+  "inline-flex h-10 shrink-0 items-center border-b-2 px-2.5 text-[13px] font-medium leading-none transition-colors";
+
+function translatorTabClass(active: boolean) {
+  return cn(
+    TRANSLATOR_TAB_ROW_CLASS,
+    active
+      ? "border-brand text-gray-900"
+      : "border-transparent text-gray-500 hover:text-gray-800"
+  );
+}
+
+function TranslatorLanguageTabs({
+  value,
+  onValueChange,
+  options,
+  detectedLabel,
+}: {
+  value: string;
+  onValueChange: (value: string) => void;
+  options: readonly { value: string; label: string }[];
+  detectedLabel?: string;
+}) {
+  const visibleOptions = options.slice(0, TRANSLATOR_VISIBLE_LANGUAGE_COUNT);
+  const overflowOptions = options.slice(TRANSLATOR_VISIBLE_LANGUAGE_COUNT);
+  const overflowActive = overflowOptions.some((option) => option.value === value);
+
+  return (
+    <div className="flex w-full min-w-0 items-center gap-0.5">
+      {visibleOptions.map((option) => {
+        const isAuto = option.value === AUTO_DETECT_LANGUAGE;
+        const label =
+          isAuto && detectedLabel ? `${detectedLabel} - Detected` : option.label;
+
+        return (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onValueChange(option.value)}
+            className={translatorTabClass(value === option.value)}
+          >
+            {label}
+          </button>
+        );
+      })}
+
+      {overflowOptions.length > 0 ? (
+        <Select
+          value={value || undefined}
+          onValueChange={(next) => next && onValueChange(next)}
+          modal={false}
+        >
+          <SelectTrigger
+            aria-label="More languages"
+            className={cn(
+              translatorTabClass(overflowActive),
+              "gap-1 rounded-none border-x-0 border-t-0 bg-transparent py-0 shadow-none hover:bg-transparent focus-visible:border-transparent focus-visible:ring-0 data-[size=default]:h-10 data-[size=sm]:h-10",
+              overflowActive ? "w-auto pr-1" : "w-10 justify-center px-0"
+            )}
+          >
+            {overflowActive ? <SelectValue /> : null}
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            {overflowOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value} className="text-xs">
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : null}
+    </div>
+  );
+}
+
+function ScriptTranslatorDialog({
+  open,
+  onOpenChange,
+  source,
+  onConfirm,
+  sourcePlaceholder = "Type to translate.",
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  source: string;
+  onConfirm: (result: ScriptTranslatorResult) => void;
+  sourcePlaceholder?: string;
+}) {
+  if (!open) return null;
+
+  return (
+    <ScriptTranslatorDialogBody
+      key={source}
+      onOpenChange={onOpenChange}
+      source={source}
+      onConfirm={onConfirm}
+      sourcePlaceholder={sourcePlaceholder}
+    />
+  );
+}
+
+function ScriptTranslatorDialogBody({
+  onOpenChange,
+  source,
+  onConfirm,
+  sourcePlaceholder,
+}: {
+  onOpenChange: (open: boolean) => void;
+  source: string;
+  onConfirm: (result: ScriptTranslatorResult) => void;
+  sourcePlaceholder: string;
+}) {
   const [draftSource, setDraftSource] = useState(source);
-  const [sourceLanguage, setSourceLanguage] = useState(defaultSourceLanguage);
-  const [targetLanguage, setTargetLanguage] = useState(defaultTargetLanguage);
+  const [sourceLanguage, setSourceLanguage] = useState(DEFAULT_SOURCE_LANGUAGE);
+  const [targetLanguage, setTargetLanguage] = useState("");
   const [translation, setTranslation] = useState("");
-  const [paneHeight, setPaneHeight] = useState(TRANSLATOR_PANE_MIN_HEIGHT);
+  const [hasGenerated, setHasGenerated] = useState(false);
 
   useEffect(() => {
     setDraftSource(source);
+    setTranslation("");
+    setHasGenerated(false);
+    setSourceLanguage(DEFAULT_SOURCE_LANGUAGE);
+    setTargetLanguage("");
   }, [source]);
 
-  const handleSourceChange = (value: string) => {
-    setDraftSource(value);
-    onSourceChange?.(value);
-  };
-
-  const syncPaneHeight = useCallback(() => {
-    const sourceEl = sourceRef.current;
-    const translationEl = translationRef.current;
-    if (!sourceEl || !translationEl) return;
-
-    sourceEl.style.height = "0px";
-    translationEl.style.height = "0px";
-
-    const nextHeight = Math.max(
-      TRANSLATOR_PANE_MIN_HEIGHT,
-      sourceEl.scrollHeight,
-      translationEl.scrollHeight
-    );
-
-    sourceEl.style.height = `${nextHeight}px`;
-    translationEl.style.height = `${nextHeight}px`;
-    setPaneHeight(nextHeight);
-  }, []);
-
-  useLayoutEffect(() => {
-    syncPaneHeight();
-  }, [draftSource, translation, syncPaneHeight]);
-
-  useEffect(() => {
-    const sourceEl = sourceRef.current;
-    if (!sourceEl) return;
-
-    const observer = new ResizeObserver(() => {
-      syncPaneHeight();
-    });
-    observer.observe(sourceEl);
-    return () => observer.disconnect();
-  }, [syncPaneHeight]);
+  const detectedLabel = useMemo(() => detectSourceLanguageLabel(draftSource), [draftSource]);
 
   const targetOptions = useMemo(() => {
     if (sourceLanguage === AUTO_DETECT_LANGUAGE) return TARGET_LANGUAGE_OPTIONS;
@@ -836,158 +969,132 @@ function InlineTranslatorPanel({
   }, [sourceLanguage]);
 
   useEffect(() => {
-    if (targetOptions.every((option) => option.value !== targetLanguage)) {
-      setTargetLanguage(targetOptions[0]?.value ?? DEFAULT_TARGET_LANGUAGE);
-    }
+    if (!targetLanguage) return;
+    if (targetOptions.some((option) => option.value === targetLanguage)) return;
+    setTargetLanguage("");
+    setTranslation("");
+    setHasGenerated(false);
   }, [targetLanguage, targetOptions]);
 
-  useEffect(() => {
-    if (!draftSource.trim()) {
+  const handleGenerateTranslation = (
+    target: string,
+    sourceLang = sourceLanguage,
+    text = draftSource
+  ) => {
+    if (!target || !text.trim()) {
       setTranslation("");
+      setHasGenerated(false);
       return;
     }
 
-    const timer = window.setTimeout(() => {
-      setTranslation(mockTranslateText(draftSource, sourceLanguage, targetLanguage));
-    }, 450);
-
-    return () => window.clearTimeout(timer);
-  }, [draftSource, sourceLanguage, targetLanguage]);
-
-  const handleSwapLanguages = () => {
-    if (sourceLanguage === AUTO_DETECT_LANGUAGE) return;
-
-    const nextSource = targetLanguage;
-    const nextTarget = sourceLanguage;
-    setSourceLanguage(nextSource);
-    setTargetLanguage(nextTarget);
-
-    if (translation.trim()) {
-      const stripped = translation.replace(/^\[[^\]]+\]\s*/, "");
-      setDraftSource(stripped);
-      onSourceChange?.(stripped);
-      setTranslation(draftSource);
-    }
+    setTranslation(mockTranslateText(text, sourceLang, target));
+    setHasGenerated(true);
   };
 
-  const textareaClass = cn(
-    "w-full resize-none overflow-hidden rounded-none border-0",
-    "bg-white px-4 py-3 text-[13px] leading-relaxed shadow-none focus-visible:ring-0"
-  );
+  const handleTargetLanguageChange = (value: string) => {
+    setTargetLanguage(value);
+    handleGenerateTranslation(value, sourceLanguage, draftSource);
+  };
+
+  const handleConfirm = () => {
+    onConfirm({
+      source: draftSource,
+      sourceLanguage,
+      translation:
+        hasGenerated && translation.trim()
+          ? stripMockTranslationPrefix(translation)
+          : "",
+      targetLanguage,
+    });
+    onOpenChange(false);
+  };
+
+  const textareaClass =
+    "min-h-[280px] max-h-[360px] w-full resize-none overflow-y-auto rounded-none border-0 bg-white px-4 py-3 text-[13px] leading-relaxed shadow-none focus-visible:ring-0";
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200">
-      <div className="flex items-stretch border-b border-gray-200 bg-gray-50/50">
-        <div className="min-w-0 flex-1 px-3 py-1">
-          <TranslatorLanguageSelect
-            value={sourceLanguage}
-            onValueChange={setSourceLanguage}
-            options={SOURCE_LANGUAGE_OPTIONS}
-          />
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-4xl" showCloseButton>
+        <div className="border-b border-gray-100 px-6 py-4">
+          <div className="flex items-start gap-3 pr-8">
+            <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
+              <Languages size={18} strokeWidth={2} />
+            </span>
+            <div>
+              <DialogTitle className="text-base font-semibold text-gray-900">
+                Translator
+              </DialogTitle>
+              <DialogDescription className="mt-1 text-xs text-gray-500">
+                Select the target language to generate the translated version.
+              </DialogDescription>
+            </div>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={handleSwapLanguages}
-          disabled={sourceLanguage === AUTO_DETECT_LANGUAGE}
-          className="inline-flex w-10 shrink-0 items-center justify-center border-x border-gray-200 text-gray-500 transition-colors hover:bg-white hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-40"
-          aria-label="Swap languages"
-        >
-          <ArrowLeftRight size={15} strokeWidth={2} />
-        </button>
-        <div className="min-w-0 flex-1 px-3 py-1">
-          <TranslatorLanguageSelect
-            value={targetLanguage}
-            onValueChange={setTargetLanguage}
-            options={targetOptions}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2">
+          <div className="flex min-h-10 min-w-0 items-center border-b border-gray-200 bg-gray-50/60 px-3">
+            <TranslatorLanguageTabs
+              value={sourceLanguage}
+              onValueChange={(value) => {
+                setSourceLanguage(value);
+                setTargetLanguage("");
+                setHasGenerated(false);
+                setTranslation("");
+              }}
+              options={SOURCE_LANGUAGE_OPTIONS}
+              detectedLabel={detectedLabel}
+            />
+          </div>
+
+          <div className="flex min-h-10 min-w-0 items-center border-b border-gray-200 bg-gray-50/60 px-3 lg:border-l">
+            <TranslatorLanguageTabs
+              value={targetLanguage}
+              onValueChange={handleTargetLanguageChange}
+              options={targetOptions}
+            />
+          </div>
+
+          <Textarea
+            value={draftSource}
+            onChange={(e) => {
+              setDraftSource(e.target.value);
+              setHasGenerated(false);
+              setTranslation("");
+            }}
+            placeholder={sourcePlaceholder}
+            className={textareaClass}
           />
+          <div className="relative border-t border-gray-200 lg:border-t-0 lg:border-l">
+            {hasGenerated && translation.trim() ? (
+              <Textarea
+                value={translation}
+                readOnly
+                tabIndex={-1}
+                className={cn(textareaClass, "cursor-default bg-gray-50/80 text-gray-700")}
+              />
+            ) : (
+              <div className="flex min-h-[280px] max-h-[360px] items-center justify-center bg-gray-50/80 px-6 text-center text-[13px] leading-relaxed text-gray-400">
+                Select a target language to generate the translated version.
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2" style={{ minHeight: paneHeight }}>
-        <Textarea
-          ref={sourceRef}
-          value={draftSource}
-          onChange={(e) => handleSourceChange(e.target.value)}
-          readOnly={sourceReadOnly}
-          placeholder={sourcePlaceholder}
-          style={{ height: paneHeight }}
-          className={cn(
-            textareaClass,
-            sourceReadOnly ? "cursor-default bg-gray-50/80 text-gray-700" : "bg-white"
-          )}
-        />
-        <Textarea
-          ref={translationRef}
-          value={translation}
-          readOnly
-          tabIndex={-1}
-          placeholder={translationPlaceholder}
-          style={{ height: paneHeight }}
-          className={cn(
-            textareaClass,
-            "cursor-default border-t border-gray-200 bg-gray-50/80 text-gray-700 lg:border-t-0 lg:border-l"
-          )}
-        />
-      </div>
-    </div>
-  );
-}
-
-function ScriptGuidelinesEditor({
-  guidelines,
-  onGuidelinesChange,
-  translatorOpen,
-}: {
-  guidelines: string;
-  onGuidelinesChange: (value: string) => void;
-  translatorOpen: boolean;
-}) {
-  if (!translatorOpen) {
-    return (
-      <Textarea
-        value={guidelines}
-        onChange={(e) => onGuidelinesChange(e.target.value)}
-        placeholder="Enter content guidelines for this creator."
-        className="min-h-[120px] resize-none text-[13px]"
-      />
-    );
-  }
-
-  return (
-    <InlineTranslatorPanel
-      source={guidelines}
-      onSourceChange={onGuidelinesChange}
-      sourcePlaceholder="Enter content guidelines for this creator."
-    />
-  );
-}
-
-function ScriptReferenceScriptsEditor({
-  scripts,
-  onScriptsChange,
-  translatorOpen,
-}: {
-  scripts: string;
-  onScriptsChange: (value: string) => void;
-  translatorOpen: boolean;
-}) {
-  if (translatorOpen) {
-    return (
-      <InlineTranslatorPanel
-        source={scripts}
-        onSourceChange={onScriptsChange}
-        sourcePlaceholder="Type to translate."
-        translationPlaceholder="Translation"
-      />
-    );
-  }
-
-  return (
-    <Textarea
-      value={scripts}
-      onChange={(e) => onScriptsChange(e.target.value)}
-      className="min-h-[200px] resize-none text-[13px] leading-relaxed"
-    />
+        <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-9 px-4 text-[13px] text-gray-500 hover:text-gray-800"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button type="button" variant="brand" className="h-9 px-4 text-[13px]" onClick={handleConfirm}>
+            Confirm
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -1292,7 +1399,13 @@ export default function CampaignHubScriptView({
   const [guidelinesById, setGuidelinesById] = useState<Record<string, string>>(() =>
     Object.fromEntries(MOCK_INFLUENCERS.map((row) => [row.id, row.guidelines]))
   );
+  const [guidelinesTranslationById, setGuidelinesTranslationById] = useState<
+    Record<string, ScriptBilingualTranslation>
+  >({});
   const [referenceScriptsById, setReferenceScriptsById] = useState<Record<string, string>>({});
+  const [scriptsTranslationById, setScriptsTranslationById] = useState<
+    Record<string, ScriptBilingualTranslation>
+  >({});
   const [translatorOpen, setTranslatorOpen] = useState(false);
   const [translatorForId, setTranslatorForId] = useState<string | null>(null);
   const [scriptsTranslatorOpen, setScriptsTranslatorOpen] = useState(false);
@@ -1307,10 +1420,45 @@ export default function CampaignHubScriptView({
   const [h5LinkById, setH5LinkById] = useState<Record<string, string>>({});
   const [publishToast, setPublishToast] = useState<string | null>(null);
   const publishToastTimerRef = useRef<number | null>(null);
+  const [statusById, setStatusById] = useState<Record<string, ScriptStatus>>(() =>
+    Object.fromEntries(MOCK_INFLUENCERS.map((row) => [row.id, row.status]))
+  );
+
+  useEffect(() => {
+    setStatusById((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      for (const row of MOCK_INFLUENCERS) {
+        const latest = getScriptDraftSubmissions(row.id).at(-1);
+        if (latest?.status === "Approved" && next[row.id] !== "Approved") {
+          next[row.id] = "Approved";
+          changed = true;
+        } else if (
+          latest?.status === "Revision Needed" &&
+          next[row.id] !== "Waiting for Approval"
+        ) {
+          next[row.id] = "Waiting for Approval";
+          changed = true;
+        }
+      }
+
+      return changed ? next : prev;
+    });
+  }, []);
+
+  const influencers = useMemo(
+    () =>
+      MOCK_INFLUENCERS.map((row) => ({
+        ...row,
+        status: statusById[row.id] ?? row.status,
+      })),
+    [statusById]
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return MOCK_INFLUENCERS.filter((row) => {
+    return influencers.filter((row) => {
       if (statusFilter !== "All" && row.status !== statusFilter) return false;
       if (platformFilter !== "All" && row.platform !== platformFilter) return false;
       if (managerFilter !== "All" && row.manager !== managerFilter) return false;
@@ -1321,29 +1469,32 @@ export default function CampaignHubScriptView({
         row.handle.toLowerCase().includes(q)
       );
     });
-  }, [statusFilter, platformFilter, managerFilter, overdueOnly, query]);
+  }, [influencers, statusFilter, platformFilter, managerFilter, overdueOnly, query]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<StatusFilter, number> = {
-      All: MOCK_INFLUENCERS.length,
+      All: influencers.length,
       Pending: 0,
       "Waiting for Approval": 0,
       Approved: 0,
     };
-    for (const row of MOCK_INFLUENCERS) {
+    for (const row of influencers) {
       counts[row.status] += 1;
     }
     return counts;
-  }, []);
+  }, [influencers]);
 
   const activeSelectedId =
     selectedId && filtered.some((row) => row.id === selectedId) ? selectedId : null;
 
   const selected = activeSelectedId
-    ? (MOCK_INFLUENCERS.find((row) => row.id === activeSelectedId) ?? null)
+    ? (influencers.find((row) => row.id === activeSelectedId) ?? null)
     : null;
 
   const selectedGuidelines = selected ? (guidelinesById[selected.id] ?? "") : "";
+  const selectedGuidelinesTranslation = selected
+    ? guidelinesTranslationById[selected.id]
+    : undefined;
   const guidelinesTranslatorOpen =
     Boolean(selected && translatorOpen && translatorForId === selected.id);
   const scriptsTranslatorOpenForSelected = Boolean(
@@ -1369,6 +1520,7 @@ export default function CampaignHubScriptView({
   };
   const selectedAttachments = selected ? (attachmentsById[selected.id] ?? []) : [];
   const selectedReferenceScripts = selected ? (referenceScriptsById[selected.id] ?? "") : "";
+  const selectedScriptsTranslation = selected ? scriptsTranslationById[selected.id] : undefined;
   const hasReferenceScripts = selectedReferenceScripts.trim().length > 0;
   const selectedH5Link = selected ? h5LinkById[selected.id] : undefined;
   const isBriefPublished = Boolean(selectedH5Link);
@@ -1398,6 +1550,20 @@ export default function CampaignHubScriptView({
     }));
     showPublishToast("H5 link generated successfully.");
   };
+
+  const handleDraftApproved = useCallback((kolId: string) => {
+    setStatusById((prev) => ({
+      ...prev,
+      [kolId]: "Approved",
+    }));
+  }, []);
+
+  const handleDraftNeedsRevision = useCallback((kolId: string) => {
+    setStatusById((prev) => ({
+      ...prev,
+      [kolId]: "Waiting for Approval",
+    }));
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -1579,7 +1745,7 @@ export default function CampaignHubScriptView({
                               STATUS_BADGE[row.status]
                             )}
                           >
-                            {row.status === "Waiting for Approval" ? "Waiting" : row.status}
+                            {row.status}
                           </span>
                         </div>
                         {rowDeadlineLabel ? (
@@ -1633,13 +1799,13 @@ export default function CampaignHubScriptView({
 
                 {workspaceTab === "brief" && selectedH5Link ? (
                   <div className="shrink-0 border-b border-gray-100 px-5 py-3">
-                    <ScriptH5LinkBar link={selectedH5Link} />
+                    <ScriptH5LinkBar link={selectedH5Link} influencerId={selected.id} />
                   </div>
                 ) : null}
 
                 <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-5">
                   {workspaceTab === "brief" ? (
-                    <div className="mx-auto flex max-w-3xl flex-col gap-6">
+                    <div className="flex w-full min-w-0 flex-col gap-6">
                       <section>
                         <div className="mb-2 flex items-center gap-3">
                           <h3 className="shrink-0 text-sm font-semibold text-gray-900">
@@ -1654,27 +1820,46 @@ export default function CampaignHubScriptView({
                             <ExternalLink size={12} strokeWidth={2} />
                           </a>
                           <SectionTranslatorButton
-                            active={guidelinesTranslatorOpen}
-                            onClick={() => {
-                              if (guidelinesTranslatorOpen) {
-                                setTranslatorOpen(false);
-                                return;
-                              }
-                              openGuidelinesTranslator();
-                            }}
+                            onClick={openGuidelinesTranslator}
                             className="ml-auto"
                           />
                         </div>
-                        <ScriptGuidelinesEditor
-                          guidelines={selectedGuidelines}
-                          onGuidelinesChange={(value) =>
-                            setGuidelinesById((prev) => ({
-                              ...prev,
-                              [selected.id]: value,
-                            }))
-                          }
-                          translatorOpen={guidelinesTranslatorOpen}
-                        />
+                        {selectedGuidelinesTranslation ? (
+                          <ScriptBilingualPanel
+                            source={selectedGuidelines}
+                            sourceLanguage={selectedGuidelinesTranslation.sourceLanguage}
+                            translation={selectedGuidelinesTranslation.translation}
+                            targetLanguage={selectedGuidelinesTranslation.targetLanguage}
+                            onSourceChange={(value) =>
+                              setGuidelinesById((prev) => ({
+                                ...prev,
+                                [selected.id]: value,
+                              }))
+                            }
+                            onTranslationChange={(value) =>
+                              setGuidelinesTranslationById((prev) => ({
+                                ...prev,
+                                [selected.id]: {
+                                  ...selectedGuidelinesTranslation,
+                                  translation: value,
+                                },
+                              }))
+                            }
+                            sourcePlaceholder="Enter content guidelines for this creator."
+                          />
+                        ) : (
+                          <Textarea
+                            value={selectedGuidelines}
+                            onChange={(e) =>
+                              setGuidelinesById((prev) => ({
+                                ...prev,
+                                [selected.id]: e.target.value,
+                              }))
+                            }
+                            placeholder="Enter content guidelines for this creator."
+                            className="min-h-[120px] resize-none text-[13px]"
+                          />
+                        )}
                         {selected ? (
                           <ScriptAttachmentsSection
                             attachments={selectedAttachments}
@@ -1698,30 +1883,47 @@ export default function CampaignHubScriptView({
                             AI Generate Ideas
                           </button>
                           <SectionTranslatorButton
-                            active={scriptsTranslatorOpenForSelected}
                             disabled={!hasReferenceScripts}
-                            onClick={() => {
-                              if (!hasReferenceScripts) return;
-                              if (scriptsTranslatorOpenForSelected) {
-                                setScriptsTranslatorOpen(false);
-                                return;
-                              }
-                              openScriptsTranslator();
-                            }}
+                            onClick={openScriptsTranslator}
                             className="ml-auto"
                           />
                         </div>
                         {hasReferenceScripts ? (
-                          <ScriptReferenceScriptsEditor
-                            scripts={selectedReferenceScripts}
-                            onScriptsChange={(value) =>
-                              setReferenceScriptsById((prev) => ({
-                                ...prev,
-                                [selected.id]: value,
-                              }))
-                            }
-                            translatorOpen={scriptsTranslatorOpenForSelected}
-                          />
+                          selectedScriptsTranslation ? (
+                            <ScriptBilingualPanel
+                              source={selectedReferenceScripts}
+                              sourceLanguage={selectedScriptsTranslation.sourceLanguage}
+                              translation={selectedScriptsTranslation.translation}
+                              targetLanguage={selectedScriptsTranslation.targetLanguage}
+                              onSourceChange={(value) =>
+                                setReferenceScriptsById((prev) => ({
+                                  ...prev,
+                                  [selected.id]: value,
+                                }))
+                              }
+                              onTranslationChange={(value) =>
+                                setScriptsTranslationById((prev) => ({
+                                  ...prev,
+                                  [selected.id]: {
+                                    ...selectedScriptsTranslation,
+                                    translation: value,
+                                  },
+                                }))
+                              }
+                              minHeightClass="min-h-[200px]"
+                            />
+                          ) : (
+                            <Textarea
+                              value={selectedReferenceScripts}
+                              onChange={(e) =>
+                                setReferenceScriptsById((prev) => ({
+                                  ...prev,
+                                  [selected.id]: e.target.value,
+                                }))
+                              }
+                              className="min-h-[200px] resize-none text-[13px] leading-relaxed"
+                            />
+                          )
                         ) : (
                           <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50/50 px-4 py-8 text-center text-xs text-gray-400">
                             Generated reference scripts will appear here.
@@ -1790,48 +1992,50 @@ export default function CampaignHubScriptView({
                       </section>
                     </div>
                   ) : (
-                    <div className="mx-auto flex max-w-3xl flex-col gap-4">
-                      <p className="text-sm font-semibold text-gray-900">KOL Draft</p>
-                      <Textarea
-                        placeholder="Paste or write the influencer's script draft here."
-                        className="min-h-[240px] resize-none text-[13px]"
-                      />
-                    </div>
+                    <ScriptKolDraftPanel
+                      kolId={selected.id}
+                      kolName={selected.name}
+                      kolStatus={selected.status}
+                      onApproved={() => handleDraftApproved(selected.id)}
+                      onNeedsRevision={() => handleDraftNeedsRevision(selected.id)}
+                    />
                   )}
                 </div>
 
-                <div className="relative shrink-0 border-t border-gray-100 bg-white px-5 py-4">
-                  {publishToast ? (
-                    <div className="absolute right-5 bottom-full mb-2 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800 shadow-sm">
-                      <CheckCircle2 size={14} className="shrink-0 text-emerald-600" strokeWidth={2} />
-                      {publishToast}
+                {workspaceTab === "brief" ? (
+                  <div className="relative shrink-0 border-t border-gray-100 bg-white px-5 py-4">
+                    {publishToast ? (
+                      <div className="absolute right-5 bottom-full mb-2 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800 shadow-sm">
+                        <CheckCircle2 size={14} className="shrink-0 text-emerald-600" strokeWidth={2} />
+                        {publishToast}
+                      </div>
+                    ) : null}
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedId(null)}
+                        className="text-[13px] font-medium text-gray-500 transition-colors hover:text-gray-800"
+                      >
+                        Cancel
+                      </button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-9 border-brand/20 bg-brand-50/60 px-4 text-[13px] font-medium text-brand hover:bg-brand-50 hover:text-brand"
+                      >
+                        Save Draft
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="brand"
+                        className="h-9 px-4 text-[13px]"
+                        onClick={handleSaveAndPublish}
+                      >
+                        {isBriefPublished ? "Update" : "Save & Publish"}
+                      </Button>
                     </div>
-                  ) : null}
-                  <div className="flex items-center justify-end gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedId(null)}
-                      className="text-[13px] font-medium text-gray-500 transition-colors hover:text-gray-800"
-                    >
-                      Cancel
-                    </button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-9 border-brand/20 bg-brand-50/60 px-4 text-[13px] font-medium text-brand hover:bg-brand-50 hover:text-brand"
-                    >
-                      Save Draft
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="brand"
-                      className="h-9 px-4 text-[13px]"
-                      onClick={handleSaveAndPublish}
-                    >
-                      {isBriefPublished ? "Update" : "Save & Publish"}
-                    </Button>
                   </div>
-                </div>
+                ) : null}
               </div>
             )}
           </div>
@@ -1839,6 +2043,55 @@ export default function CampaignHubScriptView({
 
         {selected ? (
           <>
+            <ScriptTranslatorDialog
+              open={guidelinesTranslatorOpen}
+              onOpenChange={(open) => {
+                setTranslatorOpen(open);
+                if (!open) setTranslatorForId(null);
+              }}
+              source={selectedGuidelines}
+              onConfirm={(result) => {
+                setGuidelinesById((prev) => ({
+                  ...prev,
+                  [selected.id]: result.source,
+                }));
+                if (result.translation) {
+                  setGuidelinesTranslationById((prev) => ({
+                    ...prev,
+                    [selected.id]: {
+                      sourceLanguage: result.sourceLanguage,
+                      translation: result.translation,
+                      targetLanguage: result.targetLanguage,
+                    },
+                  }));
+                }
+              }}
+              sourcePlaceholder="Enter content guidelines for this creator."
+            />
+            <ScriptTranslatorDialog
+              open={scriptsTranslatorOpenForSelected}
+              onOpenChange={(open) => {
+                setScriptsTranslatorOpen(open);
+                if (!open) setScriptsTranslatorForId(null);
+              }}
+              source={selectedReferenceScripts}
+              onConfirm={(result) => {
+                setReferenceScriptsById((prev) => ({
+                  ...prev,
+                  [selected.id]: result.source,
+                }));
+                if (result.translation) {
+                  setScriptsTranslationById((prev) => ({
+                    ...prev,
+                    [selected.id]: {
+                      sourceLanguage: result.sourceLanguage,
+                      translation: result.translation,
+                      targetLanguage: result.targetLanguage,
+                    },
+                  }));
+                }
+              }}
+            />
             <ScriptGenerateIdeasDialog
               open={generateOpen}
               onOpenChange={setGenerateOpen}
@@ -1848,6 +2101,11 @@ export default function CampaignHubScriptView({
                   ...prev,
                   [selected.id]: scripts.join("\n\n"),
                 }));
+                setScriptsTranslationById((prev) => {
+                  const next = { ...prev };
+                  delete next[selected.id];
+                  return next;
+                });
                 setScriptsTranslatorOpen(false);
               }}
             />

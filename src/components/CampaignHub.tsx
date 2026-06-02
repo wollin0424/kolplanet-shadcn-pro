@@ -37,7 +37,7 @@ const statusToneClass: Record<StatusTone, string> = {
   sky: "border-sky-200 bg-sky-50 text-sky-800",
   amber: "border-amber-200 bg-amber-50 text-amber-800",
   gray: "border-gray-200 bg-gray-50 text-gray-700",
-  brand: "border-brand-100 bg-brand-50 text-brand",
+  brand: "border-brand/20 bg-brand-50 text-brand",
   purple: "border-violet-200 bg-violet-50 text-violet-800",
   red: "border-red-200 bg-red-50 text-red-800",
   violet: "border-violet-200 bg-violet-50 text-violet-800",
@@ -251,9 +251,9 @@ function ContractHubOverview() {
       />
       <HubStatusList>
         <HubStatus label="Awaiting Info" value={2} tone="amber" />
-        <HubStatus label="Pending Draft" value={2} tone="sky" />
-        <HubStatus label="Awaiting Sending" value={1} tone="violet" />
-        <HubStatus label="Signing" value={1} tone="green" />
+        <HubStatus label="Pending Draft" value={1} tone="brand" />
+        <HubStatus label="Awaiting Sending" value={2} tone="brand" />
+        <HubStatus label="Signing" value={1} tone="violet" />
       </HubStatusList>
     </>
   );
@@ -349,11 +349,11 @@ export default function CampaignHub({
               percent={0}
             />
             <HubStatusList>
-              <HubStatus label="Delivered" value={4} tone="green" />
-              <HubStatus label="In Transit" value={1} tone="sky" />
-              <HubStatus label="Out of Delivery" value={0} tone="purple" />
               <HubStatus label="Awaiting Pickup" value={3} tone="amber" />
-              <HubStatus label="Delivery Failed" value={0} tone="red" />
+              <HubStatus label="In Transit" value={1} tone="brand" />
+              <HubStatus label="Out of Delivery" value={1} tone="purple" />
+              <HubStatus label="Delivered" value={1} tone="green" />
+              <HubStatus label="Delivery Failed" value={1} tone="red" />
             </HubStatusList>
           </>
         </HubCell>
@@ -374,9 +374,9 @@ export default function CampaignHub({
               percent={20}
             />
             <HubStatusList>
-              <HubStatus label="Partially Paid" value={1} tone="sky" />
-              <HubStatus label="Validated" value={1} tone="amber" />
               <HubStatus label="Waiting for Validation" value={1} tone="amber" />
+              <HubStatus label="Validated" value={1} tone="green" />
+              <HubStatus label="Partially Paid" value={1} tone="brand" />
               <HubStatus label="Rejected" value={1} tone="red" />
             </HubStatusList>
           </>
@@ -399,7 +399,7 @@ export default function CampaignHub({
             />
             <HubStatusList>
               <HubStatus label="Pending" value={5} tone="amber" />
-              <HubStatus label="Needs Revision" value={1} tone="red" />
+              <HubStatus label="Waiting for Approval" value={1} tone="brand" />
             </HubStatusList>
           </>
         </HubCell>
@@ -420,7 +420,7 @@ export default function CampaignHub({
             />
             <HubStatusList>
               <HubStatus label="Video Pending" value={6} tone="amber" />
-              <HubStatus label="Copy Approved" value={3} tone="sky" />
+              <HubStatus label="Copy Approved" value={3} tone="brand" />
             </HubStatusList>
           </>
         </HubCell>
@@ -440,7 +440,7 @@ export default function CampaignHub({
               percent={13}
             />
             <HubStatusList>
-              <HubStatus label="Ready" value={7} tone="sky" />
+              <HubStatus label="Ready" value={7} tone="brand" />
               <HubStatus label="In Progress" value={7} tone="amber" />
             </HubStatusList>
           </>

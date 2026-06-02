@@ -94,7 +94,7 @@ const LOGISTICS_POOL: LogisticsStatus[] = [
   "Awaiting Pickup",
   "Delivery Failed",
 ];
-const SCRIPT_POOL: ScriptStatus[] = ["Pending", "Needs Revision", "Approved"];
+const SCRIPT_POOL: ScriptStatus[] = ["Pending", "Waiting for Approval", "Approved"];
 const CONTENT_POOL: ContentStatus[] = ["Video Pending", "Copy Approved", "Approved"];
 const POSTING_POOL: PostingStatus[] = ["Ready", "In Progress", "Posted"];
 const PAYMENT_POOL: PaymentStatus[] = [

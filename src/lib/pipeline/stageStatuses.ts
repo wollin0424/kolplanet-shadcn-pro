@@ -15,7 +15,7 @@ export type LogisticsStatus =
   | "Awaiting Pickup"
   | "Delivery Failed";
 
-export type ScriptStatus = "Pending" | "Needs Revision" | "Approved";
+export type ScriptStatus = "Pending" | "Waiting for Approval" | "Approved";
 
 export type ContentStatus = "Video Pending" | "Copy Approved" | "Approved";
 
@@ -205,7 +205,11 @@ export const LOGISTICS_STATUS_CONFIG: Record<LogisticsStatus, StageBadgeConfig> 
 
 export const SCRIPT_STATUS_CONFIG: Record<ScriptStatus, StageBadgeConfig> = {
   Pending: { label: "Pending", tone: "amber", progressStep: 2 },
-  "Needs Revision": { label: "Needs Revision", tone: "rose", progressStep: 2 },
+  "Waiting for Approval": {
+    label: "Waiting for Approval",
+    tone: "brand",
+    progressStep: 2,
+  },
   Approved: { label: "Approved", tone: "green", progressStep: 5, completed: true },
 };
 
