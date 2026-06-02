@@ -65,11 +65,15 @@ function draftStatusToKolStatus(status: ScriptDraftSubmission["status"]): KolScr
 
 function KolScriptPanel({ content }: { content: string }) {
   return (
-    <div className="flex min-h-[200px] min-w-0 flex-col rounded-lg border border-gray-100 bg-white p-4">
-      <p className="text-xs font-semibold text-gray-800">KOL Script</p>
-      <p className="mt-3 min-h-0 flex-1 whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700">
-        {content}
-      </p>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col space-y-2">
+      <div className="flex min-h-5 items-center gap-2">
+        <p className="text-xs font-semibold text-gray-800">KOL Script</p>
+      </div>
+      <div className="flex min-h-[200px] min-w-0 flex-1 flex-col rounded-lg border border-gray-100 bg-white p-4">
+        <p className="min-h-0 flex-1 whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700">
+          {content}
+        </p>
+      </div>
     </div>
   );
 }
@@ -292,7 +296,7 @@ function VersionDiscussionSection({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col space-y-2">
-      <div className="flex items-center gap-2">
+      <div className="flex min-h-5 items-center gap-2">
         <MessageSquare size={14} className="text-brand" strokeWidth={2} />
         <p className="text-xs font-semibold text-gray-800">Client Feedback</p>
         <span className="text-[11px] text-gray-400">
@@ -409,34 +413,34 @@ function ScriptApprovalConfirmDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-[520px]" showCloseButton>
-        <div className="border-b border-gray-100 px-6 py-5 text-center">
+        <div className="border-b border-gray-100 px-6 py-5">
           <DialogTitle className="text-lg font-semibold text-gray-900">
             Confirm Script Approval
           </DialogTitle>
         </div>
 
-        <div className="space-y-4 px-6 py-6 text-center">
-          <DialogDescription className="text-[13px] leading-relaxed text-gray-600">
+        <div className="space-y-4 px-6 py-6">
+          <DialogDescription className="text-left text-[13px] leading-relaxed text-gray-600">
             Are you sure you want to approve this script?
           </DialogDescription>
-          <p className="text-[13px] leading-relaxed text-gray-600">
+          <p className="text-left text-[13px] leading-relaxed text-gray-600">
             Once approved, the status{" "}
             <span className="font-semibold text-gray-900">
               will be locked and CANNOT be modified
             </span>
             . The influencer will proceed with video shooting based strictly on this version.
           </p>
-          <p className="text-[13px] leading-relaxed text-gray-500">
+          <p className="text-left text-[13px] leading-relaxed text-gray-500">
             Please review the content carefully before proceeding.
           </p>
           {alreadyApproved ? (
-            <p className="text-[13px] font-medium text-emerald-700">
+            <p className="text-left text-[13px] font-medium text-emerald-700">
               This script has already been approved.
             </p>
           ) : null}
         </div>
 
-        <div className="flex items-center justify-center gap-3 border-t border-gray-100 px-6 py-4">
+        <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
           <Button
             type="button"
             variant="outline"

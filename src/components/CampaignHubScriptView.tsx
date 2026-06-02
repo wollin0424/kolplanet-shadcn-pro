@@ -54,6 +54,7 @@ import {
   ExternalLink,
   Languages,
   Link,
+  Lock,
   Pencil,
   Search,
   Sparkles,
@@ -63,6 +64,43 @@ import {
 
 type ScriptStatus = "Pending" | "Waiting for Approval" | "Approved";
 type StatusFilter = "All" | ScriptStatus;
+
+type ScriptAttachment = {
+  name: string;
+  locked?: boolean;
+};
+
+/** Attachments synced from campaign settings — always shown and cannot be removed. */
+const CAMPAIGN_SCRIPT_ATTACHMENTS = ["模块-支付管理.pdf"] as const;
+
+function isCampaignSyncedAttachment(name: string) {
+  return CAMPAIGN_SCRIPT_ATTACHMENTS.includes(
+    name as (typeof CAMPAIGN_SCRIPT_ATTACHMENTS)[number]
+  );
+}
+
+function normalizeScriptAttachments(
+  attachments: ScriptAttachment[] | undefined
+): ScriptAttachment[] {
+  return (attachments ?? []).map((attachment) => ({
+    name: attachment.name,
+    locked: attachment.locked ?? isCampaignSyncedAttachment(attachment.name),
+  }));
+}
+
+function mergeCampaignScriptAttachments(attachments: ScriptAttachment[]): ScriptAttachment[] {
+  const merged = new Map<string, ScriptAttachment>();
+
+  for (const name of CAMPAIGN_SCRIPT_ATTACHMENTS) {
+    merged.set(name, { name, locked: true });
+  }
+
+  for (const attachment of normalizeScriptAttachments(attachments)) {
+    merged.set(attachment.name, attachment);
+  }
+
+  return Array.from(merged.values());
+}
 
 type ScriptInfluencer = {
   id: string;
@@ -77,7 +115,7 @@ type ScriptInfluencer = {
   deadlineTime: string;
   timezone: string;
   guidelines: string;
-  attachments?: string[];
+  attachments?: ScriptAttachment[];
   overdue: boolean;
 };
 
@@ -99,12 +137,12 @@ const DEFAULT_DEADLINE: SubmissionDeadline = {
   timezone: "UTC+08:00",
 };
 
-function formatSubmissionDeadlineLabel(deadline: SubmissionDeadline) {
-  if (!deadline.date) return "";
+function getSubmissionDeadlineParts(deadline: SubmissionDeadline) {
+  if (!deadline.date) return null;
   const [year, month, day] = deadline.date.split("-").map(Number);
-  if (!year || !month || !day) return "";
+  if (!year || !month || !day) return null;
 
-  const parts: string[] = [
+  const dateTimeParts: string[] = [
     new Date(year, month - 1, day).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -113,14 +151,13 @@ function formatSubmissionDeadlineLabel(deadline: SubmissionDeadline) {
   ];
 
   if (deadline.time) {
-    parts.push(deadline.time);
+    dateTimeParts.push(deadline.time);
   }
 
-  if (deadline.timezone) {
-    parts.push(deadline.timezone);
-  }
-
-  return parts.join(" ");
+  return {
+    dateTime: dateTimeParts.join(" "),
+    timezone: deadline.timezone || undefined,
+  };
 }
 
 const sectionActionLinkClass =
@@ -137,10 +174,6 @@ function getH5PreviewPath(influencerId: string) {
 
 function ScriptH5LinkBar({ link, influencerId }: { link: string; influencerId: string }) {
   const previewPath = getH5PreviewPath(influencerId);
-  const previewUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}${previewPath}`
-      : previewPath;
   const copyValue = link.startsWith("http") ? link : `https://${link}`;
 
   const handleCopy = async () => {
@@ -154,28 +187,36 @@ function ScriptH5LinkBar({ link, influencerId }: { link: string; influencerId: s
   return (
     <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50/80 px-3 py-2.5">
       <Link size={14} className="shrink-0 text-gray-400" strokeWidth={2} />
-      <p className="min-w-0 flex-1 truncate text-xs text-gray-600">
-        H5 Link for KOL:{" "}
-        <span className="font-medium text-gray-800">{link}</span>
-      </p>
-      <a
-        href={previewPath}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-brand transition-colors hover:bg-brand-50"
-        aria-label="Open H5 link"
-        title={previewUrl}
-      >
-        <ExternalLink size={14} strokeWidth={2} />
-      </a>
-      <button
-        type="button"
-        onClick={handleCopy}
-        className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-brand transition-colors hover:bg-brand-50"
-        aria-label="Copy H5 link"
-      >
-        <Copy size={14} strokeWidth={2} />
-      </button>
+      <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs text-gray-600">
+        <span className="shrink-0 font-medium text-gray-800">H5 Link for KOL:</span>
+        <span className="inline-flex min-w-0 items-center gap-0.5">
+          <a
+            href={previewPath}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="truncate text-gray-600 hover:text-gray-800"
+          >
+            {link}
+          </a>
+          <a
+            href={previewPath}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-brand transition-colors hover:bg-brand-50"
+            aria-label="Open H5 link"
+          >
+            <ExternalLink size={14} strokeWidth={2} />
+          </a>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-brand transition-colors hover:bg-brand-50"
+            aria-label="Copy H5 link"
+          >
+            <Copy size={14} strokeWidth={2} />
+          </button>
+        </span>
+      </div>
     </div>
   );
 }
@@ -295,11 +336,15 @@ const SCRIPT_IDEA_STYLES = [
     summary: "Pain point first, then smooth feature reveal.",
   },
   {
-    label: "Quick Demo",
+    label: "Lifestyle Integration",
     letter: "c",
-    summary: "Fast product walkthrough with clear proof points.",
+    summary: "Product woven into a natural daily-life scene.",
   },
 ] as const;
+
+function formatReferenceScriptsForStorage(ideas: ScriptIdea[]) {
+  return ideas.map(formatScriptIdeaForStorage).join("\n\n");
+}
 
 function buildMockScriptIdeas(prompt: string, influencerName: string): ScriptIdea[] {
   const direction = prompt.trim() || "Keep the creator's established tone.";
@@ -344,6 +389,32 @@ function parseIdeaBody(
     executionNotes: readSection("Execution notes", ["CTA:"]) ?? fallback.executionNotes,
     cta: readSection("CTA", []) ?? fallback.cta,
   };
+}
+
+function ReferenceScriptOptionCard({ idea }: { idea: ScriptIdea }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4">
+      <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
+        {idea.title}
+      </span>
+      <p className="mt-2 text-xs leading-relaxed text-gray-600">{idea.summary}</p>
+      <div className="mt-3 space-y-2.5 text-xs leading-relaxed text-gray-600">
+        <p>
+          <span className="font-semibold text-gray-800">Hook:</span> {idea.hook}
+        </p>
+        <p>
+          <span className="font-semibold text-gray-800">Core flow:</span> {idea.coreFlow}
+        </p>
+        <p>
+          <span className="font-semibold text-gray-800">Execution notes:</span>{" "}
+          {idea.executionNotes}
+        </p>
+        <p>
+          <span className="font-semibold text-gray-800">CTA:</span> {idea.cta}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function ScriptIdeaCard({
@@ -477,9 +548,8 @@ const MOCK_INFLUENCERS: ScriptInfluencer[] = [
     timezone: "UTC+08:00",
     guidelines: "3456789",
     attachments: [
-      "模块-支付管理.pdf",
-      "模块-支付管理.pdf",
-      "Contract_James_Morgan_Final_2026.pdf",
+      { name: "模块-支付管理.pdf", locked: true },
+      { name: "Contract_James_Morgan_Final_2026.pdf" },
     ],
     overdue: false,
   },
@@ -630,10 +700,12 @@ function initials(name: string) {
 
 function ScriptAttachmentPill({
   name,
+  locked = false,
   onRemove,
 }: {
   name: string;
-  onRemove: () => void;
+  locked?: boolean;
+  onRemove?: () => void;
 }) {
   return (
     <div className="inline-flex max-w-full items-center gap-2 rounded-md border border-gray-200 bg-white py-1.5 pr-2 pl-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
@@ -644,14 +716,24 @@ function ScriptAttachmentPill({
         PDF
       </span>
       <span className="max-w-[200px] truncate text-xs font-medium text-gray-800">{name}</span>
-      <button
-        type="button"
-        onClick={onRemove}
-        className="ml-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-        aria-label={`Remove ${name}`}
-      >
-        <X size={12} strokeWidth={2} />
-      </button>
+      {locked ? (
+        <span
+          className="ml-0.5 inline-flex size-5 shrink-0 items-center justify-center text-gray-500"
+          title="Synced from campaign settings and cannot be removed"
+          aria-label={`${name} is synced from campaign settings and cannot be removed`}
+        >
+          <Lock size={14} strokeWidth={1.75} />
+        </span>
+      ) : (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="ml-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+          aria-label={`Remove ${name}`}
+        >
+          <X size={12} strokeWidth={2} />
+        </button>
+      )}
     </div>
   );
 }
@@ -661,7 +743,7 @@ function ScriptAttachmentsSection({
   onAddFiles,
   onRemove,
 }: {
-  attachments: string[];
+  attachments: ScriptAttachment[];
   onAddFiles: (files: FileList) => void;
   onRemove: (index: number) => void;
 }) {
@@ -690,13 +772,19 @@ function ScriptAttachmentsSection({
       </button>
       {attachments.length > 0 ? (
         <div className="flex w-full flex-wrap gap-2">
-          {attachments.map((name, index) => (
-            <ScriptAttachmentPill
-              key={`${name}-${index}`}
-              name={name}
-              onRemove={() => onRemove(index)}
-            />
-          ))}
+          {attachments.map((attachment, index) => {
+            const locked =
+              attachment.locked === true || isCampaignSyncedAttachment(attachment.name);
+
+            return (
+              <ScriptAttachmentPill
+                key={`${attachment.name}-${index}`}
+                name={attachment.name}
+                locked={locked}
+                onRemove={locked ? undefined : () => onRemove(index)}
+              />
+            );
+          })}
         </div>
       ) : null}
     </div>
@@ -863,7 +951,7 @@ function TranslatorLanguageTabs({
   const overflowActive = overflowOptions.some((option) => option.value === value);
 
   return (
-    <div className="flex w-full min-w-0 items-center gap-0.5">
+    <div className="flex w-full min-w-0 flex-nowrap items-center gap-0.5 overflow-x-auto">
       {visibleOptions.map((option) => {
         const isAuto = option.value === AUTO_DETECT_LANGUAGE;
         const label =
@@ -1010,12 +1098,18 @@ function ScriptTranslatorDialogBody({
   };
 
   const textareaClass =
-    "min-h-[280px] max-h-[360px] w-full resize-none overflow-y-auto rounded-none border-0 bg-white px-4 py-3 text-[13px] leading-relaxed shadow-none focus-visible:ring-0";
+    "field-sizing-fixed h-full min-h-0 w-full resize-none overflow-y-auto rounded-none border-0 bg-white px-4 py-3 text-[13px] leading-relaxed shadow-none focus-visible:ring-0";
+
+  const editorBoxClass =
+    "h-[280px] max-h-[calc(90vh-16rem)] shrink-0 overflow-hidden rounded-xl border border-gray-200";
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-4xl" showCloseButton>
-        <div className="border-b border-gray-100 px-6 py-4">
+      <DialogContent
+        className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl"
+        showCloseButton
+      >
+        <div className="shrink-0 border-b border-gray-100 px-6 py-4">
           <div className="flex items-start gap-3 pr-8">
             <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
               <Languages size={18} strokeWidth={2} />
@@ -1025,14 +1119,14 @@ function ScriptTranslatorDialogBody({
                 Translator
               </DialogTitle>
               <DialogDescription className="mt-1 text-xs text-gray-500">
-                Select the target language to generate the translated version.
+                Select the target language, then click the arrow to generate the translated version.
               </DialogDescription>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2">
-          <div className="flex min-h-10 min-w-0 items-center border-b border-gray-200 bg-gray-50/60 px-3">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-5 overflow-hidden px-6 py-5 lg:grid-cols-2">
+          <div className="flex min-h-0 min-w-0 flex-col gap-2">
             <TranslatorLanguageTabs
               value={sourceLanguage}
               onValueChange={(value) => {
@@ -1044,43 +1138,47 @@ function ScriptTranslatorDialogBody({
               options={SOURCE_LANGUAGE_OPTIONS}
               detectedLabel={detectedLabel}
             />
+            <div className={cn(editorBoxClass, "bg-white")}>
+              <Textarea
+                value={draftSource}
+                onChange={(e) => {
+                  setDraftSource(e.target.value);
+                  setHasGenerated(false);
+                  setTranslation("");
+                }}
+                placeholder={sourcePlaceholder}
+                className={textareaClass}
+              />
+            </div>
           </div>
 
-          <div className="flex min-h-10 min-w-0 items-center border-b border-gray-200 bg-gray-50/60 px-3 lg:border-l">
+          <div className="flex min-h-0 min-w-0 flex-col gap-2">
             <TranslatorLanguageTabs
               value={targetLanguage}
               onValueChange={handleTargetLanguageChange}
               options={targetOptions}
             />
-          </div>
-
-          <Textarea
-            value={draftSource}
-            onChange={(e) => {
-              setDraftSource(e.target.value);
-              setHasGenerated(false);
-              setTranslation("");
-            }}
-            placeholder={sourcePlaceholder}
-            className={textareaClass}
-          />
-          <div className="relative border-t border-gray-200 lg:border-t-0 lg:border-l">
-            {hasGenerated && translation.trim() ? (
-              <Textarea
-                value={translation}
-                readOnly
-                tabIndex={-1}
-                className={cn(textareaClass, "cursor-default bg-gray-50/80 text-gray-700")}
-              />
-            ) : (
-              <div className="flex min-h-[280px] max-h-[360px] items-center justify-center bg-gray-50/80 px-6 text-center text-[13px] leading-relaxed text-gray-400">
-                Select a target language to generate the translated version.
-              </div>
-            )}
+            <div className={cn(editorBoxClass, "bg-gray-50/90")}>
+              {hasGenerated && translation.trim() ? (
+                <Textarea
+                  value={translation}
+                  readOnly
+                  tabIndex={-1}
+                  className={cn(
+                    textareaClass,
+                    "cursor-default bg-transparent text-gray-700"
+                  )}
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center px-6 text-center text-[13px] leading-relaxed text-gray-400">
+                  Select a target language to generate the translated version.
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
           <Button
             type="button"
             variant="ghost"
@@ -1107,7 +1205,7 @@ function ScriptGenerateIdeasDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   influencerName: string;
-  onConfirm: (scripts: string[]) => void;
+  onConfirm: (ideas: ScriptIdea[]) => void;
 }) {
   if (!open) return null;
 
@@ -1128,7 +1226,7 @@ function ScriptGenerateIdeasDialogBody({
 }: {
   onOpenChange: (open: boolean) => void;
   influencerName: string;
-  onConfirm: (scripts: string[]) => void;
+  onConfirm: (ideas: ScriptIdea[]) => void;
 }) {
   const [customPrompt, setCustomPrompt] = useState("");
   const [phase, setPhase] = useState<GenerateIdeasPhase>("idle");
@@ -1368,7 +1466,7 @@ function ScriptGenerateIdeasDialogBody({
                 onConfirm(
                   [...selected]
                     .sort((a, b) => a - b)
-                    .map((index) => formatScriptIdeaForStorage(ideas[index]))
+                    .map((index) => ideas[index])
                 );
                 onOpenChange(false);
               }}
@@ -1402,7 +1500,9 @@ export default function CampaignHubScriptView({
   const [guidelinesTranslationById, setGuidelinesTranslationById] = useState<
     Record<string, ScriptBilingualTranslation>
   >({});
-  const [referenceScriptsById, setReferenceScriptsById] = useState<Record<string, string>>({});
+  const [referenceScriptIdeasById, setReferenceScriptIdeasById] = useState<
+    Record<string, ScriptIdea[]>
+  >({});
   const [scriptsTranslationById, setScriptsTranslationById] = useState<
     Record<string, ScriptBilingualTranslation>
   >({});
@@ -1412,10 +1512,14 @@ export default function CampaignHubScriptView({
   const [scriptsTranslatorForId, setScriptsTranslatorForId] = useState<string | null>(null);
   const [generateOpen, setGenerateOpen] = useState(false);
   const [deadlineById, setDeadlineById] = useState<Record<string, SubmissionDeadline>>({});
-  const [attachmentsById, setAttachmentsById] = useState<Record<string, string[]>>(() =>
-    Object.fromEntries(
-      MOCK_INFLUENCERS.map((row) => [row.id, row.attachments ?? []])
-    )
+  const [attachmentsById, setAttachmentsById] = useState<Record<string, ScriptAttachment[]>>(
+    () =>
+      Object.fromEntries(
+        MOCK_INFLUENCERS.map((row) => [
+          row.id,
+          normalizeScriptAttachments(row.attachments),
+        ])
+      )
   );
   const [h5LinkById, setH5LinkById] = useState<Record<string, string>>({});
   const [publishToast, setPublishToast] = useState<string | null>(null);
@@ -1514,14 +1618,17 @@ export default function CampaignHubScriptView({
 
   const openScriptsTranslator = () => {
     if (!selected) return;
-    if (!(referenceScriptsById[selected.id] ?? "").trim()) return;
+    if (!(referenceScriptIdeasById[selected.id] ?? []).length) return;
     setScriptsTranslatorForId(selected.id);
     setScriptsTranslatorOpen(true);
   };
-  const selectedAttachments = selected ? (attachmentsById[selected.id] ?? []) : [];
-  const selectedReferenceScripts = selected ? (referenceScriptsById[selected.id] ?? "") : "";
+  const selectedAttachments = selected
+    ? mergeCampaignScriptAttachments(attachmentsById[selected.id] ?? [])
+    : [];
+  const selectedReferenceIdeas = selected ? (referenceScriptIdeasById[selected.id] ?? []) : [];
+  const selectedReferenceScripts = formatReferenceScriptsForStorage(selectedReferenceIdeas);
+  const hasReferenceScripts = selectedReferenceIdeas.length > 0;
   const selectedScriptsTranslation = selected ? scriptsTranslationById[selected.id] : undefined;
-  const hasReferenceScripts = selectedReferenceScripts.trim().length > 0;
   const selectedH5Link = selected ? h5LinkById[selected.id] : undefined;
   const isBriefPublished = Boolean(selectedH5Link);
 
@@ -1592,19 +1699,25 @@ export default function CampaignHubScriptView({
   };
 
   const addAttachments = (id: string, files: FileList) => {
-    const names = Array.from(files).map((file) => file.name);
-    if (names.length === 0) return;
+    const next = Array.from(files).map((file) => ({ name: file.name }));
+    if (next.length === 0) return;
     setAttachmentsById((prev) => ({
       ...prev,
-      [id]: [...(prev[id] ?? []), ...names],
+      [id]: [...(prev[id] ?? []), ...next],
     }));
   };
 
   const removeAttachment = (id: string, index: number) => {
-    setAttachmentsById((prev) => ({
-      ...prev,
-      [id]: (prev[id] ?? []).filter((_, i) => i !== index),
-    }));
+    setAttachmentsById((prev) => {
+      const visible = mergeCampaignScriptAttachments(prev[id] ?? []);
+      const target = visible[index];
+      if (!target || target.locked || isCampaignSyncedAttachment(target.name)) return prev;
+
+      return {
+        ...prev,
+        [id]: (prev[id] ?? []).filter((attachment) => attachment.name !== target.name),
+      };
+    });
   };
 
   return (
@@ -1664,6 +1777,7 @@ export default function CampaignHubScriptView({
                 <Switch
                   checked={overdueOnly}
                   onCheckedChange={(checked) => setOverdueOnly(checked === true)}
+                  className="h-5 w-9 [&_[data-slot=switch-thumb]]:size-4 [&_[data-slot=switch-thumb]]:data-checked:translate-x-[1.125rem]"
                 />
               </label>
               <CampaignHubToolbarActionButton>
@@ -1690,9 +1804,12 @@ export default function CampaignHubScriptView({
               ) : null}
               {filtered.map((row) => {
                 const isSelected = row.id === activeSelectedId;
-                const rowDeadlineLabel = formatSubmissionDeadlineLabel(
-                  deadlineById[row.id] ?? DEFAULT_DEADLINE
-                );
+                const rowDeadline = deadlineById[row.id] ?? {
+                  date: row.deadlineDate,
+                  time: row.deadlineTime,
+                  timezone: row.timezone,
+                };
+                const rowDeadlineParts = getSubmissionDeadlineParts(rowDeadline);
                 return (
                   <div
                     key={row.id}
@@ -1748,9 +1865,14 @@ export default function CampaignHubScriptView({
                             {row.status}
                           </span>
                         </div>
-                        {rowDeadlineLabel ? (
-                          <p className="mt-2 text-[11px] font-medium text-gray-500">
-                            Deadline: {rowDeadlineLabel}
+                        {rowDeadlineParts ? (
+                          <p className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-gray-500">
+                            <span>Deadline: {rowDeadlineParts.dateTime}</span>
+                            {rowDeadlineParts.timezone ? (
+                              <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-gray-600">
+                                {rowDeadlineParts.timezone}
+                              </span>
+                            ) : null}
                           </p>
                         ) : null}
                       </div>
@@ -1882,11 +2004,13 @@ export default function CampaignHubScriptView({
                             <Sparkles size={13} className="text-amber-600" strokeWidth={2} />
                             AI Generate Ideas
                           </button>
-                          <SectionTranslatorButton
-                            disabled={!hasReferenceScripts}
-                            onClick={openScriptsTranslator}
-                            className="ml-auto"
-                          />
+                          {hasReferenceScripts ? (
+                            <SectionTranslatorButton
+                              disabled={!hasReferenceScripts}
+                              onClick={openScriptsTranslator}
+                              className="ml-auto"
+                            />
+                          ) : null}
                         </div>
                         {hasReferenceScripts ? (
                           selectedScriptsTranslation ? (
@@ -1896,9 +2020,18 @@ export default function CampaignHubScriptView({
                               translation={selectedScriptsTranslation.translation}
                               targetLanguage={selectedScriptsTranslation.targetLanguage}
                               onSourceChange={(value) =>
-                                setReferenceScriptsById((prev) => ({
+                                setReferenceScriptIdeasById((prev) => ({
                                   ...prev,
-                                  [selected.id]: value,
+                                  [selected.id]: [
+                                    {
+                                      title: "Reference Scripts",
+                                      summary: "",
+                                      hook: value,
+                                      coreFlow: "",
+                                      executionNotes: "",
+                                      cta: "",
+                                    },
+                                  ],
                                 }))
                               }
                               onTranslationChange={(value) =>
@@ -1913,30 +2046,24 @@ export default function CampaignHubScriptView({
                               minHeightClass="min-h-[200px]"
                             />
                           ) : (
-                            <Textarea
-                              value={selectedReferenceScripts}
-                              onChange={(e) =>
-                                setReferenceScriptsById((prev) => ({
-                                  ...prev,
-                                  [selected.id]: e.target.value,
-                                }))
-                              }
-                              className="min-h-[200px] resize-none text-[13px] leading-relaxed"
-                            />
+                            <div className="space-y-3">
+                              {selectedReferenceIdeas.map((idea, index) => (
+                                <ReferenceScriptOptionCard
+                                  key={`${idea.title}-${index}`}
+                                  idea={idea}
+                                />
+                              ))}
+                            </div>
                           )
-                        ) : (
-                          <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50/50 px-4 py-8 text-center text-xs text-gray-400">
-                            Generated reference scripts will appear here.
-                          </div>
-                        )}
+                        ) : null}
                       </section>
 
                       <section>
                         <h3 className="mb-3 text-sm font-semibold text-gray-900">
                           Submission Deadline
                         </h3>
-                        <div className="grid gap-3 sm:grid-cols-3">
-                          <div className="relative">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="relative w-[148px] shrink-0">
                             <input
                               type="date"
                               value={selectedDeadline.date}
@@ -1953,7 +2080,7 @@ export default function CampaignHubScriptView({
                               className="pointer-events-none absolute top-1/2 right-3 z-0 -translate-y-1/2 text-gray-400"
                             />
                           </div>
-                          <div className="relative">
+                          <div className="relative w-[148px] shrink-0">
                             <input
                               type="time"
                               value={selectedDeadline.time}
@@ -1977,7 +2104,10 @@ export default function CampaignHubScriptView({
                               if (value) patchDeadline(selected.id, { timezone: value });
                             }}
                           >
-                            <SelectTrigger size="sm" className={denseSelectTriggerClass()}>
+                            <SelectTrigger
+                              size="sm"
+                              className={denseSelectTriggerClass("w-[148px] shrink-0")}
+                            >
                               <SelectValue placeholder="Time Zone" />
                             </SelectTrigger>
                             <SelectContent alignItemWithTrigger={false}>
@@ -2076,10 +2206,6 @@ export default function CampaignHubScriptView({
               }}
               source={selectedReferenceScripts}
               onConfirm={(result) => {
-                setReferenceScriptsById((prev) => ({
-                  ...prev,
-                  [selected.id]: result.source,
-                }));
                 if (result.translation) {
                   setScriptsTranslationById((prev) => ({
                     ...prev,
@@ -2096,10 +2222,10 @@ export default function CampaignHubScriptView({
               open={generateOpen}
               onOpenChange={setGenerateOpen}
               influencerName={selected.name}
-              onConfirm={(scripts) => {
-                setReferenceScriptsById((prev) => ({
+              onConfirm={(ideas) => {
+                setReferenceScriptIdeasById((prev) => ({
                   ...prev,
-                  [selected.id]: scripts.join("\n\n"),
+                  [selected.id]: ideas,
                 }));
                 setScriptsTranslationById((prev) => {
                   const next = { ...prev };

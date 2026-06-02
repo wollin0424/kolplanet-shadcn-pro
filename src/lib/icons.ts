@@ -40,6 +40,7 @@ import {
   Link as LucideLink,
   Languages as LucideLanguages,
   List as LucideList,
+  Lock as LucideLock,
   Mail as LucideMail,
   MessageSquare as LucideMessageSquare,
   MoreHorizontal as LucideMoreHorizontal,
@@ -110,6 +111,7 @@ export const Info = createIcon(LucideInfo, "Info");
 export const Languages = createIcon(LucideLanguages, "Languages");
 export const Link = createIcon(LucideLink, "Link");
 export const List = createIcon(LucideList, "List");
+export const Lock = createIcon(LucideLock, "Lock");
 export const Mail = createIcon(LucideMail, "Mail");
 export const MessageSquare = createIcon(LucideMessageSquare, "MessageSquare");
 export const MoreHorizontal = createIcon(LucideMoreHorizontal, "MoreHorizontal");
