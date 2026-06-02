@@ -1306,7 +1306,7 @@ export default function CampaignHubScriptView({
   );
   const [h5LinkById, setH5LinkById] = useState<Record<string, string>>({});
   const [publishToast, setPublishToast] = useState<string | null>(null);
-  const publishToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const publishToastTimerRef = useRef<number | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
