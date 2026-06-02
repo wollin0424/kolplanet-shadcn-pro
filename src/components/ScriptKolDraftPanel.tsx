@@ -34,19 +34,14 @@ function formatDraftStatus(status: ScriptDraftSubmission["status"]) {
 type KolScriptStatus = "Pending" | "Waiting for Approval" | "Approved";
 
 const KOL_STATUS_BADGE: Record<KolScriptStatus, string> = {
-  Pending: "border-gray-200 bg-gray-50 text-gray-600",
-  "Waiting for Approval": "border-brand/20 bg-brand-50 text-brand",
-  Approved: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  Pending: "border border-brand/20 bg-brand-50 text-brand",
+  "Waiting for Approval": "border border-brand/20 bg-brand-50 text-brand",
+  Approved: "border border-emerald-200 bg-emerald-50 text-emerald-700",
 };
 
 function formatKolStatusLabel(status: KolScriptStatus) {
-  return status;
-}
-
-function draftStatusToKolStatus(status: ScriptDraftSubmission["status"]): KolScriptStatus {
-  if (status === "Approved") return "Approved";
-  if (status === "Revision Needed") return "Waiting for Approval";
-  return "Pending";
+  if (status === "Approved") return status;
+  return "Under Review";
 }
 
 function KolStatusBadge({ status }: { status: KolScriptStatus }) {
@@ -62,9 +57,15 @@ function KolStatusBadge({ status }: { status: KolScriptStatus }) {
   );
 }
 
+function draftStatusToKolStatus(status: ScriptDraftSubmission["status"]): KolScriptStatus {
+  if (status === "Approved") return "Approved";
+  if (status === "Revision Needed") return "Waiting for Approval";
+  return "Pending";
+}
+
 function KolScriptPanel({ content }: { content: string }) {
   return (
-    <div className="flex min-h-[200px] min-w-0 flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+    <div className="flex min-h-[200px] min-w-0 flex-col rounded-lg border border-gray-100 bg-white p-4">
       <p className="text-xs font-semibold text-gray-800">KOL Script</p>
       <p className="mt-3 min-h-0 flex-1 whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700">
         {content}
@@ -89,7 +90,7 @@ function ChatMessage({ message }: { message: ScriptDraftSubmission["messages"][n
         </span>
         <span className="text-[11px] text-gray-400">{message.sentAt}</span>
       </div>
-      <div className="rounded-lg border border-gray-100 bg-white px-3 py-2.5">
+      <div className="rounded-lg bg-white/70 px-3 py-2.5">
         {message.content ? (
           <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-gray-800">
             {message.content}
@@ -228,12 +229,12 @@ function DiscussionComposer({
         </div>
       ) : null}
 
-      <div className="rounded-full border border-gray-200 bg-white px-2 py-1">
+      <div className="rounded-lg bg-gray-100 px-2 py-1.5">
         <div className="flex items-center gap-0.5">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
+            className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
             aria-label="Add image"
           >
             <Plus size={18} strokeWidth={1.75} />
@@ -255,7 +256,7 @@ function DiscussionComposer({
             onClick={handleSend}
             disabled={!canSend}
             className={cn(
-              "inline-flex size-8 shrink-0 items-center justify-center rounded-full transition-colors",
+              "inline-flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
               canSend
                 ? "bg-brand-50 text-brand hover:bg-brand hover:text-white"
                 : "bg-brand-50/60 text-brand/40"
@@ -299,12 +300,12 @@ function VersionDiscussionSection({
         </span>
       </div>
 
-      <div className="flex min-h-[200px] min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-gray-50/90">
+      <div className="flex min-h-[200px] min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-100 bg-gray-50/90">
         <div className="flex min-h-0 flex-1 flex-col p-3">
           <DiscussionThread messages={submission.messages} emptyLabel={emptyLabel} />
         </div>
         {!readOnly ? (
-          <div className="shrink-0 border-t border-gray-200/80 bg-white/70 px-3 py-2.5">
+          <div className="shrink-0 px-3 pb-3 pt-0">
             <DiscussionComposer
               kolId={kolId}
               version={submission.version}
@@ -356,12 +357,15 @@ export function H5ScriptSubmissionCard({
   submission,
   kolId,
   kolName,
+  discussionLocked = false,
 }: {
   submission: ScriptDraftSubmission;
   kolId: string;
   kolName: string;
+  discussionLocked?: boolean;
 }) {
   const isApproved = submission.status === "Approved";
+  const feedbackReadOnly = isApproved || discussionLocked;
 
   return (
     <div className="mt-4 rounded-2xl border border-brand/15 bg-brand-50/20 p-4">
@@ -370,7 +374,7 @@ export function H5ScriptSubmissionCard({
           <p className="text-[14px] font-semibold text-gray-900">Version {submission.version}</p>
           <p className="mt-0.5 text-[11px] text-gray-500">{submission.submittedAt}</p>
         </div>
-        <span className="rounded-full border border-brand/15 bg-brand-50 px-2.5 py-1 text-[10px] font-semibold text-brand">
+        <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[10px] font-semibold leading-none text-brand">
           {formatDraftStatus(submission.status)}
         </span>
       </div>
@@ -382,7 +386,7 @@ export function H5ScriptSubmissionCard({
           submission={submission}
           composerAuthor="kol"
           composerLabel={kolName}
-          readOnly={isApproved}
+          readOnly={feedbackReadOnly}
           placeholder="Write feedback..."
           emptyLabel="The client hasn't replied yet. You can still leave a note here."
         />
@@ -432,7 +436,7 @@ function ScriptApprovalConfirmDialog({
           ) : null}
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+        <div className="flex items-center justify-center gap-3 border-t border-gray-100 px-6 py-4">
           <Button
             type="button"
             variant="outline"
@@ -467,6 +471,7 @@ function KolDraftReviewCard({
   defaultExpanded = true,
   collapsible = false,
   isLatest = false,
+  discussionLocked = false,
   onApproved,
 }: {
   kolId: string;
@@ -476,11 +481,13 @@ function KolDraftReviewCard({
   defaultExpanded?: boolean;
   collapsible?: boolean;
   isLatest?: boolean;
+  discussionLocked?: boolean;
   onApproved?: () => void;
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const isApproved = submission.status === "Approved";
+  const feedbackReadOnly = isApproved || discussionLocked;
 
   useEffect(() => {
     setExpanded(defaultExpanded);
@@ -532,12 +539,12 @@ function KolDraftReviewCard({
             submission={submission}
             composerAuthor="client"
             composerLabel="Client"
-            readOnly={isApproved}
+            readOnly={feedbackReadOnly}
             placeholder="Write feedback..."
             emptyLabel="No replies yet. Share your feedback or questions about this script."
           />
 
-          {isLatest ? (
+          {isLatest && !isApproved ? (
             <>
               <div className="mt-3 flex justify-end">
                 <Button
@@ -552,7 +559,7 @@ function KolDraftReviewCard({
               <ScriptApprovalConfirmDialog
                 open={approveDialogOpen}
                 onOpenChange={setApproveDialogOpen}
-                alreadyApproved={isApproved}
+                alreadyApproved={false}
                 onConfirm={handleConfirmApprove}
               />
             </>
@@ -613,6 +620,7 @@ export function ScriptKolDraftPanel({
   }
 
   const reversed = [...submissions].reverse();
+  const discussionLocked = submissions[submissions.length - 1]?.status === "Approved";
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-3">
@@ -626,6 +634,7 @@ export function ScriptKolDraftPanel({
           defaultExpanded={index === 0}
           collapsible={index > 0}
           isLatest={index === 0}
+          discussionLocked={discussionLocked}
           onApproved={onApproved}
         />
       ))}

@@ -94,6 +94,7 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
   };
 
   const submissionCount = submissions.length;
+  const discussionLocked = submissions[submissions.length - 1]?.status === "Approved";
 
   return (
     <div className="flex min-h-full flex-col bg-[#f4f6f9]">
@@ -224,6 +225,7 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
               kolId={kolId}
               kolName={data.influencer.name}
               submission={submission}
+              discussionLocked={discussionLocked}
             />
           ))}
         </section>
