@@ -45,16 +45,20 @@ export function denseSelectTriggerClass(className?: string) {
   return cn(
     TOOLBAR_CONTROL_HEIGHT,
     denseFieldBase,
-    "w-full min-w-0 justify-between rounded-md px-2.5 data-[size=default]:!h-8 data-[size=sm]:!h-8",
+    "w-full min-w-0 justify-between rounded-md px-2.5 text-[12px] leading-none text-gray-900 data-placeholder:text-gray-400 data-[size=default]:!h-8 data-[size=sm]:!h-8 [&_[data-slot=select-value]]:text-[12px]",
     className
   );
 }
+
+const denseNativePickerIndicatorClass =
+  "[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-y-0 [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:z-[1] [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-9 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0";
 
 export function denseDateInputClass(className?: string) {
   return cn(
     TOOLBAR_CONTROL_HEIGHT,
     denseFieldBase,
-    "w-full rounded-md px-2 pr-7 text-gray-900 outline-none",
+    "w-full rounded-md px-2.5 pr-9 text-gray-900 outline-none leading-none",
+    denseNativePickerIndicatorClass,
     className
   );
 }

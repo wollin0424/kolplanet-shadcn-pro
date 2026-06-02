@@ -7,6 +7,7 @@
 import {
   AlertCircle as LucideAlertCircle,
   ArrowRight as LucideArrowRight,
+  ArrowLeftRight as LucideArrowLeftRight,
   Bell as LucideBell,
   BookOpen as LucideBookOpen,
   Briefcase as LucideBriefcase,
@@ -72,6 +73,7 @@ export type { AppIcon };
 
 export const AlertCircle = createIcon(LucideAlertCircle, "AlertCircle");
 export const ArrowRight = createIcon(LucideArrowRight, "ArrowRight");
+export const ArrowLeftRight = createIcon(LucideArrowLeftRight, "ArrowLeftRight");
 export const Bell = createIcon(LucideBell, "Bell");
 export const BookOpen = createIcon(LucideBookOpen, "BookOpen");
 export const Briefcase = createIcon(LucideBriefcase, "Briefcase");

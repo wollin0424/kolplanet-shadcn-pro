@@ -297,10 +297,12 @@ export default function CampaignHub({
 
   if (activeSection === "script") {
     return (
-      <CampaignHubScriptView
-        campaignId={campaignId}
-        onBack={() => setActiveSection(null)}
-      />
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <CampaignHubScriptView
+          campaignId={campaignId}
+          onBack={() => setActiveSection(null)}
+        />
+      </div>
     );
   }
 

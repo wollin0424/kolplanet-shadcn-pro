@@ -51,14 +51,14 @@ export function CampaignStaffIcons({ sales, pm }: { sales: string; pm: string })
             aria-label={`Sales: ${sales}, PM: ${pm}`}
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
-          />
+          >
+            <span className="inline-flex items-center -space-x-1">
+              <StaffInitialBadge initial={salesInitial} variant="sales" />
+              <StaffInitialBadge initial={pmInitial} variant="pm" />
+            </span>
+          </span>
         }
-      >
-        <span className="inline-flex items-center -space-x-1">
-          <StaffInitialBadge initial={salesInitial} variant="sales" />
-          <StaffInitialBadge initial={pmInitial} variant="pm" />
-        </span>
-      </TooltipTrigger>
+      />
       <TooltipContent variant="light" side="bottom" align="start" className="gap-2">
         <HoverField label="Sales: " value={sales} />
         <HoverField label="PM: " value={pm} />

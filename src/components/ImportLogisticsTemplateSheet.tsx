@@ -11,12 +11,12 @@ import {
 } from "@/components/ui/dialog";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Check, Download, FileText, X } from "@/lib/icons";
+import { AlertCircle, Check, Download, X } from "@/lib/icons";
 
 const ACCEPT_INPUT =
   ".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv";
 
-type ImportPhase = "upload" | "result";
+type ImportPhase = "upload" | "loading" | "result";
 
 type ImportResult = {
   total: number;
@@ -30,12 +30,39 @@ type ParseOutcome =
 
 const EMPTY_TEMPLATE_MESSAGE = "No records found in the uploaded template.";
 
+/** Prototype delay — replace with real upload/validate API. */
+function mockImportDelay() {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, 1600);
+  });
+}
+
 /** Prototype parser — replace with real import API. */
 function parseImport(file: File): ParseOutcome {
   if (file.size === 0 || file.name.toLowerCase().includes("empty")) {
     return { kind: "empty" };
   }
   return { kind: "result", result: { total: 1, valid: 0, invalid: 1 } };
+}
+
+function ImportLoadingPanel() {
+  return (
+    <div
+      className="flex min-h-[280px] flex-col items-center justify-center px-4 py-10 text-center"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <span
+        className="mb-6 inline-block size-10 animate-spin rounded-full border-[3px] border-brand/20 border-t-brand"
+        aria-hidden
+      />
+      <p className="text-base font-semibold text-gray-900">
+        Uploading and validating data...
+      </p>
+      <p className="mt-2 text-[13px] text-gray-500">Please do not close this window.</p>
+    </div>
+  );
 }
 
 function ImportErrorBanner({ message }: { message: string }) {
@@ -110,17 +137,22 @@ export default function ImportLogisticsTemplateSheet({
   };
 
   const handleOpenChange = (next: boolean) => {
+    if (!next && phase === "loading") return;
     if (!next) reset();
     onOpenChange(next);
   };
 
-  const handleFileChange = (next: File | null) => {
+  const handleFileChange = async (next: File | null) => {
     setFile(next);
     setImportError(null);
     if (!next) return;
 
+    setPhase("loading");
+    await mockImportDelay();
+
     const outcome = parseImport(next);
     if (outcome.kind === "empty") {
+      setPhase("upload");
       setImportError(EMPTY_TEMPLATE_MESSAGE);
       return;
     }
@@ -144,7 +176,7 @@ export default function ImportLogisticsTemplateSheet({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className="gap-0 overflow-hidden p-0 sm:max-w-[520px]"
-        showCloseButton
+        showCloseButton={phase !== "loading"}
       >
         <DialogHeader className="gap-1.5 border-b border-gray-100 px-6 py-5 text-left">
           <DialogTitle className="text-[18px] font-semibold text-gray-900">
@@ -157,7 +189,9 @@ export default function ImportLogisticsTemplateSheet({
         </DialogHeader>
 
         <div className="px-6 py-6">
-          {phase === "upload" ? (
+          {phase === "loading" ? (
+            <ImportLoadingPanel />
+          ) : phase === "upload" ? (
             <div className="space-y-6">
               <div className="space-y-2">
                 <p className="text-[13px] font-semibold text-gray-800">
@@ -185,7 +219,9 @@ export default function ImportLogisticsTemplateSheet({
                   acceptedExtensions={[".xlsx", ".csv"]}
                   maxBytes={10 * 1024 * 1024}
                   file={file}
-                  onFileChange={handleFileChange}
+                  onFileChange={(next) => {
+                    void handleFileChange(next);
+                  }}
                   error={error}
                   onErrorChange={(msg) => {
                     setError(msg);
@@ -208,7 +244,7 @@ export default function ImportLogisticsTemplateSheet({
             <Button
               type="button"
               variant="outline"
-              className="h-9 min-w-[88px] text-[13px]"
+              className="h-9 min-w-[88px] border-gray-200 bg-white text-[13px] font-medium text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800"
               onClick={handleGotIt}
             >
               Got it
@@ -220,7 +256,7 @@ export default function ImportLogisticsTemplateSheet({
                 className="h-9 gap-1.5 text-[13px]"
                 onClick={handleDownloadErrorReport}
               >
-                <FileText size={15} />
+                <Download size={15} />
                 Download Error Report
               </Button>
             ) : null}

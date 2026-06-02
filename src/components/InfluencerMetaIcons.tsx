@@ -20,14 +20,12 @@ const metaIconBase =
   "inline-flex size-5 items-center justify-center rounded-full border transition-colors";
 
 const metaIconVariantClass = {
-  identity:
-    "border-violet-200 bg-violet-50 text-violet-600 group-hover:border-violet-300 group-hover:bg-violet-100",
-  manager:
-    "border-brand-100 bg-brand-50 text-brand group-hover:border-brand-200 group-hover:bg-brand-100",
+  identity: "border-violet-200 bg-violet-50 text-violet-600",
+  manager: "border-brand-100 bg-brand-50 text-brand",
 } as const;
 
 const metaIconTriggerClass =
-  "group inline-flex shrink-0 rounded-full outline-none transition-shadow hover:shadow-[0_0_0_3px_rgba(0,0,0,0.04)] focus-visible:ring-2 focus-visible:ring-brand/25";
+  "inline-flex shrink-0 rounded-full outline-none transition-shadow hover:shadow-[0_0_0_3px_rgba(0,0,0,0.04)] focus-visible:ring-2 focus-visible:ring-brand/25";
 
 function KolMetaIcon({
   icon: Icon,
@@ -71,11 +69,11 @@ export function InfluencerMetaIcons({
               aria-label={`Identity type: ${relationshipLabel}`}
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
-            />
+            >
+              <KolMetaIcon icon={Tag} variant="identity" />
+            </span>
           }
-        >
-          <KolMetaIcon icon={Tag} variant="identity" />
-        </TooltipTrigger>
+        />
         <TooltipContent variant="light" side="bottom" align="start">
           <HoverField label="Identity Type: " value={relationshipLabel} />
         </TooltipContent>
@@ -88,11 +86,11 @@ export function InfluencerMetaIcons({
               aria-label={`KOL Manager: ${kolManager}`}
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
-            />
+            >
+              <KolMetaIcon icon={UserRound} variant="manager" />
+            </span>
           }
-        >
-          <KolMetaIcon icon={UserRound} variant="manager" />
-        </TooltipTrigger>
+        />
         <TooltipContent variant="light" side="bottom" align="start">
           <HoverField label="KOL Manager: " value={kolManager} />
         </TooltipContent>
