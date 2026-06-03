@@ -22,6 +22,7 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
+  Lightbulb,
   MessageSquare,
   Plus,
   Send,
@@ -439,6 +440,25 @@ function VersionReviewSplit({
   );
 }
 
+function ScriptAiAutoCheckAlert({
+  message = "No obvious mismatch found, but please still review tone, CTA, and brand accuracy carefully.",
+}: {
+  message?: string;
+}) {
+  return (
+    <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3">
+      <div className="flex items-center gap-1.5">
+        <Lightbulb size={14} className="shrink-0 text-amber-600" strokeWidth={2} />
+        <p className="text-[13px] font-semibold text-amber-900">AI Auto-check</p>
+      </div>
+      <div className="mt-2 flex gap-2 pl-0.5">
+        <span className="mt-2 size-1 shrink-0 rounded-full bg-amber-700" aria-hidden />
+        <p className="text-[13px] leading-relaxed text-amber-900/90">{message}</p>
+      </div>
+    </div>
+  );
+}
+
 export function H5ScriptSubmissionCard({
   submission,
   kolId,
@@ -476,6 +496,8 @@ export function H5ScriptSubmissionCard({
       <p className="mt-3 whitespace-pre-wrap text-[14px] leading-relaxed text-gray-900">
         {submission.content}
       </p>
+
+      <ScriptAiAutoCheckAlert />
 
       {showFeedbackSection ? (
         <div className="mt-4 rounded-xl bg-gray-50 p-3">

@@ -404,6 +404,9 @@ function parseIdeaBody(
   };
 }
 
+const REFERENCE_SCRIPT_FIELD_CLASS =
+  "no-scrollbar min-h-[180px] max-h-[360px] overflow-y-auto rounded-lg border border-gray-200 px-3 py-3";
+
 function ReferenceScriptIdeaBodyFields({
   hook,
   coreFlow,
@@ -411,7 +414,7 @@ function ReferenceScriptIdeaBodyFields({
   cta,
 }: ScriptIdeaBody) {
   return (
-    <div className="space-y-2.5 text-xs leading-relaxed text-gray-600">
+    <div className="space-y-2.5 text-[13px] font-normal leading-relaxed text-gray-600">
       <p>
         <span className="font-semibold text-gray-800">Hook:</span> {hook}
       </p>
@@ -939,7 +942,7 @@ function ReferenceScriptBilingualCard({
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="min-w-0">
           <p className="mb-2 text-xs font-medium text-gray-500">Original</p>
-          <div className="min-h-[180px] rounded-lg border border-gray-200 bg-white px-3 py-3">
+          <div className={cn(REFERENCE_SCRIPT_FIELD_CLASS, "bg-white")}>
             <ReferenceScriptIdeaBodyFields
               hook={idea.hook}
               coreFlow={idea.coreFlow}
@@ -952,7 +955,7 @@ function ReferenceScriptBilingualCard({
           <p className="mb-2 text-xs font-medium text-gray-500">
             Translation ({targetLanguage})
           </p>
-          <div className="min-h-[180px] rounded-lg border border-gray-200 bg-gray-50/40 px-3 py-3">
+          <div className={cn(REFERENCE_SCRIPT_FIELD_CLASS, "bg-gray-50/40")}>
             <ReferenceScriptIdeaBodyFields {...translation} />
           </div>
         </div>
@@ -969,7 +972,7 @@ function ScriptBilingualPanel({
   onSourceChange,
   onTranslationChange,
   sourcePlaceholder,
-  minHeightClass = "min-h-[120px]",
+  minHeightClass = "min-h-[180px]",
 }: {
   source: string;
   sourceLanguage: string;
@@ -981,7 +984,7 @@ function ScriptBilingualPanel({
   minHeightClass?: string;
 }) {
   const textareaClass = cn(
-    "field-sizing-fixed max-h-[240px] w-full resize-none overflow-y-auto rounded-lg border-0 bg-transparent px-3 py-3 text-[13px] font-normal leading-relaxed text-gray-600 placeholder:text-gray-400 shadow-none focus-visible:ring-0",
+    "no-scrollbar field-sizing-fixed max-h-[360px] w-full resize-none overflow-y-auto rounded-lg border-0 bg-transparent px-3 py-3 text-[13px] font-normal leading-relaxed text-gray-600 placeholder:text-gray-400 shadow-none focus-visible:ring-0",
     minHeightClass
   );
   const fieldShellClass =
@@ -2297,7 +2300,7 @@ export default function CampaignHubScriptView({
                               }))
                             }
                             placeholder="Enter content guidelines for this creator."
-                            className="min-h-[120px] resize-none border-gray-200 bg-white text-[13px] font-normal text-gray-600 placeholder:text-gray-400 focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/25"
+                            className="no-scrollbar min-h-[180px] max-h-[360px] resize-none overflow-y-auto border-gray-200 bg-white text-[13px] font-normal text-gray-600 placeholder:text-gray-400 focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/25"
                           />
                         )}
                         {selected ? (
