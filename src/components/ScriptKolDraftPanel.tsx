@@ -73,11 +73,8 @@ function KolScriptPanel({
           <p className="text-xs font-semibold text-gray-800">KOL Script</p>
         </div>
       ) : null}
-      <div className="flex min-h-[200px] min-w-0 flex-1 flex-col rounded-lg border border-gray-100 bg-white p-4">
-        <p className="min-h-0 flex-1 whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700">
-          {content}
-        </p>
-      </div>
+      <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700">{content}</p>
+      <ScriptAiAutoCheckAlert />
     </div>
   );
 }
@@ -185,7 +182,7 @@ function ChatMessage({ message }: { message: ScriptDraftSubmission["messages"][n
 
 function DiscussionThread({
   messages,
-  emptyLabel = "No replies yet. Start the conversation below.",
+  emptyLabel = "No replies yet.\nStart the conversation below.",
 }: {
   messages: ScriptDraftSubmission["messages"];
   emptyLabel?: string;
@@ -196,7 +193,9 @@ function DiscussionThread({
         <span className="mb-2 inline-flex size-9 items-center justify-center rounded-full bg-gray-100 text-gray-400">
           <MessageSquare size={16} strokeWidth={2} />
         </span>
-        <p className="max-w-[200px] text-[12px] leading-relaxed text-gray-400">{emptyLabel}</p>
+        <p className="max-w-[260px] whitespace-pre-line text-[12px] leading-snug text-gray-400">
+          {emptyLabel}
+        </p>
       </div>
     );
   }
@@ -664,7 +663,7 @@ function KolDraftReviewCard({
             composerLabel="Client"
             readOnly={feedbackReadOnly}
             placeholder="Write feedback..."
-            emptyLabel="No replies yet. Share your feedback or questions about this script."
+            emptyLabel={"No replies yet.\nShare feedback or questions about this script."}
           />
 
           {isLatest && !isApproved ? (
@@ -734,7 +733,7 @@ export function ScriptKolDraftPanel({
     return (
       <div className="flex w-full min-w-0 flex-col gap-4">
         <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/50 px-4 py-12 text-center text-xs text-gray-400">
-          Waiting for the KOL to submit a script from the H5 brief link.
+          Submitted script versions will appear here once the creator sends the first draft from the H5 page.
         </div>
       </div>
     );

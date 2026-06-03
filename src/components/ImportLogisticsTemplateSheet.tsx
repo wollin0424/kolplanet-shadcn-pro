@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Check, Download, X } from "@/lib/icons";
+import { Check, Download, X } from "@/lib/icons";
 
 const ACCEPT_INPUT =
   ".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv";
@@ -80,10 +80,12 @@ function ImportResultPanel({ result }: { result: ImportResult }) {
   const hasErrors = result.invalid > 0;
 
   return (
-    <div className="flex flex-col items-center px-2 py-8 text-center">
-      <span className="mb-5 inline-flex size-14 items-center justify-center rounded-full bg-brand-50 text-brand">
-        <AlertCircle size={28} strokeWidth={1.75} />
-      </span>
+    <div className="flex flex-col items-center px-2 pt-1 pb-1 text-center">
+      <img
+        src="/import-result-success.png"
+        alt=""
+        className="mb-5 w-32 h-[111px] object-contain drop-shadow-[0_12px_28px_rgba(15,23,42,0.22)]"
+      />
       <h3 className="text-base font-semibold text-gray-900">Import Result</h3>
       <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[13px] text-gray-700">
         <span>
@@ -188,12 +190,12 @@ export default function ImportLogisticsTemplateSheet({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-6 py-6">
+        <div className="mb-[16px] px-6 py-2">
           {phase === "loading" ? (
             <ImportLoadingPanel />
           ) : phase === "upload" ? (
             <div className="space-y-6">
-              <div className="space-y-2">
+              <div className="mt-[9px] space-y-2">
                 <p className="text-[13px] font-semibold text-gray-800">
                   Step 1: Download the standard logistics template.
                 </p>
@@ -240,26 +242,28 @@ export default function ImportLogisticsTemplateSheet({
         </div>
 
         {phase === "result" ? (
-          <DialogFooter className="-mx-0 -mb-0 flex-row justify-end gap-3 rounded-none border-t border-gray-100 bg-white px-6 py-4 sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-9 min-w-[88px] border-gray-200 bg-white text-[13px] font-medium text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800"
-              onClick={handleGotIt}
-            >
-              Got it
-            </Button>
-            {result && result.invalid > 0 ? (
+          <DialogFooter className="-mx-0 -mb-0 rounded-none border-t border-gray-100 bg-white px-6 py-4">
+            <div className="flex w-full flex-row items-center justify-center gap-3">
               <Button
                 type="button"
-                variant="brand"
-                className="h-9 gap-1.5 text-[13px]"
-                onClick={handleDownloadErrorReport}
+                variant="outline"
+                className="h-9 min-w-[88px] border-gray-200 bg-white text-[13px] font-medium text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800"
+                onClick={handleGotIt}
               >
-                <Download size={15} />
-                Download Error Report
+                Got it
               </Button>
-            ) : null}
+              {result && result.invalid > 0 ? (
+                <Button
+                  type="button"
+                  variant="brand"
+                  className="h-9 gap-1.5 text-[13px]"
+                  onClick={handleDownloadErrorReport}
+                >
+                  <Download size={15} />
+                  Download Error Report
+                </Button>
+              ) : null}
+            </div>
           </DialogFooter>
         ) : null}
       </DialogContent>
