@@ -24,6 +24,7 @@ import {
   ChevronUp,
   MessageSquare,
   Plus,
+  Send,
   UserRound,
   X,
 } from "@/lib/icons";
@@ -85,50 +86,60 @@ function KolScriptPanel({
   );
 }
 
-function H5FeedbackMessage({
-  message,
+function H5FeedbackThread({
+  messages,
 }: {
-  message: ScriptDraftSubmission["messages"][number];
+  messages: ScriptDraftSubmission["messages"];
 }) {
-  const isClient = message.author === "client";
-  const lines = message.content
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
+  let itemNumber = 0;
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-        <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-gray-200/80 text-gray-500">
-          <UserRound size={13} strokeWidth={2} />
+    <>
+      <div className="mb-3 flex items-center gap-1.5">
+        <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-gray-200/80 text-gray-500">
+          <UserRound size={11} strokeWidth={2} />
         </span>
-        <span className="text-[12px] font-semibold text-gray-800">
-          {isClient ? "Client Feedback" : message.authorLabel}
-        </span>
-        <span className="text-[11px] text-gray-400">{message.sentAt}</span>
+        <span className="text-[12px] font-medium text-gray-600">Client Feedback</span>
       </div>
-      {lines.length > 0 ? (
-        <div className="space-y-0.5 pl-8 text-[13px] leading-relaxed text-gray-700">
-          {lines.map((line, index) => (
-            <p key={`${message.id}-line-${index}`}>
-              {index + 1}. {line}
-            </p>
-          ))}
-        </div>
-      ) : null}
-      {message.images?.length ? (
-        <div className={cn("flex flex-wrap gap-2", lines.length > 0 ? "pl-8" : undefined)}>
-          {message.images.map((src, imageIndex) => (
-            <img
-              key={`${message.id}-img-${imageIndex}`}
-              src={src}
-              alt={`Attachment ${imageIndex + 1}`}
-              className="size-14 rounded-md border border-gray-200 object-cover"
-            />
-          ))}
-        </div>
-      ) : null}
-    </div>
+      <div className="space-y-3">
+        {messages.map((message) => {
+          const lines = message.content
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean);
+
+          return (
+            <div key={message.id} className="space-y-1">
+              <p className="text-[11px] text-gray-400">{message.sentAt}</p>
+              {lines.length > 0 ? (
+                <div className="space-y-0.5 text-[13px] leading-relaxed text-gray-800">
+                  {lines.map((line, index) => {
+                    itemNumber += 1;
+                    return (
+                      <p key={`${message.id}-line-${index}`}>
+                        {itemNumber}. {line}
+                      </p>
+                    );
+                  })}
+                </div>
+              ) : null}
+              {message.images?.length ? (
+                <div className="flex flex-wrap gap-2 pt-0.5">
+                  {message.images.map((src, imageIndex) => (
+                    <img
+                      key={`${message.id}-img-${imageIndex}`}
+                      src={src}
+                      alt={`Attachment ${imageIndex + 1}`}
+                      className="size-14 rounded-md border border-gray-200 object-cover"
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }
 
@@ -205,6 +216,7 @@ function DiscussionComposer({
   authorLabel,
   readOnly = false,
   placeholder = "Write feedback...",
+  variant = "default",
 }: {
   kolId: string;
   version: number;
@@ -212,6 +224,7 @@ function DiscussionComposer({
   authorLabel: string;
   readOnly?: boolean;
   placeholder?: string;
+  variant?: "default" | "h5";
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState("");
@@ -287,15 +300,25 @@ function DiscussionComposer({
         </div>
       ) : null}
 
-      <div className="flex h-[46px] items-center rounded-lg border border-gray-200 bg-white px-2">
+      <div
+        className={cn(
+          "flex items-center border border-gray-200 bg-white",
+          variant === "h5"
+            ? "h-11 rounded-full px-1.5 shadow-sm"
+            : "h-[46px] rounded-lg px-2"
+        )}
+      >
         <div className="flex w-full items-center gap-0.5">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
+            className={cn(
+              "inline-flex shrink-0 items-center justify-center text-gray-400 transition-colors hover:text-gray-600",
+              variant === "h5" ? "size-8 rounded-full hover:bg-gray-50" : "size-7 rounded-md hover:bg-gray-50"
+            )}
             aria-label="Add image"
           >
-            <Plus size={17} strokeWidth={1.75} />
+            <Plus size={variant === "h5" ? 18 : 17} strokeWidth={1.75} />
           </button>
           <input
             value={draft}
@@ -314,14 +337,19 @@ function DiscussionComposer({
             onClick={handleSend}
             disabled={!canSend}
             className={cn(
-              "inline-flex size-7 shrink-0 items-center justify-center rounded-md transition-colors",
+              "inline-flex shrink-0 items-center justify-center transition-colors",
+              variant === "h5" ? "size-8 rounded-full" : "size-7 rounded-md",
               canSend
                 ? "bg-brand-50 text-brand hover:bg-brand hover:text-white"
                 : "bg-brand-50/60 text-brand/40"
             )}
             aria-label="Send message"
           >
-            <ArrowRight size={15} strokeWidth={2} />
+            {variant === "h5" ? (
+              <Send size={14} strokeWidth={2} />
+            ) : (
+              <ArrowRight size={15} strokeWidth={2} />
+            )}
           </button>
         </div>
       </div>
@@ -433,7 +461,14 @@ export function H5ScriptSubmissionCard({
           <p className="text-[15px] font-semibold text-gray-900">Version {submission.version}</p>
           <p className="mt-0.5 text-[12px] text-gray-500">{submission.submittedAt}</p>
         </div>
-        <span className="shrink-0 rounded-full border border-brand/25 bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand">
+        <span
+          className={cn(
+            "shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-tight",
+            submission.status === "Approved"
+              ? KOL_STATUS_BADGE.Approved
+              : KOL_STATUS_BADGE["Under Review"]
+          )}
+        >
           {formatDraftStatus(submission.status)}
         </span>
       </div>
@@ -443,13 +478,9 @@ export function H5ScriptSubmissionCard({
       </p>
 
       {showFeedbackSection ? (
-        <div className="mt-4 rounded-xl bg-gray-100/90 p-3">
+        <div className="mt-4 rounded-xl bg-gray-50 p-3">
           {submission.messages.length > 0 ? (
-            <div className="space-y-4">
-              {submission.messages.map((message) => (
-                <H5FeedbackMessage key={message.id} message={message} />
-              ))}
-            </div>
+            <H5FeedbackThread messages={submission.messages} />
           ) : null}
           {!feedbackReadOnly ? (
             <div className={submission.messages.length > 0 ? "mt-3" : undefined}>
@@ -459,6 +490,7 @@ export function H5ScriptSubmissionCard({
                 author="kol"
                 authorLabel={kolName}
                 placeholder="Write feedback..."
+                variant="h5"
               />
             </div>
           ) : null}

@@ -136,7 +136,7 @@ const DEADLINE_TIMEZONE_OPTIONS = [
 const DEFAULT_DEADLINE: SubmissionDeadline = {
   date: "",
   time: "",
-  timezone: "UTC+08:00",
+  timezone: "",
 };
 
 function getSubmissionDeadlineParts(deadline: SubmissionDeadline) {
@@ -432,12 +432,16 @@ function ReferenceScriptIdeaBodyFields({
 
 function ReferenceScriptOptionCard({ idea }: { idea: ScriptIdea }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
-        {idea.title}
-      </span>
-      <p className="mt-2 text-xs leading-relaxed text-gray-600">{idea.summary}</p>
-      <div className="mt-3">
+    <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className="inline-flex rounded-md bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+          {idea.title}
+        </span>
+        {idea.summary ? (
+          <span className="text-xs leading-relaxed text-gray-500">{idea.summary}</span>
+        ) : null}
+      </div>
+      <div className="mt-4 rounded-lg border border-gray-200 bg-white px-3 py-3">
         <ReferenceScriptIdeaBodyFields
           hook={idea.hook}
           coreFlow={idea.coreFlow}
@@ -849,7 +853,7 @@ function StatusPill({
       <span
         className={cn(
           "inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums leading-none",
-          active ? "bg-brand/15 text-brand" : "bg-gray-100 text-gray-600"
+          active ? "bg-white text-brand" : "bg-gray-100 text-gray-600"
         )}
       >
         {count}
@@ -933,26 +937,30 @@ function ReferenceScriptBilingualCard({
   targetLanguage: string;
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
+    <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <span className="inline-flex rounded-md bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
         {idea.title}
       </span>
-      <p className="mt-2 text-xs leading-relaxed text-gray-600">{idea.summary}</p>
-      <div className="mt-3">
-        <ReferenceScriptIdeaBodyFields
-          hook={idea.hook}
-          coreFlow={idea.coreFlow}
-          executionNotes={idea.executionNotes}
-          cta={idea.cta}
-        />
-      </div>
 
-      <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
-        <div className="border-b border-gray-100 bg-gray-50/60 px-3 py-2 text-xs font-medium text-gray-600">
-          Translation ({targetLanguage})
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="min-w-0">
+          <p className="mb-2 text-xs font-medium text-gray-500">Original</p>
+          <div className="min-h-[180px] rounded-lg border border-gray-200 bg-white px-3 py-3">
+            <ReferenceScriptIdeaBodyFields
+              hook={idea.hook}
+              coreFlow={idea.coreFlow}
+              executionNotes={idea.executionNotes}
+              cta={idea.cta}
+            />
+          </div>
         </div>
-        <div className="min-h-[180px] bg-gray-50/40 px-3 py-3">
-          <ReferenceScriptIdeaBodyFields {...translation} />
+        <div className="min-w-0">
+          <p className="mb-2 text-xs font-medium text-gray-500">
+            Translation ({targetLanguage})
+          </p>
+          <div className="min-h-[180px] rounded-lg border border-gray-200 bg-gray-50/40 px-3 py-3">
+            <ReferenceScriptIdeaBodyFields {...translation} />
+          </div>
         </div>
       </div>
     </div>
@@ -978,36 +986,35 @@ function ScriptBilingualPanel({
   sourcePlaceholder?: string;
   minHeightClass?: string;
 }) {
-  const sourceLabel = resolveSourceLanguageLabel(sourceLanguage, source);
+  const textareaClass = cn(
+    "field-sizing-fixed max-h-[240px] w-full resize-none overflow-y-auto rounded-lg border-0 bg-transparent px-3 py-3 text-[13px] leading-relaxed shadow-none focus-visible:ring-0",
+    minHeightClass
+  );
+  const fieldShellClass =
+    "rounded-lg border border-gray-200 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/25";
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200">
-      <div className="grid grid-cols-1 lg:grid-cols-2">
-        <div className="border-b border-gray-200 lg:border-b-0 lg:border-r">
-          <div className="border-b border-gray-100 bg-gray-50/60 px-3 py-2 text-xs font-medium text-gray-600">
-            Original ({sourceLabel})
-          </div>
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="min-w-0">
+        <p className="mb-2 text-xs font-medium text-gray-500">Original</p>
+        <div className={cn(fieldShellClass, "bg-white")}>
           <Textarea
             value={source}
             onChange={(e) => onSourceChange(e.target.value)}
             placeholder={sourcePlaceholder}
-            className={cn(
-              "field-sizing-fixed max-h-[240px] w-full resize-none overflow-y-auto rounded-none border-0 bg-white text-[13px] leading-relaxed shadow-none focus-visible:ring-0",
-              minHeightClass
-            )}
+            className={textareaClass}
           />
         </div>
-        <div>
-          <div className="border-b border-gray-100 bg-gray-50/60 px-3 py-2 text-xs font-medium text-gray-600">
-            Translation ({targetLanguage})
-          </div>
+      </div>
+      <div className="min-w-0">
+        <p className="mb-2 text-xs font-medium text-gray-500">
+          Translation ({targetLanguage})
+        </p>
+        <div className={cn(fieldShellClass, "bg-gray-50/40")}>
           <Textarea
             value={translation}
             onChange={(e) => onTranslationChange(e.target.value)}
-            className={cn(
-              "field-sizing-fixed max-h-[240px] w-full resize-none overflow-y-auto rounded-none border-0 bg-gray-50/40 text-[13px] leading-relaxed shadow-none focus-visible:ring-0",
-              minHeightClass
-            )}
+            className={textareaClass}
           />
         </div>
       </div>
@@ -1298,14 +1305,18 @@ function ReferenceScriptTranslatorCard({
   hasTranslation: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+    <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
+        <span className="inline-flex rounded-md bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
           {idea.title}
         </span>
-        <span className="text-xs leading-relaxed text-gray-600">{idea.summary}</span>
+        {idea.summary ? (
+          <span className="text-xs leading-relaxed text-gray-500">{idea.summary}</span>
+        ) : null}
       </div>
-      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="min-w-0">
+          <p className="mb-2 text-xs font-medium text-gray-500">Original</p>
           <div className="min-h-[220px] overflow-y-auto rounded-lg border border-gray-200 bg-white px-3 py-3">
             <ReferenceScriptIdeaBodyFields
               hook={idea.hook}
@@ -1314,6 +1325,9 @@ function ReferenceScriptTranslatorCard({
               cta={idea.cta}
             />
           </div>
+        </div>
+        <div className="min-w-0">
+          <p className="mb-2 text-xs font-medium text-gray-500">Translation</p>
           <div className="min-h-[220px] overflow-y-auto rounded-lg border border-gray-200 bg-gray-50/40 px-3 py-3">
             {hasTranslation && translation ? (
               <ReferenceScriptIdeaBodyFields {...translation} />
@@ -1324,6 +1338,7 @@ function ReferenceScriptTranslatorCard({
             )}
           </div>
         </div>
+      </div>
     </div>
   );
 }
@@ -2100,7 +2115,7 @@ export default function CampaignHubScriptView({
                 <Switch
                   checked={overdueOnly}
                   onCheckedChange={(checked) => setOverdueOnly(checked === true)}
-                  className="h-5 w-9 [&_[data-slot=switch-thumb]]:size-4 [&_[data-slot=switch-thumb]]:data-checked:translate-x-[1.125rem]"
+                  className="h-4 w-7 [&_[data-slot=switch-thumb]]:size-3 [&_[data-slot=switch-thumb]]:translate-x-0.5 [&_[data-slot=switch-thumb]]:data-checked:translate-x-3.5"
                 />
               </label>
               <CampaignHubToolbarActionButton>
@@ -2192,7 +2207,7 @@ export default function CampaignHubScriptView({
                           <p className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-gray-500">
                             <span>Deadline: {rowDeadlineParts.dateTime}</span>
                             {rowDeadlineParts.timezone ? (
-                              <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-gray-600">
+                              <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium leading-none text-gray-400">
                                 {rowDeadlineParts.timezone}
                               </span>
                             ) : null}
@@ -2408,14 +2423,17 @@ export default function CampaignHubScriptView({
                           </div>
                           <Select
                             modal={false}
-                            value={selectedDeadline.timezone}
+                            value={selectedDeadline.timezone || null}
                             onValueChange={(value) => {
                               if (value) patchDeadline(selected.id, { timezone: value });
                             }}
                           >
                             <SelectTrigger
                               size="sm"
-                              className={denseSelectTriggerClass("w-[148px] shrink-0")}
+                              className={cn(
+                                denseSelectTriggerClass("w-[148px] shrink-0"),
+                                !selectedDeadline.timezone && "[&_[data-slot=select-value]]:text-gray-400"
+                              )}
                             >
                               <SelectValue placeholder="Time Zone" />
                             </SelectTrigger>

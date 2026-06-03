@@ -39,6 +39,7 @@ import {
   Info as LucideInfo,
   Link as LucideLink,
   Languages as LucideLanguages,
+  Lightbulb as LucideLightbulb,
   List as LucideList,
   Lock as LucideLock,
   Mail as LucideMail,
@@ -109,6 +110,7 @@ export const History = createIcon(LucideHistory, "History");
 export const Hourglass = createIcon(LucideHourglass, "Hourglass");
 export const Info = createIcon(LucideInfo, "Info");
 export const Languages = createIcon(LucideLanguages, "Languages");
+export const Lightbulb = createIcon(LucideLightbulb, "Lightbulb");
 export const Link = createIcon(LucideLink, "Link");
 export const List = createIcon(LucideList, "List");
 export const Lock = createIcon(LucideLock, "Lock");

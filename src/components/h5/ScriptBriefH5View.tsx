@@ -9,8 +9,8 @@ import {
   Copy,
   ExternalLink,
   FileText,
-  Info,
   Link as LinkIcon,
+  Lightbulb,
   Lock,
   MessageSquare,
   ScrollText,
@@ -19,6 +19,7 @@ import {
 } from "@/lib/icons";
 import { getScriptBriefH5Data, getScriptBriefH5Defaults } from "@/lib/scriptBriefH5Mock";
 import { subscribeScriptBriefPublishedChanges } from "@/lib/scriptBriefPublished";
+import { cn } from "@/lib/utils";
 import { H5ScriptSubmissionCard } from "@/components/ScriptKolDraftPanel";
 import {
   addScriptDraftSubmission,
@@ -57,13 +58,7 @@ function ScriptBriefAttachmentPill({
   );
 }
 
-function CopyableBlock({
-  label,
-  text,
-}: {
-  label: string;
-  text: string;
-}) {
+function CopyableBlock({ text }: { text: string }) {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(text);
@@ -73,19 +68,66 @@ function CopyableBlock({
   };
 
   return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-3.5">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-[11px] font-semibold text-gray-500">{label}</p>
+    <div className="relative rounded-xl border border-gray-100 bg-white p-3.5">
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="absolute top-3 right-3 inline-flex size-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-50 hover:text-brand"
+        aria-label="Copy script"
+      >
+        <Copy size={14} strokeWidth={2} />
+      </button>
+      <p className="pr-8 whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700">{text}</p>
+    </div>
+  );
+}
+
+const SCRIPT_VIEW_TAB_CLASS =
+  "inline-flex h-10 shrink-0 items-center border-b-2 px-2.5 text-[13px] font-medium leading-none transition-colors";
+
+function scriptViewTabClass(active: boolean) {
+  return cn(
+    SCRIPT_VIEW_TAB_CLASS,
+    active
+      ? "border-brand text-gray-900"
+      : "border-transparent text-gray-500 hover:text-gray-800"
+  );
+}
+
+function ReferenceScriptCard({
+  title,
+  original,
+  translation,
+}: {
+  title: string;
+  original: string;
+  translation: string;
+}) {
+  const [view, setView] = useState<"original" | "translation">("original");
+  const activeText = view === "original" ? original : translation;
+
+  return (
+    <div className="space-y-3">
+      <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
+        {title}
+      </span>
+      <div className="flex w-full min-w-0 items-center gap-0.5 overflow-x-auto border-b border-gray-100">
         <button
           type="button"
-          onClick={handleCopy}
-          className="inline-flex size-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-white hover:text-brand"
-          aria-label={`Copy ${label}`}
+          onClick={() => setView("original")}
+          className={scriptViewTabClass(view === "original")}
         >
-          <Copy size={14} strokeWidth={2} />
+          Original
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("translation")}
+          className={scriptViewTabClass(view === "translation")}
+        >
+          Translation
         </button>
       </div>
-      <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700">{text}</p>
+      <CopyableBlock text={activeText} />
     </div>
   );
 }
@@ -216,7 +258,7 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
         <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
           <SectionHeading icon={ScrollText} title="Reference Scripts" />
           <p className="mb-4 flex items-start gap-2 text-[12px] leading-relaxed text-gray-500">
-            <Info size={14} className="mt-0.5 shrink-0 text-amber-500" strokeWidth={2} />
+            <Lightbulb size={14} className="mt-0.5 shrink-0 text-amber-500" strokeWidth={2} />
             These scripts are AI-generated. Use them as inspiration and adapt them into your own
             original content while meeting campaign requirements and your personal style.
           </p>
@@ -224,13 +266,12 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
           {data.referenceScripts.length > 0 ? (
             <div className="space-y-4">
               {data.referenceScripts.map((script) => (
-                <div key={script.title} className="space-y-3">
-                  <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
-                    {script.title}
-                  </span>
-                  <CopyableBlock label="Original" text={script.original} />
-                  <CopyableBlock label="Translation (English)" text={script.translation} />
-                </div>
+                <ReferenceScriptCard
+                  key={script.title}
+                  title={script.title}
+                  original={script.original}
+                  translation={script.translation}
+                />
               ))}
             </div>
           ) : (
