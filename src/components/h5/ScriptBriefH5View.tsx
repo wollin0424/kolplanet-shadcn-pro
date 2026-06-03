@@ -98,12 +98,15 @@ function ReferenceScriptCard({
   title,
   original,
   translation,
+  view,
+  onViewChange,
 }: {
   title: string;
   original: string;
   translation: string;
+  view: "original" | "translation";
+  onViewChange: (view: "original" | "translation") => void;
 }) {
-  const [view, setView] = useState<"original" | "translation">("original");
   const activeText = view === "original" ? original : translation;
 
   return (
@@ -114,14 +117,14 @@ function ReferenceScriptCard({
       <div className="flex w-full min-w-0 items-center gap-0.5 overflow-x-auto border-b border-gray-100">
         <button
           type="button"
-          onClick={() => setView("original")}
+          onClick={() => onViewChange("original")}
           className={scriptViewTabClass(view === "original")}
         >
           Original
         </button>
         <button
           type="button"
-          onClick={() => setView("translation")}
+          onClick={() => onViewChange("translation")}
           className={scriptViewTabClass(view === "translation")}
         >
           Translation
@@ -153,6 +156,9 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
   const [data, setData] = useState(() => getScriptBriefH5Defaults(kolId));
   const [draft, setDraft] = useState("");
   const [submissions, setSubmissions] = useState<ScriptDraftSubmission[]>([]);
+  const [referenceScriptViews, setReferenceScriptViews] = useState<
+    Record<number, "original" | "translation">
+  >({});
   const submissionLimit = getScriptDraftSubmissionLimit();
 
   useEffect(() => {
@@ -265,12 +271,16 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
 
           {data.referenceScripts.length > 0 ? (
             <div className="space-y-4">
-              {data.referenceScripts.map((script) => (
+              {data.referenceScripts.map((script, index) => (
                 <ReferenceScriptCard
-                  key={script.title}
+                  key={`${script.title}-${index}`}
                   title={script.title}
                   original={script.original}
                   translation={script.translation}
+                  view={referenceScriptViews[index] ?? "original"}
+                  onViewChange={(view) =>
+                    setReferenceScriptViews((prev) => ({ ...prev, [index]: view }))
+                  }
                 />
               ))}
             </div>
