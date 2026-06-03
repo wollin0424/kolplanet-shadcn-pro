@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,13 +9,16 @@ import {
   Copy,
   ExternalLink,
   FileText,
+  Info,
   Link as LinkIcon,
+  Lock,
   MessageSquare,
+  ScrollText,
   Share2,
-  Sparkles,
   TrendingUp,
 } from "@/lib/icons";
-import { getScriptBriefH5Data } from "@/lib/scriptBriefH5Mock";
+import { getScriptBriefH5Data, getScriptBriefH5Defaults } from "@/lib/scriptBriefH5Mock";
+import { subscribeScriptBriefPublishedChanges } from "@/lib/scriptBriefPublished";
 import { H5ScriptSubmissionCard } from "@/components/ScriptKolDraftPanel";
 import {
   addScriptDraftSubmission,
@@ -24,6 +27,35 @@ import {
   subscribeScriptDraftChanges,
   type ScriptDraftSubmission,
 } from "@/lib/scriptDraftSubmissions";
+
+function ScriptBriefAttachmentPill({
+  name,
+  locked = false,
+}: {
+  name: string;
+  locked?: boolean;
+}) {
+  return (
+    <div className="inline-flex max-w-full items-center gap-2 rounded-md border border-gray-200 bg-white py-1.5 pr-2 pl-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+      <span
+        className="inline-flex shrink-0 items-center justify-center rounded-[3px] bg-rose-500 px-1 py-px text-[9px] font-bold leading-none tracking-wide text-white"
+        aria-hidden
+      >
+        PDF
+      </span>
+      <span className="max-w-[200px] truncate text-xs font-medium text-gray-800">{name}</span>
+      {locked ? (
+        <span
+          className="ml-0.5 inline-flex size-5 shrink-0 items-center justify-center text-gray-500"
+          title="Synced from campaign settings"
+          aria-label={`${name} is synced from campaign settings`}
+        >
+          <Lock size={14} strokeWidth={1.75} />
+        </span>
+      ) : null}
+    </div>
+  );
+}
 
 function CopyableBlock({
   label,
@@ -76,10 +108,16 @@ function SectionHeading({
 }
 
 export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
-  const data = useMemo(() => getScriptBriefH5Data(kolId), [kolId]);
+  const [data, setData] = useState(() => getScriptBriefH5Defaults(kolId));
   const [draft, setDraft] = useState("");
   const [submissions, setSubmissions] = useState<ScriptDraftSubmission[]>([]);
   const submissionLimit = getScriptDraftSubmissionLimit();
+
+  useEffect(() => {
+    const sync = () => setData(getScriptBriefH5Data(kolId));
+    sync();
+    return subscribeScriptBriefPublishedChanges(sync);
+  }, [kolId]);
 
   useEffect(() => {
     const sync = () => setSubmissions(getScriptDraftSubmissions(kolId));
@@ -162,12 +200,23 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
               {data.guidelines || "No content guidelines yet."}
             </p>
           </div>
+          {data.attachments.length > 0 ? (
+            <div className="mt-3 flex w-full flex-wrap gap-2">
+              {data.attachments.map((attachment) => (
+                <ScriptBriefAttachmentPill
+                  key={attachment.name}
+                  name={attachment.name}
+                  locked={attachment.locked}
+                />
+              ))}
+            </div>
+          ) : null}
         </section>
 
         <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-          <SectionHeading icon={Sparkles} title="Reference Scripts" />
+          <SectionHeading icon={ScrollText} title="Reference Scripts" />
           <p className="mb-4 flex items-start gap-2 text-[12px] leading-relaxed text-gray-500">
-            <Sparkles size={14} className="mt-0.5 shrink-0 text-amber-500" strokeWidth={2} />
+            <Info size={14} className="mt-0.5 shrink-0 text-amber-500" strokeWidth={2} />
             These scripts are AI-generated. Use them as inspiration and adapt them into your own
             original content while meeting campaign requirements and your personal style.
           </p>
@@ -204,7 +253,7 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Write your script, or share a document link here..."
-            className="min-h-[120px] resize-none border-gray-200 bg-white text-[13px]"
+            className="min-h-[120px] resize-none border-gray-200 bg-white text-[13px] focus-visible:border-brand focus-visible:ring-brand/25"
           />
           <p className="mt-2 text-right text-[11px] text-gray-400">
             Submissions: {submissionCount}/{submissionLimit}

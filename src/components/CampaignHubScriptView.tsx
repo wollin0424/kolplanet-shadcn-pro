@@ -11,7 +11,9 @@ import {
   type KolRelationship,
 } from "@/components/InfluencerMetaIcons";
 import { ScriptKolDraftPanel } from "@/components/ScriptKolDraftPanel";
-import { getScriptDraftSubmissions } from "@/lib/scriptDraftSubmissions";
+import { getScriptDraftSubmissions, subscribeScriptDraftChanges } from "@/lib/scriptDraftSubmissions";
+import { getScriptBriefPublished, saveScriptBriefPublished } from "@/lib/scriptBriefPublished";
+import { getStageBadgeClass } from "@/lib/pipeline/stageStatuses";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -256,9 +258,16 @@ const STATUS_FILTERS: StatusFilter[] = [
 
 const STATUS_BADGE: Record<ScriptStatus, string> = {
   Pending: "border-gray-200 bg-gray-50 text-gray-600",
-  "Waiting for Approval": "border-brand/20 bg-brand-50 text-brand",
+  "Waiting for Approval": getStageBadgeClass("sky"),
   Approved: "border-emerald-200 bg-emerald-50 text-emerald-700",
 };
+
+function resolveScriptStatusFromDraft(kolId: string, fallback: ScriptStatus): ScriptStatus {
+  const latest = getScriptDraftSubmissions(kolId).at(-1);
+  if (!latest) return fallback;
+  if (latest.status === "Approved") return "Approved";
+  return "Waiting for Approval";
+}
 
 const TRANSLATION_LANGUAGES = [
   "Bahasa Indonesia",
@@ -322,6 +331,8 @@ type ScriptIdea = {
   cta: string;
 };
 
+type ScriptIdeaBody = Pick<ScriptIdea, "hook" | "coreFlow" | "executionNotes" | "cta">;
+
 const GENERATION_LOADING_MS = 1400;
 
 const SCRIPT_IDEA_STYLES = [
@@ -362,6 +373,10 @@ function formatScriptIdeaForStorage(idea: ScriptIdea) {
   return `${idea.title}\n\n${idea.summary}\n\nHook: ${idea.hook}\n\nCore flow: ${idea.coreFlow}\n\nExecution notes: ${idea.executionNotes}\n\nCTA: ${idea.cta}`;
 }
 
+function formatScriptIdeaBody(body: ScriptIdeaBody) {
+  return `Hook: ${body.hook}\n\nCore flow: ${body.coreFlow}\n\nExecution notes: ${body.executionNotes}\n\nCTA: ${body.cta}`;
+}
+
 function formatIdeaBody(idea: ScriptIdea) {
   return `Hook: ${idea.hook}\n\nCore flow: ${idea.coreFlow}\n\nExecution notes: ${idea.executionNotes}\n\nCTA: ${idea.cta}`;
 }
@@ -391,6 +406,30 @@ function parseIdeaBody(
   };
 }
 
+function ReferenceScriptIdeaBodyFields({
+  hook,
+  coreFlow,
+  executionNotes,
+  cta,
+}: ScriptIdeaBody) {
+  return (
+    <div className="space-y-2.5 text-xs leading-relaxed text-gray-600">
+      <p>
+        <span className="font-semibold text-gray-800">Hook:</span> {hook}
+      </p>
+      <p>
+        <span className="font-semibold text-gray-800">Core flow:</span> {coreFlow}
+      </p>
+      <p>
+        <span className="font-semibold text-gray-800">Execution notes:</span> {executionNotes}
+      </p>
+      <p>
+        <span className="font-semibold text-gray-800">CTA:</span> {cta}
+      </p>
+    </div>
+  );
+}
+
 function ReferenceScriptOptionCard({ idea }: { idea: ScriptIdea }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4">
@@ -398,20 +437,13 @@ function ReferenceScriptOptionCard({ idea }: { idea: ScriptIdea }) {
         {idea.title}
       </span>
       <p className="mt-2 text-xs leading-relaxed text-gray-600">{idea.summary}</p>
-      <div className="mt-3 space-y-2.5 text-xs leading-relaxed text-gray-600">
-        <p>
-          <span className="font-semibold text-gray-800">Hook:</span> {idea.hook}
-        </p>
-        <p>
-          <span className="font-semibold text-gray-800">Core flow:</span> {idea.coreFlow}
-        </p>
-        <p>
-          <span className="font-semibold text-gray-800">Execution notes:</span>{" "}
-          {idea.executionNotes}
-        </p>
-        <p>
-          <span className="font-semibold text-gray-800">CTA:</span> {idea.cta}
-        </p>
+      <div className="mt-3">
+        <ReferenceScriptIdeaBodyFields
+          hook={idea.hook}
+          coreFlow={idea.coreFlow}
+          executionNotes={idea.executionNotes}
+          cta={idea.cta}
+        />
       </div>
     </div>
   );
@@ -541,7 +573,7 @@ const MOCK_INFLUENCERS: ScriptInfluencer[] = [
     platform: "Instagram",
     manager: "Wollin",
     relationship: "Manager",
-    status: "Pending",
+    status: "Approved",
     deadline: "Jun 10, 2026",
     deadlineDate: "2026-06-10",
     deadlineTime: "18:00",
@@ -575,7 +607,7 @@ const MOCK_INFLUENCERS: ScriptInfluencer[] = [
     platform: "Instagram",
     manager: "Chris",
     relationship: "Manager",
-    status: "Pending",
+    status: "Waiting for Approval",
     deadline: "Jun 8, 2026",
     deadlineDate: "2026-06-08",
     deadlineTime: "09:00",
@@ -590,7 +622,7 @@ const MOCK_INFLUENCERS: ScriptInfluencer[] = [
     platform: "TikTok",
     manager: "Wollin",
     relationship: "Direct",
-    status: "Approved",
+    status: "Pending",
     deadline: "Jun 15, 2026",
     deadlineDate: "2026-06-15",
     deadlineTime: "15:30",
@@ -605,7 +637,7 @@ const MOCK_INFLUENCERS: ScriptInfluencer[] = [
     platform: "Instagram",
     manager: "Moca",
     relationship: "MCN",
-    status: "Pending",
+    status: "Approved",
     deadline: "Jun 11, 2026",
     deadlineDate: "2026-06-11",
     deadlineTime: "20:00",
@@ -620,7 +652,7 @@ const MOCK_INFLUENCERS: ScriptInfluencer[] = [
     platform: "YouTube",
     manager: "Chris",
     relationship: "Manager",
-    status: "Waiting for Approval",
+    status: "Approved",
     deadline: "Jun 9, 2026",
     deadlineDate: "2026-06-09",
     deadlineTime: "11:00",
@@ -635,7 +667,7 @@ const MOCK_INFLUENCERS: ScriptInfluencer[] = [
     platform: "Instagram",
     manager: "Wollin",
     relationship: "Direct",
-    status: "Pending",
+    status: "Waiting for Approval",
     deadline: "Jun 14, 2026",
     deadlineDate: "2026-06-14",
     deadlineTime: "10:00",
@@ -814,8 +846,13 @@ function StatusPill({
       )}
     >
       {label}
-      <span className={cn("tabular-nums", active ? "text-brand" : "text-gray-400")}>
-        ({count})
+      <span
+        className={cn(
+          "inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums leading-none",
+          active ? "bg-brand/15 text-brand" : "bg-gray-100 text-gray-600"
+        )}
+      >
+        {count}
       </span>
     </button>
   );
@@ -867,6 +904,61 @@ type ScriptBilingualTranslation = {
   targetLanguage: string;
 };
 
+type ReferenceScriptsTranslation = {
+  sourceLanguage: string;
+  targetLanguage: string;
+  items: ScriptIdeaBody[];
+};
+
+function translateScriptIdeaBody(
+  idea: ScriptIdea,
+  sourceLanguage: string,
+  targetLanguage: string
+): ScriptIdeaBody {
+  return parseIdeaBody(
+    stripMockTranslationPrefix(
+      mockTranslateText(formatIdeaBody(idea), sourceLanguage, targetLanguage)
+    ),
+    idea
+  );
+}
+
+function ReferenceScriptBilingualCard({
+  idea,
+  translation,
+  targetLanguage,
+}: {
+  idea: ScriptIdea;
+  translation: ScriptIdeaBody;
+  targetLanguage: string;
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4">
+      <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
+        {idea.title}
+      </span>
+      <p className="mt-2 text-xs leading-relaxed text-gray-600">{idea.summary}</p>
+      <div className="mt-3">
+        <ReferenceScriptIdeaBodyFields
+          hook={idea.hook}
+          coreFlow={idea.coreFlow}
+          executionNotes={idea.executionNotes}
+          cta={idea.cta}
+        />
+      </div>
+
+      <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
+        <div className="border-b border-gray-100 bg-gray-50/60 px-3 py-2 text-xs font-medium text-gray-600">
+          Translation ({targetLanguage})
+        </div>
+        <div className="min-h-[180px] bg-gray-50/40 px-3 py-3">
+          <ReferenceScriptIdeaBodyFields {...translation} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ScriptBilingualPanel({
   source,
   sourceLanguage,
@@ -900,7 +992,7 @@ function ScriptBilingualPanel({
             onChange={(e) => onSourceChange(e.target.value)}
             placeholder={sourcePlaceholder}
             className={cn(
-              "resize-none rounded-none border-0 bg-white text-[13px] leading-relaxed shadow-none focus-visible:ring-0",
+              "field-sizing-fixed max-h-[240px] w-full resize-none overflow-y-auto rounded-none border-0 bg-white text-[13px] leading-relaxed shadow-none focus-visible:ring-0",
               minHeightClass
             )}
           />
@@ -913,7 +1005,7 @@ function ScriptBilingualPanel({
             value={translation}
             onChange={(e) => onTranslationChange(e.target.value)}
             className={cn(
-              "resize-none rounded-none border-0 bg-gray-50/40 text-[13px] leading-relaxed shadow-none focus-visible:ring-0",
+              "field-sizing-fixed max-h-[240px] w-full resize-none overflow-y-auto rounded-none border-0 bg-gray-50/40 text-[13px] leading-relaxed shadow-none focus-visible:ring-0",
               minHeightClass
             )}
           />
@@ -1188,6 +1280,205 @@ function ScriptTranslatorDialogBody({
             Cancel
           </Button>
           <Button type="button" variant="brand" className="h-9 px-4 text-[13px]" onClick={handleConfirm}>
+            Confirm
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ReferenceScriptTranslatorCard({
+  idea,
+  translation,
+  hasTranslation,
+}: {
+  idea: ScriptIdea;
+  translation?: ScriptIdeaBody;
+  hasTranslation: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
+          {idea.title}
+        </span>
+        <span className="text-xs leading-relaxed text-gray-600">{idea.summary}</span>
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <div className="min-h-[220px] overflow-y-auto rounded-lg border border-gray-200 bg-white px-3 py-3">
+            <ReferenceScriptIdeaBodyFields
+              hook={idea.hook}
+              coreFlow={idea.coreFlow}
+              executionNotes={idea.executionNotes}
+              cta={idea.cta}
+            />
+          </div>
+          <div className="min-h-[220px] overflow-y-auto rounded-lg border border-gray-200 bg-gray-50/40 px-3 py-3">
+            {hasTranslation && translation ? (
+              <ReferenceScriptIdeaBodyFields {...translation} />
+            ) : (
+              <div className="flex h-full min-h-[220px] items-center justify-center px-4 text-center text-[13px] leading-relaxed text-gray-400">
+                Select a target language to generate translated scripts.
+              </div>
+            )}
+          </div>
+        </div>
+    </div>
+  );
+}
+
+function ScriptReferenceTranslatorDialog({
+  open,
+  onOpenChange,
+  ideas,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  ideas: ScriptIdea[];
+  onConfirm: (result: ReferenceScriptsTranslation) => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <ScriptReferenceTranslatorDialogBody
+      key={ideas.map((idea) => idea.title).join("|")}
+      ideas={ideas}
+      onOpenChange={onOpenChange}
+      onConfirm={onConfirm}
+    />
+  );
+}
+
+function ScriptReferenceTranslatorDialogBody({
+  ideas,
+  onOpenChange,
+  onConfirm,
+}: {
+  ideas: ScriptIdea[];
+  onOpenChange: (open: boolean) => void;
+  onConfirm: (result: ReferenceScriptsTranslation) => void;
+}) {
+  const [sourceLanguage, setSourceLanguage] = useState(DEFAULT_SOURCE_LANGUAGE);
+  const [targetLanguage, setTargetLanguage] = useState("");
+  const [translations, setTranslations] = useState<ScriptIdeaBody[]>([]);
+  const [hasGenerated, setHasGenerated] = useState(false);
+
+  const combinedSource = useMemo(
+    () => ideas.map((idea) => formatIdeaBody(idea)).join("\n\n"),
+    [ideas]
+  );
+  const detectedLabel = useMemo(() => detectSourceLanguageLabel(combinedSource), [combinedSource]);
+
+  const targetOptions = useMemo(() => {
+    if (sourceLanguage === AUTO_DETECT_LANGUAGE) return TARGET_LANGUAGE_OPTIONS;
+    return TARGET_LANGUAGE_OPTIONS.filter((option) => option.value !== sourceLanguage);
+  }, [sourceLanguage]);
+
+  useEffect(() => {
+    if (!targetLanguage) return;
+    if (targetOptions.some((option) => option.value === targetLanguage)) return;
+    setTargetLanguage("");
+    setTranslations([]);
+    setHasGenerated(false);
+  }, [targetLanguage, targetOptions]);
+
+  const handleTargetLanguageChange = (value: string) => {
+    setTargetLanguage(value);
+    if (!value) {
+      setTranslations([]);
+      setHasGenerated(false);
+      return;
+    }
+
+    setTranslations(
+      ideas.map((idea) => translateScriptIdeaBody(idea, sourceLanguage, value))
+    );
+    setHasGenerated(true);
+  };
+
+  const handleConfirm = () => {
+    if (!targetLanguage || !hasGenerated) return;
+    onConfirm({
+      sourceLanguage,
+      targetLanguage,
+      items: translations,
+    });
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent
+        className="grid max-h-[90vh] grid-rows-[auto_auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-4xl"
+        showCloseButton
+      >
+        <div className="shrink-0 border-b border-gray-100 px-6 py-4">
+          <div className="flex items-start gap-3 pr-8">
+            <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
+              <Languages size={18} strokeWidth={2} />
+            </span>
+            <div>
+              <DialogTitle className="text-base font-semibold text-gray-900">
+                Translator
+              </DialogTitle>
+              <DialogDescription className="mt-1 text-xs text-gray-500">
+                Translate each reference script individually, then confirm to sync the translated
+                content back into the tab.
+              </DialogDescription>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid shrink-0 grid-cols-1 gap-4 px-6 pt-4 pb-0 lg:grid-cols-2">
+          <TranslatorLanguageTabs
+            value={sourceLanguage}
+            onValueChange={(value) => {
+              setSourceLanguage(value);
+              setTargetLanguage("");
+              setTranslations([]);
+              setHasGenerated(false);
+            }}
+            options={SOURCE_LANGUAGE_OPTIONS}
+            detectedLabel={detectedLabel}
+          />
+          <TranslatorLanguageTabs
+            value={targetLanguage}
+            onValueChange={handleTargetLanguageChange}
+            options={targetOptions}
+          />
+        </div>
+
+        <div className="min-h-0 overflow-y-auto overscroll-contain">
+          <div className="space-y-4 px-6 py-5">
+            {ideas.map((idea, index) => (
+              <ReferenceScriptTranslatorCard
+                key={`${idea.title}-${index}`}
+                idea={idea}
+                translation={translations[index]}
+                hasTranslation={hasGenerated}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="relative z-10 flex shrink-0 items-center justify-end gap-3 border-t border-gray-100 bg-white px-6 py-4">
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-9 px-4 text-[13px] text-gray-500 hover:text-gray-800"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="brand"
+            className="h-9 px-4 text-[13px]"
+            disabled={!hasGenerated}
+            onClick={handleConfirm}
+          >
             Confirm
           </Button>
         </div>
@@ -1504,7 +1795,7 @@ export default function CampaignHubScriptView({
     Record<string, ScriptIdea[]>
   >({});
   const [scriptsTranslationById, setScriptsTranslationById] = useState<
-    Record<string, ScriptBilingualTranslation>
+    Record<string, ReferenceScriptsTranslation>
   >({});
   const [translatorOpen, setTranslatorOpen] = useState(false);
   const [translatorForId, setTranslatorForId] = useState<string | null>(null);
@@ -1527,24 +1818,24 @@ export default function CampaignHubScriptView({
   const [statusById, setStatusById] = useState<Record<string, ScriptStatus>>(() =>
     Object.fromEntries(MOCK_INFLUENCERS.map((row) => [row.id, row.status]))
   );
+  const [draftSyncTick, setDraftSyncTick] = useState(0);
 
   useEffect(() => {
-    setStatusById((prev) => {
+    const sync = () => setDraftSyncTick((value) => value + 1);
+    sync();
+    return subscribeScriptDraftChanges(sync);
+  }, []);
+
+  useEffect(() => {
+    setH5LinkById((prev) => {
       const next = { ...prev };
       let changed = false;
 
       for (const row of MOCK_INFLUENCERS) {
-        const latest = getScriptDraftSubmissions(row.id).at(-1);
-        if (latest?.status === "Approved" && next[row.id] !== "Approved") {
-          next[row.id] = "Approved";
-          changed = true;
-        } else if (
-          latest?.status === "Revision Needed" &&
-          next[row.id] !== "Waiting for Approval"
-        ) {
-          next[row.id] = "Waiting for Approval";
-          changed = true;
-        }
+        if (next[row.id]) continue;
+        if (!getScriptBriefPublished(row.id)) continue;
+        next[row.id] = buildMockH5Link(row.id);
+        changed = true;
       }
 
       return changed ? next : prev;
@@ -1555,9 +1846,9 @@ export default function CampaignHubScriptView({
     () =>
       MOCK_INFLUENCERS.map((row) => ({
         ...row,
-        status: statusById[row.id] ?? row.status,
+        status: resolveScriptStatusFromDraft(row.id, statusById[row.id] ?? row.status),
       })),
-    [statusById]
+    [statusById, draftSyncTick]
   );
 
   const filtered = useMemo(() => {
@@ -1626,7 +1917,6 @@ export default function CampaignHubScriptView({
     ? mergeCampaignScriptAttachments(attachmentsById[selected.id] ?? [])
     : [];
   const selectedReferenceIdeas = selected ? (referenceScriptIdeasById[selected.id] ?? []) : [];
-  const selectedReferenceScripts = formatReferenceScriptsForStorage(selectedReferenceIdeas);
   const hasReferenceScripts = selectedReferenceIdeas.length > 0;
   const selectedScriptsTranslation = selected ? scriptsTranslationById[selected.id] : undefined;
   const selectedH5Link = selected ? h5LinkById[selected.id] : undefined;
@@ -1645,6 +1935,39 @@ export default function CampaignHubScriptView({
 
   const handleSaveAndPublish = () => {
     if (!selected) return;
+
+    const deadline = { ...DEFAULT_DEADLINE, ...deadlineById[selected.id] };
+    const deadlineParts = getSubmissionDeadlineParts(deadline);
+    const deadlineLabel = deadlineParts
+      ? [deadlineParts.dateTime, deadlineParts.timezone].filter(Boolean).join(" ")
+      : "";
+
+    const guidelinesTranslation = guidelinesTranslationById[selected.id];
+    const ideas = referenceScriptIdeasById[selected.id] ?? [];
+    const scriptsTranslation = scriptsTranslationById[selected.id];
+
+    saveScriptBriefPublished(selected.id, {
+      guidelines:
+        guidelinesTranslation?.translation?.trim() ||
+        guidelinesById[selected.id]?.trim() ||
+        "",
+      attachments: mergeCampaignScriptAttachments(attachmentsById[selected.id] ?? []).map(
+        (attachment) => ({
+          name: attachment.name,
+          locked: attachment.locked,
+        })
+      ),
+      referenceScripts: ideas.map((idea, index) => {
+        const original = formatIdeaBody(idea);
+        const translatedBody = scriptsTranslation?.items[index];
+        return {
+          title: idea.title,
+          original,
+          translation: translatedBody ? formatScriptIdeaBody(translatedBody) : original,
+        };
+      }),
+      deadlineLabel,
+    });
 
     if (isBriefPublished) {
       showPublishToast("Brief updated successfully.");
@@ -1979,7 +2302,7 @@ export default function CampaignHubScriptView({
                               }))
                             }
                             placeholder="Enter content guidelines for this creator."
-                            className="min-h-[120px] resize-none text-[13px]"
+                            className="min-h-[120px] resize-none border-gray-200 bg-white text-[13px] focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/25"
                           />
                         )}
                         {selected ? (
@@ -2014,37 +2337,23 @@ export default function CampaignHubScriptView({
                         </div>
                         {hasReferenceScripts ? (
                           selectedScriptsTranslation ? (
-                            <ScriptBilingualPanel
-                              source={selectedReferenceScripts}
-                              sourceLanguage={selectedScriptsTranslation.sourceLanguage}
-                              translation={selectedScriptsTranslation.translation}
-                              targetLanguage={selectedScriptsTranslation.targetLanguage}
-                              onSourceChange={(value) =>
-                                setReferenceScriptIdeasById((prev) => ({
-                                  ...prev,
-                                  [selected.id]: [
-                                    {
-                                      title: "Reference Scripts",
-                                      summary: "",
-                                      hook: value,
-                                      coreFlow: "",
-                                      executionNotes: "",
-                                      cta: "",
-                                    },
-                                  ],
-                                }))
-                              }
-                              onTranslationChange={(value) =>
-                                setScriptsTranslationById((prev) => ({
-                                  ...prev,
-                                  [selected.id]: {
-                                    ...selectedScriptsTranslation,
-                                    translation: value,
-                                  },
-                                }))
-                              }
-                              minHeightClass="min-h-[200px]"
-                            />
+                            <div className="space-y-3">
+                              {selectedReferenceIdeas.map((idea, index) => (
+                                <ReferenceScriptBilingualCard
+                                  key={`${idea.title}-${index}`}
+                                  idea={idea}
+                                  translation={
+                                    selectedScriptsTranslation.items[index] ?? {
+                                      hook: idea.hook,
+                                      coreFlow: idea.coreFlow,
+                                      executionNotes: idea.executionNotes,
+                                      cta: idea.cta,
+                                    }
+                                  }
+                                  targetLanguage={selectedScriptsTranslation.targetLanguage}
+                                />
+                              ))}
+                            </div>
                           ) : (
                             <div className="space-y-3">
                               {selectedReferenceIdeas.map((idea, index) => (
@@ -2125,7 +2434,6 @@ export default function CampaignHubScriptView({
                     <ScriptKolDraftPanel
                       kolId={selected.id}
                       kolName={selected.name}
-                      kolStatus={selected.status}
                       onApproved={() => handleDraftApproved(selected.id)}
                       onNeedsRevision={() => handleDraftNeedsRevision(selected.id)}
                     />
@@ -2198,24 +2506,19 @@ export default function CampaignHubScriptView({
               }}
               sourcePlaceholder="Enter content guidelines for this creator."
             />
-            <ScriptTranslatorDialog
+            <ScriptReferenceTranslatorDialog
               open={scriptsTranslatorOpenForSelected}
               onOpenChange={(open) => {
                 setScriptsTranslatorOpen(open);
                 if (!open) setScriptsTranslatorForId(null);
               }}
-              source={selectedReferenceScripts}
+              ideas={selectedReferenceIdeas}
               onConfirm={(result) => {
-                if (result.translation) {
-                  setScriptsTranslationById((prev) => ({
-                    ...prev,
-                    [selected.id]: {
-                      sourceLanguage: result.sourceLanguage,
-                      translation: result.translation,
-                      targetLanguage: result.targetLanguage,
-                    },
-                  }));
-                }
+                if (!selected) return;
+                setScriptsTranslationById((prev) => ({
+                  ...prev,
+                  [selected.id]: result,
+                }));
               }}
             />
             <ScriptGenerateIdeasDialog

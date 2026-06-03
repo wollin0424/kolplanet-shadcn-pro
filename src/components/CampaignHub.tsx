@@ -78,7 +78,7 @@ function HubStatus({
   return (
     <span
       className={cn(
-        "inline-flex w-fit max-w-full items-center rounded-full border px-3 py-2 text-xs font-semibold leading-none whitespace-nowrap",
+        "inline-flex w-fit max-w-full items-center rounded-full border px-3 py-2 text-xs font-medium leading-none whitespace-nowrap",
         statusToneClass[tone]
       )}
     >
