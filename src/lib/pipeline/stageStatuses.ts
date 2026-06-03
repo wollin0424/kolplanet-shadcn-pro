@@ -231,7 +231,7 @@ export const POSTING_STATUS_CONFIG: Record<PostingStatus, StageBadgeConfig> = {
 
 export const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, StageBadgeConfig> = {
   "Partially Paid": { label: "Partially Paid", tone: "sky", progressStep: 3 },
-  Validated: { label: "Validated", tone: "green", progressStep: 5, completed: true },
+  Validated: { label: "Validated", tone: "amber", progressStep: 4 },
   "All Paid": { label: "All Paid", tone: "green", progressStep: 5, completed: true },
   "Waiting for Validation": {
     label: "Waiting for Validation",

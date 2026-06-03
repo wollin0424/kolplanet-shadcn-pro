@@ -375,7 +375,7 @@ export default function CampaignHub({
             />
             <HubStatusList>
               <HubStatus label="Waiting for Validation" value={1} tone="amber" />
-              <HubStatus label="Validated" value={1} tone="green" />
+              <HubStatus label="Validated" value={1} tone="amber" />
               <HubStatus label="Partially Paid" value={1} tone="sky" />
               <HubStatus label="Rejected" value={1} tone="red" />
             </HubStatusList>

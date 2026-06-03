@@ -2116,7 +2116,7 @@ export default function CampaignHubScriptView({
               />
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-3">
-              <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-normal text-gray-500">
+              <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-gray-600">
                 Overdue
                 <Switch
                   checked={overdueOnly}
