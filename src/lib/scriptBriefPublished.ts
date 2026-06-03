@@ -9,11 +9,24 @@ export type ScriptBriefPublishedReferenceScript = {
   translation: string;
 };
 
+export type ScriptBriefPublishedGuidelines = {
+  original: string;
+  translation: string;
+};
+
+export type ScriptBriefPublishedDeadline = {
+  date: string;
+  time?: string;
+  timezone?: string;
+};
+
 export type ScriptBriefPublished = {
-  guidelines: string;
+  guidelines: ScriptBriefPublishedGuidelines;
   attachments: ScriptBriefPublishedAttachment[];
   referenceScripts: ScriptBriefPublishedReferenceScript[];
-  deadlineLabel: string;
+  deadline: ScriptBriefPublishedDeadline;
+  /** @deprecated Legacy single-line deadline — migrated on read */
+  deadlineLabel?: string;
 };
 
 const STORAGE_KEY = "kolplanet:script-brief-published:v1";

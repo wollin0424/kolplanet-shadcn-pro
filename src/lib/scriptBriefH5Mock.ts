@@ -1,5 +1,9 @@
 import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
 import {
+  parseLegacyDeadlineLabel,
+  type ScriptBriefDeadline,
+} from "@/lib/scriptBriefDeadline";
+import {
   getScriptBriefPublished,
   type ScriptBriefPublished,
 } from "@/lib/scriptBriefPublished";
@@ -15,14 +19,17 @@ export type ScriptBriefH5Data = {
     avatar: string;
   };
   referenceWebsiteUrl: string;
-  guidelines: string;
+  guidelines: {
+    original: string;
+    translation: string;
+  };
   attachments: Array<{ name: string; locked?: boolean }>;
   referenceScripts: Array<{
     title: string;
     original: string;
     translation: string;
   }>;
-  deadlineLabel: string;
+  deadline: ScriptBriefDeadline;
   submissionLimit: number;
 };
 
@@ -55,10 +62,16 @@ export function getScriptBriefH5Defaults(kolId: string): ScriptBriefH5Data {
       avatar: getMockInfluencerAvatar(kolId === "1" ? "s1" : kolId),
     },
     referenceWebsiteUrl: "https://example.com/campaign-reference",
-    guidelines:
-      kolId === "s1"
-        ? "3456789"
-        : "Highlight the campaign value naturally and keep delivery easy to follow.",
+    guidelines: {
+      original:
+        kolId === "s1"
+          ? "3456789"
+          : "Highlight the campaign value naturally and keep delivery easy to follow.",
+      translation:
+        kolId === "s1"
+          ? "3456789"
+          : "Harap ikuti panduan kampanye, gunakan nada yang natural, dan sesuaikan penyampaian dengan audiens lokal.",
+    },
     attachments:
       kolId === "s1"
         ? [
@@ -67,9 +80,50 @@ export function getScriptBriefH5Defaults(kolId: string): ScriptBriefH5Data {
           ]
         : [],
     referenceScripts: [DEFAULT_SCRIPT],
-    deadlineLabel: "Jun 16, 2026 11:53 UTC+08:00",
+    deadline: {
+      date: "Jun 16, 2026",
+      time: "11:53 AM",
+      timezone: "UTC+08:00",
+    },
     submissionLimit: 5,
   };
+}
+
+function normalizePublishedGuidelines(
+  guidelines: ScriptBriefPublished["guidelines"] | string | undefined,
+  fallback: ScriptBriefH5Data["guidelines"]
+): ScriptBriefH5Data["guidelines"] {
+  if (!guidelines) return fallback;
+  if (typeof guidelines === "string") {
+    const text = guidelines.trim();
+    return { original: text || fallback.original, translation: text || fallback.translation };
+  }
+  return {
+    original: guidelines.original?.trim() || fallback.original,
+    translation:
+      guidelines.translation?.trim() ||
+      guidelines.original?.trim() ||
+      fallback.translation,
+  };
+}
+
+function normalizePublishedDeadline(
+  published: ScriptBriefPublished,
+  fallback: ScriptBriefH5Data["deadline"]
+): ScriptBriefH5Data["deadline"] {
+  if (published.deadline?.date?.trim()) {
+    return {
+      date: published.deadline.date.trim(),
+      time: published.deadline.time?.trim() || undefined,
+      timezone: published.deadline.timezone?.trim() || undefined,
+    };
+  }
+
+  if (published.deadlineLabel?.trim()) {
+    return parseLegacyDeadlineLabel(published.deadlineLabel);
+  }
+
+  return fallback;
 }
 
 function mergeScriptBriefPublished(
@@ -80,7 +134,7 @@ function mergeScriptBriefPublished(
 
   return {
     ...defaults,
-    guidelines: published.guidelines?.trim() || defaults.guidelines,
+    guidelines: normalizePublishedGuidelines(published.guidelines, defaults.guidelines),
     attachments: Array.isArray(published.attachments)
       ? published.attachments
       : defaults.attachments,
@@ -88,7 +142,7 @@ function mergeScriptBriefPublished(
       Array.isArray(published.referenceScripts) && published.referenceScripts.length > 0
         ? published.referenceScripts
         : defaults.referenceScripts,
-    deadlineLabel: published.deadlineLabel?.trim() || defaults.deadlineLabel,
+    deadline: normalizePublishedDeadline(published, defaults.deadline),
   };
 }
 

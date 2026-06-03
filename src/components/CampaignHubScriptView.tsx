@@ -13,7 +13,8 @@ import {
 import { ScriptKolDraftPanel } from "@/components/ScriptKolDraftPanel";
 import { getScriptDraftSubmissions, subscribeScriptDraftChanges } from "@/lib/scriptDraftSubmissions";
 import { getScriptBriefPublished, saveScriptBriefPublished } from "@/lib/scriptBriefPublished";
-import { getStageBadgeClass } from "@/lib/pipeline/stageStatuses";
+import { formatDeadlineDisplayTime } from "@/lib/scriptBriefDeadline";
+import { getStageBadgeClass, STAGE_STATUS_PILL_CLASS } from "@/lib/pipeline/stageStatuses";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -144,20 +145,17 @@ function getSubmissionDeadlineParts(deadline: SubmissionDeadline) {
   const [year, month, day] = deadline.date.split("-").map(Number);
   if (!year || !month || !day) return null;
 
-  const dateTimeParts: string[] = [
-    new Date(year, month - 1, day).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }),
-  ];
-
-  if (deadline.time) {
-    dateTimeParts.push(deadline.time);
-  }
+  const date = new Date(year, month - 1, day).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const time = deadline.time ? formatDeadlineDisplayTime(deadline.time) : undefined;
 
   return {
-    dateTime: dateTimeParts.join(" "),
+    date,
+    time,
+    dateTime: [date, deadline.time].filter(Boolean).join(" "),
     timezone: deadline.timezone || undefined,
   };
 }
@@ -864,10 +862,12 @@ function StatusPill({
 
 function ScriptEmptyWorkspace() {
   return (
-    <div className="flex flex-col items-center justify-center px-8 py-16 text-center">
-      <span className="mb-4 inline-flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-50 to-sky-50 text-brand">
-        <Sparkles size={26} strokeWidth={1.75} />
-      </span>
+    <div className="-translate-y-6 flex flex-col items-center justify-center px-8 py-16 text-center">
+      <img
+        src="/script-empty-workspace.png"
+        alt=""
+        className="mb-4 size-24 object-contain drop-shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
+      />
       <p className="max-w-sm text-sm font-medium text-gray-600">
         Select an influencer on the left to open the Script workspace.
       </p>
@@ -1953,19 +1953,19 @@ export default function CampaignHubScriptView({
 
     const deadline = { ...DEFAULT_DEADLINE, ...deadlineById[selected.id] };
     const deadlineParts = getSubmissionDeadlineParts(deadline);
-    const deadlineLabel = deadlineParts
-      ? [deadlineParts.dateTime, deadlineParts.timezone].filter(Boolean).join(" ")
-      : "";
-
     const guidelinesTranslation = guidelinesTranslationById[selected.id];
     const ideas = referenceScriptIdeasById[selected.id] ?? [];
     const scriptsTranslation = scriptsTranslationById[selected.id];
 
+    const guidelinesOriginal = guidelinesById[selected.id]?.trim() ?? "";
+    const guidelinesTranslated =
+      guidelinesTranslation?.translation?.trim() || guidelinesOriginal;
+
     saveScriptBriefPublished(selected.id, {
-      guidelines:
-        guidelinesTranslation?.translation?.trim() ||
-        guidelinesById[selected.id]?.trim() ||
-        "",
+      guidelines: {
+        original: guidelinesOriginal,
+        translation: guidelinesTranslated,
+      },
       attachments: mergeCampaignScriptAttachments(attachmentsById[selected.id] ?? []).map(
         (attachment) => ({
           name: attachment.name,
@@ -1981,7 +1981,13 @@ export default function CampaignHubScriptView({
           translation: translatedBody ? formatScriptIdeaBody(translatedBody) : original,
         };
       }),
-      deadlineLabel,
+      deadline: deadlineParts
+        ? {
+            date: deadlineParts.date,
+            time: deadlineParts.time,
+            timezone: deadlineParts.timezone,
+          }
+        : { date: "" },
     });
 
     if (isBriefPublished) {
@@ -2195,10 +2201,7 @@ export default function CampaignHubScriptView({
                             <p className="mt-1 truncate text-xs text-gray-500">{row.handle}</p>
                           </div>
                           <span
-                            className={cn(
-                              "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-tight",
-                              STATUS_BADGE[row.status]
-                            )}
+                            className={cn(STAGE_STATUS_PILL_CLASS, STATUS_BADGE[row.status])}
                           >
                             {row.status}
                           </span>

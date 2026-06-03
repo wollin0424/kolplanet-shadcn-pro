@@ -16,7 +16,7 @@ import {
   type ScriptDraftMessageAuthor,
   type ScriptDraftSubmission,
 } from "@/lib/scriptDraftSubmissions";
-import { getStageBadgeClass } from "@/lib/pipeline/stageStatuses";
+import { getStageBadgeClass, STAGE_STATUS_PILL_CLASS } from "@/lib/pipeline/stageStatuses";
 import { cn } from "@/lib/utils";
 import {
   ArrowRight,
@@ -47,12 +47,7 @@ function formatKolStatusLabel(status: KolScriptStatus) {
 
 function KolStatusBadge({ status }: { status: KolScriptStatus }) {
   return (
-    <span
-      className={cn(
-        "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-tight",
-        KOL_STATUS_BADGE[status]
-      )}
-    >
+    <span className={cn(STAGE_STATUS_PILL_CLASS, KOL_STATUS_BADGE[status])}>
       {formatKolStatusLabel(status)}
     </span>
   );
@@ -304,7 +299,7 @@ function DiscussionComposer({
         className={cn(
           "flex items-center border border-gray-200 bg-white",
           variant === "h5"
-            ? "h-11 rounded-full px-1.5 shadow-sm"
+            ? "h-11 rounded-full px-1.5"
             : "h-[46px] rounded-lg px-2"
         )}
       >
@@ -463,7 +458,8 @@ export function H5ScriptSubmissionCard({
         </div>
         <span
           className={cn(
-            "shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-tight",
+            STAGE_STATUS_PILL_CLASS,
+            "px-2.5 text-[11px]",
             submission.status === "Approved"
               ? KOL_STATUS_BADGE.Approved
               : KOL_STATUS_BADGE["Under Review"]

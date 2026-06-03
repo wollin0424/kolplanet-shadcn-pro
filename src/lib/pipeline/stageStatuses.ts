@@ -125,6 +125,10 @@ export function getStageBadgeClass(tone: BadgeTone) {
   return badgeClass[tone];
 }
 
+/** Compact status pill — Script hub KOL list + draft review (21px tall). */
+export const STAGE_STATUS_PILL_CLASS =
+  "inline-flex shrink-0 items-center h-[21px] rounded-full border px-2 text-[10px] font-semibold leading-none";
+
 const toneDotClass: Record<BadgeTone, string> = {
   amber: "bg-amber-400",
   sky: "bg-sky-400",

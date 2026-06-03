@@ -18,6 +18,7 @@ import {
   TrendingUp,
 } from "@/lib/icons";
 import { getScriptBriefH5Data, getScriptBriefH5Defaults } from "@/lib/scriptBriefH5Mock";
+import { hasScriptBriefDeadline, type ScriptBriefDeadline } from "@/lib/scriptBriefDeadline";
 import { subscribeScriptBriefPublishedChanges } from "@/lib/scriptBriefPublished";
 import { cn } from "@/lib/utils";
 import { H5ScriptSubmissionCard } from "@/components/ScriptKolDraftPanel";
@@ -94,26 +95,23 @@ function scriptViewTabClass(active: boolean) {
   );
 }
 
-function ReferenceScriptCard({
-  title,
+function BilingualTabPanel({
   original,
   translation,
   view,
   onViewChange,
+  emptyLabel = "No content available.",
 }: {
-  title: string;
   original: string;
   translation: string;
   view: "original" | "translation";
   onViewChange: (view: "original" | "translation") => void;
+  emptyLabel?: string;
 }) {
-  const activeText = view === "original" ? original : translation;
+  const activeText = (view === "original" ? original : translation).trim() || emptyLabel;
 
   return (
-    <div className="space-y-3">
-      <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
-        {title}
-      </span>
+    <>
       <div className="flex w-full min-w-0 items-center gap-0.5 overflow-x-auto border-b border-gray-100">
         <button
           type="button"
@@ -131,7 +129,64 @@ function ReferenceScriptCard({
         </button>
       </div>
       <CopyableBlock text={activeText} />
+    </>
+  );
+}
+
+function ReferenceScriptCard({
+  title,
+  original,
+  translation,
+  view,
+  onViewChange,
+}: {
+  title: string;
+  original: string;
+  translation: string;
+  view: "original" | "translation";
+  onViewChange: (view: "original" | "translation") => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
+        {title}
+      </span>
+      <BilingualTabPanel
+        original={original}
+        translation={translation}
+        view={view}
+        onViewChange={onViewChange}
+        emptyLabel="No script content available."
+      />
     </div>
+  );
+}
+
+function SubmissionDeadlineDisplay({ deadline }: { deadline: ScriptBriefDeadline }) {
+  if (!hasScriptBriefDeadline(deadline)) {
+    return <p className="text-[13px] text-gray-500">No deadline set yet.</p>;
+  }
+
+  return (
+    <p className="flex flex-wrap items-baseline gap-x-1.5 text-[13px] leading-relaxed text-gray-700">
+      <span>{deadline.date}</span>
+      {deadline.time ? (
+        <>
+          <span aria-hidden className="text-gray-300">
+            ·
+          </span>
+          <span>{deadline.time}</span>
+        </>
+      ) : null}
+      {deadline.timezone ? (
+        <>
+          <span aria-hidden className="text-gray-300">
+            ·
+          </span>
+          <span className="text-gray-500">{deadline.timezone}</span>
+        </>
+      ) : null}
+    </p>
   );
 }
 
@@ -159,6 +214,7 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
   const [referenceScriptViews, setReferenceScriptViews] = useState<
     Record<number, "original" | "translation">
   >({});
+  const [guidelinesView, setGuidelinesView] = useState<"original" | "translation">("original");
   const submissionLimit = getScriptDraftSubmissionLimit();
 
   useEffect(() => {
@@ -183,7 +239,7 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
   const discussionLocked = submissions[submissions.length - 1]?.status === "Approved";
 
   return (
-    <div className="flex min-h-full flex-col bg-[#f4f6f9]">
+    <div className="flex min-h-full flex-col bg-white">
       <header className="sticky top-0 z-20 border-b border-gray-100 bg-white px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -202,7 +258,7 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
         </div>
       </header>
 
-      <main className="flex-1 space-y-5 px-4 py-5 pb-8">
+      <div className="bg-white px-5 pt-5 pb-5">
         <section>
           <p className="text-[11px] font-semibold tracking-wide text-gray-400 uppercase">
             {data.campaignSubtitle}
@@ -213,7 +269,7 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
           <p className="mt-2 text-[13px] leading-relaxed text-gray-500">{data.intro}</p>
         </section>
 
-        <section className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-3 py-2.5 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+        <section className="mt-4 flex items-center gap-3 rounded-2xl bg-gray-50 px-3 py-2.5">
           <InfluencerAvatar
             src={data.influencer.avatar}
             alt={data.influencer.name}
@@ -234,19 +290,25 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
           href={data.referenceWebsiteUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
+          className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
         >
           <LinkIcon size={14} strokeWidth={2} />
           Reference Website
           <ExternalLink size={12} strokeWidth={2} />
         </a>
+      </div>
 
+      <main className="flex-1 space-y-5 bg-[#f4f6f9] px-4 py-5 pb-8">
         <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
           <SectionHeading icon={FileText} title="Content Guidelines" />
-          <div className="rounded-xl border border-gray-100 bg-gray-50/70 px-3.5 py-3">
-            <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700">
-              {data.guidelines || "No content guidelines yet."}
-            </p>
+          <div className="space-y-3">
+            <BilingualTabPanel
+              original={data.guidelines.original}
+              translation={data.guidelines.translation}
+              view={guidelinesView}
+              onViewChange={setGuidelinesView}
+              emptyLabel="No content guidelines yet."
+            />
           </div>
           {data.attachments.length > 0 ? (
             <div className="mt-3 flex w-full flex-wrap gap-2">
@@ -294,7 +356,7 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
         <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
           <SectionHeading icon={Calendar} title="Submission Deadline" />
           <div className="rounded-xl border border-gray-100 bg-gray-50/70 px-3.5 py-3">
-            <p className="text-[13px] font-medium text-gray-800">{data.deadlineLabel}</p>
+            <SubmissionDeadlineDisplay deadline={data.deadline} />
           </div>
         </section>
 
@@ -304,7 +366,7 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Write your script, or share a document link here..."
-            className="min-h-[120px] resize-none border-gray-200 bg-white text-[13px] focus-visible:border-brand focus-visible:ring-brand/25"
+            className="min-h-[120px] resize-none border-gray-200 bg-white text-[13px] focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand/15"
           />
           <p className="mt-2 text-right text-[11px] text-gray-400">
             Submissions: {submissionCount}/{submissionLimit}
