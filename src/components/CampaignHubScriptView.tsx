@@ -749,7 +749,7 @@ function ScriptAttachmentPill({
       >
         PDF
       </span>
-      <span className="max-w-[200px] truncate text-xs font-medium text-gray-800">{name}</span>
+      <span className="max-w-[200px] truncate text-xs font-normal text-gray-500">{name}</span>
       {locked ? (
         <span
           className="ml-0.5 inline-flex size-5 shrink-0 items-center justify-center text-gray-500"
@@ -841,17 +841,17 @@ function StatusPill({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-xs font-semibold transition-colors",
+        "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-xs transition-colors",
         active
-          ? "border-brand bg-brand-50 text-brand"
-          : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+          ? "border-brand/30 bg-brand-50/60 font-normal text-brand/80"
+          : "border-gray-200 bg-white font-normal text-gray-500 hover:border-gray-300 hover:bg-gray-50"
       )}
     >
       {label}
       <span
         className={cn(
-          "inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums leading-none",
-          active ? "bg-white text-brand" : "bg-gray-100 text-gray-600"
+          "inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1 text-[10px] tabular-nums leading-none",
+          active ? "bg-white font-normal text-brand/80" : "bg-gray-100 font-normal text-gray-500"
         )}
       >
         {count}
@@ -868,7 +868,7 @@ function ScriptEmptyWorkspace() {
         alt=""
         className="mb-4 size-24 object-contain drop-shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
       />
-      <p className="max-w-sm text-sm font-medium text-gray-600">
+      <p className="max-w-sm text-sm font-normal text-gray-500">
         Select an influencer on the left to open the Script workspace.
       </p>
     </div>
@@ -987,7 +987,7 @@ function ScriptBilingualPanel({
   minHeightClass?: string;
 }) {
   const textareaClass = cn(
-    "field-sizing-fixed max-h-[240px] w-full resize-none overflow-y-auto rounded-lg border-0 bg-transparent px-3 py-3 text-[13px] leading-relaxed shadow-none focus-visible:ring-0",
+    "field-sizing-fixed max-h-[240px] w-full resize-none overflow-y-auto rounded-lg border-0 bg-transparent px-3 py-3 text-[13px] font-normal leading-relaxed text-gray-600 placeholder:text-gray-400 shadow-none focus-visible:ring-0",
     minHeightClass
   );
   const fieldShellClass =
@@ -2116,7 +2116,7 @@ export default function CampaignHubScriptView({
               />
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-3">
-              <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-gray-600">
+              <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-normal text-gray-500">
                 Overdue
                 <Switch
                   checked={overdueOnly}
@@ -2232,14 +2232,14 @@ export default function CampaignHubScriptView({
             ) : (
               <div className="flex h-full min-h-0 flex-col overflow-hidden">
                 <div className="shrink-0 border-b border-gray-100 px-5 py-4">
-                  <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5">
+                  <div className="inline-grid grid-cols-2 rounded-lg border border-gray-200 bg-gray-50 p-0.5">
                     <button
                       type="button"
                       onClick={() => setWorkspaceTab("brief")}
                       className={cn(
-                        "rounded-md px-4 py-1.5 text-xs font-semibold transition-colors",
+                        "rounded-md px-4 py-1.5 text-center text-xs font-semibold transition-colors",
                         workspaceTab === "brief"
-                          ? "bg-white text-gray-900 shadow-sm"
+                          ? "bg-white text-brand shadow-sm"
                           : "text-gray-500 hover:text-gray-700"
                       )}
                     >
@@ -2249,9 +2249,9 @@ export default function CampaignHubScriptView({
                       type="button"
                       onClick={() => setWorkspaceTab("draft")}
                       className={cn(
-                        "rounded-md px-4 py-1.5 text-xs font-semibold transition-colors",
+                        "rounded-md px-4 py-1.5 text-center text-xs font-semibold transition-colors",
                         workspaceTab === "draft"
-                          ? "bg-white text-gray-900 shadow-sm"
+                          ? "bg-white text-brand shadow-sm"
                           : "text-gray-500 hover:text-gray-700"
                       )}
                     >
@@ -2320,7 +2320,7 @@ export default function CampaignHubScriptView({
                               }))
                             }
                             placeholder="Enter content guidelines for this creator."
-                            className="min-h-[120px] resize-none border-gray-200 bg-white text-[13px] focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/25"
+                            className="min-h-[120px] resize-none border-gray-200 bg-white text-[13px] font-normal text-gray-600 placeholder:text-gray-400 focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/25"
                           />
                         )}
                         {selected ? (

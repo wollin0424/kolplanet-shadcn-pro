@@ -459,7 +459,6 @@ export function H5ScriptSubmissionCard({
         <span
           className={cn(
             STAGE_STATUS_PILL_CLASS,
-            "px-2.5 text-[11px]",
             submission.status === "Approved"
               ? KOL_STATUS_BADGE.Approved
               : KOL_STATUS_BADGE["Under Review"]

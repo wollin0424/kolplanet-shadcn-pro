@@ -183,7 +183,7 @@ function SubmissionDeadlineDisplay({ deadline }: { deadline: ScriptBriefDeadline
           <span aria-hidden className="text-gray-300">
             ·
           </span>
-          <span className="text-gray-500">{deadline.timezone}</span>
+          <span>{deadline.timezone}</span>
         </>
       ) : null}
     </p>
@@ -239,7 +239,7 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
   const discussionLocked = submissions[submissions.length - 1]?.status === "Approved";
 
   return (
-    <div className="flex min-h-full flex-col bg-white">
+    <div className="flex min-h-full flex-col bg-[#f4f6f9]">
       <header className="sticky top-0 z-20 border-b border-gray-100 bg-white px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -258,8 +258,8 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
         </div>
       </header>
 
-      <div className="bg-white px-5 pt-5 pb-5">
-        <section>
+      <main className="flex-1 space-y-5 px-4 py-5 pb-8">
+        <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
           <p className="text-[11px] font-semibold tracking-wide text-gray-400 uppercase">
             {data.campaignSubtitle}
           </p>
@@ -267,38 +267,35 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
             {data.campaignTitle}
           </h1>
           <p className="mt-2 text-[13px] leading-relaxed text-gray-500">{data.intro}</p>
-        </section>
 
-        <section className="mt-4 flex items-center gap-3 rounded-2xl bg-gray-50 px-3 py-2.5">
-          <InfluencerAvatar
-            src={data.influencer.avatar}
-            alt={data.influencer.name}
-            platform="Instagram"
-            size="md"
-            fallback={data.influencer.name.slice(0, 2)}
-            fallbackClassName="bg-violet-100 text-violet-700"
-          />
-          <div className="min-w-0">
-            <p className="truncate text-[13px] font-semibold text-gray-900">
-              {data.influencer.handle}
-            </p>
-            <p className="truncate text-[11px] text-gray-500">{data.influencer.platform}</p>
+          <div className="mt-4 flex items-center gap-3 rounded-2xl bg-gray-50 px-3 py-2.5">
+            <InfluencerAvatar
+              src={data.influencer.avatar}
+              alt={data.influencer.name}
+              platform="Instagram"
+              size="md"
+              fallback={data.influencer.name.slice(0, 2)}
+              fallbackClassName="bg-violet-100 text-violet-700"
+            />
+            <div className="min-w-0">
+              <p className="truncate text-[13px] font-semibold text-gray-900">
+                {data.influencer.handle}
+              </p>
+              <p className="truncate text-[11px] text-gray-500">{data.influencer.platform}</p>
+            </div>
           </div>
+
+          <a
+            href={data.referenceWebsiteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
+          >
+            <LinkIcon size={14} strokeWidth={2} />
+            Reference Website
+            <ExternalLink size={12} strokeWidth={2} />
+          </a>
         </section>
-
-        <a
-          href={data.referenceWebsiteUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
-        >
-          <LinkIcon size={14} strokeWidth={2} />
-          Reference Website
-          <ExternalLink size={12} strokeWidth={2} />
-        </a>
-      </div>
-
-      <main className="flex-1 space-y-5 bg-[#f4f6f9] px-4 py-5 pb-8">
         <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
           <SectionHeading icon={FileText} title="Content Guidelines" />
           <div className="space-y-3">
