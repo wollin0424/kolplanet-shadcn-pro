@@ -81,11 +81,6 @@ function ImportResultPanel({ result }: { result: ImportResult }) {
 
   return (
     <div className="flex flex-col items-center px-2 pt-1 pb-1 text-center">
-      <img
-        src="/import-result-success.png"
-        alt=""
-        className="mb-5 w-32 h-[111px] object-contain drop-shadow-[0_12px_28px_rgba(15,23,42,0.22)]"
-      />
       <h3 className="text-base font-semibold text-gray-900">Import Result</h3>
       <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[13px] text-gray-700">
         <span>
@@ -190,7 +185,7 @@ export default function ImportLogisticsTemplateSheet({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mb-[16px] px-6 py-2">
+        <div className="mt-[24px] mb-[24px] px-6 py-2">
           {phase === "loading" ? (
             <ImportLoadingPanel />
           ) : phase === "upload" ? (
