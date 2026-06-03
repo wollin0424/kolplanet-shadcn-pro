@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -193,16 +193,21 @@ function SubmissionDeadlineDisplay({ deadline }: { deadline: ScriptBriefDeadline
 function SectionHeading({
   icon: Icon,
   title,
+  trailing,
 }: {
   icon: typeof FileText;
   title: string;
+  trailing?: ReactNode;
 }) {
   return (
-    <div className="mb-3 flex items-center gap-2">
-      <span className="inline-flex size-7 items-center justify-center rounded-lg bg-brand-50 text-brand">
-        <Icon size={15} strokeWidth={2} />
-      </span>
-      <h2 className="text-[15px] font-semibold text-gray-900">{title}</h2>
+    <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
+          <Icon size={15} strokeWidth={2} />
+        </span>
+        <h2 className="text-[15px] font-semibold text-gray-900">{title}</h2>
+      </div>
+      {trailing}
     </div>
   );
 }
@@ -284,20 +289,24 @@ export default function ScriptBriefH5View({ kolId }: { kolId: string }) {
               <p className="truncate text-[11px] text-gray-500">{data.influencer.platform}</p>
             </div>
           </div>
-
-          <a
-            href={data.referenceWebsiteUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
-          >
-            <LinkIcon size={14} strokeWidth={2} />
-            Reference Website
-            <ExternalLink size={12} strokeWidth={2} />
-          </a>
         </section>
         <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-          <SectionHeading icon={FileText} title="Content Guidelines" />
+          <SectionHeading
+            icon={FileText}
+            title="Content Guidelines"
+            trailing={
+              <a
+                href={data.referenceWebsiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
+              >
+                <LinkIcon size={14} strokeWidth={2} />
+                Reference Website
+                <ExternalLink size={12} strokeWidth={2} />
+              </a>
+            }
+          />
           <div className="space-y-3">
             <BilingualTabPanel
               original={data.guidelines.original}
