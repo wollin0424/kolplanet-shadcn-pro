@@ -470,13 +470,7 @@ function ScriptIdeaCard({
   onSave: (patch: Pick<ScriptIdea, "hook" | "coreFlow" | "executionNotes" | "cta">) => void;
   onRemove: () => void;
 }) {
-  const [draftBody, setDraftBody] = useState("");
-
-  useEffect(() => {
-    if (editing) {
-      setDraftBody(formatIdeaBody(idea));
-    }
-  }, [editing, idea]);
+  const [draftBody, setDraftBody] = useState(() => formatIdeaBody(idea));
 
   return (
     <div
@@ -1140,14 +1134,6 @@ function ScriptTranslatorDialogBody({
   const [translation, setTranslation] = useState("");
   const [hasGenerated, setHasGenerated] = useState(false);
 
-  useEffect(() => {
-    setDraftSource(source);
-    setTranslation("");
-    setHasGenerated(false);
-    setSourceLanguage(DEFAULT_SOURCE_LANGUAGE);
-    setTargetLanguage("");
-  }, [source]);
-
   const detectedLabel = useMemo(() => detectSourceLanguageLabel(draftSource), [draftSource]);
 
   const targetOptions = useMemo(() => {
@@ -1155,13 +1141,10 @@ function ScriptTranslatorDialogBody({
     return TARGET_LANGUAGE_OPTIONS.filter((option) => option.value !== sourceLanguage);
   }, [sourceLanguage]);
 
-  useEffect(() => {
-    if (!targetLanguage) return;
-    if (targetOptions.some((option) => option.value === targetLanguage)) return;
-    setTargetLanguage("");
-    setTranslation("");
-    setHasGenerated(false);
-  }, [targetLanguage, targetOptions]);
+  const resolvedTargetLanguage =
+    targetLanguage && targetOptions.some((option) => option.value === targetLanguage)
+      ? targetLanguage
+      : "";
 
   const handleGenerateTranslation = (
     target: string,
@@ -1191,7 +1174,7 @@ function ScriptTranslatorDialogBody({
         hasGenerated && translation.trim()
           ? stripMockTranslationPrefix(translation)
           : "",
-      targetLanguage,
+      targetLanguage: resolvedTargetLanguage,
     });
     onOpenChange(false);
   };
@@ -1253,7 +1236,7 @@ function ScriptTranslatorDialogBody({
 
           <div className="flex min-h-0 min-w-0 flex-col gap-2">
             <TranslatorLanguageTabs
-              value={targetLanguage}
+              value={resolvedTargetLanguage}
               onValueChange={handleTargetLanguageChange}
               options={targetOptions}
             />
@@ -1391,13 +1374,10 @@ function ScriptReferenceTranslatorDialogBody({
     return TARGET_LANGUAGE_OPTIONS.filter((option) => option.value !== sourceLanguage);
   }, [sourceLanguage]);
 
-  useEffect(() => {
-    if (!targetLanguage) return;
-    if (targetOptions.some((option) => option.value === targetLanguage)) return;
-    setTargetLanguage("");
-    setTranslations([]);
-    setHasGenerated(false);
-  }, [targetLanguage, targetOptions]);
+  const resolvedTargetLanguage =
+    targetLanguage && targetOptions.some((option) => option.value === targetLanguage)
+      ? targetLanguage
+      : "";
 
   const handleTargetLanguageChange = (value: string) => {
     setTargetLanguage(value);
@@ -1414,10 +1394,10 @@ function ScriptReferenceTranslatorDialogBody({
   };
 
   const handleConfirm = () => {
-    if (!targetLanguage || !hasGenerated) return;
+    if (!resolvedTargetLanguage || !hasGenerated) return;
     onConfirm({
       sourceLanguage,
-      targetLanguage,
+      targetLanguage: resolvedTargetLanguage,
       items: translations,
     });
     onOpenChange(false);
@@ -1459,7 +1439,7 @@ function ScriptReferenceTranslatorDialogBody({
             detectedLabel={detectedLabel}
           />
           <TranslatorLanguageTabs
-            value={targetLanguage}
+            value={resolvedTargetLanguage}
             onValueChange={handleTargetLanguageChange}
             options={targetOptions}
           />
@@ -1718,7 +1698,7 @@ function ScriptGenerateIdeasDialogBody({
               <div className="space-y-4">
                 {ideas.map((idea, index) => (
                   <ScriptIdeaCard
-                    key={`${idea.title}-${index}`}
+                    key={`${idea.title}-${index}-${editingIndex === index ? "edit" : "view"}`}
                     idea={idea}
                     selected={selected.has(index)}
                     editing={editingIndex === index}
@@ -1827,7 +1807,15 @@ export default function CampaignHubScriptView({
         ])
       )
   );
-  const [h5LinkById, setH5LinkById] = useState<Record<string, string>>({});
+  const [h5LinkById, setH5LinkById] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    for (const row of MOCK_INFLUENCERS) {
+      if (getScriptBriefPublished(row.id)) {
+        initial[row.id] = buildMockH5Link(row.id);
+      }
+    }
+    return initial;
+  });
   const [publishToast, setPublishToast] = useState<string | null>(null);
   const publishToastTimerRef = useRef<number | null>(null);
   const [statusById, setStatusById] = useState<Record<string, ScriptStatus>>(() =>
@@ -1837,24 +1825,7 @@ export default function CampaignHubScriptView({
 
   useEffect(() => {
     const sync = () => setDraftSyncTick((value) => value + 1);
-    sync();
     return subscribeScriptDraftChanges(sync);
-  }, []);
-
-  useEffect(() => {
-    setH5LinkById((prev) => {
-      const next = { ...prev };
-      let changed = false;
-
-      for (const row of MOCK_INFLUENCERS) {
-        if (next[row.id]) continue;
-        if (!getScriptBriefPublished(row.id)) continue;
-        next[row.id] = buildMockH5Link(row.id);
-        changed = true;
-      }
-
-      return changed ? next : prev;
-    });
   }, []);
 
   const influencers = useMemo(
@@ -1948,6 +1919,19 @@ export default function CampaignHubScriptView({
     }, 3200);
   };
 
+  const clearPublishToast = () => {
+    setPublishToast(null);
+    if (publishToastTimerRef.current) {
+      window.clearTimeout(publishToastTimerRef.current);
+      publishToastTimerRef.current = null;
+    }
+  };
+
+  const selectInfluencer = (id: string | null) => {
+    clearPublishToast();
+    setSelectedId(id);
+  };
+
   const handleSaveAndPublish = () => {
     if (!selected) return;
 
@@ -2024,13 +2008,6 @@ export default function CampaignHubScriptView({
     };
   }, []);
 
-  useEffect(() => {
-    setPublishToast(null);
-    if (publishToastTimerRef.current) {
-      window.clearTimeout(publishToastTimerRef.current);
-      publishToastTimerRef.current = null;
-    }
-  }, [selectedId]);
   const selectedDeadline = selected
     ? { ...DEFAULT_DEADLINE, ...deadlineById[selected.id] }
     : DEFAULT_DEADLINE;
@@ -2081,7 +2058,7 @@ export default function CampaignHubScriptView({
                 active={statusFilter === filter}
                 onClick={() => {
                   setStatusFilter(filter);
-                  setSelectedId(null);
+                  selectInfluencer(null);
                   closeTranslators();
                 }}
               />
@@ -2160,13 +2137,13 @@ export default function CampaignHubScriptView({
                     role="button"
                     tabIndex={0}
                     onClick={() => {
-                      setSelectedId(row.id);
+                      selectInfluencer(row.id);
                       closeTranslators();
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        setSelectedId(row.id);
+                        selectInfluencer(row.id);
                         closeTranslators();
                       }
                     }}
@@ -2472,7 +2449,7 @@ export default function CampaignHubScriptView({
                     <div className="flex items-center justify-end gap-3">
                       <button
                         type="button"
-                        onClick={() => setSelectedId(null)}
+                        onClick={() => selectInfluencer(null)}
                         className="text-[13px] font-medium text-gray-500 transition-colors hover:text-gray-800"
                       >
                         Cancel

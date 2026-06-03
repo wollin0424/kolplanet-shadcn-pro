@@ -81,12 +81,27 @@ function KolScriptPanel({
   );
 }
 
+function buildH5FeedbackThreadItems(messages: ScriptDraftSubmission["messages"]) {
+  let itemNumber = 0;
+  return messages.map((message) => {
+    const lines = message.content
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    const numberedLines = lines.map((line) => {
+      itemNumber += 1;
+      return { line, number: itemNumber };
+    });
+    return { message, numberedLines };
+  });
+}
+
 function H5FeedbackThread({
   messages,
 }: {
   messages: ScriptDraftSubmission["messages"];
 }) {
-  let itemNumber = 0;
+  const threadItems = buildH5FeedbackThreadItems(messages);
 
   return (
     <>
@@ -97,42 +112,32 @@ function H5FeedbackThread({
         <span className="text-[12px] font-medium text-gray-600">Client Feedback</span>
       </div>
       <div className="space-y-3">
-        {messages.map((message) => {
-          const lines = message.content
-            .split("\n")
-            .map((line) => line.trim())
-            .filter(Boolean);
-
-          return (
-            <div key={message.id} className="space-y-1">
-              <p className="text-[11px] text-gray-400">{message.sentAt}</p>
-              {lines.length > 0 ? (
-                <div className="space-y-0.5 text-[13px] leading-relaxed text-gray-800">
-                  {lines.map((line, index) => {
-                    itemNumber += 1;
-                    return (
-                      <p key={`${message.id}-line-${index}`}>
-                        {itemNumber}. {line}
-                      </p>
-                    );
-                  })}
-                </div>
-              ) : null}
-              {message.images?.length ? (
-                <div className="flex flex-wrap gap-2 pt-0.5">
-                  {message.images.map((src, imageIndex) => (
-                    <img
-                      key={`${message.id}-img-${imageIndex}`}
-                      src={src}
-                      alt={`Attachment ${imageIndex + 1}`}
-                      className="size-14 rounded-md border border-gray-200 object-cover"
-                    />
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
+        {threadItems.map(({ message, numberedLines }) => (
+          <div key={message.id} className="space-y-1">
+            <p className="text-[11px] text-gray-400">{message.sentAt}</p>
+            {numberedLines.length > 0 ? (
+              <div className="space-y-0.5 text-[13px] leading-relaxed text-gray-800">
+                {numberedLines.map(({ line, number }, index) => (
+                  <p key={`${message.id}-line-${index}`}>
+                    {number}. {line}
+                  </p>
+                ))}
+              </div>
+            ) : null}
+            {message.images?.length ? (
+              <div className="flex flex-wrap gap-2 pt-0.5">
+                {message.images.map((src, imageIndex) => (
+                  <img
+                    key={`${message.id}-img-${imageIndex}`}
+                    src={src}
+                    alt={`Attachment ${imageIndex + 1}`}
+                    className="size-14 rounded-md border border-gray-200 object-cover"
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ))}
       </div>
     </>
   );
@@ -588,10 +593,6 @@ function KolDraftReviewCard({
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const isApproved = submission.status === "Approved";
   const feedbackReadOnly = isApproved || discussionLocked;
-
-  useEffect(() => {
-    setExpanded(defaultExpanded);
-  }, [defaultExpanded, submission.version]);
 
   const handleConfirmApprove = () => {
     if (isApproved) return;
