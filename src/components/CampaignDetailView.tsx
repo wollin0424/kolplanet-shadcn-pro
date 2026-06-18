@@ -11,10 +11,14 @@ export default function CampaignDetailView({
   campaignId,
   initialTab,
   initialHubSection,
+  initialScriptKolId,
+  figmaCapture,
 }: {
   campaignId: string;
   initialTab?: CampaignTab;
   initialHubSection?: HubSection;
+  initialScriptKolId?: string;
+  figmaCapture?: boolean;
 }) {
   const [tab, setTab] = useState<CampaignTab>(initialTab ?? "Pipeline");
   const [hubMountKey, setHubMountKey] = useState(0);
@@ -41,6 +45,8 @@ export default function CampaignDetailView({
             campaignId={campaignId}
             onNavigate={setTab}
             initialSection={hubMountKey === 0 ? initialHubSection : undefined}
+            initialScriptKolId={hubMountKey === 0 ? initialScriptKolId : undefined}
+            figmaCapture={hubMountKey === 0 ? figmaCapture : undefined}
           />
         ) : (
           <PagePlaceholder

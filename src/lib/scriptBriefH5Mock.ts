@@ -54,7 +54,7 @@ export function getScriptBriefH5Defaults(kolId: string): ScriptBriefH5Data {
     campaignTitle: "Budweiser 2024 Sales Promotion Campaign",
     campaignSubtitle: "Campaign Brief",
     intro:
-      "Before drafting, review the campaign outline, reference materials, and submission schedule carefully.",
+      "Review the brief, references, and deadline before starting your script.",
     influencer: {
       name: "Amelia Stone",
       handle: "@instagram ins",

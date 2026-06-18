@@ -30,7 +30,7 @@ Do not import from `lucide-react` in feature code — add the icon to `icons.ts`
 | `ChevronDown` | Selects, dropdowns |
 | `ChevronLeft` | Back, pagination prev |
 | `ChevronRight` | Hub go, pagination next |
-| `CircleDashed` | Pipeline stage pending |
+| `CircleDashed` | Pipeline stage not started (Pending) |
 | `Clapperboard` | Hub script cell |
 | `Clock` | Scheduled step |
 | `Columns3` | Column picker |

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import FigmaCaptureMode from "@/components/FigmaCaptureMode";
 
 // Inter — primary UI font. Using variable axes for weight range 100–900
 // so every font-weight renders from one file with no layout shift.
@@ -38,6 +39,7 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="h-full bg-gray-50">
+        <FigmaCaptureMode />
         {process.env.NODE_ENV === "development" ? (
           <Script
             src="https://mcp.figma.com/mcp/html-to-design/capture.js"

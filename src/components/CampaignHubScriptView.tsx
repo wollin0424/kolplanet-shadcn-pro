@@ -44,14 +44,12 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
-import { denseDateInputClass, denseSelectTriggerClass } from "@/lib/toolbarControls";
 import { cn } from "@/lib/utils";
 import {
   ArrowRight,
   Calendar,
   Check,
   CheckCircle2,
-  Clock,
   Copy,
   Download,
   ExternalLink,
@@ -158,6 +156,207 @@ function getSubmissionDeadlineParts(deadline: SubmissionDeadline) {
     dateTime: [date, deadline.time].filter(Boolean).join(" "),
     timezone: deadline.timezone || undefined,
   };
+}
+
+function SubmissionDeadlineFields({
+  deadline,
+  onChange,
+}: {
+  deadline: SubmissionDeadline;
+  onChange: (patch: Partial<SubmissionDeadline>) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-gray-700">Date</label>
+        <input
+          type="date"
+          value={deadline.date}
+          onChange={(e) => onChange({ date: e.target.value })}
+          className={cn(
+            "h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 shadow-[0_1px_2px_rgba(0,0,0,0.03)] outline-none transition-colors focus:border-brand/40 focus:ring-2 focus:ring-brand/10",
+            !deadline.date && "text-gray-400"
+          )}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-gray-700">Time</label>
+          <input
+            type="time"
+            value={deadline.time}
+            onChange={(e) => onChange({ time: e.target.value })}
+            className={cn(
+              "h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 shadow-[0_1px_2px_rgba(0,0,0,0.03)] outline-none transition-colors focus:border-brand/40 focus:ring-2 focus:ring-brand/10",
+              !deadline.time && "text-gray-400"
+            )}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-gray-700">Time Zone</label>
+          <Select
+            modal={false}
+            value={deadline.timezone || null}
+            onValueChange={(value) => {
+              if (value) onChange({ timezone: value });
+            }}
+          >
+            <SelectTrigger
+              size="default"
+              className={cn(
+                "h-10! w-full rounded-lg border-gray-200 bg-white px-3 py-0 text-sm shadow-[0_1px_2px_rgba(0,0,0,0.03)]",
+                !deadline.timezone && "[&_[data-slot=select-value]]:text-gray-400"
+              )}
+            >
+              <SelectValue placeholder="Select zone" />
+            </SelectTrigger>
+            <SelectContent alignItemWithTrigger={false}>
+              {DEADLINE_TIMEZONE_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value} className="text-xs">
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InfluencerDeadlineButton({
+  parts,
+  onEdit,
+}: {
+  parts: ReturnType<typeof getSubmissionDeadlineParts> | null;
+  onEdit: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onEdit();
+      }}
+      className={cn(
+        "group/deadline flex w-full min-w-0 items-center gap-1.5 rounded-md border border-dashed border-gray-200 bg-gray-50/70 px-2 py-1 text-left transition-all",
+        "hover:border-brand/35 hover:bg-brand-50/50 hover:shadow-[0_1px_3px_rgba(59,130,246,0.08)]"
+      )}
+      aria-label={parts ? "Edit submission deadline" : "Set submission deadline"}
+    >
+      <Calendar
+        size={12}
+        strokeWidth={2}
+        className="shrink-0 text-gray-400 transition-colors group-hover/deadline:text-brand"
+      />
+      <span className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden whitespace-nowrap">
+        <span className="shrink-0 text-[11px] font-semibold text-gray-700 group-hover/deadline:text-gray-900">
+          Deadline
+        </span>
+        {parts ? (
+          <>
+            <span className="shrink-0 text-[11px] text-gray-300">·</span>
+            <span className="min-w-0 truncate text-[11px] font-normal text-gray-500 group-hover/deadline:text-gray-600">
+              {parts.dateTime}
+            </span>
+            {parts.timezone ? (
+              <span className="shrink-0 rounded-sm bg-white px-1 py-px text-[10px] font-normal leading-none text-gray-400 ring-1 ring-gray-100">
+                {parts.timezone}
+              </span>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <span className="shrink-0 text-[11px] text-gray-300">·</span>
+            <span className="text-[11px] font-medium text-gray-400 group-hover/deadline:text-brand">
+              Tap to set
+            </span>
+          </>
+        )}
+      </span>
+      <Pencil
+        size={11}
+        strokeWidth={2}
+        className="shrink-0 text-gray-300 transition-colors group-hover/deadline:text-brand"
+      />
+    </button>
+  );
+}
+
+function SubmissionDeadlineDialog({
+  open,
+  onOpenChange,
+  influencerName,
+  deadline,
+  onChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  influencerName: string;
+  deadline: SubmissionDeadline;
+  onChange: (patch: Partial<SubmissionDeadline>) => void;
+}) {
+  const preview = getSubmissionDeadlineParts(deadline);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[420px]"
+        showCloseButton
+      >
+        <div className="border-b border-gray-100 bg-gradient-to-b from-gray-50/80 to-white px-6 pt-6 pb-5">
+          <div className="flex items-start gap-3 pr-6">
+            <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand ring-1 ring-brand/10">
+              <Calendar size={18} strokeWidth={2} />
+            </span>
+            <div className="min-w-0 pt-0.5">
+              <DialogTitle className="text-base font-semibold text-gray-900">
+                Submission Deadline
+              </DialogTitle>
+              <DialogDescription className="mt-1 truncate text-sm text-gray-500">
+                {influencerName}
+              </DialogDescription>
+            </div>
+          </div>
+          {preview ? (
+            <div className="mt-4 rounded-xl border border-gray-100 bg-white px-3.5 py-2.5 text-xs text-gray-600 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+              <span className="font-medium text-gray-500">Preview · </span>
+              {preview.dateTime}
+              {preview.timezone ? (
+                <span className="ml-1.5 rounded bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-400">
+                  {preview.timezone}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="px-6 py-5">
+          <SubmissionDeadlineFields deadline={deadline} onChange={onChange} />
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-gray-100 bg-gray-50/50 px-6 py-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 px-4 text-[13px]"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            className="h-9 px-4 text-[13px]"
+            onClick={() => onOpenChange(false)}
+          >
+            Save
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 const sectionActionLinkClass =
@@ -353,6 +552,32 @@ const SCRIPT_IDEA_STYLES = [
 
 function formatReferenceScriptsForStorage(ideas: ScriptIdea[]) {
   return ideas.map(formatScriptIdeaForStorage).join("\n\n");
+}
+
+function getFigmaCaptureScriptSeed(kolId: string) {
+  const row = MOCK_INFLUENCERS.find((r) => r.id === kolId) ?? MOCK_INFLUENCERS[0];
+  const ideas = buildMockScriptIdeas("Campaign brief", row.name);
+  return {
+    guidelinesTranslation: {
+      sourceLanguage: "English",
+      targetLanguage: "English",
+      translation: `[English · from English] ${row.guidelines || "3456789"}`,
+    },
+    referenceScriptIdeas: ideas,
+    scriptsTranslation: {
+      sourceLanguage: "English",
+      targetLanguage: "English",
+      items: ideas.map((idea) =>
+        translateScriptIdeaBody(idea, "English", "English")
+      ),
+    },
+    h5Link: buildMockH5Link(kolId),
+    deadline: {
+      date: row.deadlineDate,
+      time: row.deadlineTime,
+      timezone: row.timezone || "UTC+08:00",
+    },
+  };
 }
 
 function buildMockScriptIdeas(prompt: string, influencerName: string): ScriptIdea[] {
@@ -1132,17 +1357,15 @@ function ScriptTranslatorDialogBody({
   sourcePlaceholder: string;
 }) {
   const [draftSource, setDraftSource] = useState(source);
-  const [sourceLanguage, setSourceLanguage] = useState(DEFAULT_SOURCE_LANGUAGE);
-  const [targetLanguage, setTargetLanguage] = useState("");
+  const sourceLanguage = DEFAULT_SOURCE_LANGUAGE;
+  const [targetLanguage, setTargetLanguage] = useState("Bahasa Melayu");
   const [translation, setTranslation] = useState("");
   const [hasGenerated, setHasGenerated] = useState(false);
-
-  const detectedLabel = useMemo(() => detectSourceLanguageLabel(draftSource), [draftSource]);
 
   const targetOptions = useMemo(() => {
     if (sourceLanguage === AUTO_DETECT_LANGUAGE) return TARGET_LANGUAGE_OPTIONS;
     return TARGET_LANGUAGE_OPTIONS.filter((option) => option.value !== sourceLanguage);
-  }, [sourceLanguage]);
+  }, []);
 
   const resolvedTargetLanguage =
     targetLanguage && targetOptions.some((option) => option.value === targetLanguage)
@@ -1164,9 +1387,11 @@ function ScriptTranslatorDialogBody({
     setHasGenerated(true);
   };
 
-  const handleTargetLanguageChange = (value: string) => {
+  const handleTargetLanguageChange = (value: string | null) => {
+    if (!value) return;
     setTargetLanguage(value);
-    handleGenerateTranslation(value, sourceLanguage, draftSource);
+    setTranslation("");
+    setHasGenerated(false);
   };
 
   const handleConfirm = () => {
@@ -1210,19 +1435,11 @@ function ScriptTranslatorDialogBody({
           </div>
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-5 overflow-hidden px-6 py-5 lg:grid-cols-2">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-5 overflow-hidden px-6 py-5 lg:grid-cols-[minmax(0,1fr)_48px_minmax(0,1fr)]">
           <div className="flex min-h-0 min-w-0 flex-col gap-2">
-            <TranslatorLanguageTabs
-              value={sourceLanguage}
-              onValueChange={(value) => {
-                setSourceLanguage(value);
-                setTargetLanguage("");
-                setHasGenerated(false);
-                setTranslation("");
-              }}
-              options={SOURCE_LANGUAGE_OPTIONS}
-              detectedLabel={detectedLabel}
-            />
+            <div className="flex h-8 items-center justify-between gap-3">
+              <p className="text-[13px] font-semibold text-gray-700">Original</p>
+            </div>
             <div className={cn(editorBoxClass, "bg-white")}>
               <Textarea
                 value={draftSource}
@@ -1237,13 +1454,45 @@ function ScriptTranslatorDialogBody({
             </div>
           </div>
 
+          <div className="hidden items-center justify-center lg:flex">
+            <button
+              type="button"
+              onClick={() =>
+                handleGenerateTranslation(
+                  resolvedTargetLanguage,
+                  sourceLanguage,
+                  draftSource
+                )
+              }
+              disabled={!draftSource.trim() || !resolvedTargetLanguage}
+              className="inline-flex size-10 items-center justify-center rounded-full border border-gray-200 bg-white text-brand shadow-sm transition-colors hover:border-brand/30 hover:bg-brand-50 disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:border-gray-200 disabled:hover:bg-white"
+              aria-label="Generate translation"
+            >
+              <ArrowRight size={16} strokeWidth={2} />
+            </button>
+          </div>
+
           <div className="flex min-h-0 min-w-0 flex-col gap-2">
-            <TranslatorLanguageTabs
-              value={resolvedTargetLanguage}
-              onValueChange={handleTargetLanguageChange}
-              options={targetOptions}
-            />
-            <div className={cn(editorBoxClass, "bg-gray-50/90")}>
+            <div className="flex h-8 items-center justify-between gap-3">
+              <p className="text-[13px] font-semibold text-gray-700">Translation</p>
+              <Select
+                value={resolvedTargetLanguage}
+                onValueChange={handleTargetLanguageChange}
+                modal={false}
+              >
+                <SelectTrigger className="h-8 w-auto min-w-[150px] border-0 bg-transparent px-0 text-[13px] font-medium text-gray-800 shadow-none hover:text-brand focus-visible:ring-0 [&_svg]:ml-1">
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  {targetOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value} className="text-xs">
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className={cn(editorBoxClass, "bg-white")}>
               {hasGenerated && translation.trim() ? (
                 <Textarea
                   value={translation}
@@ -1255,11 +1504,29 @@ function ScriptTranslatorDialogBody({
                   )}
                 />
               ) : (
-                <div className="flex h-full items-center justify-center px-6 text-center text-[13px] leading-relaxed text-gray-400">
-                  Select a target language to generate the translated version.
+                <div className="flex h-full items-start px-4 py-3 text-[13px] leading-relaxed text-gray-400">
+                  Translation will appear here after you click the arrow.
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="flex justify-center lg:hidden">
+            <button
+              type="button"
+              onClick={() =>
+                handleGenerateTranslation(
+                  resolvedTargetLanguage,
+                  sourceLanguage,
+                  draftSource
+                )
+              }
+              disabled={!draftSource.trim() || !resolvedTargetLanguage}
+              className="inline-flex h-9 items-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-[13px] font-medium text-brand shadow-sm transition-colors hover:border-brand/30 hover:bg-brand-50 disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:border-gray-200 disabled:hover:bg-white"
+            >
+              Generate
+              <ArrowRight size={14} strokeWidth={2} />
+            </button>
           </div>
         </div>
 
@@ -1772,35 +2039,62 @@ function ScriptGenerateIdeasDialogBody({
 export default function CampaignHubScriptView({
   campaignId,
   onBack,
+  initialSelectedKolId,
+  figmaCapture,
+  variant = "script",
 }: {
   campaignId: string;
   onBack: () => void;
+  initialSelectedKolId?: string;
+  figmaCapture?: boolean;
+  variant?: "script" | "content";
 }) {
+  const isContentHub = variant === "content";
+  const captureKolId =
+    figmaCapture && initialSelectedKolId ? initialSelectedKolId : null;
+  const captureSeed = captureKolId ? getFigmaCaptureScriptSeed(captureKolId) : null;
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
   const [platformFilter, setPlatformFilter] = useState("All");
   const [managerFilter, setManagerFilter] = useState("All");
   const [query, setQuery] = useState("");
   const [overdueOnly, setOverdueOnly] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    initialSelectedKolId ?? null
+  );
   const [workspaceTab, setWorkspaceTab] = useState<"brief" | "draft">("brief");
   const [guidelinesById, setGuidelinesById] = useState<Record<string, string>>(() =>
     Object.fromEntries(MOCK_INFLUENCERS.map((row) => [row.id, row.guidelines]))
   );
   const [guidelinesTranslationById, setGuidelinesTranslationById] = useState<
     Record<string, ScriptBilingualTranslation>
-  >({});
+  >(() =>
+    captureKolId && captureSeed
+      ? { [captureKolId]: captureSeed.guidelinesTranslation }
+      : {}
+  );
   const [referenceScriptIdeasById, setReferenceScriptIdeasById] = useState<
     Record<string, ScriptIdea[]>
-  >({});
+  >(() =>
+    captureKolId && captureSeed
+      ? { [captureKolId]: captureSeed.referenceScriptIdeas }
+      : {}
+  );
   const [scriptsTranslationById, setScriptsTranslationById] = useState<
     Record<string, ReferenceScriptsTranslation>
-  >({});
+  >(() =>
+    captureKolId && captureSeed
+      ? { [captureKolId]: captureSeed.scriptsTranslation }
+      : {}
+  );
   const [translatorOpen, setTranslatorOpen] = useState(false);
   const [translatorForId, setTranslatorForId] = useState<string | null>(null);
   const [scriptsTranslatorOpen, setScriptsTranslatorOpen] = useState(false);
   const [scriptsTranslatorForId, setScriptsTranslatorForId] = useState<string | null>(null);
   const [generateOpen, setGenerateOpen] = useState(false);
-  const [deadlineById, setDeadlineById] = useState<Record<string, SubmissionDeadline>>({});
+  const [deadlineEditorId, setDeadlineEditorId] = useState<string | null>(null);
+  const [deadlineById, setDeadlineById] = useState<Record<string, SubmissionDeadline>>(() =>
+    captureKolId && captureSeed ? { [captureKolId]: captureSeed.deadline } : {}
+  );
   const [attachmentsById, setAttachmentsById] = useState<Record<string, ScriptAttachment[]>>(
     () =>
       Object.fromEntries(
@@ -1812,6 +2106,10 @@ export default function CampaignHubScriptView({
   );
   const [h5LinkById, setH5LinkById] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
+    if (captureKolId && captureSeed) {
+      initial[captureKolId] = captureSeed.h5Link;
+      return initial;
+    }
     for (const row of MOCK_INFLUENCERS) {
       if (getScriptBriefPublished(row.id)) {
         initial[row.id] = buildMockH5Link(row.id);
@@ -2011,8 +2309,22 @@ export default function CampaignHubScriptView({
     };
   }, []);
 
-  const selectedDeadline = selected
-    ? { ...DEFAULT_DEADLINE, ...deadlineById[selected.id] }
+  const deadlineEditorInfluencer = deadlineEditorId
+    ? (influencers.find((row) => row.id === deadlineEditorId) ?? null)
+    : null;
+
+  const deadlineEditorDeadline = deadlineEditorId
+    ? {
+        ...DEFAULT_DEADLINE,
+        ...(deadlineEditorInfluencer
+          ? {
+              date: deadlineEditorInfluencer.deadlineDate,
+              time: deadlineEditorInfluencer.deadlineTime,
+              timezone: deadlineEditorInfluencer.timezone,
+            }
+          : {}),
+        ...deadlineById[deadlineEditorId],
+      }
     : DEFAULT_DEADLINE;
 
   const patchDeadline = (id: string, patch: Partial<SubmissionDeadline>) => {
@@ -2049,7 +2361,7 @@ export default function CampaignHubScriptView({
       <div className="no-scrollbar flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
         <span className="sr-only">{campaignId}</span>
 
-        <CampaignHubDetailHeader title="Script" onBack={onBack} />
+        <CampaignHubDetailHeader title={isContentHub ? "Content" : "Script"} onBack={onBack} />
 
         <div className="shrink-0 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
           <div className="flex flex-wrap gap-2">
@@ -2157,46 +2469,42 @@ export default function CampaignHubScriptView({
                         : "border-transparent bg-white hover:border-gray-200 hover:bg-gray-50/80"
                     )}
                   >
-                    <div className="flex items-start gap-3">
-                      <InfluencerAvatar
-                        src={getMockInfluencerAvatar(row.id)}
-                        alt={row.name}
-                        platform={row.platform}
-                        size="md"
-                        fallback={initials(row.name)}
-                        fallbackClassName="bg-violet-100 text-violet-700"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="flex min-w-0 items-center gap-1">
-                              <span className="truncate text-sm font-semibold text-gray-900">
-                                {row.name}
-                              </span>
-                              <InfluencerMetaIcons
-                                kolManager={row.manager}
-                                relationship={row.relationship}
-                              />
+                    <div className="flex flex-col gap-2.5">
+                      <div className="flex items-start gap-3">
+                        <InfluencerAvatar
+                          src={getMockInfluencerAvatar(row.id)}
+                          alt={row.name}
+                          platform={row.platform}
+                          size="md"
+                          fallback={initials(row.name)}
+                          fallbackClassName="bg-violet-100 text-violet-700"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="flex min-w-0 items-center gap-1">
+                                <span className="truncate text-sm font-semibold text-gray-900">
+                                  {row.name}
+                                </span>
+                                <InfluencerMetaIcons
+                                  kolManager={row.manager}
+                                  relationship={row.relationship}
+                                />
+                              </div>
+                              <p className="mt-1 truncate text-xs text-gray-500">{row.handle}</p>
                             </div>
-                            <p className="mt-1 truncate text-xs text-gray-500">{row.handle}</p>
+                            <span
+                              className={cn(STAGE_STATUS_PILL_CLASS, STATUS_BADGE[row.status])}
+                            >
+                              {row.status}
+                            </span>
                           </div>
-                          <span
-                            className={cn(STAGE_STATUS_PILL_CLASS, STATUS_BADGE[row.status])}
-                          >
-                            {row.status}
-                          </span>
                         </div>
-                        {rowDeadlineParts ? (
-                          <p className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-gray-500">
-                            <span>Deadline: {rowDeadlineParts.dateTime}</span>
-                            {rowDeadlineParts.timezone ? (
-                              <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium leading-none text-gray-400">
-                                {rowDeadlineParts.timezone}
-                              </span>
-                            ) : null}
-                          </p>
-                        ) : null}
                       </div>
+                      <InfluencerDeadlineButton
+                        parts={rowDeadlineParts}
+                        onEdit={() => setDeadlineEditorId(row.id)}
+                      />
                     </div>
                   </div>
                 );
@@ -2211,43 +2519,45 @@ export default function CampaignHubScriptView({
               </div>
             ) : (
               <div className="flex h-full min-h-0 flex-col overflow-hidden">
-                <div className="shrink-0 border-b border-gray-100 px-5 py-4">
-                  <div className="inline-grid grid-cols-2 rounded-lg border border-gray-200 bg-gray-50 p-0.5">
-                    <button
-                      type="button"
-                      onClick={() => setWorkspaceTab("brief")}
-                      className={cn(
-                        "rounded-md px-4 py-1.5 text-center text-xs font-semibold transition-colors",
-                        workspaceTab === "brief"
-                          ? "bg-white text-brand shadow-sm"
-                          : "text-gray-500 hover:text-gray-700"
-                      )}
-                    >
-                      Brief & H5 Link
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setWorkspaceTab("draft")}
-                      className={cn(
-                        "rounded-md px-4 py-1.5 text-center text-xs font-semibold transition-colors",
-                        workspaceTab === "draft"
-                          ? "bg-white text-brand shadow-sm"
-                          : "text-gray-500 hover:text-gray-700"
-                      )}
-                    >
-                      KOL Draft
-                    </button>
+                {!isContentHub ? (
+                  <div className="shrink-0 border-b border-gray-100 px-5 py-4">
+                    <div className="grid w-full grid-cols-2 rounded-lg border border-gray-200 bg-gray-50 p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setWorkspaceTab("brief")}
+                        className={cn(
+                          "min-w-0 rounded-md px-4 py-2 text-center text-xs font-semibold transition-colors",
+                          workspaceTab === "brief"
+                            ? "bg-white text-brand shadow-sm"
+                            : "text-gray-500 hover:text-gray-700"
+                        )}
+                      >
+                        Brief & H5 Link
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setWorkspaceTab("draft")}
+                        className={cn(
+                          "min-w-0 rounded-md px-4 py-2 text-center text-xs font-semibold transition-colors",
+                          workspaceTab === "draft"
+                            ? "bg-white text-brand shadow-sm"
+                            : "text-gray-500 hover:text-gray-700"
+                        )}
+                      >
+                        KOL Draft
+                      </button>
+                    </div>
                   </div>
-                </div>
+                ) : null}
 
-                {workspaceTab === "brief" && selectedH5Link ? (
+                {(isContentHub || workspaceTab === "brief") && selectedH5Link ? (
                   <div className="shrink-0 border-b border-gray-100 px-5 py-3">
                     <ScriptH5LinkBar link={selectedH5Link} influencerId={selected.id} />
                   </div>
                 ) : null}
 
                 <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-5">
-                  {workspaceTab === "brief" ? (
+                  {isContentHub || workspaceTab === "brief" ? (
                     <div className="flex w-full min-w-0 flex-col gap-6">
                       <section>
                         <div className="mb-2 flex items-center gap-3">
@@ -2312,6 +2622,7 @@ export default function CampaignHubScriptView({
                         ) : null}
                       </section>
 
+                      {!isContentHub ? (
                       <section>
                         <div className="mb-2 flex items-center gap-3">
                           <h3 className="shrink-0 text-sm font-semibold text-gray-900">
@@ -2364,72 +2675,7 @@ export default function CampaignHubScriptView({
                           )
                         ) : null}
                       </section>
-
-                      <section>
-                        <h3 className="mb-3 text-sm font-semibold text-gray-900">
-                          Submission Deadline
-                        </h3>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="relative w-[148px] shrink-0">
-                            <input
-                              type="date"
-                              value={selectedDeadline.date}
-                              onChange={(e) =>
-                                patchDeadline(selected.id, { date: e.target.value })
-                              }
-                              className={cn(
-                                denseDateInputClass(),
-                                !selectedDeadline.date && "text-gray-400"
-                              )}
-                            />
-                            <Calendar
-                              size={14}
-                              className="pointer-events-none absolute top-1/2 right-3 z-0 -translate-y-1/2 text-gray-400"
-                            />
-                          </div>
-                          <div className="relative w-[148px] shrink-0">
-                            <input
-                              type="time"
-                              value={selectedDeadline.time}
-                              onChange={(e) =>
-                                patchDeadline(selected.id, { time: e.target.value })
-                              }
-                              className={cn(
-                                denseDateInputClass(),
-                                !selectedDeadline.time && "text-gray-400"
-                              )}
-                            />
-                            <Clock
-                              size={14}
-                              className="pointer-events-none absolute top-1/2 right-3 z-0 -translate-y-1/2 text-gray-400"
-                            />
-                          </div>
-                          <Select
-                            modal={false}
-                            value={selectedDeadline.timezone || null}
-                            onValueChange={(value) => {
-                              if (value) patchDeadline(selected.id, { timezone: value });
-                            }}
-                          >
-                            <SelectTrigger
-                              size="sm"
-                              className={cn(
-                                denseSelectTriggerClass("w-[148px] shrink-0"),
-                                !selectedDeadline.timezone && "[&_[data-slot=select-value]]:text-gray-400"
-                              )}
-                            >
-                              <SelectValue placeholder="Time Zone" />
-                            </SelectTrigger>
-                            <SelectContent alignItemWithTrigger={false}>
-                              {DEADLINE_TIMEZONE_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value} className="text-xs">
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </section>
+                      ) : null}
                     </div>
                   ) : (
                     <ScriptKolDraftPanel
@@ -2441,7 +2687,7 @@ export default function CampaignHubScriptView({
                   )}
                 </div>
 
-                {workspaceTab === "brief" ? (
+                {(isContentHub || workspaceTab === "brief") ? (
                   <div className="relative shrink-0 border-t border-gray-100 bg-white px-5 py-4">
                     {publishToast ? (
                       <div className="absolute right-5 bottom-full mb-2 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800 shadow-sm">
@@ -2508,7 +2754,7 @@ export default function CampaignHubScriptView({
               sourcePlaceholder="Enter content guidelines for this creator."
             />
             <ScriptReferenceTranslatorDialog
-              open={scriptsTranslatorOpenForSelected}
+              open={!isContentHub && scriptsTranslatorOpenForSelected}
               onOpenChange={(open) => {
                 setScriptsTranslatorOpen(open);
                 if (!open) setScriptsTranslatorForId(null);
@@ -2522,6 +2768,7 @@ export default function CampaignHubScriptView({
                 }));
               }}
             />
+            {!isContentHub ? (
             <ScriptGenerateIdeasDialog
               open={generateOpen}
               onOpenChange={setGenerateOpen}
@@ -2539,8 +2786,22 @@ export default function CampaignHubScriptView({
                 setScriptsTranslatorOpen(false);
               }}
             />
+            ) : null}
           </>
         ) : null}
+
+        <SubmissionDeadlineDialog
+          open={deadlineEditorId !== null}
+          onOpenChange={(open) => {
+            if (!open) setDeadlineEditorId(null);
+          }}
+          influencerName={deadlineEditorInfluencer?.name ?? "Influencer"}
+          deadline={deadlineEditorDeadline}
+          onChange={(patch) => {
+            if (!deadlineEditorId) return;
+            patchDeadline(deadlineEditorId, patch);
+          }}
+        />
       </div>
     </TooltipProvider>
   );

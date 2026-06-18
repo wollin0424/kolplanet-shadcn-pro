@@ -1,6 +1,9 @@
 "use client";
 
-import type { StageBadgeConfig } from "@/lib/pipeline/stageStatuses";
+import {
+  STAGE_PROGRESS_TOTAL,
+  type StageBadgeConfig,
+} from "@/lib/pipeline/stageStatuses";
 import { cn } from "@/lib/utils";
 import {
   AlertCircle,
@@ -8,16 +11,61 @@ import {
   CircleDashed,
 } from "@/lib/icons";
 
+const STAGE_ICON_BOX =
+  "inline-flex size-3.5 shrink-0 flex-none items-center justify-center overflow-visible leading-none";
+const STAGE_ICON_STROKE = 2.25;
+const STAGE_RING_CENTER = 12;
+const STAGE_RING_RADIUS = 10;
+
+function StageProgressRing({ step }: { step: number }) {
+  const circumference = 2 * Math.PI * STAGE_RING_RADIUS;
+  const fill = Math.min(1, Math.max(0, step / STAGE_PROGRESS_TOTAL));
+  const offset = circumference * (1 - fill);
+
+  return (
+    <span className={STAGE_ICON_BOX} aria-hidden>
+      <svg
+        viewBox="0 0 24 24"
+        className="block size-full shrink-0 -rotate-90 overflow-visible"
+        aria-hidden
+      >
+        <circle
+          cx={STAGE_RING_CENTER}
+          cy={STAGE_RING_CENTER}
+          r={STAGE_RING_RADIUS}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={STAGE_ICON_STROKE}
+          className="text-gray-200"
+        />
+        <circle
+          cx={STAGE_RING_CENTER}
+          cy={STAGE_RING_CENTER}
+          r={STAGE_RING_RADIUS}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={STAGE_ICON_STROKE}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className="text-brand"
+        />
+      </svg>
+    </span>
+  );
+}
+
 /**
- * Incomplete: orange dashed ring. Done: green check icon + gray label (same hover as others);
- * failed (rose tone): alert icon + gray label, brand link hover on label.
+ * Not started (step 1): gray dashed ring. In progress (step 2–4): brand arc ring.
+ * Done: green check. Failed (rose tone): alert icon. Label hover matches across states.
  */
 export default function PipelineStageCell({ config }: { config: StageBadgeConfig }) {
   const isComplete = config.completed === true;
   const isFailed = config.tone === "rose";
+  const isInProgress = !isComplete && !isFailed && config.progressStep > 1;
 
-  const iconClass = "size-3.5 shrink-0";
-  const stroke = 2.25;
+  const iconClass = STAGE_ICON_BOX;
+  const stroke = STAGE_ICON_STROKE;
 
   return (
     <button
@@ -41,9 +89,11 @@ export default function PipelineStageCell({ config }: { config: StageBadgeConfig
           strokeWidth={stroke}
           aria-hidden
         />
+      ) : isInProgress ? (
+        <StageProgressRing step={config.progressStep} />
       ) : (
         <CircleDashed
-          className={cn(iconClass, "text-orange-500")}
+          className={cn(iconClass, "text-gray-400")}
           strokeWidth={stroke}
           aria-hidden
         />

@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "../styles/brand.css";
+@import "../styles/figma-capture.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -214,5 +215,56 @@
   .scrollbar-overlay:hover::-webkit-scrollbar-thumb,
   .scrollbar-overlay.scrollbar-active::-webkit-scrollbar-thumb {
     background-color: rgb(156 163 175 / 0.45);
+  }
+
+  /** Wide data tables keep their horizontal affordance visible. */
+  .wide-table-scroll {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(156 163 175 / 0.5) transparent;
+  }
+  .wide-table-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .wide-table-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .wide-table-scroll::-webkit-scrollbar-thumb {
+    background-color: rgb(156 163 175 / 0.5);
+    border: 2px solid transparent;
+    border-radius: 9999px;
+    background-clip: padding-box;
+  }
+  .wide-table-scroll [data-slot="table-container"] {
+    height: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(156 163 175 / 0.5) transparent;
+  }
+  .wide-table-scroll [data-slot="table-container"]::-webkit-scrollbar {
+    height: 8px;
+  }
+  .wide-table-scroll [data-slot="table-container"]::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .wide-table-scroll [data-slot="table-container"]::-webkit-scrollbar-thumb {
+    background-color: rgb(156 163 175 / 0.5);
+    border: 2px solid transparent;
+    border-radius: 9999px;
+    background-clip: padding-box;
+  }
+  .wide-table-scroll::after {
+    content: "";
+    position: sticky;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    display: block;
+    width: 28px;
+    height: 1px;
+    margin-top: -1px;
+    margin-left: auto;
+    pointer-events: none;
+    box-shadow: -18px 0 22px 18px rgb(255 255 255 / 0.92);
   }
 }

@@ -65,14 +65,14 @@ export type BadgeTone =
 
 /** Preview / docs: one status per tone in Collaboration column */
 export const BADGE_TONE_PALETTE: { tone: BadgeTone; hint: string }[] = [
-  { tone: "amber", hint: "Pending / warning" },
+  { tone: "amber", hint: "Warning / in progress" },
   { tone: "sky", hint: "Info / invited" },
   { tone: "violet", hint: "Review / negotiation" },
   { tone: "brand", hint: "Approved / primary" },
   { tone: "indigo", hint: "Active / in progress" },
   { tone: "green", hint: "Completed / success" },
   { tone: "rose", hint: "Risk / on hold" },
-  { tone: "gray", hint: "Terminated / inactive" },
+  { tone: "gray", hint: "Pending / terminated / inactive" },
 ];
 
 export type StageBadgeConfig = {
@@ -167,7 +167,7 @@ export function getStageHoverPillClass(tone: BadgeTone) {
 export const CONTRACT_STATUS_CONFIG: Record<ContractStatus, StageBadgeConfig> = {
   Pending: {
     label: "Pending",
-    tone: "amber",
+    tone: "gray",
     progressStep: 1,
   },
   "Awaiting KOL Info": {
@@ -208,7 +208,28 @@ export const LOGISTICS_STATUS_CONFIG: Record<LogisticsStatus, StageBadgeConfig> 
 };
 
 export const SCRIPT_STATUS_CONFIG: Record<ScriptStatus, StageBadgeConfig> = {
-  Pending: { label: "Pending", tone: "amber", progressStep: 2 },
+  Pending: { label: "Pending", tone: "gray", progressStep: 1 },
+  "Waiting for Approval": {
+    label: "Waiting for Approval",
+    tone: "brand",
+    progressStep: 2,
+  },
+  Approved: { label: "Approved", tone: "green", progressStep: 5, completed: true },
+};
+
+/** Campaign Hub → Content table (Script / Visual / Caption columns). */
+export type ContentHubStageStatus =
+  | "Approved"
+  | "Under Review"
+  | "Pending"
+  | "Waiting for Approval";
+
+export const CONTENT_HUB_STAGE_STATUS_CONFIG: Record<
+  ContentHubStageStatus,
+  StageBadgeConfig
+> = {
+  Pending: { label: "Pending", tone: "gray", progressStep: 1 },
+  "Under Review": { label: "Under Review", tone: "sky", progressStep: 3 },
   "Waiting for Approval": {
     label: "Waiting for Approval",
     tone: "brand",
@@ -218,7 +239,7 @@ export const SCRIPT_STATUS_CONFIG: Record<ScriptStatus, StageBadgeConfig> = {
 };
 
 export const CONTENT_STATUS_CONFIG: Record<ContentStatus, StageBadgeConfig> = {
-  "Video Pending": { label: "Video Pending", tone: "amber", progressStep: 2 },
+  "Video Pending": { label: "Video Pending", tone: "gray", progressStep: 2 },
   "Copy Approved": { label: "Copy Approved", tone: "sky", progressStep: 4 },
   Approved: { label: "Approved", tone: "green", progressStep: 5, completed: true },
 };
@@ -245,7 +266,7 @@ export const COLLAB_STATUS_CONFIG: Record<
   CollabStatus,
   { label: string; tone: BadgeTone }
 > = {
-  Pending: { label: "Pending", tone: "amber" },
+  Pending: { label: "Pending", tone: "gray" },
   Invited: { label: "Invited", tone: "sky" },
   "In Negotiation": { label: "In Negotiation", tone: "violet" },
   Approved: { label: "Approved", tone: "brand" },

@@ -21,6 +21,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
+import {
+  getStageBadgeClass,
+  PAYMENT_STATUS_CONFIG,
+  type PaymentStatus,
+} from "@/lib/pipeline/stageStatuses";
 import { cn } from "@/lib/utils";
 import {
   Calendar,
@@ -302,20 +307,21 @@ function InvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
   );
 }
 
-function SettlementStatusBadge({ status }: { status: SettlementStatus }) {
-  const styles: Record<SettlementStatus, string> = {
-    "Waiting for Validation": "bg-sky-50 text-sky-700 border-sky-200",
-    "Partially Paid": "bg-blue-50 text-blue-700 border-blue-200",
-    Validated: "bg-amber-50 text-amber-700 border-amber-200",
-    "All Paid": "bg-emerald-50 text-emerald-700 border-emerald-200",
-    Rejected: "bg-rose-50 text-rose-700 border-rose-200",
-  };
+/** Aligns with Campaign Hub Payment `HubStatusList` tones (+ green for All Paid). */
+function settlementStatusBadgeClass(status: SettlementStatus): string {
+  const paymentStatus = status as PaymentStatus;
+  if (status === "Rejected") {
+    return "border-red-200 bg-red-50 text-red-800";
+  }
+  return getStageBadgeClass(PAYMENT_STATUS_CONFIG[paymentStatus].tone);
+}
 
+function SettlementStatusBadge({ status }: { status: SettlementStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border",
-        styles[status]
+        "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+        settlementStatusBadgeClass(status)
       )}
     >
       {status}
@@ -508,9 +514,6 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
               <TableHead className="font-semibold text-gray-800 py-3">
                 Earliest Due Date
               </TableHead>
-              <TableHead className="font-semibold text-gray-800 py-3">
-                KOL Manager
-              </TableHead>
               <TableHead className="font-semibold text-gray-800 py-3">Notes</TableHead>
               <TableHead className="font-semibold text-gray-800 py-3 w-12 !pr-6" />
             </TableRow>
@@ -590,8 +593,6 @@ export default function CampaignPaymentTable({ campaignId }: { campaignId: strin
                 <TableCell className="py-4 tabular-nums text-gray-600">
                   {row.earliestDueDate}
                 </TableCell>
-
-                <TableCell className="py-4 text-gray-700">{row.manager}</TableCell>
 
                 <TableCell className="py-4">
                   <TableNotesCell

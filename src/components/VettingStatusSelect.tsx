@@ -35,7 +35,7 @@ const statusStyle: Record<VettingStatus, { bg: string; text: string }> = {
   Shortlisted:              { bg: "bg-emerald-50", text: "text-emerald-700" },
   Contacted:                { bg: "bg-blue-50",    text: "text-blue-700" },
   Proposed:                 { bg: "bg-violet-50",  text: "text-violet-700" },
-  Pending:                  { bg: "bg-amber-50",   text: "text-amber-700" },
+  Pending:                  { bg: "bg-gray-50",    text: "text-gray-600" },
   Approved:                 { bg: "bg-brand-50",   text: "text-brand" },
   "No Response":            { bg: "bg-gray-100",   text: "text-gray-600" },
   "KOL Declined":           { bg: "bg-orange-50",  text: "text-orange-700" },

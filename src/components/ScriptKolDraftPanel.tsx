@@ -439,7 +439,7 @@ function VersionReviewSplit({
   );
 }
 
-function ScriptAiAutoCheckAlert({
+export function ScriptAiAutoCheckAlert({
   message = "No obvious mismatch found, but please still review tone, CTA, and brand accuracy carefully.",
 }: {
   message?: string;

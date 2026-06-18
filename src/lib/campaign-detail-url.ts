@@ -12,12 +12,21 @@ const HUB_SECTION_BY_QUERY: Record<string, HubSection> = {
   contract: "contract",
   logistics: "logistics",
   payment: "payment",
+  content: "content",
+  script: "script",
 };
 
 export function parseCampaignDetailSearchParams(searchParams: {
   tab?: string;
   section?: string;
-}): { initialTab?: CampaignTab; initialHubSection?: HubSection } {
+  kol?: string;
+  figmaCapture?: string;
+}): {
+  initialTab?: CampaignTab;
+  initialHubSection?: HubSection;
+  initialScriptKolId?: string;
+  figmaCapture?: boolean;
+} {
   const tabKey = searchParams.tab?.toLowerCase().replace(/_/g, "-");
   const sectionKey = searchParams.section?.toLowerCase().replace(/_/g, "-");
 
@@ -25,8 +34,13 @@ export function parseCampaignDetailSearchParams(searchParams: {
     return { initialTab: "Campaign Hub", initialHubSection: "payment" };
   }
 
+  const initialScriptKolId = searchParams.kol?.trim() || undefined;
+  const figmaCapture = searchParams.figmaCapture === "1";
+
   return {
     initialTab: tabKey ? TAB_BY_QUERY[tabKey] : undefined,
     initialHubSection: sectionKey ? HUB_SECTION_BY_QUERY[sectionKey] : undefined,
+    initialScriptKolId,
+    figmaCapture,
   };
 }

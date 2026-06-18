@@ -120,8 +120,8 @@ const INSTALLMENT_STATUS_STYLES: Record<
     border: "border-l-red-500",
   },
   Pending: {
-    badge: "border-amber-200 bg-amber-50 text-amber-800",
-    border: "border-l-amber-400",
+    badge: "border-gray-200 bg-gray-50 text-gray-600",
+    border: "border-l-gray-400",
   },
 };
 

@@ -1,5 +1,6 @@
 "use client";
 
+import CampaignHubContentView from "@/components/CampaignHubContentView";
 import CampaignHubContractView from "@/components/CampaignHubContractView";
 import CampaignHubLogisticsView from "@/components/CampaignHubLogisticsView";
 import CampaignHubScriptView from "@/components/CampaignHubScriptView";
@@ -10,14 +11,13 @@ import { cn } from "@/lib/utils";
 import { useState, type MouseEvent } from "react";
 import {
   Stamp,
-  ScrollText,
   ChevronRight,
   Info,
   List,
   Truck,
   CreditCard,
+  FileText,
   Send,
-  Clapperboard,
   type AppIcon,
 } from "@/lib/icons";
 import type { ReactNode } from "react";
@@ -31,17 +31,6 @@ type StatusTone =
   | "purple"
   | "red"
   | "violet";
-
-const statusToneClass: Record<StatusTone, string> = {
-  green: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  sky: "border-sky-200 bg-sky-50 text-sky-700",
-  amber: "border-amber-200 bg-amber-50 text-amber-800",
-  gray: "border-gray-200 bg-gray-50 text-gray-700",
-  brand: "border-brand/20 bg-brand-50 text-brand",
-  purple: "border-violet-200 bg-violet-50 text-violet-800",
-  red: "border-red-200 bg-red-50 text-red-800",
-  violet: "border-violet-200 bg-violet-50 text-violet-800",
-};
 
 function HubCountBadge({ count }: { count: number }) {
   return (
@@ -64,6 +53,17 @@ function HubGoButton({ onClick }: { onClick?: (e: MouseEvent<HTMLButtonElement>)
     </button>
   );
 }
+
+const statusToneClass: Record<StatusTone, string> = {
+  green: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  sky: "border-sky-200 bg-sky-50 text-sky-700",
+  amber: "border-amber-200 bg-amber-50 text-amber-700",
+  gray: "border-gray-200 bg-gray-50 text-gray-700",
+  brand: "border-brand/20 bg-brand-50 text-brand",
+  purple: "border-violet-200 bg-violet-50 text-violet-700",
+  red: "border-red-200 bg-red-50 text-red-700",
+  violet: "border-violet-200 bg-violet-50 text-violet-700",
+};
 
 /** Count chip: color encodes state; no per-tag icons (consistent SaaS breakdown pattern). */
 function HubStatus({
@@ -91,7 +91,7 @@ function HubStatusList({ children }: { children: ReactNode }) {
   return <div className="mt-0 flex flex-wrap gap-x-2 gap-y-2">{children}</div>;
 }
 
-export type HubSection = "contract" | "logistics" | "payment" | "script";
+export type HubSection = "contract" | "logistics" | "payment" | "content" | "script";
 
 function HubCell({
   title,
@@ -131,7 +131,7 @@ function HubCell({
           : undefined
       }
       className={cn(
-        "flex h-full min-h-0 flex-col gap-3 rounded-xl border border-gray-100 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-colors",
+        "flex h-[260px] flex-col gap-3 overflow-hidden rounded-xl border border-gray-100 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-colors",
         onEnter && "cursor-pointer hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
       )}
     >
@@ -153,8 +153,8 @@ function HubCell({
         <HubCountBadge count={badgeCount} />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2">
-        <div className="flex flex-col gap-4 pt-2">{children}</div>
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden pt-2">{children}</div>
         <div className="mt-auto flex shrink-0 justify-end pt-2">
           <HubGoButton onClick={handleGo} />
         </div>
@@ -263,10 +263,14 @@ export default function CampaignHub({
   campaignId,
   onNavigate,
   initialSection,
+  initialScriptKolId,
+  figmaCapture,
 }: {
   campaignId: string;
   onNavigate?: (tab: CampaignTab) => void;
   initialSection?: HubSection;
+  initialScriptKolId?: string;
+  figmaCapture?: boolean;
 }) {
   const [activeSection, setActiveSection] = useState<HubSection | null>(
     initialSection ?? null
@@ -275,6 +279,7 @@ export default function CampaignHub({
   const openContract = () => setActiveSection("contract");
   const openLogistics = () => setActiveSection("logistics");
   const openPayment = () => setActiveSection("payment");
+  const openContent = () => setActiveSection("content");
   const openScript = () => setActiveSection("script");
 
   if (activeSection === "contract") {
@@ -295,12 +300,23 @@ export default function CampaignHub({
     );
   }
 
+  if (activeSection === "content") {
+    return (
+      <CampaignHubContentView
+        campaignId={campaignId}
+        onBack={() => setActiveSection(null)}
+      />
+    );
+  }
+
   if (activeSection === "script") {
     return (
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <CampaignHubScriptView
           campaignId={campaignId}
           onBack={() => setActiveSection(null)}
+          initialSelectedKolId={initialScriptKolId}
+          figmaCapture={figmaCapture}
         />
       </div>
     );
@@ -319,9 +335,9 @@ export default function CampaignHub({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-auto">
+    <div className="flex min-h-0 flex-1 flex-col overflow-auto pr-1">
       <span className="sr-only">{campaignId}</span>
-      <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-3 gap-4">
+      <div className="grid auto-rows-[260px] grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
         <HubCell
           title="Contract"
           icon={Stamp}
@@ -375,7 +391,7 @@ export default function CampaignHub({
             />
             <HubStatusList>
               <HubStatus label="Waiting for Validation" value={1} tone="amber" />
-              <HubStatus label="Validated" value={1} tone="amber" />
+              <HubStatus label="Validated" value={1} tone="green" />
               <HubStatus label="Partially Paid" value={1} tone="sky" />
               <HubStatus label="Rejected" value={1} tone="red" />
             </HubStatusList>
@@ -383,44 +399,23 @@ export default function CampaignHub({
         </HubCell>
 
         <HubCell
-          title="Script"
-          icon={ScrollText}
-          iconClassName="bg-sky-50 text-sky-600"
-          badgeCount={5}
-          onEnter={openScript}
-          onGo={openScript}
-        >
-          <>
-            <HubProgressOverview
-              statusLabel="Approved"
-              current={2}
-              total={8}
-              percent={25}
-            />
-            <HubStatusList>
-              <HubStatus label="Pending" value={5} tone="amber" />
-              <HubStatus label="Waiting for Approval" value={1} tone="sky" />
-            </HubStatusList>
-          </>
-        </HubCell>
-
-        <HubCell
           title="Content"
-          icon={Clapperboard}
-          iconClassName="bg-amber-50 text-amber-600"
-          badgeCount={6}
-          onGo={() => onNavigate?.("Pipeline")}
+          icon={FileText}
+          iconClassName="bg-violet-50 text-violet-600"
+          badgeCount={4}
+          onEnter={openContent}
+          onGo={openContent}
         >
           <>
             <HubProgressOverview
               statusLabel="Approved"
-              current={3}
+              current={4}
               total={8}
-              percent={38}
+              percent={50}
             />
             <HubStatusList>
-              <HubStatus label="Video Pending" value={6} tone="amber" />
-              <HubStatus label="Copy Approved" value={3} tone="sky" />
+              <HubStatus label="Pending" value={1} tone="gray" />
+              <HubStatus label="Waiting for Approval" value={3} tone="sky" />
             </HubStatusList>
           </>
         </HubCell>

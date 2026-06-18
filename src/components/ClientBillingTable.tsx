@@ -341,8 +341,8 @@ export default function ClientBillingTable() {
         </DropdownMenu>
       </div>
 
-      <div className="no-scrollbar flex-1 min-h-0 overflow-auto [&_[data-slot=table-container]]:no-scrollbar">
-        <Table className="w-full min-w-[1360px] table-auto border-separate border-spacing-0 text-[13px] [&_td]:px-5 [&_th]:px-5">
+      <div className="wide-table-scroll flex-1 min-h-0 overflow-hidden">
+        <Table className="w-full min-w-[1320px] table-auto border-separate border-spacing-0 text-[13px] [&_td]:px-5 [&_th]:px-5">
           <TableHeader>
             <TableRow className="border-b border-gray-100 bg-gray-50/80 hover:bg-gray-50/80">
               <TableHead className="py-3 font-semibold text-gray-700">Campaign Name</TableHead>
