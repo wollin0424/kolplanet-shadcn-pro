@@ -12,14 +12,15 @@ import {
   ChevronUp,
   Copy,
   ExternalLink,
+  Eye,
   FileText,
   Link as LinkIcon,
   Lightbulb,
   Lock,
   MessageSquare,
-  ScrollText,
   Share2,
   TrendingUp,
+  Trash2,
   Upload,
 } from "@/lib/icons";
 import {
@@ -320,22 +321,15 @@ function H5PageShell({
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
             <Link
               href={backHref}
-              className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[13px] font-medium text-gray-700 transition-colors hover:border-gray-300 hover:text-gray-900"
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition-colors hover:border-gray-300 hover:text-gray-900"
               aria-label="Back to Hub"
             >
               <ChevronLeft size={16} strokeWidth={2} />
-              Hub
             </Link>
             <h1 className="min-w-0 truncate text-center text-[17px] font-bold leading-snug text-gray-950">
               {pageTitle}
             </h1>
-            <span
-              className="inline-flex shrink-0 items-center gap-0.5 px-3 py-1.5 text-[13px] font-medium opacity-0"
-              aria-hidden
-            >
-              <ChevronLeft size={16} strokeWidth={2} />
-              Hub
-            </span>
+            <span className="inline-flex size-9 shrink-0 opacity-0" aria-hidden />
           </div>
         ) : (
           <div className="flex items-center justify-between gap-3">
@@ -708,25 +702,40 @@ function CoverImageUploadField({
         }}
       />
       {value ? (
-        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-2.5">
-          <img
-            src={value.previewUrl}
-            alt={value.name}
-            className="size-[88px] shrink-0 rounded-lg border border-gray-200 object-cover"
-          />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-medium text-gray-900">{value.name}</p>
-            <p className="text-[11px] text-gray-500">{value.sizeLabel}</p>
+        <div className="flex items-start gap-3">
+          <div className="group/cover relative aspect-[9/16] w-full max-w-[132px] shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
+            <img
+              src={value.previewUrl}
+              alt={value.name}
+              className="size-full object-cover"
+            />
+            {!disabled ? (
+              <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 transition-colors group-hover/cover:bg-black/35">
+                <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover/cover:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => window.open(value.previewUrl, "_blank", "noopener,noreferrer")}
+                    className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+                    aria-label="Preview cover image"
+                  >
+                    <Eye size={16} strokeWidth={2} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onChange(null)}
+                    className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+                    aria-label="Remove cover image"
+                  >
+                    <Trash2 size={16} strokeWidth={2} />
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
-          {!disabled ? (
-            <button
-              type="button"
-              onClick={() => onChange(null)}
-              className="shrink-0 text-[12px] font-medium text-brand"
-            >
-              Remove
-            </button>
-          ) : null}
+          <div className="min-w-0 pt-1">
+            <p className="truncate text-[13px] font-medium text-gray-900">{value.name}</p>
+            <p className="mt-0.5 text-[11px] text-gray-500">{value.sizeLabel}</p>
+          </div>
         </div>
       ) : (
         <button
@@ -833,24 +842,20 @@ function ScriptBriefH5CaptionCover({ kolId }: { kolId: string }) {
           </p>
         </div>
 
-        {canInsertFromVersion1 && !submissionLocked ? (
-          <button
-            type="button"
-            onClick={handleInsertFromVersion1}
-            className="mb-4 flex w-full items-center gap-3 rounded-xl border border-brand/20 bg-brand-50/50 px-3 py-2.5 text-left transition-colors hover:border-brand/30 hover:bg-brand-50/70"
-          >
-            <Lightbulb size={16} strokeWidth={2} className="shrink-0 text-brand" />
-            <span className="min-w-0 flex-1 text-[13px] font-medium text-brand">
-              Insert text and image from version 1
-            </span>
-            <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-brand/15 bg-white text-brand">
-              <Copy size={14} strokeWidth={2} />
-            </span>
-          </button>
-        ) : null}
-
         <div className="space-y-2">
-          <p className="text-[12px] font-medium text-gray-500">Caption</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[12px] font-medium text-gray-500">Caption</p>
+            {canInsertFromVersion1 && !submissionLocked ? (
+              <button
+                type="button"
+                onClick={handleInsertFromVersion1}
+                className="inline-flex shrink-0 items-center gap-1 text-[12px] font-medium text-brand transition-colors hover:text-brand/80"
+              >
+                <Copy size={12} strokeWidth={2} />
+                Copy from v1
+              </button>
+            ) : null}
+          </div>
           <Textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value.slice(0, CAPTION_MAX_LENGTH))}
@@ -1083,7 +1088,7 @@ function ScriptBriefH5ViewInner({
 
         <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
           <SectionHeading
-            icon={ScrollText}
+            icon={Lightbulb}
             title="Reference Scripts"
             className={referenceScriptsExpanded ? undefined : "mb-0"}
             trailing={
@@ -1111,8 +1116,7 @@ function ScriptBriefH5ViewInner({
           />
           {referenceScriptsExpanded ? (
             <>
-              <p className="mb-4 flex items-start gap-2 text-[12px] leading-relaxed text-gray-500">
-                <Lightbulb size={14} className="mt-0.5 shrink-0 text-amber-500" strokeWidth={2} />
+              <p className="mb-4 text-[12px] leading-relaxed text-gray-500">
                 These scripts are AI-generated. Use them as inspiration and adapt them into your own
                 original content while meeting campaign requirements and your personal style.
               </p>
