@@ -369,7 +369,7 @@ export default function CampaignsTable() {
               setCurrentPage(1);
             }}
             placeholder="Search by campaign name or id"
-            className="pl-8 h-8 text-[13px] border-gray-200 bg-gray-50 focus:bg-white"
+            className="pl-8 h-8 rounded-lg text-[13px] border-gray-200 bg-gray-50 focus:bg-white"
           />
         </div>
 

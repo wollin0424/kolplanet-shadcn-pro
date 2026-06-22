@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
+import { formInputClass, formTextareaClass } from "@/lib/formControls";
 import { cn } from "@/lib/utils";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import { Copy } from "@/lib/icons";
@@ -294,7 +295,7 @@ export default function ContractInfoSheet({
                       <Input
                         value={totalAmount}
                         onChange={(e) => setTotalAmount(e.target.value)}
-                        className="h-9 border-gray-200"
+                      className={formInputClass("h-9 text-[13px]")}
                       />
                     </div>
                   </div>
@@ -344,7 +345,7 @@ export default function ContractInfoSheet({
                   <Textarea
                     value={deliverables}
                     onChange={(e) => setDeliverables(e.target.value)}
-                    className="border-gray-200"
+                    className={formTextareaClass("text-[13px]")}
                   />
                 </div>
               </SubtleCard>
@@ -420,7 +421,7 @@ export default function ContractInfoSheet({
                       value={competitorExclList}
                       onChange={(e) => setCompetitorExclList(e.target.value)}
                       placeholder="Exclusion List"
-                      className="border-gray-200"
+                      className={formTextareaClass("text-[13px]")}
                     />
                   ) : null}
 
@@ -450,7 +451,7 @@ export default function ContractInfoSheet({
                       value={onsiteEventDetails}
                       onChange={(e) => setOnsiteEventDetails(e.target.value)}
                       placeholder="Time, Location, And Duration"
-                      className="border-gray-200"
+                      className={formTextareaClass("text-[13px]")}
                     />
                   ) : null}
 
@@ -540,7 +541,7 @@ export default function ContractInfoSheet({
                       value={contractEntity}
                       onChange={(e) => setContractEntity(e.target.value)}
                       placeholder="Enter Legal Name"
-                      className="h-9 border-gray-200"
+                      className={formInputClass("h-9 text-[13px]")}
                     />
                   </div>
 
@@ -550,7 +551,7 @@ export default function ContractInfoSheet({
                       value={govId}
                       onChange={(e) => setGovId(e.target.value)}
                       placeholder="Enter Gov ID Number"
-                      className="h-9 border-gray-200"
+                      className={formInputClass("h-9 text-[13px]")}
                     />
                   </div>
 
@@ -573,19 +574,19 @@ export default function ContractInfoSheet({
                         value={resCity}
                         onChange={(e) => setResCity(e.target.value)}
                         placeholder="City"
-                        className="h-9 border-gray-200"
+                      className={formInputClass("h-9 text-[13px]")}
                       />
                       <Input
                         value={resZip}
                         onChange={(e) => setResZip(e.target.value)}
                         placeholder="Zip / Postal Code"
-                        className="h-9 border-gray-200"
+                      className={formInputClass("h-9 text-[13px]")}
                       />
                       <Textarea
                         value={resStreet}
                         onChange={(e) => setResStreet(e.target.value)}
                         placeholder="Street Address"
-                        className="border-gray-200"
+                        className={formTextareaClass("text-[13px]")}
                       />
                     </div>
                     <label className="flex items-center gap-2 text-[12px] text-gray-600">
@@ -616,7 +617,7 @@ export default function ContractInfoSheet({
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         placeholder="Enter Phone Number"
-                        className="h-9 border-gray-200"
+                      className={formInputClass("h-9 text-[13px]")}
                       />
                     </div>
                     <label className="flex items-center gap-2 text-[12px] text-gray-600">
@@ -655,7 +656,7 @@ export default function ContractInfoSheet({
                       value={beneficiaryName}
                       onChange={(e) => setBeneficiaryName(e.target.value)}
                       placeholder="Beneficiary Name"
-                      className="h-9 border-gray-200"
+                      className={formInputClass("h-9 text-[13px]")}
                     />
                   </div>
 
@@ -665,7 +666,7 @@ export default function ContractInfoSheet({
                       value={beneficiaryBank}
                       onChange={(e) => setBeneficiaryBank(e.target.value)}
                       placeholder="Select Bank"
-                      className="h-9 border-gray-200"
+                      className={formInputClass("h-9 text-[13px]")}
                     />
                   </div>
 
@@ -675,7 +676,7 @@ export default function ContractInfoSheet({
                       value={accountNumber}
                       onChange={(e) => setAccountNumber(e.target.value)}
                       placeholder="Enter Account Number"
-                      className="h-9 border-gray-200"
+                      className={formInputClass("h-9 text-[13px]")}
                     />
                   </div>
 
@@ -685,7 +686,7 @@ export default function ContractInfoSheet({
                       value={swiftCode}
                       onChange={(e) => setSwiftCode(e.target.value)}
                       placeholder="Enter SWIFT Code"
-                      className="h-9 border-gray-200"
+                      className={formInputClass("h-9 text-[13px]")}
                     />
                   </div>
 
@@ -695,7 +696,7 @@ export default function ContractInfoSheet({
                       value={bankAddress}
                       onChange={(e) => setBankAddress(e.target.value)}
                       placeholder="Enter Bank Address"
-                      className="h-9 border-gray-200"
+                      className={formInputClass("h-9 text-[13px]")}
                     />
                   </div>
                 </div>
@@ -710,7 +711,7 @@ export default function ContractInfoSheet({
                       value={recipientName}
                       onChange={(e) => setRecipientName(e.target.value)}
                       placeholder="Recipient Name"
-                      className="h-9 border-gray-200"
+                      className={formInputClass("h-9 text-[13px]")}
                     />
                   </div>
 
@@ -733,7 +734,7 @@ export default function ContractInfoSheet({
                         value={recipientPhone}
                         onChange={(e) => setRecipientPhone(e.target.value)}
                         placeholder="Recipient Phone"
-                        className="h-9 border-gray-200"
+                      className={formInputClass("h-9 text-[13px]")}
                       />
                     </div>
                   </div>
@@ -761,7 +762,7 @@ export default function ContractInfoSheet({
                         value={shipCity}
                         onChange={(e) => setShipCity(e.target.value)}
                         placeholder="City"
-                        className="h-9 border-gray-200"
+                      className={formInputClass("h-9 text-[13px]")}
                       />
                     </div>
                     <div className="space-y-2">
@@ -770,7 +771,7 @@ export default function ContractInfoSheet({
                         value={shipZip}
                         onChange={(e) => setShipZip(e.target.value)}
                         placeholder="Zip / Postal Code"
-                        className="h-9 border-gray-200"
+                      className={formInputClass("h-9 text-[13px]")}
                       />
                     </div>
                   </div>
@@ -781,7 +782,7 @@ export default function ContractInfoSheet({
                       value={shipStreet}
                       onChange={(e) => setShipStreet(e.target.value)}
                       placeholder="Street Address"
-                      className="border-gray-200"
+                      className={formTextareaClass("text-[13px]")}
                     />
                   </div>
                 </div>

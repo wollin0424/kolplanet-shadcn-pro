@@ -48,6 +48,7 @@ import {
   MoreVertical as LucideMoreVertical,
   Pencil as LucidePencil,
   Plus as LucidePlus,
+  Play as LucidePlay,
   Receipt as LucideReceipt,
   RefreshCcw as LucideRefreshCcw,
   RotateCcw as LucideRotateCcw,
@@ -120,6 +121,7 @@ export const MoreHorizontal = createIcon(LucideMoreHorizontal, "MoreHorizontal")
 export const MoreVertical = createIcon(LucideMoreVertical, "MoreVertical");
 export const Pencil = createIcon(LucidePencil, "Pencil");
 export const Plus = createIcon(LucidePlus, "Plus");
+export const Play = createIcon(LucidePlay, "Play");
 export const Receipt = createIcon(LucideReceipt, "Receipt");
 export const RefreshCcw = createIcon(LucideRefreshCcw, "RefreshCcw");
 export const RotateCcw = createIcon(LucideRotateCcw, "RotateCcw");

@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollFade } from "@/components/ScrollFade";
+import { formInputClass, formTextareaClass } from "@/lib/formControls";
 import { cn } from "@/lib/utils";
 
 export type ShippingAddress = {
@@ -52,8 +53,8 @@ const COUNTRY_OPTIONS = [
   "United States",
 ];
 
-const fieldInputClass = "h-9 border-gray-200 bg-white text-[13px]";
-const fieldTextareaClass = "resize-none border-gray-200 bg-white text-[13px]";
+const disabledFieldClass =
+  "disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-500 disabled:opacity-100";
 
 function FieldLabel({
   children,
@@ -107,9 +108,6 @@ function ContractSnapshotPanel({ contractShipping }: { contractShipping: Shippin
   );
 }
 
-const disabledFieldClass =
-  "disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-500 disabled:opacity-100";
-
 function FulfillmentDetailsPanel({
   useContractDefault,
   onUseContractDefaultChange,
@@ -157,7 +155,7 @@ function FulfillmentDetailsPanel({
             value={address.recipientName}
             onChange={(e) => onAddressChange({ recipientName: e.target.value })}
             disabled={useContractDefault}
-            className={cn(fieldInputClass, disabledFieldClass)}
+            className={cn(formInputClass("h-9 text-[13px]"), disabledFieldClass)}
           />
         </div>
         <div className="space-y-1.5">
@@ -166,7 +164,7 @@ function FulfillmentDetailsPanel({
             value={address.recipientPhone}
             onChange={(e) => onAddressChange({ recipientPhone: e.target.value })}
             disabled={useContractDefault}
-            className={cn(fieldInputClass, disabledFieldClass)}
+            className={cn(formInputClass("h-9 text-[13px]"), disabledFieldClass)}
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -178,7 +176,7 @@ function FulfillmentDetailsPanel({
               onValueChange={(v) => onAddressChange({ countryRegion: v ?? "" })}
             >
               <SelectTrigger
-                className={cn("w-full", fieldInputClass, disabledFieldClass)}
+                className={cn("w-full", formInputClass("h-9 text-[13px]"), disabledFieldClass)}
               >
                 <SelectValue placeholder="Select country" />
               </SelectTrigger>
@@ -197,7 +195,7 @@ function FulfillmentDetailsPanel({
               value={address.city}
               onChange={(e) => onAddressChange({ city: e.target.value })}
               disabled={useContractDefault}
-              className={cn(fieldInputClass, disabledFieldClass)}
+              className={cn(formInputClass("h-9 text-[13px]"), disabledFieldClass)}
             />
           </div>
         </div>
@@ -207,7 +205,7 @@ function FulfillmentDetailsPanel({
             value={address.zipPostalCode}
             onChange={(e) => onAddressChange({ zipPostalCode: e.target.value })}
             disabled={useContractDefault}
-            className={cn(fieldInputClass, disabledFieldClass)}
+            className={cn(formInputClass("h-9 text-[13px]"), disabledFieldClass)}
           />
         </div>
         <div className="space-y-1.5">
@@ -217,7 +215,7 @@ function FulfillmentDetailsPanel({
             onChange={(e) => onAddressChange({ streetAddress: e.target.value })}
             disabled={useContractDefault}
             rows={3}
-            className={cn("min-h-[72px]", fieldTextareaClass, disabledFieldClass)}
+            className={cn(formTextareaClass("min-h-[72px] resize-none text-[13px]"), disabledFieldClass)}
           />
         </div>
       </div>
@@ -229,7 +227,7 @@ function FulfillmentDetailsPanel({
         <div className="space-y-1.5">
           <FieldLabel>Courier</FieldLabel>
           <Select value={courier} onValueChange={(v) => onCourierChange(v ?? "")}>
-            <SelectTrigger className={cn("w-full", fieldInputClass)}>
+            <SelectTrigger className={cn("w-full", formInputClass("h-9 text-[13px]"))}>
               <SelectValue placeholder="Select courier" />
             </SelectTrigger>
             <SelectContent>
@@ -246,7 +244,7 @@ function FulfillmentDetailsPanel({
           <Input
             value={trackingId}
             onChange={(e) => onTrackingIdChange(e.target.value)}
-            className={fieldInputClass}
+            className={formInputClass("h-9 text-[13px]")}
           />
         </div>
         <div className="space-y-1.5">
@@ -255,7 +253,7 @@ function FulfillmentDetailsPanel({
             value={goodsContent}
             onChange={(e) => onGoodsContentChange(e.target.value)}
             rows={4}
-            className={cn("min-h-[96px]", fieldTextareaClass)}
+            className={formTextareaClass("min-h-[96px] resize-none text-[13px]")}
           />
         </div>
       </div>

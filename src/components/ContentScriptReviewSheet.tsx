@@ -26,6 +26,7 @@ import {
   saveScriptBriefPublished,
   type ScriptBriefPublished,
 } from "@/lib/scriptBriefPublished";
+import { formInputClass, formTextareaClass } from "@/lib/formControls";
 import { cn } from "@/lib/utils";
 import {
   ArrowRight,
@@ -302,7 +303,7 @@ function ReferenceScriptsContinueControls({
           value={customPrompt}
           onChange={(e) => onCustomPromptChange(e.target.value)}
           placeholder="Add your own style or generation instruction."
-          className="h-10 border-gray-200 bg-white pr-10 text-[13px] font-normal text-gray-600 shadow-none placeholder:text-gray-400 focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/25"
+          className={formInputClass("pr-10 text-[13px] font-normal text-gray-600 placeholder:text-gray-400")}
           disabled={disabled}
           onKeyDown={(e) => {
             if (e.key === "Enter") onGenerate();
@@ -585,7 +586,9 @@ function BriefSettingsPanel({
           value={guidelines}
           onChange={(e) => onGuidelinesChange(e.target.value)}
           placeholder="Enter content guidelines for this creator."
-          className="no-scrollbar min-h-[180px] max-h-[360px] resize-none overflow-y-auto border-gray-200 bg-white text-[13px] font-normal text-gray-600 placeholder:text-gray-400 focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/25"
+          className={formTextareaClass(
+            "no-scrollbar min-h-[180px] max-h-[360px] resize-none overflow-y-auto text-[13px] font-normal text-gray-600 placeholder:text-gray-400"
+          )}
         />
       </section>
 

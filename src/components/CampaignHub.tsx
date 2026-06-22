@@ -1,6 +1,7 @@
 "use client";
 
 import CampaignHubContentView from "@/components/CampaignHubContentView";
+import { ContentHubOverview, getContentHubOverviewStats } from "@/components/ContentHubOverview";
 import CampaignHubContractView from "@/components/CampaignHubContractView";
 import CampaignHubLogisticsView from "@/components/CampaignHubLogisticsView";
 import CampaignHubScriptView from "@/components/CampaignHubScriptView";
@@ -94,6 +95,9 @@ function HubStatusList({ children }: { children: ReactNode }) {
 
 export type HubSection = "contract" | "logistics" | "payment" | "content" | "script";
 
+/** Fixed hub tile height — fits progress ring + two rows of status chips + Go. */
+const HUB_CELL_HEIGHT_CLASS = "h-[300px]";
+
 function HubCell({
   title,
   icon: Icon,
@@ -102,6 +106,7 @@ function HubCell({
   children,
   onGo,
   onEnter,
+  centerBody = false,
 }: {
   title: string;
   icon: AppIcon;
@@ -110,6 +115,7 @@ function HubCell({
   children: ReactNode;
   onGo?: () => void;
   onEnter?: () => void;
+  centerBody?: boolean;
 }) {
   const handleGo = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -132,7 +138,8 @@ function HubCell({
           : undefined
       }
       className={cn(
-        "flex h-[260px] flex-col gap-3 overflow-hidden rounded-xl border border-gray-100 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-colors",
+        "flex flex-col gap-3 rounded-xl border border-gray-100 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-colors",
+        HUB_CELL_HEIGHT_CLASS,
         onEnter && "cursor-pointer hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
       )}
     >
@@ -154,8 +161,15 @@ function HubCell({
         <HubCountBadge count={badgeCount} />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden pt-2">{children}</div>
+      <div className="flex min-h-0 flex-1 flex-col gap-2">
+        <div
+          className={cn(
+            "flex min-h-0 w-full flex-1 flex-col gap-4 pt-1",
+            centerBody && "justify-center"
+          )}
+        >
+          {children}
+        </div>
         <div className="mt-auto flex shrink-0 justify-end pt-2">
           <HubGoButton onClick={handleGo} />
         </div>
@@ -336,9 +350,9 @@ export default function CampaignHub({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-auto pr-1">
+    <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-auto">
       <span className="sr-only">{campaignId}</span>
-      <div className="grid auto-rows-[260px] grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid auto-rows-[300px] grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
         <HubCell
           title="Contract"
           icon={Stamp}
@@ -402,23 +416,13 @@ export default function CampaignHub({
         <HubCell
           title="Content"
           icon={FileText}
-          iconClassName="bg-violet-50 text-violet-600"
-          badgeCount={4}
+          iconClassName="bg-emerald-50 text-emerald-600"
+          badgeCount={getContentHubOverviewStats().activeKolCount}
+          centerBody
           onEnter={openContent}
           onGo={openContent}
         >
-          <>
-            <HubProgressOverview
-              statusLabel="Approved"
-              current={4}
-              total={8}
-              percent={50}
-            />
-            <HubStatusList>
-              <HubStatus label="Pending" value={1} tone="gray" />
-              <HubStatus label="Waiting for Approval" value={3} tone="sky" />
-            </HubStatusList>
-          </>
+          <ContentHubOverview />
         </HubCell>
 
         <HubCell

@@ -32,6 +32,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { formInputClass, formTextareaClass } from "@/lib/formControls";
 import { cn } from "@/lib/utils";
 
 const PAYOUT_STEPS = ["Invoice", "Account Pool", "Approved Amount"] as const;
@@ -612,8 +613,9 @@ function AgreementSummaryPanel() {
   );
 }
 
-const invoiceFieldClass =
-  "h-10 border-gray-200 bg-white text-[13px] text-gray-800 shadow-none read-only:bg-white read-only:text-gray-800";
+const invoiceFieldClass = formInputClass(
+  "text-[13px] text-gray-800 read-only:bg-white read-only:text-gray-800"
+);
 
 function ConfirmFieldRow({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -848,7 +850,7 @@ function InvoicePendingConfirmation({
               <Textarea
                 readOnly
                 value={parsed.bank.bankAddress}
-                className="min-h-[72px] resize-none border-gray-200 bg-white text-[13px] text-gray-800 shadow-none"
+                className={formTextareaClass("min-h-[72px] resize-none text-[13px] text-gray-800")}
               />
               <MatchedBadge />
             </div>
@@ -905,7 +907,7 @@ function InvoiceStepPanel({
         <Input
           readOnly
           value={AGREEMENT_SNAPSHOT.legalName}
-          className="h-10 border-gray-200 bg-gray-50/90 text-[13px] text-gray-700 shadow-none"
+          className={formInputClass("h-10 border-gray-200 bg-gray-50/90 text-[13px] text-gray-700")}
         />
       </FormField>
 
@@ -1392,7 +1394,9 @@ function ApprovedAmountStepPanel({
           value={paymentRemarks}
           onChange={(e) => onPaymentRemarksChange(e.target.value)}
           placeholder="Add remarks for this payout request"
-          className="min-h-[88px] resize-none border-gray-200 bg-white text-[13px] text-gray-800 shadow-none placeholder:text-gray-400"
+          className={formTextareaClass(
+            "min-h-[88px] resize-none text-[13px] text-gray-800 placeholder:text-gray-400"
+          )}
         />
       </FormField>
     </div>

@@ -19,6 +19,7 @@ import {
   Lock,
   MessageSquare,
   Share2,
+  Tag,
   TrendingUp,
   Trash2,
   Upload,
@@ -211,6 +212,38 @@ function H5CampaignBriefSection({
   );
 }
 
+function H5GuidelineDetailCard({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof LinkIcon;
+  label: string;
+  value: string;
+}) {
+  const display = value.trim() || "—";
+
+  return (
+    <div className="min-w-0 rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
+        <Icon size={13} strokeWidth={2} className="shrink-0 text-brand" />
+        {label}
+      </div>
+      <p className="mt-2 break-words text-[13px] leading-relaxed text-gray-800">{display}</p>
+    </div>
+  );
+}
+
+function H5GuidelineReadonlyField({ value }: { value: string }) {
+  const display = value.trim() || "—";
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50/70 px-3.5 py-3 text-[13px] leading-relaxed text-gray-800">
+      {display}
+    </div>
+  );
+}
+
 function ContentGuidelinesSection({
   data,
   guidelinesView,
@@ -239,6 +272,10 @@ function ContentGuidelinesSection({
         }
       />
       <div className="space-y-3">
+        <p className="text-[12px] leading-relaxed text-gray-500">
+          The translation is auto-generated for reference. Please follow the Original version for
+          exact requirements.
+        </p>
         <BilingualTabPanel
           original={data.guidelines.original}
           translation={data.guidelines.translation}
@@ -246,6 +283,14 @@ function ContentGuidelinesSection({
           onViewChange={onGuidelinesViewChange}
           emptyLabel="No content guidelines yet."
         />
+        <div className="grid grid-cols-2 gap-2">
+          <H5GuidelineDetailCard icon={LinkIcon} label="Mention" value={data.mention} />
+          <H5GuidelineDetailCard icon={Tag} label="Hashtag" value={data.hashtag} />
+        </div>
+        <div className="space-y-2">
+          <p className="text-[12px] font-medium text-gray-500">Add Link</p>
+          <H5GuidelineReadonlyField value={data.addLink} />
+        </div>
       </div>
       {data.attachments.length > 0 ? (
         <div className="mt-3 flex w-full flex-wrap gap-2">

@@ -104,7 +104,7 @@ export function CampaignHubDetailToolbar({
               value={searchValue}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={searchPlaceholder}
-              className="h-8 border-gray-200 bg-gray-50/80 py-0 pl-8 text-xs leading-8 placeholder:text-xs focus:bg-white md:text-xs"
+              className="h-8 rounded-lg border-gray-200 bg-gray-50/80 py-0 pl-8 text-xs leading-8 placeholder:text-xs focus:bg-white md:text-xs"
             />
           </div>
           {actions ? (

@@ -218,11 +218,7 @@ export const SCRIPT_STATUS_CONFIG: Record<ScriptStatus, StageBadgeConfig> = {
 };
 
 /** Campaign Hub → Content table (Script / Visual / Caption columns). */
-export type ContentHubStageStatus =
-  | "Approved"
-  | "Under Review"
-  | "Pending"
-  | "Waiting for Approval";
+export type ContentHubStageStatus = "Approved" | "Under Review" | "Pending";
 
 export const CONTENT_HUB_STAGE_STATUS_CONFIG: Record<
   ContentHubStageStatus,
@@ -230,12 +226,14 @@ export const CONTENT_HUB_STAGE_STATUS_CONFIG: Record<
 > = {
   Pending: { label: "Pending", tone: "gray", progressStep: 1 },
   "Under Review": { label: "Under Review", tone: "sky", progressStep: 3 },
-  "Waiting for Approval": {
-    label: "Waiting for Approval",
-    tone: "brand",
-    progressStep: 2,
-  },
   Approved: { label: "Approved", tone: "green", progressStep: 5, completed: true },
+};
+
+/** Segment fills — solid pastels aligned with HubStatus pill borders (no opacity / ring). */
+export const CONTENT_HUB_STAGE_BAR_FILL: Record<ContentHubStageStatus, string> = {
+  Pending: "bg-gray-200",
+  "Under Review": "bg-sky-200",
+  Approved: "bg-emerald-200",
 };
 
 export const CONTENT_STATUS_CONFIG: Record<ContentStatus, StageBadgeConfig> = {

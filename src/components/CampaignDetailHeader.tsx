@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Button } from "@/components/ui/button";
+import { CampaignSettingsMenu } from "@/components/CampaignSettingsMenu";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
@@ -59,14 +59,7 @@ export default function CampaignDetailHeader({
 
           {/* Right actions */}
           <div className="flex items-center gap-2.5 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-[13px] gap-1.5 border-gray-200 text-gray-700"
-            >
-              Campaign Settings
-              <ChevronDown size={13} className="text-gray-400" />
-            </Button>
+            <CampaignSettingsMenu />
 
             <DropdownMenu>
               <DropdownMenuTrigger className="inline-flex items-center h-8 px-3 rounded-md border border-gray-200 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
