@@ -59,7 +59,14 @@ function StageProgressRing({ step }: { step: number }) {
  * Not started (step 1): gray dashed ring. In progress (step 2–4): brand arc ring.
  * Done: green check. Failed (rose tone): alert icon. Label hover matches across states.
  */
-export default function PipelineStageCell({ config }: { config: StageBadgeConfig }) {
+export default function PipelineStageCell({
+  config,
+  static: isStatic = false,
+}: {
+  config: StageBadgeConfig;
+  /** Render as non-interactive content (e.g. inside a parent button). */
+  static?: boolean;
+}) {
   const isComplete = config.completed === true;
   const isFailed = config.tone === "rose";
   const isInProgress = !isComplete && !isFailed && config.progressStep > 1;
@@ -67,14 +74,17 @@ export default function PipelineStageCell({ config }: { config: StageBadgeConfig
   const iconClass = STAGE_ICON_BOX;
   const stroke = STAGE_ICON_STROKE;
 
+  const Wrapper = isStatic ? "span" : "button";
+
   return (
-    <button
-      type="button"
+    <Wrapper
+      {...(!isStatic ? { type: "button" as const } : {})}
       className={cn(
         "group/stage inline-flex max-w-full min-w-0 items-center gap-2 p-0",
         "text-left text-[12px] font-medium whitespace-nowrap",
-        "cursor-pointer transition-colors duration-150",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:ring-offset-1"
+        !isStatic && "cursor-pointer transition-colors duration-150",
+        !isStatic &&
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:ring-offset-1"
       )}
     >
       {isComplete ? (
@@ -106,6 +116,6 @@ export default function PipelineStageCell({ config }: { config: StageBadgeConfig
       >
         {config.label}
       </span>
-    </button>
+    </Wrapper>
   );
 }

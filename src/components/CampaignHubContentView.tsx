@@ -33,6 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ContentScriptReviewSheet } from "@/components/ContentScriptReviewSheet";
 import PipelineStageCell from "@/components/pipeline/PipelineStageCell";
 import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
 import {
@@ -210,21 +211,61 @@ function ContentStageCell({
   deadline,
   showDeadline = true,
   overdue = false,
+  onClick,
 }: {
   status: ContentHubStageStatus;
   deadline?: string;
   showDeadline?: boolean;
   overdue?: boolean;
+  onClick?: () => void;
 }) {
   const hasDeadline = Boolean(deadline && deadline !== "—");
+  const stageCell = (
+    <PipelineStageCell config={CONTENT_HUB_STAGE_STATUS_CONFIG[status]} static={Boolean(onClick)} />
+  );
 
   if (!showDeadline) {
-    return <PipelineStageCell config={CONTENT_HUB_STAGE_STATUS_CONFIG[status]} />;
+    if (onClick) {
+      return (
+        <button
+          type="button"
+          onClick={onClick}
+          className="flex min-w-[140px] flex-col items-start gap-1 py-0.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:ring-offset-1"
+        >
+          {stageCell}
+        </button>
+      );
+    }
+    return stageCell;
+  }
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="group/stage-cell flex min-w-[140px] flex-col items-start gap-1 py-0.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:ring-offset-1"
+      >
+        {stageCell}
+        {hasDeadline ? (
+          <p
+            className={cn(
+              "overflow-hidden pl-[22px] text-[11px] leading-tight tabular-nums transition-all duration-150",
+              overdue
+                ? "mt-0 max-h-4 opacity-100 font-medium text-amber-700"
+                : "max-h-0 opacity-0 group-hover/stage-cell:mt-0 group-hover/stage-cell:max-h-4 group-hover/stage-cell:opacity-100 text-gray-500"
+            )}
+          >
+            {deadline}
+          </p>
+        ) : null}
+      </button>
+    );
   }
 
   return (
     <div className="flex min-w-[140px] flex-col items-start gap-1 py-0.5">
-      <PipelineStageCell config={CONTENT_HUB_STAGE_STATUS_CONFIG[status]} />
+      {stageCell}
       {hasDeadline ? (
         <p
           className={cn(
@@ -284,6 +325,7 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
   const [scriptOverdueOnly, setScriptOverdueOnly] = useState(false);
   const [visualOverdueOnly, setVisualOverdueOnly] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [scriptReviewRow, setScriptReviewRow] = useState<ContentRow | null>(null);
 
   const activeFilterCount =
     [scriptStatusFilter, visualStatusFilter, captionStatusFilter].filter(
@@ -586,6 +628,7 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
                     status={row.script.status}
                     deadline={row.script.updatedAt}
                     overdue={row.scriptOverdue}
+                    onClick={() => setScriptReviewRow(row)}
                   />
                 </TableCell>
                 <TableCell className="py-4">
@@ -603,6 +646,18 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
           </TableBody>
         </Table>
       </div>
+
+      {scriptReviewRow ? (
+        <ContentScriptReviewSheet
+          open={Boolean(scriptReviewRow)}
+          onOpenChange={(open) => {
+            if (!open) setScriptReviewRow(null);
+          }}
+          kolId={scriptReviewRow.id}
+          kolName={scriptReviewRow.name}
+          platform={scriptReviewRow.platform}
+        />
+      ) : null}
     </div>
   );
 }

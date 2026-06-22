@@ -86,6 +86,15 @@ export function getScriptDraftSubmissions(kolId: string): ScriptDraftSubmission[
   return (readAll()[kolId] ?? []).map(normalizeSubmission);
 }
 
+export function setScriptDraftSubmissions(
+  kolId: string,
+  submissions: ScriptDraftSubmission[]
+) {
+  const all = readAll();
+  all[kolId] = submissions.map(normalizeSubmission);
+  writeAll(all);
+}
+
 export function getScriptDraftSubmissionLimit() {
   return SUBMISSION_LIMIT;
 }

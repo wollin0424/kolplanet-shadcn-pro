@@ -18,6 +18,7 @@ import {
   CreditCard,
   FileText,
   Send,
+  ScrollText,
   type AppIcon,
 } from "@/lib/icons";
 import type { ReactNode } from "react";
@@ -437,6 +438,28 @@ export default function CampaignHub({
             <HubStatusList>
               <HubStatus label="Ready" value={7} tone="sky" />
               <HubStatus label="In Progress" value={7} tone="amber" />
+            </HubStatusList>
+          </>
+        </HubCell>
+
+        <HubCell
+          title="Script"
+          icon={ScrollText}
+          iconClassName="bg-sky-50 text-sky-600"
+          badgeCount={5}
+          onEnter={openScript}
+          onGo={openScript}
+        >
+          <>
+            <HubProgressOverview
+              statusLabel="Approved"
+              current={2}
+              total={8}
+              percent={25}
+            />
+            <HubStatusList>
+              <HubStatus label="Pending" value={5} tone="gray" />
+              <HubStatus label="Waiting for Approval" value={1} tone="sky" />
             </HubStatusList>
           </>
         </HubCell>
