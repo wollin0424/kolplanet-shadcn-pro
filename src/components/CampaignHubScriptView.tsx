@@ -1857,7 +1857,7 @@ function ScriptGenerateIdeasDialogBody({
         showCloseButton={false}
         className="flex h-full flex-col gap-0 border-l border-gray-100 bg-white p-0 data-[side=right]:w-full data-[side=right]:max-w-[640px] data-[side=right]:sm:max-w-[640px]"
       >
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-gray-100 px-6 py-5">
+        <div className="flex w-full shrink-0 items-start justify-between gap-3 border-b border-gray-100 px-6 py-5">
           <div className="flex min-w-0 items-start gap-3">
             <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
               <Sparkles size={18} strokeWidth={2} />

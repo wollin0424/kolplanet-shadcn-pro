@@ -22,7 +22,8 @@ export function CampaignSettingsPlaceholderSheet({
         showCloseButton={false}
         className="flex h-full w-full flex-col gap-0 border-l border-gray-100 bg-white p-0 data-[side=right]:max-w-[540px] data-[side=right]:sm:max-w-[540px]"
       >
-        <div className="flex shrink-0 items-center gap-3 border-b border-gray-100 px-6 py-5">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-6 py-5">
+          <h2 className="text-[18px] font-semibold text-gray-900">{title}</h2>
           <SheetClose
             render={
               <button
@@ -34,7 +35,6 @@ export function CampaignSettingsPlaceholderSheet({
           >
             <X size={18} strokeWidth={2} />
           </SheetClose>
-          <h2 className="text-[18px] font-semibold text-gray-900">{title}</h2>
         </div>
 
         <div className="flex min-h-0 flex-1 items-center justify-center bg-gray-50/80 px-6 py-10">

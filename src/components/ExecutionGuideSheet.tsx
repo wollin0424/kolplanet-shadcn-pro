@@ -404,7 +404,8 @@ function ExecutionGuideSheetForm({
 
   return (
     <>
-        <div className="flex shrink-0 items-center gap-3 border-b border-gray-100 px-6 py-5">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-6 py-5">
+          <h2 className="text-[18px] font-semibold text-gray-900">Execution Guide</h2>
           <SheetClose
             render={
               <button
@@ -416,7 +417,6 @@ function ExecutionGuideSheetForm({
           >
             <X size={18} strokeWidth={2} />
           </SheetClose>
-          <h2 className="text-[18px] font-semibold text-gray-900">Execution Guide</h2>
         </div>
 
         <ScrollArea className="min-h-0 flex-1 bg-gray-50/80">

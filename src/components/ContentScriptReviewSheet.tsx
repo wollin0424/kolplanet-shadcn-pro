@@ -850,7 +850,7 @@ function ContentScriptReviewSheetInner({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-start justify-between gap-3 border-b border-gray-100 px-5 py-4">
+      <div className="flex w-full shrink-0 items-start justify-between gap-3 border-b border-gray-100 px-5 py-4">
           <div className="min-w-0">
             <div className="flex min-w-0 items-center gap-2.5">
               <SheetTitle className="text-base font-semibold text-gray-900">

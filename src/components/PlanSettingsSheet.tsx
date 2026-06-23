@@ -189,7 +189,7 @@ export function PlanSettingsSheet() {
         showCloseButton={false}
         className="p-0 flex flex-col gap-0 border-l border-gray-100 w-full! sm:max-w-[500px]!"
       >
-        <div className="flex items-start justify-between px-6 pt-5 pb-4 shrink-0">
+        <div className="flex w-full items-start justify-between px-6 pt-5 pb-4 shrink-0">
           <div>
             <h2 className="text-[15px] font-bold text-gray-900 tracking-tight">Plan Settings</h2>
             <p className="text-[12px] text-gray-400 mt-0.5 leading-relaxed max-w-[420px]">
