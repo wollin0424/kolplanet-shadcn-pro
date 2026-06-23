@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ContentGuidelinesDisplayBlock } from "@/components/ContentGuidelinesDisplayBlock";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { ScriptKolDraftPanel } from "@/components/ScriptKolDraftPanel";
@@ -23,12 +23,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { subscribeCampaignExecutionGuideChanges } from "@/lib/campaignExecutionGuide";
 import { ensureContentScriptReviewDemoData } from "@/lib/contentScriptReviewDemo";
 import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
-import { getScriptBriefH5Data, type ScriptBriefH5Data } from "@/lib/scriptBriefH5Mock";
 import {
+  getScriptBriefH5Data,
+  getScriptBriefH5Defaults,
+  type ScriptBriefH5Data,
+} from "@/lib/scriptBriefH5Mock";
+import { scriptBriefDeadlineToSubmissionDeadline } from "@/lib/scriptBriefDeadline";
+import {
+  getScriptBriefPublished,
   saveScriptBriefPublished,
+  subscribeScriptBriefPublishedChanges,
   type ScriptBriefPublished,
 } from "@/lib/scriptBriefPublished";
-import { formInputClass, formTextareaClass } from "@/lib/formControls";
+import { formInputClass } from "@/lib/formControls";
 import { cn } from "@/lib/utils";
 import {
   ArrowRight,
@@ -48,6 +55,20 @@ import {
 
 type SheetTab = "comments" | "brief";
 
+export type ContentReviewTrack = "script" | "visual" | "caption";
+
+const CONTENT_REVIEW_TRACK_LABEL: Record<ContentReviewTrack, string> = {
+  script: "Script",
+  visual: "Visual Draft",
+  caption: "Caption & Cover",
+};
+
+function getContentReviewDraftKolId(kolId: string, track: ContentReviewTrack) {
+  if (track === "visual") return `${kolId}-video`;
+  if (track === "caption") return `${kolId}-caption`;
+  return kolId;
+}
+
 type SubmissionDeadline = {
   date: string;
   time: string;
@@ -60,12 +81,8 @@ const DEADLINE_TIMEZONE_OPTIONS = [
   { value: "UTC", label: "UTC" },
 ] as const;
 
-const CONTENT_BRIEF_DEFAULTS: Record<
-  string,
-  { guidelines: string; deadline: SubmissionDeadline }
-> = {
+const CONTENT_BRIEF_DEFAULTS: Record<string, { deadline: SubmissionDeadline }> = {
   s1: {
-    guidelines: "打算赌神的萨达爱上打算打算赌神啊赌神啊打算的",
     deadline: { date: "2026-06-24", time: "20:33", timezone: "UTC+08:00" },
   },
 };
@@ -466,6 +483,40 @@ function ReferenceScriptsSectionHeader({
   );
 }
 
+function ContentGuidelinesSectionHeader({
+  expanded,
+  referenceWebsiteUrl,
+  onToggle,
+}: {
+  expanded: boolean;
+  referenceWebsiteUrl: string;
+  onToggle: () => void;
+}) {
+  return (
+    <div className={cn("flex items-center gap-3", expanded && "mb-2")}>
+      <FileText size={16} className="shrink-0 text-brand" strokeWidth={2} />
+      <h3 className="shrink-0 text-sm font-semibold text-gray-900">Content Guidelines</h3>
+      <a
+        href={referenceWebsiteUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={sectionActionLinkClass}
+      >
+        Reference Website
+        <ExternalLink size={12} strokeWidth={2} />
+      </a>
+      <button
+        type="button"
+        onClick={onToggle}
+        className={cn(sectionActionLinkClass, "ml-auto")}
+      >
+        {expanded ? "Collapse" : "Expand"}
+        {expanded ? <ChevronUp size={14} strokeWidth={2} /> : <ChevronDown size={14} strokeWidth={2} />}
+      </button>
+    </div>
+  );
+}
+
 function initials(name: string) {
   return name
     .split(" ")
@@ -548,6 +599,8 @@ function BriefSettingsPanel({
   referenceWebsiteUrl,
   onDeadlineChange,
   onReferenceScriptsChange,
+  showReferenceScripts = true,
+  showSubmissionDeadline = true,
 }: {
   kolName: string;
   briefContent: Pick<
@@ -558,161 +611,159 @@ function BriefSettingsPanel({
   referenceWebsiteUrl: string;
   onDeadlineChange: (patch: Partial<SubmissionDeadline>) => void;
   onReferenceScriptsChange: (scripts: ScriptBriefPublished["referenceScripts"]) => void;
+  showReferenceScripts?: boolean;
+  showSubmissionDeadline?: boolean;
 }) {
   const [referenceExpanded, setReferenceExpanded] = useState(false);
+  const [guidelinesExpanded, setGuidelinesExpanded] = useState(true);
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-6">
-      <section>
-        <div className="mb-3 flex items-center gap-2">
-          <Calendar size={16} className="shrink-0 text-brand" strokeWidth={2} />
-          <h3 className="text-sm font-semibold text-gray-900">Submission Deadline</h3>
-        </div>
-        <SubmissionDeadlineFields deadline={deadline} onChange={onDeadlineChange} />
-      </section>
+      {showSubmissionDeadline ? (
+        <section>
+          <div className="mb-3 flex items-center gap-2">
+            <Calendar size={16} className="shrink-0 text-brand" strokeWidth={2} />
+            <h3 className="text-sm font-semibold text-gray-900">Submission Deadline</h3>
+          </div>
+          <SubmissionDeadlineFields deadline={deadline} onChange={onDeadlineChange} />
+        </section>
+      ) : null}
 
       <section>
-        <div className="mb-2 flex items-center gap-3">
-          <FileText size={16} className="shrink-0 text-brand" strokeWidth={2} />
-          <h3 className="shrink-0 text-sm font-semibold text-gray-900">Content Guidelines</h3>
-          <a
-            href={referenceWebsiteUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={sectionActionLinkClass}
-          >
-            Reference Website
-            <ExternalLink size={12} strokeWidth={2} />
-          </a>
-        </div>
-        <ContentGuidelinesDisplayBlock
-          guidelines={briefContent.guidelines}
-          mention={briefContent.mention}
-          hashtag={briefContent.hashtag}
-          attachments={briefContent.attachments}
-          referenceLinks={briefContent.referenceLinks}
+        <ContentGuidelinesSectionHeader
+          expanded={guidelinesExpanded}
+          referenceWebsiteUrl={referenceWebsiteUrl}
+          onToggle={() => setGuidelinesExpanded((prev) => !prev)}
         />
-      </section>
-
-      <section>
-        <ReferenceScriptsSectionHeader
-          expanded={referenceExpanded}
-          onToggle={() => setReferenceExpanded((prev) => !prev)}
-        />
-        {referenceExpanded ? (
-          <ReferenceScriptsGeneratePanel
-            kolName={kolName}
-            onIdeasGenerated={onReferenceScriptsChange}
+        {guidelinesExpanded ? (
+          <ContentGuidelinesDisplayBlock
+            guidelines={briefContent.guidelines}
+            mention={briefContent.mention}
+            hashtag={briefContent.hashtag}
+            attachments={briefContent.attachments}
+            referenceLinks={briefContent.referenceLinks}
           />
         ) : null}
       </section>
+
+      {showReferenceScripts ? (
+        <section>
+          <ReferenceScriptsSectionHeader
+            expanded={referenceExpanded}
+            onToggle={() => setReferenceExpanded((prev) => !prev)}
+          />
+          {referenceExpanded ? (
+            <ReferenceScriptsGeneratePanel
+              kolName={kolName}
+              onIdeasGenerated={onReferenceScriptsChange}
+            />
+          ) : null}
+        </section>
+      ) : null}
     </div>
   );
 }
 
-export function ContentScriptReviewSheet({
-  open,
-  onOpenChange,
+function loadContentScriptBriefState(kolId: string) {
+  ensureContentScriptReviewDemoData(kolId);
+
+  const brief = getScriptBriefH5Data(kolId);
+  const overrides = CONTENT_BRIEF_DEFAULTS[kolId];
+
+  const parsed = scriptBriefDeadlineToSubmissionDeadline(brief.deadline);
+  const deadline =
+    overrides?.deadline?.date
+      ? overrides.deadline
+      : { date: parsed.date, time: parsed.time, timezone: parsed.timezone };
+
+  return {
+    guidelines: brief.guidelines,
+    briefContent: {
+      mention: brief.mention,
+      hashtag: brief.hashtag,
+      attachments: brief.attachments,
+      referenceLinks: brief.referenceLinks,
+    },
+    deadline,
+    referenceScripts: brief.referenceScripts,
+    referenceWebsiteUrl: brief.referenceWebsiteUrl,
+  };
+}
+
+function ContentScriptReviewSheetInner({
   kolId,
   kolName,
   platform,
+  track,
+  onOpenChange,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   kolId: string;
   kolName: string;
   platform: string;
+  track: ContentReviewTrack;
+  onOpenChange: (open: boolean) => void;
 }) {
+  const draftKolId = getContentReviewDraftKolId(kolId, track);
+  const showReferenceScripts = track === "script";
+  const showSubmissionDeadline = track !== "caption";
+  const initialBrief = loadContentScriptBriefState(kolId);
   const [tab, setTab] = useState<SheetTab>("comments");
-  const [guidelines, setGuidelines] = useState<ScriptBriefH5Data["guidelines"]>({
-    original: "",
-    translation: "",
-  });
-  const [briefContent, setBriefContent] = useState<
-    Pick<ScriptBriefH5Data, "mention" | "hashtag" | "attachments" | "referenceLinks">
-  >({
-    mention: "",
-    hashtag: "",
-    attachments: [],
-    referenceLinks: [],
-  });
-  const [deadline, setDeadline] = useState<SubmissionDeadline>({
-    date: "",
-    time: "",
-    timezone: "",
-  });
-  const [referenceScripts, setReferenceScripts] = useState<
-    ScriptBriefPublished["referenceScripts"]
-  >([]);
-  const [referenceWebsiteUrl, setReferenceWebsiteUrl] = useState("");
+  const [guidelines, setGuidelines] = useState(initialBrief.guidelines);
+  const [briefContent, setBriefContent] = useState(initialBrief.briefContent);
+  const [deadline, setDeadline] = useState<SubmissionDeadline>(initialBrief.deadline);
+  const [referenceScripts, setReferenceScripts] = useState(initialBrief.referenceScripts);
+  const [referenceWebsiteUrl, setReferenceWebsiteUrl] = useState(initialBrief.referenceWebsiteUrl);
+
+  const loadBrief = useCallback(() => {
+    const loaded = loadContentScriptBriefState(kolId);
+    setGuidelines(loaded.guidelines);
+    setBriefContent(loaded.briefContent);
+    setDeadline(loaded.deadline);
+    setReferenceScripts(loaded.referenceScripts);
+    setReferenceWebsiteUrl(loaded.referenceWebsiteUrl);
+  }, [kolId]);
 
   useEffect(() => {
-    if (!open) return;
-
-    const loadBrief = () => {
-      ensureContentScriptReviewDemoData(kolId);
-
-      const brief = getScriptBriefH5Data(kolId);
-      const overrides = CONTENT_BRIEF_DEFAULTS[kolId];
-
-      const loadedGuidelines = overrides?.guidelines
-        ? { original: overrides.guidelines, translation: overrides.guidelines }
-        : brief.guidelines;
-      setGuidelines(loadedGuidelines);
-      setBriefContent({
-        mention: brief.mention,
-        hashtag: brief.hashtag,
-        attachments: brief.attachments,
-        referenceLinks: brief.referenceLinks,
-      });
-      setReferenceScripts(brief.referenceScripts);
-      setReferenceWebsiteUrl(brief.referenceWebsiteUrl);
-
-      if (overrides?.deadline) {
-        setDeadline(overrides.deadline);
-      } else if (brief.deadline.date.includes("-")) {
-        setDeadline({
-          date: brief.deadline.date,
-          time: brief.deadline.time?.includes(":") ? brief.deadline.time.slice(0, 5) : "",
-          timezone: brief.deadline.timezone ?? "",
-        });
-      } else {
-        setDeadline({ date: "", time: "", timezone: brief.deadline.timezone ?? "" });
-      }
+    ensureContentScriptReviewDemoData(draftKolId);
+    const unsubGuide = subscribeCampaignExecutionGuideChanges(loadBrief);
+    const unsubPublished = subscribeScriptBriefPublishedChanges(loadBrief);
+    return () => {
+      unsubGuide();
+      unsubPublished();
     };
-
-    loadBrief();
-    setTab("comments");
-
-    return subscribeCampaignExecutionGuideChanges(loadBrief);
-  }, [open, kolId]);
+  }, [draftKolId, loadBrief]);
 
   const handleSave = () => {
     const brief = getScriptBriefH5Data(kolId);
+    const existingPublished = getScriptBriefPublished(kolId);
+    const defaults = getScriptBriefH5Defaults(kolId);
     saveScriptBriefPublished(kolId, {
-      guidelines,
+      guidelines: existingPublished?.guidelines ?? defaults.guidelines,
       attachments: brief.attachments,
       referenceScripts,
-      deadline: {
-        date: deadline.date,
-        time: deadline.time,
-        timezone: deadline.timezone,
-      },
+      deadline: showSubmissionDeadline
+        ? {
+            date: deadline.date,
+            time: deadline.time,
+            timezone: deadline.timezone,
+          }
+        : {
+            date: brief.deadline.date,
+            time: brief.deadline.time,
+            timezone: brief.deadline.timezone,
+          },
     });
     onOpenChange(false);
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        showCloseButton={false}
-        className="flex h-full flex-col gap-0 border-l border-gray-100 bg-white p-0 data-[side=right]:w-full data-[side=right]:max-w-[720px] data-[side=right]:sm:max-w-[720px]"
-      >
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-gray-100 px-5 py-4">
+    <>
+      <div className="flex shrink-0 items-start justify-between gap-3 border-b border-gray-100 px-5 py-4">
           <div className="min-w-0">
             <div className="flex min-w-0 items-center gap-2.5">
-              <SheetTitle className="text-base font-semibold text-gray-900">Script</SheetTitle>
+              <SheetTitle className="text-base font-semibold text-gray-900">
+                {CONTENT_REVIEW_TRACK_LABEL[track]}
+              </SheetTitle>
               <InfluencerAvatar
                 src={getMockInfluencerAvatar(kolId)}
                 alt={kolName}
@@ -768,7 +819,7 @@ export function ContentScriptReviewSheet({
 
         <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-5">
           {tab === "comments" ? (
-            <ScriptKolDraftPanel kolId={kolId} kolName={kolName} />
+            <ScriptKolDraftPanel kolId={draftKolId} kolName={kolName} />
           ) : (
             <BriefSettingsPanel
               kolName={kolName}
@@ -777,6 +828,8 @@ export function ContentScriptReviewSheet({
               referenceWebsiteUrl={referenceWebsiteUrl}
               onDeadlineChange={(patch) => setDeadline((prev) => ({ ...prev, ...patch }))}
               onReferenceScriptsChange={setReferenceScripts}
+              showReferenceScripts={showReferenceScripts}
+              showSubmissionDeadline={showSubmissionDeadline}
             />
           )}
         </div>
@@ -795,6 +848,41 @@ export function ContentScriptReviewSheet({
             </Button>
           </div>
         </div>
+    </>
+  );
+}
+
+export function ContentScriptReviewSheet({
+  open,
+  onOpenChange,
+  kolId,
+  kolName,
+  platform,
+  track = "script",
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  kolId: string;
+  kolName: string;
+  platform: string;
+  track?: ContentReviewTrack;
+}) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        showCloseButton={false}
+        className="flex h-full flex-col gap-0 border-l border-gray-100 bg-white p-0 data-[side=right]:w-full data-[side=right]:max-w-[720px] data-[side=right]:sm:max-w-[720px]"
+      >
+        {open ? (
+          <ContentScriptReviewSheetInner
+            kolId={kolId}
+            kolName={kolName}
+            platform={platform}
+            track={track}
+            onOpenChange={onOpenChange}
+          />
+        ) : null}
       </SheetContent>
     </Sheet>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
+import { useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -343,23 +343,35 @@ export function ExecutionGuideSheet({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        showCloseButton={false}
+        className="flex h-full w-full flex-col gap-0 border-l border-gray-100 bg-white p-0 data-[side=right]:max-w-[540px] data-[side=right]:sm:max-w-[540px]"
+      >
+        {open ? <ExecutionGuideSheetForm onOpenChange={onOpenChange} /> : null}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function ExecutionGuideSheetForm({
+  onOpenChange,
+}: {
+  onOpenChange: (open: boolean) => void;
+}) {
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const guide = getCampaignExecutionGuide();
 
   const [brandDescription, setBrandDescription] = useState("");
   const [previewLink, setPreviewLink] = useState("");
   const [objectives, setObjectives] = useState("");
-  const [contentGuidelines, setContentGuidelines] = useState(
-    "打算赌神的萨达爱上打算打算赌神啊赌神啊打算的"
-  );
-  const [mention, setMention] = useState("打算大的赌神啊d");
-  const [hashtag, setHashtag] = useState("打算打算赌神啊赌神啊");
-  const [briefFiles, setBriefFiles] = useState([
-    "Frame 2085665168.png",
-    "Frame 2085665168.png",
-  ]);
-  const [referenceLinks, setReferenceLinks] = useState([
-    "https://kolplanet-ab5zz5ztf-boluobao20-6161s-projects.vercel.app/",
-  ]);
+  const [contentGuidelines, setContentGuidelines] = useState(guide.contentGuidelines);
+  const [mention, setMention] = useState(guide.mention);
+  const [hashtag, setHashtag] = useState(guide.hashtag);
+  const [briefFiles, setBriefFiles] = useState(guide.briefFiles);
+  const [referenceLinks, setReferenceLinks] = useState(guide.referenceLinks);
   const [linkDraft, setLinkDraft] = useState("");
   const [deliverables, setDeliverables] = useState("");
   const [contentUsage, setContentUsage] = useState<string>("60 Days");
@@ -379,17 +391,6 @@ export function ExecutionGuideSheet({
     setLinkDraft("");
   };
 
-  useEffect(() => {
-    if (!open) return;
-    const guide = getCampaignExecutionGuide();
-    setContentGuidelines(guide.contentGuidelines);
-    setMention(guide.mention);
-    setHashtag(guide.hashtag);
-    setBriefFiles(guide.briefFiles);
-    setReferenceLinks(guide.referenceLinks);
-    setLinkDraft("");
-  }, [open]);
-
   const handleSave = () => {
     saveCampaignExecutionGuide({
       contentGuidelines,
@@ -402,12 +403,7 @@ export function ExecutionGuideSheet({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        showCloseButton={false}
-        className="flex h-full w-full flex-col gap-0 border-l border-gray-100 bg-white p-0 data-[side=right]:max-w-[540px] data-[side=right]:sm:max-w-[540px]"
-      >
+    <>
         <div className="flex shrink-0 items-center gap-3 border-b border-gray-100 px-6 py-5">
           <SheetClose
             render={
@@ -635,7 +631,6 @@ export function ExecutionGuideSheet({
             Save
           </Button>
         </div>
-      </SheetContent>
-    </Sheet>
+    </>
   );
 }

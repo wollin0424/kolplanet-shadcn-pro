@@ -1,5 +1,6 @@
 import {
   getCampaignExecutionGuide,
+  subscribeCampaignExecutionGuideChanges,
 } from "@/lib/campaignExecutionGuide";
 import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
 import {
@@ -8,6 +9,7 @@ import {
 } from "@/lib/scriptBriefDeadline";
 import {
   getScriptBriefPublished,
+  subscribeScriptBriefPublishedChanges,
   type ScriptBriefPublished,
 } from "@/lib/scriptBriefPublished";
 
@@ -190,4 +192,14 @@ export function getScriptBriefH5Data(kolId: string): ScriptBriefH5Data {
   if (typeof window === "undefined") return defaults;
   const merged = mergeScriptBriefPublished(defaults, getScriptBriefPublished(kolId));
   return mergeCampaignExecutionGuide(merged);
+}
+
+/** Subscribes to per-KOL published brief and campaign execution guide updates. */
+export function subscribeScriptBriefH5DataChanges(listener: () => void) {
+  const unsubPublished = subscribeScriptBriefPublishedChanges(listener);
+  const unsubGuide = subscribeCampaignExecutionGuideChanges(listener);
+  return () => {
+    unsubPublished();
+    unsubGuide();
+  };
 }

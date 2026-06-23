@@ -36,7 +36,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ContentScriptReviewSheet } from "@/components/ContentScriptReviewSheet";
+import {
+  ContentScriptReviewSheet,
+  type ContentReviewTrack,
+} from "@/components/ContentScriptReviewSheet";
 import PipelineStageCell from "@/components/pipeline/PipelineStageCell";
 import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
 import { CONTENT_HUB_MOCK_ROWS, type ContentHubRow } from "@/lib/contentHubMock";
@@ -221,7 +224,10 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
   const [scriptOverdueOnly, setScriptOverdueOnly] = useState(false);
   const [visualOverdueOnly, setVisualOverdueOnly] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [scriptReviewRow, setScriptReviewRow] = useState<ContentHubRow | null>(null);
+  const [contentReview, setContentReview] = useState<{
+    row: ContentHubRow;
+    track: ContentReviewTrack;
+  } | null>(null);
 
   const activeFilterCount =
     [scriptStatusFilter, visualStatusFilter, captionStatusFilter].filter(
@@ -525,7 +531,7 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
                     status={row.script.status}
                     deadline={row.script.updatedAt}
                     overdue={row.scriptOverdue}
-                    onClick={() => setScriptReviewRow(row)}
+                    onClick={() => setContentReview({ row, track: "script" })}
                   />
                 </TableCell>
                 <TableCell className="py-4">
@@ -533,10 +539,15 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
                     status={row.visual.status}
                     deadline={row.visual.updatedAt}
                     overdue={row.visualOverdue}
+                    onClick={() => setContentReview({ row, track: "visual" })}
                   />
                 </TableCell>
                 <TableCell className="py-4 !pr-5">
-                  <ContentStageCell status={row.caption.status} showDeadline={false} />
+                  <ContentStageCell
+                    status={row.caption.status}
+                    showDeadline={false}
+                    onClick={() => setContentReview({ row, track: "caption" })}
+                  />
                 </TableCell>
               </TableRow>
             ))}
@@ -544,15 +555,16 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
         </Table>
       </div>
 
-      {scriptReviewRow ? (
+      {contentReview ? (
         <ContentScriptReviewSheet
-          open={Boolean(scriptReviewRow)}
+          open={Boolean(contentReview)}
           onOpenChange={(open) => {
-            if (!open) setScriptReviewRow(null);
+            if (!open) setContentReview(null);
           }}
-          kolId={scriptReviewRow.id}
-          kolName={scriptReviewRow.name}
-          platform={scriptReviewRow.platform}
+          kolId={contentReview.row.id}
+          kolName={contentReview.row.name}
+          platform={contentReview.row.platform}
+          track={contentReview.track}
         />
       ) : null}
       </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { ContentGuidelinesDisplayBlock } from "@/components/ContentGuidelinesDisplayBlock";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,12 +16,10 @@ import {
   ExternalLink,
   Eye,
   FileText,
-  Link as LinkIcon,
   Lightbulb,
   Lock,
   MessageSquare,
   Share2,
-  Tag,
   TrendingUp,
   Trash2,
   Upload,
@@ -35,9 +34,12 @@ import {
   type CaptionCoverSubmission,
 } from "@/lib/captionCoverSubmissions";
 import { getStageBadgeClass, STAGE_STATUS_PILL_CLASS } from "@/lib/pipeline/stageStatuses";
-import { getScriptBriefH5Data, getScriptBriefH5Defaults } from "@/lib/scriptBriefH5Mock";
+import {
+  getScriptBriefH5Data,
+  getScriptBriefH5Defaults,
+  subscribeScriptBriefH5DataChanges,
+} from "@/lib/scriptBriefH5Mock";
 import { hasScriptBriefDeadline, type ScriptBriefDeadline } from "@/lib/scriptBriefDeadline";
-import { subscribeScriptBriefPublishedChanges } from "@/lib/scriptBriefPublished";
 import { cn } from "@/lib/utils";
 import { H5ScriptSubmissionCard, ScriptAiAutoCheckAlert } from "@/components/ScriptKolDraftPanel";
 import {
@@ -207,101 +209,6 @@ function H5CampaignBriefSection({
         </div>
       </div>
     </section>
-  );
-}
-
-function H5GuidelineDetailCard({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof LinkIcon;
-  label: string;
-  value: string;
-}) {
-  const display = value.trim() || "—";
-
-  return (
-    <div className="min-w-0 rounded-xl border border-gray-100 bg-gray-50/70 p-3">
-      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
-        <Icon size={13} strokeWidth={2} className="shrink-0 text-brand" />
-        {label}
-      </div>
-      <p className="mt-2 break-words text-[13px] leading-relaxed text-gray-800">{display}</p>
-    </div>
-  );
-}
-
-function H5GuidelineReadonlyField({ value }: { value: string }) {
-  const display = value.trim() || "—";
-
-  return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50/70 px-3.5 py-3 text-[13px] leading-relaxed text-gray-800">
-      {display}
-    </div>
-  );
-}
-
-function ContentGuidelinesSection({
-  data,
-  guidelinesView,
-  onGuidelinesViewChange,
-}: {
-  data: ReturnType<typeof getScriptBriefH5Defaults>;
-  guidelinesView: "original" | "translation";
-  onGuidelinesViewChange: (view: "original" | "translation") => void;
-}) {
-  return (
-    <>
-      <SectionHeading
-        icon={FileText}
-        title="Content Guidelines"
-        trailing={
-          <a
-            href={data.referenceWebsiteUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
-          >
-            <LinkIcon size={14} strokeWidth={2} />
-            Reference Website
-            <ExternalLink size={12} strokeWidth={2} />
-          </a>
-        }
-      />
-      <div className="space-y-3">
-        <p className="text-[12px] leading-relaxed text-gray-500">
-          The translation is auto-generated for reference. Please follow the Original version for
-          exact requirements.
-        </p>
-        <BilingualTabPanel
-          original={data.guidelines.original}
-          translation={data.guidelines.translation}
-          view={guidelinesView}
-          onViewChange={onGuidelinesViewChange}
-          emptyLabel="No content guidelines yet."
-        />
-        <div className="grid grid-cols-2 gap-2">
-          <H5GuidelineDetailCard icon={LinkIcon} label="Mention" value={data.mention} />
-          <H5GuidelineDetailCard icon={Tag} label="Hashtag" value={data.hashtag} />
-        </div>
-        <div className="space-y-2">
-          <p className="text-[12px] font-medium text-gray-500">Add Link</p>
-          <H5GuidelineReadonlyField value={data.addLink} />
-        </div>
-      </div>
-      {data.attachments.length > 0 ? (
-        <div className="mt-3 flex w-full flex-wrap gap-2">
-          {data.attachments.map((attachment) => (
-            <ScriptBriefAttachmentPill
-              key={attachment.name}
-              name={attachment.name}
-              locked={attachment.locked}
-            />
-          ))}
-        </div>
-      ) : null}
-    </>
   );
 }
 
@@ -642,24 +549,40 @@ function ScriptBriefH5Overview({
 
 function ScriptBriefH5Guidelines({ kolId }: { kolId: string }) {
   const [data, setData] = useState(() => getScriptBriefH5Defaults(kolId));
-  const [guidelinesView, setGuidelinesView] = useState<"original" | "translation">("original");
   const overviewHref = `/h5/kol-info/${encodeURIComponent(kolId)}`;
 
   useEffect(() => {
     const sync = () => setData(getScriptBriefH5Data(kolId));
     sync();
-    return subscribeScriptBriefPublishedChanges(sync);
+    return subscribeScriptBriefH5DataChanges(sync);
   }, [kolId]);
 
   return (
     <H5PageShell backHref={overviewHref} pageTitle="Content Guidelines">
-      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-        <ContentGuidelinesSection
-          data={data}
-          guidelinesView={guidelinesView}
-          onGuidelinesViewChange={setGuidelinesView}
+      <div className="space-y-3">
+        <SectionHeading
+          icon={FileText}
+          title="Content Guidelines"
+          trailing={
+            <a
+              href={data.referenceWebsiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
+            >
+              Reference Website
+              <ExternalLink size={12} strokeWidth={2} />
+            </a>
+          }
         />
-      </section>
+        <ContentGuidelinesDisplayBlock
+          guidelines={data.guidelines}
+          mention={data.mention}
+          hashtag={data.hashtag}
+          attachments={data.attachments}
+          referenceLinks={data.referenceLinks}
+        />
+      </div>
     </H5PageShell>
   );
 }
@@ -830,7 +753,7 @@ function ScriptBriefH5CaptionCover({ kolId }: { kolId: string }) {
   useEffect(() => {
     const sync = () => setData(getScriptBriefH5Data(kolId));
     sync();
-    return subscribeScriptBriefPublishedChanges(sync);
+    return subscribeScriptBriefH5DataChanges(sync);
   }, [kolId]);
 
   useEffect(() => {
@@ -966,7 +889,7 @@ function ScriptBriefH5Posting({ kolId }: { kolId: string }) {
   useEffect(() => {
     const sync = () => setData(getScriptBriefH5Data(kolId));
     sync();
-    return subscribeScriptBriefPublishedChanges(sync);
+    return subscribeScriptBriefH5DataChanges(sync);
   }, [kolId]);
 
   return (
@@ -1001,7 +924,7 @@ function ScriptBriefH5VideoDraft({ kolId }: { kolId: string }) {
   useEffect(() => {
     const sync = () => setData(getScriptBriefH5Data(kolId));
     sync();
-    return subscribeScriptBriefPublishedChanges(sync);
+    return subscribeScriptBriefH5DataChanges(sync);
   }, [kolId]);
 
   useEffect(() => {
@@ -1033,7 +956,7 @@ function ScriptBriefH5VideoDraft({ kolId }: { kolId: string }) {
           <p>
             Upload your video to a cloud drive (e.g., Google Drive) and paste the link below. Ensure
             access is set to{" "}
-            <span className="font-semibold text-gray-700">'Anyone with the link'</span>.
+            <span className="font-semibold text-gray-700">&apos;Anyone with the link&apos;</span>.
           </p>
           <p className="font-semibold text-gray-700">
             Note: The feedback section is for client use only.
@@ -1099,7 +1022,7 @@ function ScriptBriefH5ViewInner({
   useEffect(() => {
     const sync = () => setData(getScriptBriefH5Data(kolId));
     sync();
-    return subscribeScriptBriefPublishedChanges(sync);
+    return subscribeScriptBriefH5DataChanges(sync);
   }, [kolId]);
 
   useEffect(() => {

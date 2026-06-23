@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { ScriptBriefH5Data } from "@/lib/scriptBriefH5Mock";
 import { cn } from "@/lib/utils";
 import { ExternalLink, FileText, Link as LinkIcon, Tag } from "@/lib/icons";
@@ -87,6 +87,21 @@ function ReadonlyLinkField({ value }: { value: string }) {
   );
 }
 
+function GuidelineSectionField({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="border-t border-gray-100 px-5 py-4">
+      <p className="text-[13px] font-medium text-gray-600">{title}</p>
+      <div className="mt-3">{children}</div>
+    </div>
+  );
+}
+
 export function ContentGuidelinesDisplayBlock({
   guidelines,
   mention,
@@ -140,25 +155,29 @@ export function ContentGuidelinesDisplayBlock({
       </div>
 
       {attachments.length > 0 ? (
-        <div className="space-y-2 border-t border-gray-100 px-5 py-4">
-          {attachments.map((attachment) => (
-            <ReadonlyAttachmentRow key={attachment.name} name={attachment.name} />
-          ))}
-        </div>
+        <GuidelineSectionField title="Upload Briefs">
+          <div className="space-y-2">
+            {attachments.map((attachment, index) => (
+              <ReadonlyAttachmentRow
+                key={`${attachment.name}-${index}`}
+                name={attachment.name}
+              />
+            ))}
+          </div>
+        </GuidelineSectionField>
       ) : null}
 
-      <div className="space-y-2 border-t border-gray-100 px-5 py-4">
-        <label className="text-[13px] font-medium text-gray-600">Add Link</label>
+      <GuidelineSectionField title="Add Link">
         {referenceLinks.length > 0 ? (
           <div className="space-y-2">
-            {referenceLinks.map((url) => (
-              <ReadonlyLinkField key={url} value={url} />
+            {referenceLinks.map((url, index) => (
+              <ReadonlyLinkField key={`${url}-${index}`} value={url} />
             ))}
           </div>
         ) : (
           <ReadonlyLinkField value="" />
         )}
-      </div>
+      </GuidelineSectionField>
     </div>
   );
 }
