@@ -305,6 +305,7 @@ export default function CampaignHub({
       <CampaignHubContentView
         campaignId={campaignId}
         onBack={() => setActiveSection(null)}
+        figmaCapture={figmaCapture}
       />
     );
   }

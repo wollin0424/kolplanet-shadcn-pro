@@ -9,9 +9,18 @@ export default function FigmaCaptureMode() {
 
     document.documentElement.classList.add("figma-capture");
 
+    const width = params.get("figmaWidth");
+    if (width && /^\d+$/.test(width)) {
+      document.documentElement.style.setProperty("--figma-capture-width", `${width}px`);
+    }
+
     const scrollTimer = window.setTimeout(() => {
-      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
-    }, 1500);
+      const scrollHeight = document.documentElement.scrollHeight;
+      window.scrollTo({ top: scrollHeight, behavior: "instant" });
+      window.setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "instant" });
+      }, 400);
+    }, 2500);
 
     return () => {
       window.clearTimeout(scrollTimer);

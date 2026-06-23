@@ -7,7 +7,8 @@ html.figma-capture body {
 }
 
 html.figma-capture body {
-  min-width: 1920px;
+  min-width: var(--figma-capture-width, 1920px);
+  max-width: var(--figma-capture-width, 1920px);
 }
 
 html.figma-capture .flex.h-screen.overflow-hidden {
@@ -16,9 +17,18 @@ html.figma-capture .flex.h-screen.overflow-hidden {
   overflow: visible !important;
 }
 
+/* Campaign detail — keep absolute fill; give main a real height so content isn't clipped */
 html.figma-capture main.relative.flex.min-h-0.flex-1 {
+  flex: 1 1 auto !important;
   overflow: visible !important;
-  min-height: auto !important;
+  min-height: calc(100vh - 3.5rem) !important;
+  height: auto !important;
+}
+
+html.figma-capture main .absolute.inset-0.flex.min-h-0.flex-col {
+  position: absolute !important;
+  inset: 0 !important;
+  overflow: visible !important;
 }
 
 html.figma-capture .no-scrollbar.flex.min-h-0.flex-1.flex-col.overflow-y-auto,
@@ -30,13 +40,28 @@ html.figma-capture [class*="min-h-[680px]"] {
   overflow: visible !important;
 }
 
-html.figma-capture .flex.min-h-0.flex-1 {
+html.figma-capture .figma-capture-detail-content,
+html.figma-capture .overflow-y-auto.min-h-0.flex-1 {
   flex: none !important;
   min-height: auto !important;
   height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
 }
 
 html.figma-capture .flex.h-full.min-h-0.flex-col.overflow-hidden {
   overflow: visible !important;
   height: auto !important;
+}
+
+/* Content hub — show full table (all 8 rows) during capture */
+html.figma-capture .figma-capture-content-root,
+html.figma-capture .figma-capture-content-card,
+html.figma-capture .figma-capture-content-table,
+html.figma-capture .figma-capture-table-scroll {
+  overflow: visible !important;
+  min-height: auto !important;
+  height: auto !important;
+  max-height: none !important;
+  flex: none !important;
 }

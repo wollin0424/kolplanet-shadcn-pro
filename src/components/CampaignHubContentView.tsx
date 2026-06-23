@@ -213,7 +213,13 @@ function H5LinkCell({ path }: { path: string }) {
   );
 }
 
-function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
+function CampaignHubContentTable({
+  campaignId,
+  figmaCapture,
+}: {
+  campaignId: string;
+  figmaCapture?: boolean;
+}) {
   const [rows, setRows] = useState<ContentHubRow[]>(CONTENT_HUB_MOCK_ROWS);
   const [query, setQuery] = useState("");
   const [platformFilter, setPlatformFilter] = useState("All");
@@ -305,7 +311,12 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
 
   return (
     <TooltipProvider delay={0}>
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col overflow-hidden bg-white",
+          figmaCapture && "figma-capture-content-table"
+        )}
+      >
       <span className="sr-only">{campaignId}</span>
 
       <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-gray-100 px-5 py-3">
@@ -468,14 +479,19 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
                 Set Visual Deadline
               </DropdownMenuItem>
               <DropdownMenuItem disabled={!someSelected} className="whitespace-nowrap">
-                Bulk Download
+                Download
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
-      <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
+      <div
+        className={cn(
+          "no-scrollbar min-h-0 flex-1 overflow-y-auto",
+          figmaCapture && "figma-capture-table-scroll"
+        )}
+      >
         <Table className="w-full table-auto border-separate border-spacing-0 text-[13px] [&_tbody_td]:border-b [&_tbody_td]:border-gray-100 [&_td]:px-5 [&_td]:align-middle [&_th]:border-b [&_th]:border-gray-100 [&_th]:px-5 [&_th]:align-middle">
           <TableHeader>
             <TableRow className="bg-gray-50/70 hover:bg-gray-50/70">
@@ -587,15 +603,27 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
 export default function CampaignHubContentView({
   campaignId,
   onBack,
+  figmaCapture,
 }: {
   campaignId: string;
   onBack: () => void;
+  figmaCapture?: boolean;
 }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+    <div
+      className={cn(
+        "flex min-h-0 flex-1 flex-col gap-3 overflow-hidden",
+        figmaCapture && "figma-capture-content-root"
+      )}
+    >
       <CampaignHubDetailHeader title="Content" onBack={onBack} />
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-        <CampaignHubContentTable campaignId={campaignId} />
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
+          figmaCapture && "figma-capture-content-card"
+        )}
+      >
+        <CampaignHubContentTable campaignId={campaignId} figmaCapture={figmaCapture} />
       </div>
     </div>
   );
