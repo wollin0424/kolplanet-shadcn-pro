@@ -250,11 +250,11 @@ export const CONTENT_HUB_STAGE_STATUS_CONFIG: Record<
   Approved: { label: "Approved", tone: "green", progressStep: 5, completed: true },
 };
 
-/** Segment fills — solid pastels aligned with HubStatus pill borders (no opacity / ring). */
+/** Segment fills — match HubStatus pill borders (Pending / Under Review / Approved). */
 export const CONTENT_HUB_STAGE_BAR_FILL: Record<ContentHubStageStatus, string> = {
-  Pending: "bg-gray-300",
-  "Under Review": "bg-sky-400",
-  Approved: "bg-emerald-300",
+  Pending: "bg-gray-200",
+  "Under Review": "bg-sky-200",
+  Approved: "bg-emerald-200",
 };
 
 /** Hover fills — one step darker than bar fill; sky uses *-600 (HubStatus hue), not *-400 (reads as brand). */

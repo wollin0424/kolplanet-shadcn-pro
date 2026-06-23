@@ -148,8 +148,10 @@ export function ContentHubOverview({ className }: { className?: string }) {
                 <p className="text-[12px] font-medium leading-none text-gray-700">{track.label}</p>
                 <p className="shrink-0 tabular-nums leading-none text-gray-400">
                   <span className="text-[15px] font-bold text-brand">{approved}</span>
-                  <span className="text-[12px] font-semibold text-gray-400"> / {breakdown.total}</span>
-                  <span className="text-[11px]"> approved</span>
+                  <span className="text-[12px] font-semibold text-gray-400"> / {breakdown.total}</span>{" "}
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-brand">
+                    approved
+                  </span>
                 </p>
               </div>
               <StageSegmentBar breakdown={breakdown} />
