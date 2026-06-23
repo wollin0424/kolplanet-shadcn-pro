@@ -83,7 +83,7 @@ const S1_DEMO_SUBMISSIONS: ScriptDraftSubmission[] = [
 const S1_VIDEO_DEMO_SUBMISSIONS: ScriptDraftSubmission[] = [
   {
     version: 1,
-    status: "Approved",
+    status: "Under Review",
     submittedAt: "Jun 17, 2026, 10:30 AM",
     content: "https://drive.google.com/file/d/demo-video-draft/view",
     messages: [],

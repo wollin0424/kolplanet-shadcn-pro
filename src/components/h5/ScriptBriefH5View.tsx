@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ContentGuidelinesDisplayBlock } from "@/components/ContentGuidelinesDisplayBlock";
+import { ContentGuidelinesDisplayBlock, ContentGuidelinesTranslationNote } from "@/components/ContentGuidelinesDisplayBlock";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,7 +39,7 @@ import {
   getScriptBriefH5Defaults,
   subscribeScriptBriefH5DataChanges,
 } from "@/lib/scriptBriefH5Mock";
-import { hasScriptBriefDeadline, type ScriptBriefDeadline } from "@/lib/scriptBriefDeadline";
+import { hasScriptBriefDeadline, isScriptBriefDeadlineOverdue, type ScriptBriefDeadline } from "@/lib/scriptBriefDeadline";
 import { cn } from "@/lib/utils";
 import { H5CaptionCoverSubmissionCard } from "@/components/CaptionCoverKolDraftPanel";
 import { H5ScriptSubmissionCard } from "@/components/ScriptKolDraftPanel";
@@ -217,22 +217,29 @@ function SectionHeading({
   icon: Icon,
   title,
   trailing,
+  description,
   className,
 }: {
   icon: typeof FileText;
   title: string;
   trailing?: ReactNode;
+  description?: ReactNode;
   className?: string;
 }) {
   return (
-    <div className={cn("mb-3 flex items-center justify-between gap-3", className)}>
-      <div className="flex min-w-0 items-center gap-2">
+    <div className={cn("mb-3", className)}>
+      <div className="flex items-start gap-2">
         <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
           <Icon size={15} strokeWidth={2} />
         </span>
-        <h2 className="text-[15px] font-semibold text-gray-900">{title}</h2>
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-[15px] font-semibold text-gray-900">{title}</h2>
+            {trailing}
+          </div>
+          {description}
+        </div>
       </div>
-      {trailing}
     </div>
   );
 }
@@ -266,8 +273,8 @@ function H5PageShell({
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#f4f6f9]">
-      <header className="shrink-0 border-b border-gray-100 bg-white px-4 py-3">
+    <div className="flex min-h-full flex-col bg-[#f4f6f9]">
+      <header className="sticky top-0 z-10 shrink-0 border-b border-gray-100 bg-white px-4 py-3">
         {backHref && pageTitle ? (
           <div className="flex min-w-0 items-center gap-2">
             <Link
@@ -303,7 +310,7 @@ function H5PageShell({
         )}
       </header>
 
-      <main className="no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-5 pb-8">
+      <main className="space-y-5 px-4 py-5 pb-8">
         {children}
       </main>
     </div>
@@ -313,34 +320,46 @@ function H5PageShell({
 function H5OverviewDeadline({
   deadline,
   locked = false,
+  completed = false,
 }: {
   deadline: ScriptBriefDeadline;
   locked?: boolean;
+  completed?: boolean;
 }) {
   if (!hasScriptBriefDeadline(deadline)) return null;
 
   const dateTime = [deadline.date, deadline.time].filter(Boolean).join(" ");
+  const overdue = !completed && !locked && isScriptBriefDeadlineOverdue(deadline);
 
   return (
     <div
       className={cn(
-        "mt-2.5 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-2.5",
-        locked ? "text-gray-500" : "text-amber-900"
+        "mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-gray-100 pt-2.5",
+        locked && "text-gray-500",
+        overdue && "text-red-700",
+        !locked && !overdue && !completed && "text-gray-600",
+        completed && !locked && "text-gray-500"
       )}
     >
       <span
         className={cn(
           "inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold leading-none",
-          locked ? "bg-gray-100 text-gray-600" : "bg-amber-50 text-amber-800"
+          locked && "bg-gray-100 text-gray-600",
+          overdue && "bg-red-50 text-red-700",
+          !locked && !overdue && !completed && "bg-gray-100 text-gray-600",
+          completed && !locked && "bg-gray-100 text-gray-500"
         )}
       >
         <Calendar size={12} strokeWidth={2} className="shrink-0" aria-hidden />
-        Deadline
+        {overdue ? "Overdue" : "Deadline"}
       </span>
       <span
         className={cn(
           "text-[12px] font-semibold tabular-nums leading-snug",
-          locked ? "text-gray-600" : "text-gray-900"
+          locked && "text-gray-600",
+          overdue && "text-red-700",
+          !locked && !overdue && !completed && "text-gray-800",
+          completed && !locked && "text-gray-600"
         )}
       >
         {dateTime}
@@ -348,8 +367,11 @@ function H5OverviewDeadline({
       {deadline.timezone ? (
         <span
           className={cn(
-            "rounded px-1.5 py-0.5 text-[10px] font-medium leading-none",
-            locked ? "bg-gray-100 text-gray-500" : "bg-amber-100/80 text-amber-800"
+            "text-[11px] font-normal leading-none",
+            locked && "text-gray-400",
+            overdue && "text-red-500/80",
+            !locked && !overdue && "text-gray-400",
+            completed && !locked && "text-gray-400"
           )}
         >
           {deadline.timezone}
@@ -430,7 +452,13 @@ function H5OverviewCard({
             ) : null}
           </div>
           <p className="mt-1 text-[12px] leading-relaxed text-gray-400">{description}</p>
-          {deadline ? <H5OverviewDeadline deadline={deadline} locked={locked} /> : null}
+          {deadline ? (
+            <H5OverviewDeadline
+              deadline={deadline}
+              locked={locked}
+              completed={completed}
+            />
+          ) : null}
         </div>
       </div>
     </div>
@@ -539,13 +567,13 @@ function ScriptBriefH5Overview({ kolId }: { kolId: string }) {
           />
 
           <p className="text-[13px] leading-relaxed text-gray-500">
-            Review campaign guidelines, attachments, and reference materials.
+            Tap for full brief and creation requirements.
           </p>
 
           <div className="mt-5 space-y-4">
             <H5OverviewCard
               title="Script"
-              description="Review the brief, submit script drafts, and leave feedback."
+              description="Tap to submit your script and track client feedback."
               active={!scriptCompleted}
               href={scriptHref}
               completed={scriptCompleted}
@@ -553,8 +581,8 @@ function ScriptBriefH5Overview({ kolId }: { kolId: string }) {
               deadline={data.deadline}
             />
             <H5OverviewCard
-              title="Video Draft"
-              description="Review the draft script and progress the workflow."
+              title="Visual Draft"
+              description="Tap to submit draft per approved script & track client feedback."
               active={scriptCompleted && !videoCompleted}
               completed={videoCompleted}
               locked={!scriptCompleted}
@@ -564,7 +592,7 @@ function ScriptBriefH5Overview({ kolId }: { kolId: string }) {
             />
             <H5OverviewCard
               title="Caption & Cover"
-              description="Review caption and cover submissions."
+              description="Submit caption & cover for approval before publishing."
               active={videoCompleted && !captionCompleted}
               completed={captionCompleted}
               locked={!videoCompleted}
@@ -573,7 +601,7 @@ function ScriptBriefH5Overview({ kolId }: { kolId: string }) {
             />
             <H5OverviewCard
               title="Posting"
-              description="Open the final publishing step."
+              description="Submit post link & insights after publishing approved content."
               locked={!captionCompleted}
               href={postingHref}
               step={4}
@@ -612,6 +640,7 @@ function ScriptBriefH5Guidelines({ kolId }: { kolId: string }) {
               <ExternalLink size={12} strokeWidth={2} />
             </a>
           }
+          description={<ContentGuidelinesTranslationNote />}
         />
         <ContentGuidelinesDisplayBlock
           guidelines={data.guidelines}
@@ -723,6 +752,46 @@ function CoverImageUploadField({
 
 const CAPTION_MAX_LENGTH = 2000;
 
+function H5LimitedTextarea({
+  value,
+  onChange,
+  maxLength,
+  disabled = false,
+  placeholder,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  maxLength: number;
+  disabled?: boolean;
+  placeholder?: string;
+  className?: string;
+}) {
+  return (
+    <div className="relative">
+      <Textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value.slice(0, maxLength))}
+        disabled={disabled}
+        placeholder={placeholder}
+        className={cn(
+          "min-h-[120px] resize-none border-gray-200 pb-7 text-[13px] focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand/15",
+          disabled ? "bg-gray-50 text-gray-400" : "bg-white",
+          className
+        )}
+      />
+      <span
+        className={cn(
+          "pointer-events-none absolute bottom-2.5 right-3 text-[11px] tabular-nums text-gray-400",
+          disabled && "text-gray-300"
+        )}
+      >
+        {value.length} / {maxLength}
+      </span>
+    </div>
+  );
+}
+
 function ScriptBriefH5CaptionCover({ kolId }: { kolId: string }) {
   const captionKolId = `${kolId}-caption`;
   const videoKolId = `${kolId}-video`;
@@ -805,8 +874,9 @@ function ScriptBriefH5CaptionCover({ kolId }: { kolId: string }) {
           <p>
             Please provide the final caption and cover image for publishing.
           </p>
-          <p className="font-semibold text-gray-700">
-            Note: The feedback section is for client use only.
+          <p>
+            <span className="font-semibold text-gray-600">Note:</span> The feedback section is for
+            client use only.
           </p>
         </div>
 
@@ -824,19 +894,13 @@ function ScriptBriefH5CaptionCover({ kolId }: { kolId: string }) {
               </button>
             ) : null}
           </div>
-          <Textarea
+          <H5LimitedTextarea
             value={caption}
-            onChange={(e) => setCaption(e.target.value.slice(0, CAPTION_MAX_LENGTH))}
+            onChange={setCaption}
+            maxLength={CAPTION_MAX_LENGTH}
             disabled={submissionLocked}
             placeholder="Enter your caption here, including @mentions and #hashtags..."
-            className={cn(
-              "min-h-[120px] resize-none border-gray-200 text-[13px] focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand/15",
-              submissionLocked ? "bg-gray-50 text-gray-400" : "bg-white"
-            )}
           />
-          <p className="text-right text-[11px] text-gray-400">
-            {caption.length} / {CAPTION_MAX_LENGTH}
-          </p>
         </div>
 
         <div className="mt-4">
@@ -947,12 +1011,13 @@ function ScriptBriefH5VideoDraft({ kolId }: { kolId: string }) {
         <SectionHeading icon={MessageSquare} title="Draft Submission & Feedback" />
         <div className="mb-4 space-y-2 text-[12px] leading-relaxed text-gray-500">
           <p>
-            Upload your video to a cloud drive (e.g., Google Drive) and paste the link below. Ensure
-            access is set to{" "}
-            <span className="font-semibold text-gray-700">&apos;Anyone with the link&apos;</span>.
+            Upload your video to a cloud drive (e.g., Google Drive) and paste the link below.
+            Ensure access is set to{" "}
+            <span className="font-semibold text-gray-600">&apos;Anyone with the link&apos;</span>.
           </p>
-          <p className="font-semibold text-gray-700">
-            Note: The feedback section is for client use only.
+          <p>
+            <span className="font-semibold text-gray-600">Note:</span> The feedback section is for
+            client use only.
           </p>
         </div>
         <Textarea
@@ -965,7 +1030,7 @@ function ScriptBriefH5VideoDraft({ kolId }: { kolId: string }) {
               : "Paste your video draft link here..."
           }
           className={cn(
-            "min-h-[120px] resize-none border-gray-200 text-[13px] focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand/15",
+            "min-h-[120px] resize-none border-gray-200 text-[13px] placeholder:font-normal placeholder:text-gray-400 focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand/15",
             submissionLocked ? "bg-gray-50 text-gray-400" : "bg-white"
           )}
         />
@@ -1013,6 +1078,8 @@ function ScriptBriefH5ViewInner({
   const submissionLimit = getScriptDraftSubmissionLimit();
 
   useEffect(() => {
+    ensureContentScriptReviewDemoData(kolId);
+
     const sync = () => setData(getScriptBriefH5Data(kolId));
     sync();
     return subscribeScriptBriefH5DataChanges(sync);
@@ -1033,6 +1100,14 @@ function ScriptBriefH5ViewInner({
   const submissionCount = submissions.length;
   const discussionLocked = submissions[submissions.length - 1]?.status === "Approved";
   const scriptCompleted = submissions.some((submission) => submission.status === "Approved");
+  const lastSubmission = submissions[submissions.length - 1];
+  const canInsertFromPreviousVersion =
+    Boolean(lastSubmission) && !discussionLocked && submissionCount < submissionLimit;
+
+  const handleInsertFromPreviousVersion = () => {
+    if (!lastSubmission) return;
+    setDraft(lastSubmission.content);
+  };
 
   if (view === "overview") {
     return <ScriptBriefH5Overview kolId={kolId} />;
@@ -1121,12 +1196,27 @@ function ScriptBriefH5ViewInner({
 
         <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
           <SectionHeading icon={MessageSquare} title="Script Submission & Feedback" />
-          <Textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Write your script, or share a document link here..."
-            className="min-h-[120px] resize-none border-gray-200 bg-white text-[13px] focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand/15"
-          />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[12px] font-medium text-gray-500">Your script</p>
+              {canInsertFromPreviousVersion ? (
+                <button
+                  type="button"
+                  onClick={handleInsertFromPreviousVersion}
+                  className="inline-flex shrink-0 items-center gap-1 text-[12px] font-medium text-brand transition-colors hover:text-brand/80"
+                >
+                  <Copy size={12} strokeWidth={2} />
+                  Copy from v{lastSubmission.version}
+                </button>
+              ) : null}
+            </div>
+            <Textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Write your script, or share a document link here..."
+              className="min-h-[120px] resize-none border-gray-200 bg-white text-[13px] placeholder:font-normal placeholder:text-gray-400 focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand/15"
+            />
+          </div>
           <p className="mt-2 text-right text-[11px] text-gray-400">
             Submissions: {submissionCount}/{submissionLimit}
           </p>

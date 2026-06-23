@@ -252,19 +252,19 @@ export const CONTENT_HUB_STAGE_STATUS_CONFIG: Record<
 
 /** Segment fills — solid pastels aligned with HubStatus pill borders (no opacity / ring). */
 export const CONTENT_HUB_STAGE_BAR_FILL: Record<ContentHubStageStatus, string> = {
-  Pending: "bg-gray-200",
-  "Under Review": "bg-sky-200",
-  Approved: "bg-emerald-200",
+  Pending: "bg-gray-300",
+  "Under Review": "bg-sky-400",
+  Approved: "bg-emerald-300",
 };
 
 /** Hover fills — one step darker than bar fill; sky uses *-600 (HubStatus hue), not *-400 (reads as brand). */
 export const CONTENT_HUB_STAGE_BAR_FILL_HOVER: Record<ContentHubStageStatus, string> = {
   Pending:
-    "group-hover/segment:bg-gray-400 group-focus-visible/segment:bg-gray-400",
+    "group-hover/segment:bg-gray-500 group-focus-visible/segment:bg-gray-500",
   "Under Review":
     "group-hover/segment:bg-sky-600 group-focus-visible/segment:bg-sky-600",
   Approved:
-    "group-hover/segment:bg-emerald-400 group-focus-visible/segment:bg-emerald-400",
+    "group-hover/segment:bg-emerald-500 group-focus-visible/segment:bg-emerald-500",
 };
 
 export const CONTENT_STATUS_CONFIG: Record<ContentStatus, StageBadgeConfig> = {

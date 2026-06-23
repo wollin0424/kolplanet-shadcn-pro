@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { CaptionCoverKolDraftPanel } from "@/components/CaptionCoverKolDraftPanel";
-import { ContentGuidelinesDisplayBlock } from "@/components/ContentGuidelinesDisplayBlock";
+import { ContentGuidelinesDisplayBlock, ContentGuidelinesTranslationNote } from "@/components/ContentGuidelinesDisplayBlock";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { ScriptKolDraftPanel } from "@/components/ScriptKolDraftPanel";
 import { Button } from "@/components/ui/button";
@@ -302,7 +302,7 @@ function ReferenceScriptsContinueControls({
 }) {
   return (
     <div className="rounded-xl border border-gray-100 bg-white/70 p-4">
-      <p className="mb-3 text-xs text-gray-500">
+      <p className="mb-3 text-[13px] leading-relaxed text-gray-500">
         Not satisfied? Try a custom style or instruction.
       </p>
       <div className="mb-3 flex flex-wrap gap-2">
@@ -323,7 +323,9 @@ function ReferenceScriptsContinueControls({
           value={customPrompt}
           onChange={(e) => onCustomPromptChange(e.target.value)}
           placeholder="Add your own style or generation instruction."
-          className={formInputClass("pr-10 text-[13px] font-normal text-gray-600 placeholder:text-gray-400")}
+          className={formInputClass(
+            "h-9 pr-10 text-[13px] leading-normal font-normal text-gray-600 placeholder:text-[13px] placeholder:font-normal placeholder:text-gray-400"
+          )}
           disabled={disabled}
           onKeyDown={(e) => {
             if (e.key === "Enter") onGenerate();
@@ -333,10 +335,10 @@ function ReferenceScriptsContinueControls({
           type="button"
           onClick={() => onGenerate()}
           disabled={disabled}
-          className="absolute top-1/2 right-2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-brand disabled:opacity-50"
+          className="absolute top-1/2 right-2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full bg-brand-50 text-brand transition-colors hover:bg-brand hover:text-white disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-brand-50 disabled:hover:text-brand"
           aria-label="Generate with custom prompt"
         >
-          <ArrowRight size={14} />
+          <ArrowRight size={14} strokeWidth={2} />
         </button>
       </div>
     </div>
@@ -443,12 +445,17 @@ function ReferenceScriptsGeneratePanel({
         ) : null}
 
         {showContinueControls ? (
-          <div className="text-xs text-gray-400">
+          <div className="text-[13px] leading-relaxed text-gray-500">
             <p>
-              Selected: <span className="font-semibold tabular-nums text-gray-600">0/3</span>
+              Selected:{" "}
+              <span className="font-semibold tabular-nums text-gray-600">0/3</span>
             </p>
             <p className="mt-0.5">
-              Generation limit ({generationRuns}/3) reached.
+              Generation limit (
+              <span className="font-semibold tabular-nums text-gray-600">
+                {generationRuns}/3
+              </span>
+              ) reached.
             </p>
           </div>
         ) : null}
@@ -485,6 +492,7 @@ function BriefSettingsSectionHeader({
   icon: Icon,
   title,
   trailing,
+  description,
   expanded,
   onToggle,
   collapsible = false,
@@ -493,18 +501,38 @@ function BriefSettingsSectionHeader({
   icon: typeof Calendar;
   title: string;
   trailing?: ReactNode;
+  description?: ReactNode;
   expanded?: boolean;
   onToggle?: () => void;
   collapsible?: boolean;
   withBottomSpacing?: boolean;
 }) {
+  const hasBottomSpacing = (collapsible && expanded) || withBottomSpacing || description;
+
+  if (description) {
+    return (
+      <div className={cn("flex gap-3", hasBottomSpacing && "mb-3")}>
+        <Icon size={16} className="mt-0.5 shrink-0 text-brand self-start" strokeWidth={2} />
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h3 className={briefSectionTitleClass}>{title}</h3>
+            {trailing}
+            {collapsible && onToggle ? (
+              <BriefSectionCollapseButton
+                expanded={expanded ?? false}
+                onToggle={onToggle}
+                sectionLabel={title}
+              />
+            ) : null}
+          </div>
+          {description}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={cn(
-        "flex items-center gap-3",
-        ((collapsible && expanded) || withBottomSpacing) && "mb-3"
-      )}
-    >
+    <div className={cn("flex items-center gap-3", hasBottomSpacing && "mb-3")}>
       <Icon size={16} className="shrink-0 text-brand" strokeWidth={2} />
       <h3 className={briefSectionTitleClass}>{title}</h3>
       {trailing}
@@ -547,10 +575,12 @@ function ContentGuidelinesSectionHeader({
   expanded,
   referenceWebsiteUrl,
   onToggle,
+  showTranslationNote = false,
 }: {
   expanded: boolean;
   referenceWebsiteUrl: string;
   onToggle: () => void;
+  showTranslationNote?: boolean;
 }) {
   return (
     <BriefSettingsSectionHeader
@@ -559,6 +589,9 @@ function ContentGuidelinesSectionHeader({
       expanded={expanded}
       onToggle={onToggle}
       collapsible
+      description={
+        showTranslationNote ? <ContentGuidelinesTranslationNote /> : undefined
+      }
       trailing={
         <a
           href={referenceWebsiteUrl}
@@ -692,6 +725,7 @@ function BriefSettingsPanel({
           expanded={guidelinesExpanded}
           referenceWebsiteUrl={referenceWebsiteUrl}
           onToggle={() => setGuidelinesExpanded((prev) => !prev)}
+          showTranslationNote={guidelinesExpanded}
         />
         {guidelinesExpanded ? (
           <ContentGuidelinesDisplayBlock
@@ -815,7 +849,7 @@ function ContentScriptReviewSheetInner({
   };
 
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex shrink-0 items-start justify-between gap-3 border-b border-gray-100 px-5 py-4">
           <div className="min-w-0">
             <div className="flex min-w-0 items-center gap-2.5">
@@ -905,12 +939,14 @@ function ContentScriptReviewSheetInner({
             >
               Cancel
             </button>
-            <Button type="button" variant="brand" className="h-9 px-4 text-[13px]" onClick={handleSave}>
-              Save & Update
-            </Button>
+            {tab === "brief" ? (
+              <Button type="button" variant="brand" className="h-9 px-4 text-[13px]" onClick={handleSave}>
+                Save & Update
+              </Button>
+            ) : null}
           </div>
         </div>
-    </>
+    </div>
   );
 }
 
@@ -934,7 +970,7 @@ export function ContentScriptReviewSheet({
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="flex h-full flex-col gap-0 border-l border-gray-100 bg-white p-0 data-[side=right]:w-full data-[side=right]:max-w-[720px] data-[side=right]:sm:max-w-[720px]"
+        className="flex h-full min-h-0 flex-col gap-0 border-l border-gray-100 bg-white p-0 data-[side=right]:w-full data-[side=right]:max-w-[720px] data-[side=right]:sm:max-w-[720px]"
       >
         {open ? (
           <ContentScriptReviewSheetInner

@@ -120,3 +120,37 @@ function parseDeadlineTimeForInput(time?: string): string {
 
   return "";
 }
+
+/** Parses brief deadline to a local Date for overdue comparison. */
+export function parseScriptBriefDeadlineDate(
+  deadline: ScriptBriefDeadline,
+  endOfDayIfNoTime = true
+): Date | null {
+  const parsed = scriptBriefDeadlineToSubmissionDeadline(deadline);
+  if (!parsed.date) return null;
+
+  const [year, month, day] = parsed.date.split("-").map(Number);
+  if (!year || !month || !day) return null;
+
+  if (parsed.time) {
+    const [hours, minutes] = parsed.time.split(":").map(Number);
+    if (!Number.isNaN(hours) && !Number.isNaN(minutes)) {
+      return new Date(year, month - 1, day, hours, minutes, 0, 0);
+    }
+  }
+
+  if (endOfDayIfNoTime) {
+    return new Date(year, month - 1, day, 23, 59, 59, 999);
+  }
+
+  return new Date(year, month - 1, day, 0, 0, 0, 0);
+}
+
+export function isScriptBriefDeadlineOverdue(
+  deadline: ScriptBriefDeadline,
+  now = new Date()
+): boolean {
+  const dueAt = parseScriptBriefDeadlineDate(deadline);
+  if (!dueAt) return false;
+  return dueAt.getTime() < now.getTime();
+}

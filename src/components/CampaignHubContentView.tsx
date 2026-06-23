@@ -115,8 +115,8 @@ function StageDeadlineTooltip({
 function OverdueDeadline({ deadline }: { deadline: string }) {
   return (
     <p className="text-[11px] leading-tight">
-      <span className="font-medium text-amber-800">Deadline </span>
-      <span className="font-normal tabular-nums text-amber-700">{deadline}</span>
+      <span className="font-medium text-red-700">Overdue </span>
+      <span className="font-normal tabular-nums text-red-700">{deadline}</span>
     </p>
   );
 }

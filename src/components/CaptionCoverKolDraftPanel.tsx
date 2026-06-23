@@ -181,14 +181,7 @@ function CaptionCoverDiscussionSection({
 
       <div className="flex min-h-[200px] min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-100 bg-gray-50/90">
         <div className="flex min-h-0 flex-1 flex-col p-3">
-          {submission.messages.length === 0 ? (
-            <div className="flex flex-1 flex-col items-center justify-center py-6 text-center">
-              <p className="max-w-[260px] whitespace-pre-line text-[12px] leading-snug text-gray-400">
-                No replies yet.
-                {"\n"}Share feedback or questions about this caption and cover.
-              </p>
-            </div>
-          ) : (
+          {submission.messages.length > 0 ? (
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-0.5">
               {submission.messages.map((message) => (
                 <div key={message.id} className="space-y-1.5">
@@ -206,7 +199,14 @@ function CaptionCoverDiscussionSection({
                 </div>
               ))}
             </div>
-          )}
+          ) : readOnly ? (
+            <div className="flex flex-1 flex-col items-center justify-center py-6 text-center">
+              <p className="max-w-[260px] whitespace-pre-line text-[12px] leading-snug text-gray-400">
+                No replies yet.
+                {"\n"}Share feedback or questions about this caption and cover.
+              </p>
+            </div>
+          ) : null}
         </div>
         {!readOnly ? (
           <div className="shrink-0 px-3 pb-3 pt-0">
@@ -289,7 +289,7 @@ function CaptionCoverReviewCard({
       )}
 
       {expanded ? (
-        <div className={cn(collapsible && "mt-4")}>
+        <div className={cn(collapsible && "mt-4", "flex flex-col")}>
           <div className="grid grid-cols-2 gap-4">
             <CaptionCoverContentPanel submission={submission} />
             <CaptionCoverDiscussionSection
@@ -300,7 +300,7 @@ function CaptionCoverReviewCard({
           </div>
 
           {isLatest && !isApproved ? (
-            <div className="mt-3 flex justify-end">
+            <div className="-mx-4 mt-4 flex shrink-0 justify-end border-t border-gray-100 px-4 pt-3">
               <Button
                 type="button"
                 variant="brand"

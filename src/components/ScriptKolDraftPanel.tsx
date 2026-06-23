@@ -149,7 +149,7 @@ function ChatMessage({ message }: { message: ScriptDraftSubmission["messages"][n
         <span
           className={cn(
             "text-[11px] font-semibold",
-            isClient ? "text-brand" : "text-violet-700"
+            isClient ? "text-brand" : "text-gray-600"
           )}
         >
           {isClient ? "From **" : "From H5"}
@@ -369,6 +369,14 @@ function VersionDiscussionSection({
   emptyLabel?: string;
 }) {
   const replyCount = submission.messages.length;
+  const hasMessages = replyCount > 0;
+  const composerProps = {
+    kolId,
+    version: submission.version,
+    author: composerAuthor,
+    authorLabel: composerLabel,
+    placeholder,
+  };
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col space-y-2">
@@ -382,17 +390,15 @@ function VersionDiscussionSection({
 
       <div className="flex min-h-[200px] min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-100 bg-gray-50/90">
         <div className="flex min-h-0 flex-1 flex-col p-3">
-          <DiscussionThread messages={submission.messages} emptyLabel={emptyLabel} />
+          {hasMessages ? (
+            <DiscussionThread messages={submission.messages} emptyLabel={emptyLabel} />
+          ) : readOnly ? (
+            <DiscussionThread messages={[]} emptyLabel={emptyLabel} />
+          ) : null}
         </div>
         {!readOnly ? (
           <div className="shrink-0 px-3 pb-3 pt-0">
-            <DiscussionComposer
-              kolId={kolId}
-              version={submission.version}
-              author={composerAuthor}
-              authorLabel={composerLabel}
-              placeholder={placeholder}
-            />
+            <DiscussionComposer {...composerProps} />
           </div>
         ) : null}
       </div>
@@ -649,7 +655,7 @@ function KolDraftReviewCard({
       )}
 
       {expanded ? (
-        <div className={cn(collapsible && "mt-4")}>
+        <div className={cn(collapsible && "mt-4", "flex flex-col")}>
           <VersionReviewSplit
             kolId={kolId}
             submission={submission}
@@ -662,7 +668,7 @@ function KolDraftReviewCard({
 
           {isLatest && !isApproved ? (
             <>
-              <div className="mt-3 flex justify-end">
+              <div className="-mx-4 mt-4 flex shrink-0 justify-end border-t border-gray-100 px-4 pt-3">
                 <Button
                   type="button"
                   variant="brand"
