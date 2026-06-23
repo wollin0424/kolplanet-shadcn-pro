@@ -5,7 +5,6 @@ import { CaptionCoverKolDraftPanel } from "@/components/CaptionCoverKolDraftPane
 import { ContentGuidelinesDisplayBlock, ContentGuidelinesTranslationNote } from "@/components/ContentGuidelinesDisplayBlock";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { ScriptKolDraftPanel } from "@/components/ScriptKolDraftPanel";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -787,13 +786,11 @@ function ContentScriptReviewSheetInner({
   kolName,
   platform,
   track,
-  onOpenChange,
 }: {
   kolId: string;
   kolName: string;
   platform: string;
   track: ContentReviewTrack;
-  onOpenChange: (open: boolean) => void;
 }) {
   const draftKolId = getContentReviewDraftKolId(kolId, track);
   const showReferenceScripts = track === "script";
@@ -825,7 +822,7 @@ function ContentScriptReviewSheetInner({
     };
   }, [draftKolId, loadBrief]);
 
-  const handleSave = () => {
+  const persistBrief = useCallback(() => {
     const brief = getScriptBriefH5Data(kolId);
     const existingPublished = getScriptBriefPublished(kolId);
     const defaults = getScriptBriefH5Defaults(kolId);
@@ -845,8 +842,9 @@ function ContentScriptReviewSheetInner({
             timezone: brief.deadline.timezone,
           },
     });
-    onOpenChange(false);
-  };
+  }, [kolId, referenceScripts, deadline, showSubmissionDeadline]);
+
+  useEffect(() => () => persistBrief(), [persistBrief]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -929,23 +927,6 @@ function ContentScriptReviewSheetInner({
             />
           )}
         </div>
-
-        <div className="shrink-0 border-t border-gray-100 bg-white px-5 py-4">
-          <div className="flex items-center justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="text-[13px] font-medium text-gray-500 transition-colors hover:text-gray-800"
-            >
-              Cancel
-            </button>
-            {tab === "brief" ? (
-              <Button type="button" variant="brand" className="h-9 px-4 text-[13px]" onClick={handleSave}>
-                Save & Update
-              </Button>
-            ) : null}
-          </div>
-        </div>
     </div>
   );
 }
@@ -978,7 +959,6 @@ export function ContentScriptReviewSheet({
             kolName={kolName}
             platform={platform}
             track={track}
-            onOpenChange={onOpenChange}
           />
         ) : null}
       </SheetContent>

@@ -20,7 +20,6 @@ import {
   Lock,
   MessageSquare,
   Share2,
-  TrendingUp,
   Trash2,
   Upload,
 } from "@/lib/icons";
@@ -264,12 +263,11 @@ function H5PageShell({
   children: ReactNode;
 }) {
   const brand = (
-    <>
-      <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-brand text-white">
-        <TrendingUp size={16} strokeWidth={2.2} />
-      </span>
-      <span className="truncate text-[17px] font-bold tracking-tight text-brand">KOLPlanet</span>
-    </>
+    <img
+      src="/kolplanet-logo.png"
+      alt="KOLPlanet"
+      className="h-6 w-auto shrink-0"
+    />
   );
 
   return (
