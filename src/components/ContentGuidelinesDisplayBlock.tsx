@@ -120,10 +120,13 @@ export function ContentGuidelinesDisplayBlock({
   hashtag,
   attachments,
   referenceLinks,
+  layout = "default",
 }: Pick<
   ScriptBriefH5Data,
   "guidelines" | "mention" | "hashtag" | "attachments" | "referenceLinks"
->) {
+> & {
+  layout?: "default" | "h5";
+}) {
   const [guidelinesView, setGuidelinesView] = useState<"original" | "translation">("original");
   const activeGuidelines =
     (guidelinesView === "original" ? guidelines.original : guidelines.translation).trim() ||
@@ -156,7 +159,7 @@ export function ContentGuidelinesDisplayBlock({
       </div>
 
       <div className={GUIDELINE_BUBBLE_CLASS}>
-        <div className="grid grid-cols-2 gap-3">
+        <div className={cn(layout === "h5" ? "space-y-3" : "grid grid-cols-2 gap-3")}>
           <GuidelineDetailField icon={LinkIcon} label="Mention" value={mention} />
           <GuidelineDetailField icon={Tag} label="Hashtag" value={hashtag} />
         </div>

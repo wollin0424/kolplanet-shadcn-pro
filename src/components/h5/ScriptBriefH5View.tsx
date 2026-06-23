@@ -632,6 +632,7 @@ function ScriptBriefH5Guidelines({ kolId }: { kolId: string }) {
           description={<ContentGuidelinesTranslationNote />}
         />
         <ContentGuidelinesDisplayBlock
+          layout="h5"
           guidelines={data.guidelines}
           mention={data.mention}
           hashtag={data.hashtag}
