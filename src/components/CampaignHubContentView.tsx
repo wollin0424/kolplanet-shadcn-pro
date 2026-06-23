@@ -453,12 +453,12 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
           <DropdownMenu>
             <DropdownMenuTrigger
               className={cn(
-                "inline-flex shrink-0 items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-[12px] transition-colors hover:bg-gray-50",
+                "inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] transition-colors hover:bg-gray-50",
                 someSelected || allSelected ? "text-gray-700" : "text-gray-400"
               )}
             >
               Bulk Actions
-              <ChevronDown size={11} />
+              <ChevronDown size={13} className="shrink-0 text-gray-400" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="min-w-[220px] w-auto text-[13px]">
               <DropdownMenuItem disabled={!someSelected} className="whitespace-nowrap">

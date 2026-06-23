@@ -336,18 +336,14 @@ function H5OverviewDeadline({
       className={cn(
         "mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-gray-100 pt-2.5",
         locked && "text-gray-500",
-        overdue && "text-red-700",
         !locked && !overdue && !completed && "text-gray-600",
         completed && !locked && "text-gray-500"
       )}
     >
       <span
         className={cn(
-          "inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold leading-none",
-          locked && "bg-gray-100 text-gray-600",
-          overdue && "bg-red-50 text-red-700",
-          !locked && !overdue && !completed && "bg-gray-100 text-gray-600",
-          completed && !locked && "bg-gray-100 text-gray-500"
+          "inline-flex shrink-0 items-center gap-1 rounded-md bg-gray-100 px-2 py-1 text-[11px] font-semibold leading-none",
+          completed && !locked ? "text-gray-500" : "text-gray-600"
         )}
       >
         <Calendar size={12} strokeWidth={2} className="shrink-0" aria-hidden />
@@ -369,7 +365,7 @@ function H5OverviewDeadline({
           className={cn(
             "text-[11px] font-normal leading-none",
             locked && "text-gray-400",
-            overdue && "text-red-500/80",
+            overdue && "text-gray-400",
             !locked && !overdue && "text-gray-400",
             completed && !locked && "text-gray-400"
           )}
@@ -556,11 +552,12 @@ function ScriptBriefH5Overview({ kolId }: { kolId: string }) {
                 <ChevronRight size={14} strokeWidth={2} />
               </a>
             }
+            description={
+              <p className="text-[13px] leading-relaxed text-gray-500">
+                Tap for full brief and creation requirements.
+              </p>
+            }
           />
-
-          <p className="text-[13px] leading-relaxed text-gray-500">
-            Tap for full brief and creation requirements.
-          </p>
 
           <div className="mt-5 space-y-4">
             <H5OverviewCard
