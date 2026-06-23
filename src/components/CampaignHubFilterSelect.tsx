@@ -41,9 +41,9 @@ export function CampaignHubFilterSelect({
         </span>
         <ChevronDown size={13} className="shrink-0 text-gray-400" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="text-[13px]">
+      <DropdownMenuContent align="start" className="min-w-32 text-[12px]">
         {options.map((opt) => (
-          <DropdownMenuItem key={opt} onClick={() => onChange(opt)}>
+          <DropdownMenuItem key={opt} onClick={() => onChange(opt)} className="text-[12px]">
             {opt}
           </DropdownMenuItem>
         ))}

@@ -82,7 +82,7 @@ function FilterField({ label, children }: { label: string; children: ReactNode }
   );
 }
 
-const STAGE_CELL_WRAPPER = "flex min-w-[140px] flex-col items-start gap-1 py-0.5";
+const STAGE_CELL_WRAPPER = "flex min-w-[140px] flex-col items-start gap-2 py-0.5";
 const STAGE_CELL_CLICKABLE =
   "group/stage-cell cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:ring-offset-1";
 
@@ -114,10 +114,7 @@ function StageDeadlineTooltip({
 
 function OverdueDeadline({ deadline }: { deadline: string }) {
   return (
-    <p className="text-[11px] leading-tight">
-      <span className="font-medium text-red-700">Overdue </span>
-      <span className="font-normal tabular-nums text-red-700">{deadline}</span>
-    </p>
+    <p className="text-[11px] leading-tight font-normal tabular-nums text-red-700">{deadline}</p>
   );
 }
 
@@ -421,7 +418,7 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
           <CampaignHubFilterSelect
             label="Platform"
             value={platformFilter}
-            options={["All", "Instagram", "TikTok", "YouTube"]}
+            options={["All", "Instagram", "TikTok", "YouTube", "Rednote"]}
             onChange={setPlatformFilter}
           />
           <CampaignHubFilterSelect

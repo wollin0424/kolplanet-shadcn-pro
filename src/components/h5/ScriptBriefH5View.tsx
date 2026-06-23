@@ -7,7 +7,7 @@ import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  CheckCircle2,
+  Check,
   Calendar,
   ChevronLeft,
   ChevronRight,
@@ -351,7 +351,7 @@ function H5OverviewDeadline({
         )}
       >
         <Calendar size={12} strokeWidth={2} className="shrink-0" aria-hidden />
-        {overdue ? "Overdue" : "Deadline"}
+        Deadline
       </span>
       <span
         className={cn(
@@ -401,17 +401,17 @@ function H5OverviewCard({
   deadline?: ScriptBriefDeadline | null;
 }) {
   const statusNode = completed ? (
-    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
-      <CheckCircle2 size={18} strokeWidth={2.5} />
-    </span>
-  ) : active ? (
-    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white">
-      {step}
+    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+      <Check size={13} strokeWidth={2.5} />
     </span>
   ) : (
-    <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-gray-300 bg-white text-sm font-semibold text-gray-300">
-      {step}
-    </span>
+    <span
+      className={cn(
+        "size-6 shrink-0 rounded-full border border-gray-300 bg-white",
+        locked && "border-gray-200"
+      )}
+      aria-hidden
+    />
   );
 
   const isInteractive = Boolean(href);
@@ -422,21 +422,13 @@ function H5OverviewCard({
         "rounded-2xl border px-4 py-4 text-left shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition-colors",
         completed
           ? "border-emerald-200/70 bg-emerald-50/25 text-gray-900"
-          : active
-            ? "border-brand/30 bg-brand-50/30 text-gray-900"
-            : locked
-              ? "border-gray-200 bg-white text-gray-500"
-              : "border-gray-200 bg-white text-gray-700",
+          : "border-gray-200 bg-white text-gray-500",
         isInteractive && "cursor-pointer",
         isInteractive &&
           completed &&
           "hover:border-emerald-200 hover:bg-emerald-50/35 active:bg-emerald-50/45",
         isInteractive &&
-          active &&
-          "hover:border-brand/35 hover:bg-brand-50/40 active:bg-brand-50/50",
-        isInteractive &&
           !completed &&
-          !active &&
           "hover:border-brand/35 hover:bg-brand-50/25 active:bg-brand-50/35"
       )}
     >

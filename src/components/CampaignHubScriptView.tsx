@@ -2386,7 +2386,7 @@ export default function CampaignHubScriptView({
             <CampaignHubFilterSelect
               label="Platform"
               value={platformFilter}
-              options={["All", "Instagram", "TikTok", "YouTube"]}
+              options={["All", "Instagram", "TikTok", "YouTube", "Rednote"]}
               onChange={setPlatformFilter}
             />
             <CampaignHubFilterSelect
