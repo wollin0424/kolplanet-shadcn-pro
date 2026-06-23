@@ -150,7 +150,7 @@ function HubCell({
         <div
           className={cn(
             "flex min-h-0 w-full flex-1 flex-col",
-            centerBody ? "gap-0 pt-0 justify-center" : "gap-4 pt-1"
+            centerBody ? "gap-0 pt-0 justify-center" : "gap-4 pt-1.5"
           )}
         >
           {children}
@@ -399,7 +399,6 @@ export default function CampaignHub({
           title="Content"
           icon={Clapperboard}
           iconClassName="bg-amber-50 text-amber-600"
-          centerBody
           onEnter={openContent}
           onGo={openContent}
         >

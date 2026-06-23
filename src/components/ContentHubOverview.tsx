@@ -137,15 +137,17 @@ export function ContentHubOverview({ className }: { className?: string }) {
 
   return (
     <TooltipProvider delay={0}>
-      <div className={cn("w-full space-y-4", className)}>
+      <div className={cn("w-full mt-0.5 space-y-5", className)}>
         {TRACKS.map((track) => {
           const breakdown = stats[track.key];
           const approved = breakdown.counts.Approved;
 
           return (
             <div key={track.key} className="space-y-1.5">
-              <div className="flex items-baseline justify-between gap-2">
-                <p className="text-[12px] font-medium leading-none text-gray-700">{track.label}</p>
+              <div className="flex items-start justify-between gap-2">
+                <p className="mt-0.5 text-xs font-semibold leading-none tracking-wide text-gray-700">
+                  {track.label}
+                </p>
                 <p className="shrink-0 tabular-nums leading-none text-gray-400">
                   <span className="text-[15px] font-bold text-brand">{approved}</span>
                   <span className="text-[12px] font-semibold text-gray-400"> / {breakdown.total}</span>{" "}
