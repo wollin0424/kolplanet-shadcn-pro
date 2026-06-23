@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactElement, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactElement, type ReactNode } from "react";
 import { CampaignHubDetailHeader } from "@/components/CampaignHubDetailToolbar";
 import { CampaignHubFilterSelect } from "@/components/CampaignHubFilterSelect";
 import { InfluencerMetaIcons } from "@/components/InfluencerMetaIcons";
@@ -42,7 +42,9 @@ import {
 } from "@/components/ContentScriptReviewSheet";
 import PipelineStageCell from "@/components/pipeline/PipelineStageCell";
 import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
-import { CONTENT_HUB_MOCK_ROWS, type ContentHubRow } from "@/lib/contentHubMock";
+import { subscribeCaptionCoverChanges } from "@/lib/captionCoverSubmissions";
+import { CONTENT_HUB_MOCK_ROWS, getContentHubRowsWithLiveStatus, type ContentHubRow } from "@/lib/contentHubMock";
+import { subscribeScriptDraftChanges } from "@/lib/scriptDraftSubmissions";
 import {
   CONTENT_HUB_STAGE_STATUS_CONFIG,
   type ContentHubStageStatus,
@@ -215,6 +217,7 @@ function H5LinkCell({ path }: { path: string }) {
 }
 
 function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
+  const [rows, setRows] = useState<ContentHubRow[]>(CONTENT_HUB_MOCK_ROWS);
   const [query, setQuery] = useState("");
   const [platformFilter, setPlatformFilter] = useState("All");
   const [managerFilter, setManagerFilter] = useState("All");
@@ -228,6 +231,17 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
     row: ContentHubRow;
     track: ContentReviewTrack;
   } | null>(null);
+
+  useEffect(() => {
+    const refresh = () => setRows(getContentHubRowsWithLiveStatus());
+    refresh();
+    const unsubScript = subscribeScriptDraftChanges(refresh);
+    const unsubCaption = subscribeCaptionCoverChanges(refresh);
+    return () => {
+      unsubScript();
+      unsubCaption();
+    };
+  }, []);
 
   const activeFilterCount =
     [scriptStatusFilter, visualStatusFilter, captionStatusFilter].filter(
@@ -246,7 +260,7 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return CONTENT_HUB_MOCK_ROWS.filter((row) => {
+    return rows.filter((row) => {
       if (platformFilter !== "All" && row.platform !== platformFilter) return false;
       if (managerFilter !== "All" && row.manager !== managerFilter) return false;
       if (scriptStatusFilter !== "All" && row.script.status !== scriptStatusFilter) return false;
@@ -269,6 +283,7 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
     captionStatusFilter,
     scriptOverdueOnly,
     visualOverdueOnly,
+    rows,
   ]);
 
   const allSelected = filtered.length > 0 && filtered.every((row) => selectedIds.has(row.id));
@@ -435,7 +450,7 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
           <span className="text-[12px] font-medium text-gray-500">
             Influencers{" "}
             <span className="tabular-nums text-gray-900">
-              ({selectedIds.size}/{CONTENT_HUB_MOCK_ROWS.length})
+              ({selectedIds.size}/{rows.length})
             </span>
           </span>
           <DropdownMenu>

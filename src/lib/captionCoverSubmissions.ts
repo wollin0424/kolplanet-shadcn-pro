@@ -85,6 +85,21 @@ export function addCaptionCoverSubmission(
   return submission;
 }
 
+export function setCaptionCoverSubmissions(kolId: string, submissions: CaptionCoverSubmission[]) {
+  const all = readAll();
+  all[kolId] = submissions;
+  writeAll(all);
+}
+
+export function approveCaptionCover(kolId: string, version: number) {
+  const all = readAll();
+  const existing = all[kolId] ?? [];
+  all[kolId] = existing.map((item) =>
+    item.version === version ? { ...item, status: "Approved" as const } : item
+  );
+  writeAll(all);
+}
+
 export function addCaptionCoverMessage(
   kolId: string,
   version: number,

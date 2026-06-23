@@ -25,7 +25,6 @@ import {
   Lightbulb,
   MessageSquare,
   Plus,
-  Send,
   UserRound,
   X,
 } from "@/lib/icons";
@@ -94,7 +93,7 @@ function buildH5FeedbackThreadItems(messages: ScriptDraftSubmission["messages"])
   });
 }
 
-function H5FeedbackThread({
+export function H5FeedbackThread({
   messages,
 }: {
   messages: ScriptDraftSubmission["messages"];
@@ -209,14 +208,14 @@ function DiscussionThread({
   );
 }
 
-function DiscussionComposer({
+export function DiscussionComposer({
   kolId,
   version,
   author,
   authorLabel,
   readOnly = false,
   placeholder = "Write feedback...",
-  variant = "default",
+  onSendMessage,
 }: {
   kolId: string;
   version: number;
@@ -224,7 +223,12 @@ function DiscussionComposer({
   authorLabel: string;
   readOnly?: boolean;
   placeholder?: string;
-  variant?: "default" | "h5";
+  onSendMessage?: (payload: {
+    author: ScriptDraftMessageAuthor;
+    authorLabel: string;
+    content: string;
+    images?: string[];
+  }) => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState("");
@@ -250,12 +254,17 @@ function DiscussionComposer({
 
   const handleSend = () => {
     if (!canCompose || !canSend) return;
-    addScriptDraftMessage(kolId, version, {
+    const payload = {
       author,
       authorLabel,
       content: draft,
       images: pendingImages,
-    });
+    };
+    if (onSendMessage) {
+      onSendMessage(payload);
+    } else {
+      addScriptDraftMessage(kolId, version, payload);
+    }
     setDraft("");
     setPendingImages([]);
   };
@@ -300,25 +309,15 @@ function DiscussionComposer({
         </div>
       ) : null}
 
-      <div
-        className={cn(
-          "flex items-center border border-gray-200 bg-white",
-          variant === "h5"
-            ? "h-11 rounded-full px-1.5"
-            : "h-[46px] rounded-lg px-2"
-        )}
-      >
+      <div className="flex h-10 items-center rounded-lg border border-gray-200 bg-white px-2">
         <div className="flex w-full items-center gap-0.5">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className={cn(
-              "inline-flex shrink-0 items-center justify-center text-gray-400 transition-colors hover:text-gray-600",
-              variant === "h5" ? "size-8 rounded-full hover:bg-gray-50" : "size-7 rounded-md hover:bg-gray-50"
-            )}
+            className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
             aria-label="Add image"
           >
-            <Plus size={variant === "h5" ? 18 : 17} strokeWidth={1.75} />
+            <Plus size={17} strokeWidth={1.75} />
           </button>
           <input
             value={draft}
@@ -337,19 +336,14 @@ function DiscussionComposer({
             onClick={handleSend}
             disabled={!canSend}
             className={cn(
-              "inline-flex shrink-0 items-center justify-center transition-colors",
-              variant === "h5" ? "size-8 rounded-full" : "size-7 rounded-md",
+              "inline-flex size-7 shrink-0 items-center justify-center rounded-md transition-colors",
               canSend
                 ? "bg-brand-50 text-brand hover:bg-brand hover:text-white"
                 : "bg-brand-50/60 text-brand/40"
             )}
             aria-label="Send message"
           >
-            {variant === "h5" ? (
-              <Send size={14} strokeWidth={2} />
-            ) : (
-              <ArrowRight size={15} strokeWidth={2} />
-            )}
+            <ArrowRight size={15} strokeWidth={2} />
           </button>
         </div>
       </div>
@@ -511,7 +505,7 @@ export function H5ScriptSubmissionCard({
                 author="kol"
                 authorLabel={kolName}
                 placeholder="Write feedback..."
-                variant="h5"
+                onSendMessage={(payload) => addScriptDraftMessage(kolId, submission.version, payload)}
               />
             </div>
           ) : null}

@@ -1,4 +1,10 @@
 import type { KolRelationship } from "@/components/InfluencerMetaIcons";
+import { ensureContentScriptReviewDemoData } from "@/lib/contentScriptReviewDemo";
+import { getCaptionCoverSubmissions } from "@/lib/captionCoverSubmissions";
+import {
+  getScriptDraftSubmissions,
+  type ScriptDraftStatus,
+} from "@/lib/scriptDraftSubmissions";
 import {
   type ContentHubStageStatus,
 } from "@/lib/pipeline/stageStatuses";
@@ -23,6 +29,58 @@ export type ContentHubRow = {
   scriptOverdue: boolean;
   visualOverdue: boolean;
 };
+
+function mapSubmissionStatusToHubStatus(
+  status: ScriptDraftStatus | undefined,
+  hasSubmissions: boolean
+): ContentHubStageStatus {
+  if (!hasSubmissions) return "Pending";
+  if (status === "Approved") return "Approved";
+  return "Under Review";
+}
+
+function seedContentHubLiveDemoData(rowId: string) {
+  ensureContentScriptReviewDemoData(rowId);
+  ensureContentScriptReviewDemoData(`${rowId}-video`);
+  ensureContentScriptReviewDemoData(`${rowId}-caption`);
+}
+
+/** Merges mock row metadata with script / visual / caption submission state from localStorage. */
+export function mergeContentHubRowWithLiveStatus(row: ContentHubRow): ContentHubRow {
+  if (typeof window === "undefined") return row;
+
+  seedContentHubLiveDemoData(row.id);
+
+  const scriptSubmissions = getScriptDraftSubmissions(row.id);
+  const visualSubmissions = getScriptDraftSubmissions(`${row.id}-video`);
+  const captionSubmissions = getCaptionCoverSubmissions(`${row.id}-caption`);
+
+  const scriptLatest = scriptSubmissions[scriptSubmissions.length - 1];
+  const visualLatest = visualSubmissions[visualSubmissions.length - 1];
+  const captionLatest = captionSubmissions[captionSubmissions.length - 1];
+
+  return {
+    ...row,
+    script: {
+      status: mapSubmissionStatusToHubStatus(scriptLatest?.status, scriptSubmissions.length > 0),
+      updatedAt: scriptLatest?.submittedAt ?? row.script.updatedAt,
+    },
+    visual: {
+      status: mapSubmissionStatusToHubStatus(visualLatest?.status, visualSubmissions.length > 0),
+      updatedAt: visualLatest?.submittedAt ?? row.visual.updatedAt,
+    },
+    caption: {
+      status: mapSubmissionStatusToHubStatus(captionLatest?.status, captionSubmissions.length > 0),
+      updatedAt: captionLatest?.submittedAt ?? row.caption.updatedAt,
+    },
+  };
+}
+
+export function getContentHubRowsWithLiveStatus(
+  rows: ContentHubRow[] = CONTENT_HUB_MOCK_ROWS
+): ContentHubRow[] {
+  return rows.map(mergeContentHubRowWithLiveStatus);
+}
 
 export const CONTENT_HUB_MOCK_ROWS: ContentHubRow[] = [
   {
@@ -174,7 +232,7 @@ function aggregateStage(
 }
 
 export function getContentHubOverviewStats(
-  rows: ContentHubRow[] = CONTENT_HUB_MOCK_ROWS
+  rows: ContentHubRow[] = getContentHubRowsWithLiveStatus()
 ): ContentHubOverviewStats {
   const activeKolCount = rows.filter(
     (row) =>

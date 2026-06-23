@@ -33,7 +33,7 @@ import {
   type CaptionCoverFile,
   type CaptionCoverSubmission,
 } from "@/lib/captionCoverSubmissions";
-import { getStageBadgeClass, STAGE_STATUS_PILL_CLASS } from "@/lib/pipeline/stageStatuses";
+import { ensureContentScriptReviewDemoData } from "@/lib/contentScriptReviewDemo";
 import {
   getScriptBriefH5Data,
   getScriptBriefH5Defaults,
@@ -41,7 +41,8 @@ import {
 } from "@/lib/scriptBriefH5Mock";
 import { hasScriptBriefDeadline, type ScriptBriefDeadline } from "@/lib/scriptBriefDeadline";
 import { cn } from "@/lib/utils";
-import { H5ScriptSubmissionCard, ScriptAiAutoCheckAlert } from "@/components/ScriptKolDraftPanel";
+import { H5CaptionCoverSubmissionCard } from "@/components/CaptionCoverKolDraftPanel";
+import { H5ScriptSubmissionCard } from "@/components/ScriptKolDraftPanel";
 import {
   addScriptDraftSubmission,
   getScriptDraftSubmissionLimit,
@@ -444,14 +445,48 @@ function H5OverviewCard({
   );
 }
 
-function ScriptBriefH5Overview({
-  kolId,
-  completed,
-}: {
-  kolId: string;
-  completed: boolean;
-}) {
-  const data = getScriptBriefH5Defaults(kolId);
+function hasApprovedDraftSubmission(submissions: ScriptDraftSubmission[]) {
+  return submissions.some((submission) => submission.status === "Approved");
+}
+
+function ScriptBriefH5Overview({ kolId }: { kolId: string }) {
+  const videoKolId = `${kolId}-video`;
+  const captionKolId = `${kolId}-caption`;
+  const [data, setData] = useState(() => getScriptBriefH5Defaults(kolId));
+  const [scriptSubmissions, setScriptSubmissions] = useState<ScriptDraftSubmission[]>([]);
+  const [videoSubmissions, setVideoSubmissions] = useState<ScriptDraftSubmission[]>([]);
+  const [captionSubmissions, setCaptionSubmissions] = useState<CaptionCoverSubmission[]>([]);
+
+  useEffect(() => {
+    ensureContentScriptReviewDemoData(kolId);
+    ensureContentScriptReviewDemoData(videoKolId);
+
+    const syncBrief = () => setData(getScriptBriefH5Data(kolId));
+    syncBrief();
+    const unsubBrief = subscribeScriptBriefH5DataChanges(syncBrief);
+
+    const syncScriptDrafts = () => {
+      setScriptSubmissions(getScriptDraftSubmissions(kolId));
+      setVideoSubmissions(getScriptDraftSubmissions(videoKolId));
+    };
+    syncScriptDrafts();
+    const unsubDrafts = subscribeScriptDraftChanges(syncScriptDrafts);
+
+    const syncCaption = () => setCaptionSubmissions(getCaptionCoverSubmissions(captionKolId));
+    syncCaption();
+    const unsubCaption = subscribeCaptionCoverChanges(syncCaption);
+
+    return () => {
+      unsubBrief();
+      unsubDrafts();
+      unsubCaption();
+    };
+  }, [kolId, videoKolId, captionKolId]);
+
+  const scriptCompleted = hasApprovedDraftSubmission(scriptSubmissions);
+  const videoCompleted = hasApprovedDraftSubmission(videoSubmissions);
+  const captionCompleted = captionSubmissions.some((submission) => submission.status === "Approved");
+
   const baseHref = `/h5/kol-info/${encodeURIComponent(kolId)}`;
   const guidelinesHref = `${baseHref}?view=guidelines`;
   const scriptHref = `${baseHref}?view=script`;
@@ -511,17 +546,18 @@ function ScriptBriefH5Overview({
             <H5OverviewCard
               title="Script"
               description="Review the brief, submit script drafts, and leave feedback."
-              active={!completed}
+              active={!scriptCompleted}
               href={scriptHref}
-              completed={completed}
+              completed={scriptCompleted}
               step={1}
               deadline={data.deadline}
             />
             <H5OverviewCard
               title="Video Draft"
               description="Review the draft script and progress the workflow."
-              active={completed}
-              locked={!completed}
+              active={scriptCompleted && !videoCompleted}
+              completed={videoCompleted}
+              locked={!scriptCompleted}
               href={videoHref}
               step={2}
               deadline={data.deadline}
@@ -529,14 +565,16 @@ function ScriptBriefH5Overview({
             <H5OverviewCard
               title="Caption & Cover"
               description="Review caption and cover submissions."
-              locked
+              active={videoCompleted && !captionCompleted}
+              completed={captionCompleted}
+              locked={!videoCompleted}
               href={captionHref}
               step={3}
             />
             <H5OverviewCard
               title="Posting"
               description="Open the final publishing step."
-              locked
+              locked={!captionCompleted}
               href={postingHref}
               step={4}
               deadline={data.deadline}
@@ -584,60 +622,6 @@ function ScriptBriefH5Guidelines({ kolId }: { kolId: string }) {
         />
       </div>
     </H5PageShell>
-  );
-}
-
-function formatCaptionCoverStatus(status: CaptionCoverSubmission["status"]) {
-  if (status === "Under Review") return "Under review";
-  return status;
-}
-
-function H5CaptionCoverSubmissionCard({ submission }: { submission: CaptionCoverSubmission }) {
-  return (
-    <div className="mt-4 rounded-2xl border border-brand/20 bg-white p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[15px] font-semibold text-gray-900">Version {submission.version}</p>
-          <p className="mt-0.5 text-[12px] text-gray-500">{submission.submittedAt}</p>
-        </div>
-        <span
-          className={cn(
-            STAGE_STATUS_PILL_CLASS,
-            submission.status === "Approved"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-              : getStageBadgeClass("sky")
-          )}
-        >
-          {formatCaptionCoverStatus(submission.status)}
-        </span>
-      </div>
-
-      <p className="mt-4 text-[11px] font-semibold tracking-wide text-gray-400 uppercase">Caption</p>
-      <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-gray-900">
-        {submission.caption}
-      </p>
-
-      <div className="mt-3">
-        <ScriptAiAutoCheckAlert />
-      </div>
-
-      {submission.cover ? (
-        <>
-          <p className="mt-4 text-[11px] font-semibold tracking-wide text-gray-400 uppercase">Cover</p>
-          <div className="mt-2 flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/70 p-2.5">
-            <img
-              src={submission.cover.previewUrl}
-              alt={submission.cover.name}
-              className="size-14 shrink-0 rounded-lg border border-gray-200 object-cover"
-            />
-            <div className="min-w-0">
-              <p className="truncate text-[13px] font-medium text-gray-900">{submission.cover.name}</p>
-              <p className="text-[11px] text-gray-500">{submission.cover.sizeLabel}</p>
-            </div>
-          </div>
-        </>
-      ) : null}
-    </div>
   );
 }
 
@@ -757,6 +741,8 @@ function ScriptBriefH5CaptionCover({ kolId }: { kolId: string }) {
   }, [kolId]);
 
   useEffect(() => {
+    ensureContentScriptReviewDemoData(captionKolId);
+
     const sync = () => {
       const captionSubmissions = getCaptionCoverSubmissions(captionKolId);
       const videoSubmissions = getScriptDraftSubmissions(videoKolId);
@@ -804,6 +790,7 @@ function ScriptBriefH5CaptionCover({ kolId }: { kolId: string }) {
 
   const submissionCount = submissions.length;
   const submissionLocked = submissions[submissions.length - 1]?.status === "Approved";
+  const discussionLocked = submissionLocked;
 
   return (
     <H5PageShell backHref={overviewHref} pageTitle="Caption & Cover">
@@ -875,7 +862,13 @@ function ScriptBriefH5CaptionCover({ kolId }: { kolId: string }) {
         </Button>
 
         {[...submissions].reverse().map((submission) => (
-          <H5CaptionCoverSubmissionCard key={submission.version} submission={submission} />
+          <H5CaptionCoverSubmissionCard
+            key={submission.version}
+            submission={submission}
+            kolId={captionKolId}
+            kolName={data.influencer.name}
+            discussionLocked={discussionLocked}
+          />
         ))}
       </section>
     </H5PageShell>
@@ -1042,7 +1035,7 @@ function ScriptBriefH5ViewInner({
   const scriptCompleted = submissions.some((submission) => submission.status === "Approved");
 
   if (view === "overview") {
-    return <ScriptBriefH5Overview kolId={kolId} completed={scriptCompleted} />;
+    return <ScriptBriefH5Overview kolId={kolId} />;
   }
 
   if (view === "guidelines") {

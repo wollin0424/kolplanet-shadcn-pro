@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { CaptionCoverKolDraftPanel } from "@/components/CaptionCoverKolDraftPanel";
 import { ContentGuidelinesDisplayBlock } from "@/components/ContentGuidelinesDisplayBlock";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { ScriptKolDraftPanel } from "@/components/ScriptKolDraftPanel";
@@ -456,6 +457,68 @@ function ReferenceScriptsGeneratePanel({
   );
 }
 
+const briefSectionTitleClass = "shrink-0 text-sm font-semibold text-gray-900";
+
+function BriefSectionCollapseButton({
+  expanded,
+  onToggle,
+  sectionLabel,
+}: {
+  expanded: boolean;
+  onToggle: () => void;
+  sectionLabel: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={expanded ? `Collapse ${sectionLabel}` : `Expand ${sectionLabel}`}
+      aria-expanded={expanded}
+      className="ml-auto inline-flex size-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+    >
+      {expanded ? <ChevronUp size={16} strokeWidth={2} /> : <ChevronDown size={16} strokeWidth={2} />}
+    </button>
+  );
+}
+
+function BriefSettingsSectionHeader({
+  icon: Icon,
+  title,
+  trailing,
+  expanded,
+  onToggle,
+  collapsible = false,
+  withBottomSpacing = false,
+}: {
+  icon: typeof Calendar;
+  title: string;
+  trailing?: ReactNode;
+  expanded?: boolean;
+  onToggle?: () => void;
+  collapsible?: boolean;
+  withBottomSpacing?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3",
+        ((collapsible && expanded) || withBottomSpacing) && "mb-3"
+      )}
+    >
+      <Icon size={16} className="shrink-0 text-brand" strokeWidth={2} />
+      <h3 className={briefSectionTitleClass}>{title}</h3>
+      {trailing}
+      {collapsible && onToggle ? (
+        <BriefSectionCollapseButton
+          expanded={expanded ?? false}
+          onToggle={onToggle}
+          sectionLabel={title}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 function ReferenceScriptsSectionHeader({
   expanded,
   onToggle,
@@ -464,22 +527,19 @@ function ReferenceScriptsSectionHeader({
   onToggle: () => void;
 }) {
   return (
-    <div className={cn("flex items-center gap-3", expanded && "mb-3")}>
-      <Lightbulb size={16} className="shrink-0 text-brand" strokeWidth={2} />
-      <h3 className="shrink-0 text-sm font-semibold text-gray-900">Reference Scripts</h3>
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
-        <Sparkles size={13} className="text-amber-600" strokeWidth={2} />
-        AI Generate Ideas
-      </span>
-      <button
-        type="button"
-        onClick={onToggle}
-        className={cn(sectionActionLinkClass, "ml-auto")}
-      >
-        {expanded ? "Collapse" : "Expand"}
-        {expanded ? <ChevronUp size={14} strokeWidth={2} /> : <ChevronDown size={14} strokeWidth={2} />}
-      </button>
-    </div>
+    <BriefSettingsSectionHeader
+      icon={Lightbulb}
+      title="Reference Scripts"
+      expanded={expanded}
+      onToggle={onToggle}
+      collapsible
+      trailing={
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
+          <Sparkles size={13} className="text-amber-600" strokeWidth={2} />
+          AI Generate Ideas
+        </span>
+      }
+    />
   );
 }
 
@@ -493,27 +553,24 @@ function ContentGuidelinesSectionHeader({
   onToggle: () => void;
 }) {
   return (
-    <div className={cn("flex items-center gap-3", expanded && "mb-2")}>
-      <FileText size={16} className="shrink-0 text-brand" strokeWidth={2} />
-      <h3 className="shrink-0 text-sm font-semibold text-gray-900">Content Guidelines</h3>
-      <a
-        href={referenceWebsiteUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={sectionActionLinkClass}
-      >
-        Reference Website
-        <ExternalLink size={12} strokeWidth={2} />
-      </a>
-      <button
-        type="button"
-        onClick={onToggle}
-        className={cn(sectionActionLinkClass, "ml-auto")}
-      >
-        {expanded ? "Collapse" : "Expand"}
-        {expanded ? <ChevronUp size={14} strokeWidth={2} /> : <ChevronDown size={14} strokeWidth={2} />}
-      </button>
-    </div>
+    <BriefSettingsSectionHeader
+      icon={FileText}
+      title="Content Guidelines"
+      expanded={expanded}
+      onToggle={onToggle}
+      collapsible
+      trailing={
+        <a
+          href={referenceWebsiteUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={sectionActionLinkClass}
+        >
+          Reference Website
+          <ExternalLink size={12} strokeWidth={2} />
+        </a>
+      }
+    />
   );
 }
 
@@ -614,17 +671,18 @@ function BriefSettingsPanel({
   showReferenceScripts?: boolean;
   showSubmissionDeadline?: boolean;
 }) {
-  const [referenceExpanded, setReferenceExpanded] = useState(false);
+  const [referenceExpanded, setReferenceExpanded] = useState(true);
   const [guidelinesExpanded, setGuidelinesExpanded] = useState(true);
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-6">
       {showSubmissionDeadline ? (
         <section>
-          <div className="mb-3 flex items-center gap-2">
-            <Calendar size={16} className="shrink-0 text-brand" strokeWidth={2} />
-            <h3 className="text-sm font-semibold text-gray-900">Submission Deadline</h3>
-          </div>
+          <BriefSettingsSectionHeader
+            icon={Calendar}
+            title="Submission Deadline"
+            withBottomSpacing
+          />
           <SubmissionDeadlineFields deadline={deadline} onChange={onDeadlineChange} />
         </section>
       ) : null}
@@ -819,7 +877,11 @@ function ContentScriptReviewSheetInner({
 
         <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-5">
           {tab === "comments" ? (
-            <ScriptKolDraftPanel kolId={draftKolId} kolName={kolName} />
+            track === "caption" ? (
+              <CaptionCoverKolDraftPanel kolId={draftKolId} />
+            ) : (
+              <ScriptKolDraftPanel kolId={draftKolId} kolName={kolName} />
+            )
           ) : (
             <BriefSettingsPanel
               kolName={kolName}

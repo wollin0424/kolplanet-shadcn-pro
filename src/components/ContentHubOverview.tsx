@@ -1,16 +1,20 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { subscribeCaptionCoverChanges } from "@/lib/captionCoverSubmissions";
 import {
   CONTENT_HUB_STAGE_ORDER,
   type ContentHubStageBreakdown,
   getContentHubOverviewStats,
+  getContentHubRowsWithLiveStatus,
 } from "@/lib/contentHubMock";
+import { subscribeScriptDraftChanges } from "@/lib/scriptDraftSubmissions";
 import {
   CONTENT_HUB_STAGE_BAR_FILL,
   CONTENT_HUB_STAGE_BAR_FILL_HOVER,
@@ -114,7 +118,18 @@ function StageSegmentBar({ breakdown }: { breakdown: ContentHubStageBreakdown })
 }
 
 export function ContentHubOverview({ className }: { className?: string }) {
-  const stats = getContentHubOverviewStats();
+  const [stats, setStats] = useState(() => getContentHubOverviewStats());
+
+  useEffect(() => {
+    const refresh = () => setStats(getContentHubOverviewStats(getContentHubRowsWithLiveStatus()));
+    refresh();
+    const unsubScript = subscribeScriptDraftChanges(refresh);
+    const unsubCaption = subscribeCaptionCoverChanges(refresh);
+    return () => {
+      unsubScript();
+      unsubCaption();
+    };
+  }, []);
 
   return (
     <TooltipProvider delay={0}>

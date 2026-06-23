@@ -1,8 +1,38 @@
 import {
+  getCaptionCoverSubmissions,
+  setCaptionCoverSubmissions,
+  type CaptionCoverSubmission,
+} from "@/lib/captionCoverSubmissions";
+import {
   getScriptDraftSubmissions,
   setScriptDraftSubmissions,
   type ScriptDraftSubmission,
 } from "@/lib/scriptDraftSubmissions";
+
+const DEMO_COVER_FILE = {
+  name: "Logo.png",
+  previewUrl: "/vercel.svg",
+  sizeLabel: "3.4 KB",
+};
+
+const S1_CAPTION_COVER_DEMO_SUBMISSIONS: CaptionCoverSubmission[] = [
+  {
+    version: 1,
+    status: "Under Review",
+    submittedAt: "Jun 17, 2026, 11:16 AM",
+    caption: "打算的",
+    cover: DEMO_COVER_FILE,
+    messages: [
+      {
+        id: "demo-caption-msg-1",
+        author: "client",
+        authorLabel: "**",
+        content: "1. 但是啊的啊的",
+        sentAt: "Jun 17, 2026, 11:16 AM",
+      },
+    ],
+  },
+];
 
 const S1_DEMO_SUBMISSIONS: ScriptDraftSubmission[] = [
   {
@@ -50,16 +80,6 @@ const S1_DEMO_SUBMISSIONS: ScriptDraftSubmission[] = [
   },
 ];
 
-const S1_CAPTION_DEMO_SUBMISSIONS: ScriptDraftSubmission[] = [
-  {
-    version: 1,
-    status: "Under Review",
-    submittedAt: "Jun 17, 2026, 11:00 AM",
-    content: "Summer vibes with Budweiser — link in bio for the full drop.",
-    messages: [],
-  },
-];
-
 const S1_VIDEO_DEMO_SUBMISSIONS: ScriptDraftSubmission[] = [
   {
     version: 1,
@@ -79,8 +99,8 @@ export function ensureContentScriptReviewDemoData(kolId: string) {
   }
 
   if (kolId.endsWith("-caption")) {
-    if (getScriptDraftSubmissions(kolId).length > 0) return;
-    setScriptDraftSubmissions(kolId, S1_CAPTION_DEMO_SUBMISSIONS);
+    if (getCaptionCoverSubmissions(kolId).length > 0) return;
+    setCaptionCoverSubmissions(kolId, S1_CAPTION_COVER_DEMO_SUBMISSIONS);
     return;
   }
 
