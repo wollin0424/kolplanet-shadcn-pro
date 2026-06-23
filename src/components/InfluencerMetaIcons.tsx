@@ -44,8 +44,8 @@ function KolMetaIcon({
 function HoverField({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-gray-400">{label}</span>
-      <span className="font-semibold text-gray-900">{value}</span>
+      <span className="font-medium text-gray-700">{label}</span>
+      <span className="font-normal text-gray-500">{value}</span>
     </div>
   );
 }
@@ -75,7 +75,7 @@ export function InfluencerMetaIcons({
           }
         />
         <TooltipContent variant="light" side="bottom" align="start">
-          <HoverField label="Identity Type: " value={relationshipLabel} />
+          <HoverField label="Identity Type" value={relationshipLabel} />
         </TooltipContent>
       </Tooltip>
       <Tooltip>
@@ -92,7 +92,7 @@ export function InfluencerMetaIcons({
           }
         />
         <TooltipContent variant="light" side="bottom" align="start">
-          <HoverField label="KOL Manager: " value={kolManager} />
+          <HoverField label="KOL Manager" value={kolManager} />
         </TooltipContent>
       </Tooltip>
     </>

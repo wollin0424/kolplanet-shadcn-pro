@@ -1,3 +1,6 @@
+import {
+  getCampaignExecutionGuide,
+} from "@/lib/campaignExecutionGuide";
 import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
 import {
   parseLegacyDeadlineLabel,
@@ -26,6 +29,7 @@ export type ScriptBriefH5Data = {
   mention: string;
   hashtag: string;
   addLink: string;
+  referenceLinks: string[];
   attachments: Array<{ name: string; locked?: boolean }>;
   referenceScripts: Array<{
     title: string;
@@ -77,7 +81,8 @@ export function getScriptBriefH5Defaults(kolId: string): ScriptBriefH5Data {
     },
     mention: kolId === "s1" ? "打算大的赌神啊d" : "@brandhandle",
     hashtag: kolId === "s1" ? "打算打算赌神啊赌神啊" : "#Campaign2026",
-    addLink: kolId === "s1" ? "-" : "",
+    addLink: "",
+    referenceLinks: [],
     attachments:
       kolId === "s1"
         ? [
@@ -152,9 +157,37 @@ function mergeScriptBriefPublished(
   };
 }
 
+function mergeCampaignExecutionGuide(defaults: ScriptBriefH5Data): ScriptBriefH5Data {
+  if (typeof window === "undefined") return defaults;
+
+  const guide = getCampaignExecutionGuide();
+  const campaignAttachments = guide.briefFiles.map((name) => ({ name, locked: true }));
+  const seen = new Set(campaignAttachments.map((item) => item.name));
+  const mergedAttachments = [
+    ...campaignAttachments,
+    ...defaults.attachments.filter((item) => !seen.has(item.name)),
+  ];
+
+  const referenceLinks = guide.referenceLinks.filter((url) => url.trim().length > 0);
+
+  return {
+    ...defaults,
+    guidelines: {
+      original: guide.contentGuidelines.trim() || defaults.guidelines.original,
+      translation: defaults.guidelines.translation,
+    },
+    mention: guide.mention.trim() || defaults.mention,
+    hashtag: guide.hashtag.trim() || defaults.hashtag,
+    referenceLinks: referenceLinks.length > 0 ? referenceLinks : defaults.referenceLinks,
+    addLink: referenceLinks[0] ?? defaults.addLink,
+    attachments: mergedAttachments.length > 0 ? mergedAttachments : defaults.attachments,
+  };
+}
+
 /** Client-only: reads published brief from localStorage. */
 export function getScriptBriefH5Data(kolId: string): ScriptBriefH5Data {
   const defaults = getScriptBriefH5Defaults(kolId);
   if (typeof window === "undefined") return defaults;
-  return mergeScriptBriefPublished(defaults, getScriptBriefPublished(kolId));
+  const merged = mergeScriptBriefPublished(defaults, getScriptBriefPublished(kolId));
+  return mergeCampaignExecutionGuide(merged);
 }

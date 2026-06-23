@@ -125,13 +125,34 @@ export function getStageBadgeClass(tone: BadgeTone) {
   return badgeClass[tone];
 }
 
+/** Interactive pill hover — deepen within tone (no brand ring / drop shadow). */
+const badgeInteractiveHoverClass: Record<BadgeTone, string> = {
+  amber:
+    "hover:bg-amber-100 hover:border-amber-300 group-hover/stage-cell:bg-amber-100 group-hover/stage-cell:border-amber-300",
+  sky: "hover:bg-sky-100 hover:border-sky-300 group-hover/stage-cell:bg-sky-100 group-hover/stage-cell:border-sky-300",
+  violet:
+    "hover:bg-violet-100 hover:border-violet-300 group-hover/stage-cell:bg-violet-100 group-hover/stage-cell:border-violet-300",
+  brand:
+    "hover:bg-brand-100 hover:border-brand/30 group-hover/stage-cell:bg-brand-100 group-hover/stage-cell:border-brand/30",
+  green:
+    "hover:bg-emerald-100 hover:border-emerald-300 group-hover/stage-cell:bg-emerald-100 group-hover/stage-cell:border-emerald-300",
+  rose: "hover:bg-rose-100 hover:border-rose-300 group-hover/stage-cell:bg-rose-100 group-hover/stage-cell:border-rose-300",
+  indigo:
+    "hover:bg-indigo-100 hover:border-indigo-300 group-hover/stage-cell:bg-indigo-100 group-hover/stage-cell:border-indigo-300",
+  gray: "hover:bg-gray-100 hover:border-gray-300 group-hover/stage-cell:bg-gray-100 group-hover/stage-cell:border-gray-300",
+};
+
+export function getStageBadgeInteractiveHoverClass(tone: BadgeTone) {
+  return badgeInteractiveHoverClass[tone];
+}
+
 /** Compact status pill — Script hub KOL list + draft review (21px tall). */
 export const STAGE_STATUS_PILL_CLASS =
   "inline-flex shrink-0 items-center h-[21px] rounded-full border px-2 text-[10px] font-semibold leading-none";
 
 const toneDotClass: Record<BadgeTone, string> = {
   amber: "bg-amber-400",
-  sky: "bg-sky-400",
+  sky: "bg-sky-600",
   violet: "bg-violet-400",
   brand: "bg-brand",
   green: "bg-emerald-500",
@@ -234,6 +255,16 @@ export const CONTENT_HUB_STAGE_BAR_FILL: Record<ContentHubStageStatus, string> =
   Pending: "bg-gray-200",
   "Under Review": "bg-sky-200",
   Approved: "bg-emerald-200",
+};
+
+/** Hover fills — one step darker than bar fill; sky uses *-600 (HubStatus hue), not *-400 (reads as brand). */
+export const CONTENT_HUB_STAGE_BAR_FILL_HOVER: Record<ContentHubStageStatus, string> = {
+  Pending:
+    "group-hover/segment:bg-gray-400 group-focus-visible/segment:bg-gray-400",
+  "Under Review":
+    "group-hover/segment:bg-sky-600 group-focus-visible/segment:bg-sky-600",
+  Approved:
+    "group-hover/segment:bg-emerald-400 group-focus-visible/segment:bg-emerald-400",
 };
 
 export const CONTENT_STATUS_CONFIG: Record<ContentStatus, StageBadgeConfig> = {

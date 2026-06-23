@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactElement, type ReactNode } from "react";
 import { CampaignHubDetailHeader } from "@/components/CampaignHubDetailToolbar";
 import { CampaignHubFilterSelect } from "@/components/CampaignHubFilterSelect";
 import { InfluencerMetaIcons } from "@/components/InfluencerMetaIcons";
@@ -30,6 +30,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ContentScriptReviewSheet } from "@/components/ContentScriptReviewSheet";
 import PipelineStageCell from "@/components/pipeline/PipelineStageCell";
 import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
@@ -71,6 +77,45 @@ function FilterField({ label, children }: { label: string; children: ReactNode }
   );
 }
 
+const STAGE_CELL_WRAPPER = "flex min-w-[140px] flex-col items-start gap-1 py-0.5";
+const STAGE_CELL_CLICKABLE =
+  "group/stage-cell cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:ring-offset-1";
+
+function TooltipDetailField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="font-medium text-gray-700">{label}</span>
+      <span className="font-normal tabular-nums text-gray-500">{value}</span>
+    </div>
+  );
+}
+
+function StageDeadlineTooltip({
+  deadline,
+  children,
+}: {
+  deadline: string;
+  children: ReactElement;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger render={children} />
+      <TooltipContent variant="light" side="bottom" align="start" sideOffset={6}>
+        <TooltipDetailField label="Deadline" value={deadline} />
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function OverdueDeadline({ deadline }: { deadline: string }) {
+  return (
+    <p className="text-[11px] leading-tight">
+      <span className="font-medium text-amber-800">Deadline </span>
+      <span className="font-normal tabular-nums text-amber-700">{deadline}</span>
+    </p>
+  );
+}
+
 function ContentStageCell({
   status,
   deadline,
@@ -86,17 +131,29 @@ function ContentStageCell({
 }) {
   const hasDeadline = Boolean(deadline && deadline !== "—");
   const stageCell = (
-    <PipelineStageCell config={CONTENT_HUB_STAGE_STATUS_CONFIG[status]} static={Boolean(onClick)} />
+    <PipelineStageCell
+      config={CONTENT_HUB_STAGE_STATUS_CONFIG[status]}
+      static={Boolean(onClick)}
+      variant="pill"
+      interactive={Boolean(onClick)}
+    />
   );
+  const showOverdueInline = showDeadline && hasDeadline && overdue;
+  const showDeadlineTooltip = showDeadline && hasDeadline && !overdue;
+
+  const statusBlock =
+    showDeadlineTooltip ? (
+      <StageDeadlineTooltip deadline={deadline!}>
+        <span className="inline-flex max-w-full">{stageCell}</span>
+      </StageDeadlineTooltip>
+    ) : (
+      stageCell
+    );
 
   if (!showDeadline) {
     if (onClick) {
       return (
-        <button
-          type="button"
-          onClick={onClick}
-          className="flex min-w-[140px] flex-col items-start gap-1 py-0.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:ring-offset-1"
-        >
+        <button type="button" onClick={onClick} className={cn(STAGE_CELL_WRAPPER, STAGE_CELL_CLICKABLE)}>
           {stageCell}
         </button>
       );
@@ -106,43 +163,17 @@ function ContentStageCell({
 
   if (onClick) {
     return (
-      <button
-        type="button"
-        onClick={onClick}
-        className="group/stage-cell flex min-w-[140px] flex-col items-start gap-1 py-0.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:ring-offset-1"
-      >
-        {stageCell}
-        {hasDeadline ? (
-          <p
-            className={cn(
-              "overflow-hidden pl-[22px] text-[11px] leading-tight tabular-nums transition-all duration-150",
-              overdue
-                ? "mt-0 max-h-4 opacity-100 font-medium text-amber-700"
-                : "max-h-0 opacity-0 group-hover/stage-cell:mt-0 group-hover/stage-cell:max-h-4 group-hover/stage-cell:opacity-100 text-gray-500"
-            )}
-          >
-            {deadline}
-          </p>
-        ) : null}
+      <button type="button" onClick={onClick} className={cn(STAGE_CELL_WRAPPER, STAGE_CELL_CLICKABLE)}>
+        {statusBlock}
+        {showOverdueInline ? <OverdueDeadline deadline={deadline!} /> : null}
       </button>
     );
   }
 
   return (
-    <div className="flex min-w-[140px] flex-col items-start gap-1 py-0.5">
-      {stageCell}
-      {hasDeadline ? (
-        <p
-          className={cn(
-            "overflow-hidden pl-[22px] text-[11px] leading-tight tabular-nums transition-all duration-150",
-            overdue
-              ? "mt-0 max-h-4 opacity-100 font-medium text-amber-700"
-              : "max-h-0 opacity-0 group-hover/row:mt-0 group-hover/row:max-h-4 group-hover/row:opacity-100 text-gray-500"
-          )}
-        >
-          {deadline}
-        </p>
-      ) : null}
+    <div className={STAGE_CELL_WRAPPER}>
+      {statusBlock}
+      {showOverdueInline ? <OverdueDeadline deadline={deadline!} /> : null}
     </div>
   );
 }
@@ -255,7 +286,8 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
+    <TooltipProvider delay={0}>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
       <span className="sr-only">{campaignId}</span>
 
       <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-gray-100 px-5 py-3">
@@ -523,7 +555,8 @@ function CampaignHubContentTable({ campaignId }: { campaignId: string }) {
           platform={scriptReviewRow.platform}
         />
       ) : null}
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }
 

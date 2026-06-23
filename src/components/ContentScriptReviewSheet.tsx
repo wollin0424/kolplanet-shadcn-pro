@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ContentGuidelinesDisplayBlock } from "@/components/ContentGuidelinesDisplayBlock";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { ScriptKolDraftPanel } from "@/components/ScriptKolDraftPanel";
 import { Button } from "@/components/ui/button";
@@ -19,9 +20,10 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { subscribeCampaignExecutionGuideChanges } from "@/lib/campaignExecutionGuide";
 import { ensureContentScriptReviewDemoData } from "@/lib/contentScriptReviewDemo";
 import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
-import { getScriptBriefH5Data } from "@/lib/scriptBriefH5Mock";
+import { getScriptBriefH5Data, type ScriptBriefH5Data } from "@/lib/scriptBriefH5Mock";
 import {
   saveScriptBriefPublished,
   type ScriptBriefPublished,
@@ -541,18 +543,19 @@ function SubmissionDeadlineFields({
 
 function BriefSettingsPanel({
   kolName,
-  guidelines,
+  briefContent,
   deadline,
   referenceWebsiteUrl,
-  onGuidelinesChange,
   onDeadlineChange,
   onReferenceScriptsChange,
 }: {
   kolName: string;
-  guidelines: string;
+  briefContent: Pick<
+    ScriptBriefH5Data,
+    "guidelines" | "mention" | "hashtag" | "attachments" | "referenceLinks"
+  >;
   deadline: SubmissionDeadline;
   referenceWebsiteUrl: string;
-  onGuidelinesChange: (value: string) => void;
   onDeadlineChange: (patch: Partial<SubmissionDeadline>) => void;
   onReferenceScriptsChange: (scripts: ScriptBriefPublished["referenceScripts"]) => void;
 }) {
@@ -582,13 +585,12 @@ function BriefSettingsPanel({
             <ExternalLink size={12} strokeWidth={2} />
           </a>
         </div>
-        <Textarea
-          value={guidelines}
-          onChange={(e) => onGuidelinesChange(e.target.value)}
-          placeholder="Enter content guidelines for this creator."
-          className={formTextareaClass(
-            "no-scrollbar min-h-[180px] max-h-[360px] resize-none overflow-y-auto text-[13px] font-normal text-gray-600 placeholder:text-gray-400"
-          )}
+        <ContentGuidelinesDisplayBlock
+          guidelines={briefContent.guidelines}
+          mention={briefContent.mention}
+          hashtag={briefContent.hashtag}
+          attachments={briefContent.attachments}
+          referenceLinks={briefContent.referenceLinks}
         />
       </section>
 
@@ -622,7 +624,18 @@ export function ContentScriptReviewSheet({
   platform: string;
 }) {
   const [tab, setTab] = useState<SheetTab>("comments");
-  const [guidelines, setGuidelines] = useState("");
+  const [guidelines, setGuidelines] = useState<ScriptBriefH5Data["guidelines"]>({
+    original: "",
+    translation: "",
+  });
+  const [briefContent, setBriefContent] = useState<
+    Pick<ScriptBriefH5Data, "mention" | "hashtag" | "attachments" | "referenceLinks">
+  >({
+    mention: "",
+    hashtag: "",
+    attachments: [],
+    referenceLinks: [],
+  });
   const [deadline, setDeadline] = useState<SubmissionDeadline>({
     date: "",
     time: "",
@@ -636,37 +649,48 @@ export function ContentScriptReviewSheet({
   useEffect(() => {
     if (!open) return;
 
-    ensureContentScriptReviewDemoData(kolId);
+    const loadBrief = () => {
+      ensureContentScriptReviewDemoData(kolId);
 
-    const brief = getScriptBriefH5Data(kolId);
-    const overrides = CONTENT_BRIEF_DEFAULTS[kolId];
+      const brief = getScriptBriefH5Data(kolId);
+      const overrides = CONTENT_BRIEF_DEFAULTS[kolId];
 
-    setGuidelines(overrides?.guidelines ?? brief.guidelines.original);
-    setReferenceScripts(brief.referenceScripts);
-    setReferenceWebsiteUrl(brief.referenceWebsiteUrl);
-
-    if (overrides?.deadline) {
-      setDeadline(overrides.deadline);
-    } else if (brief.deadline.date.includes("-")) {
-      setDeadline({
-        date: brief.deadline.date,
-        time: brief.deadline.time?.includes(":") ? brief.deadline.time.slice(0, 5) : "",
-        timezone: brief.deadline.timezone ?? "",
+      const loadedGuidelines = overrides?.guidelines
+        ? { original: overrides.guidelines, translation: overrides.guidelines }
+        : brief.guidelines;
+      setGuidelines(loadedGuidelines);
+      setBriefContent({
+        mention: brief.mention,
+        hashtag: brief.hashtag,
+        attachments: brief.attachments,
+        referenceLinks: brief.referenceLinks,
       });
-    } else {
-      setDeadline({ date: "", time: "", timezone: brief.deadline.timezone ?? "" });
-    }
+      setReferenceScripts(brief.referenceScripts);
+      setReferenceWebsiteUrl(brief.referenceWebsiteUrl);
 
+      if (overrides?.deadline) {
+        setDeadline(overrides.deadline);
+      } else if (brief.deadline.date.includes("-")) {
+        setDeadline({
+          date: brief.deadline.date,
+          time: brief.deadline.time?.includes(":") ? brief.deadline.time.slice(0, 5) : "",
+          timezone: brief.deadline.timezone ?? "",
+        });
+      } else {
+        setDeadline({ date: "", time: "", timezone: brief.deadline.timezone ?? "" });
+      }
+    };
+
+    loadBrief();
     setTab("comments");
+
+    return subscribeCampaignExecutionGuideChanges(loadBrief);
   }, [open, kolId]);
 
   const handleSave = () => {
     const brief = getScriptBriefH5Data(kolId);
     saveScriptBriefPublished(kolId, {
-      guidelines: {
-        original: guidelines,
-        translation: guidelines,
-      },
+      guidelines,
       attachments: brief.attachments,
       referenceScripts,
       deadline: {
@@ -748,10 +772,9 @@ export function ContentScriptReviewSheet({
           ) : (
             <BriefSettingsPanel
               kolName={kolName}
-              guidelines={guidelines}
+              briefContent={{ ...briefContent, guidelines }}
               deadline={deadline}
               referenceWebsiteUrl={referenceWebsiteUrl}
-              onGuidelinesChange={setGuidelines}
               onDeadlineChange={(patch) => setDeadline((prev) => ({ ...prev, ...patch }))}
               onReferenceScriptsChange={setReferenceScripts}
             />

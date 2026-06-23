@@ -1,7 +1,7 @@
 "use client";
 
 import CampaignHubContentView from "@/components/CampaignHubContentView";
-import { ContentHubOverview, getContentHubOverviewStats } from "@/components/ContentHubOverview";
+import { ContentHubOverview } from "@/components/ContentHubOverview";
 import CampaignHubContractView from "@/components/CampaignHubContractView";
 import CampaignHubLogisticsView from "@/components/CampaignHubLogisticsView";
 import CampaignHubScriptView from "@/components/CampaignHubScriptView";
@@ -14,7 +14,6 @@ import {
   Stamp,
   ChevronRight,
   Info,
-  List,
   Truck,
   CreditCard,
   FileText,
@@ -33,15 +32,6 @@ type StatusTone =
   | "purple"
   | "red"
   | "violet";
-
-function HubCountBadge({ count }: { count: number }) {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-amber-200/80 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-      <List size={12} className="opacity-75" />
-      {count}
-    </span>
-  );
-}
 
 function HubGoButton({ onClick }: { onClick?: (e: MouseEvent<HTMLButtonElement>) => void }) {
   return (
@@ -102,7 +92,6 @@ function HubCell({
   title,
   icon: Icon,
   iconClassName,
-  badgeCount,
   children,
   onGo,
   onEnter,
@@ -111,7 +100,6 @@ function HubCell({
   title: string;
   icon: AppIcon;
   iconClassName: string;
-  badgeCount: number;
   children: ReactNode;
   onGo?: () => void;
   onEnter?: () => void;
@@ -143,29 +131,26 @@ function HubCell({
         onEnter && "cursor-pointer hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
       )}
     >
-      <div className="flex shrink-0 items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <span
-            className={cn(
-              "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-              iconClassName
-            )}
-          >
-            <Icon size={16} strokeWidth={2} />
-          </span>
-          <span className="flex min-w-0 items-center gap-2">
-            <h3 className="truncate text-sm font-semibold text-gray-900">{title}</h3>
-            <Info size={14} className="shrink-0 text-gray-300" aria-hidden />
-          </span>
-        </div>
-        <HubCountBadge count={badgeCount} />
+      <div className="flex shrink-0 items-center gap-2">
+        <span
+          className={cn(
+            "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+            iconClassName
+          )}
+        >
+          <Icon size={16} strokeWidth={2} />
+        </span>
+        <span className="flex min-w-0 items-center gap-2">
+          <h3 className="truncate text-sm font-semibold text-gray-900">{title}</h3>
+          <Info size={14} className="shrink-0 text-gray-300" aria-hidden />
+        </span>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-2">
         <div
           className={cn(
-            "flex min-h-0 w-full flex-1 flex-col gap-4 pt-1",
-            centerBody && "justify-center"
+            "flex min-h-0 w-full flex-1 flex-col",
+            centerBody ? "gap-0 pt-0 justify-center" : "gap-4 pt-1"
           )}
         >
           {children}
@@ -357,7 +342,6 @@ export default function CampaignHub({
           title="Contract"
           icon={Stamp}
           iconClassName="bg-sky-50 text-sky-600"
-          badgeCount={5}
           onEnter={openContract}
           onGo={openContract}
         >
@@ -368,7 +352,6 @@ export default function CampaignHub({
           title="Logistics"
           icon={Truck}
           iconClassName="bg-emerald-50 text-emerald-600"
-          badgeCount={4}
           onEnter={openLogistics}
           onGo={openLogistics}
         >
@@ -393,7 +376,6 @@ export default function CampaignHub({
           title="Payment"
           icon={CreditCard}
           iconClassName="bg-violet-50 text-violet-600"
-          badgeCount={7}
           onEnter={openPayment}
           onGo={openPayment}
         >
@@ -417,7 +399,6 @@ export default function CampaignHub({
           title="Content"
           icon={FileText}
           iconClassName="bg-emerald-50 text-emerald-600"
-          badgeCount={getContentHubOverviewStats().activeKolCount}
           centerBody
           onEnter={openContent}
           onGo={openContent}
@@ -429,7 +410,6 @@ export default function CampaignHub({
           title="Posting"
           icon={Send}
           iconClassName="bg-emerald-50 text-emerald-600"
-          badgeCount={7}
           onGo={() => onNavigate?.("Pipeline")}
         >
           <>
@@ -450,7 +430,6 @@ export default function CampaignHub({
           title="Script"
           icon={ScrollText}
           iconClassName="bg-sky-50 text-sky-600"
-          badgeCount={5}
           onEnter={openScript}
           onGo={openScript}
         >

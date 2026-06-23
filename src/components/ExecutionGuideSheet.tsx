@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ComponentProps, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,10 @@ import { Sheet, SheetClose, SheetContent } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { formInputClass, formTextareaClass } from "@/lib/formControls";
+import {
+  getCampaignExecutionGuide,
+  saveCampaignExecutionGuide,
+} from "@/lib/campaignExecutionGuide";
 import { cn } from "@/lib/utils";
 import { FileText, Languages, Link as LinkIcon, Plus, Sparkles, X } from "@/lib/icons";
 
@@ -375,6 +379,28 @@ export function ExecutionGuideSheet({
     setLinkDraft("");
   };
 
+  useEffect(() => {
+    if (!open) return;
+    const guide = getCampaignExecutionGuide();
+    setContentGuidelines(guide.contentGuidelines);
+    setMention(guide.mention);
+    setHashtag(guide.hashtag);
+    setBriefFiles(guide.briefFiles);
+    setReferenceLinks(guide.referenceLinks);
+    setLinkDraft("");
+  }, [open]);
+
+  const handleSave = () => {
+    saveCampaignExecutionGuide({
+      contentGuidelines,
+      mention,
+      hashtag,
+      briefFiles,
+      referenceLinks,
+    });
+    onOpenChange(false);
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -604,7 +630,7 @@ export function ExecutionGuideSheet({
             type="button"
             variant="brand"
             className="h-10 rounded-xl px-6 text-[14px]"
-            onClick={() => onOpenChange(false)}
+            onClick={handleSave}
           >
             Save
           </Button>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   CheckCircle2,
+  Calendar,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
@@ -188,10 +189,7 @@ function H5CampaignBriefSection({
 }) {
   return (
     <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-      <p className="text-[11px] font-semibold tracking-wide text-gray-400 uppercase">
-        {data.campaignSubtitle}
-      </p>
-      <h1 className="mt-1 text-[22px] leading-tight font-bold text-gray-900">{data.campaignTitle}</h1>
+      <h1 className="text-[22px] leading-tight font-bold text-gray-900">{data.campaignTitle}</h1>
       <p className="mt-2 text-[13px] leading-relaxed text-gray-500">{intro ?? data.intro}</p>
 
       <div className="mt-4 flex items-center gap-3 rounded-2xl bg-gray-50 px-3 py-2.5">
@@ -363,7 +361,7 @@ function H5PageShell({
     <div className="flex h-full min-h-0 flex-col bg-[#f4f6f9]">
       <header className="shrink-0 border-b border-gray-100 bg-white px-4 py-3">
         {backHref && pageTitle ? (
-          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
+          <div className="flex min-w-0 items-center gap-2">
             <Link
               href={backHref}
               className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition-colors hover:border-gray-300 hover:text-gray-900"
@@ -371,10 +369,9 @@ function H5PageShell({
             >
               <ChevronLeft size={16} strokeWidth={2} />
             </Link>
-            <h1 className="min-w-0 truncate text-center text-[17px] font-bold leading-snug text-gray-950">
+            <h1 className="min-w-0 truncate text-left text-[17px] font-bold leading-snug text-gray-950">
               {pageTitle}
             </h1>
-            <span className="inline-flex size-9 shrink-0 opacity-0" aria-hidden />
           </div>
         ) : (
           <div className="flex items-center justify-between gap-3">
@@ -417,19 +414,40 @@ function H5OverviewDeadline({
   const dateTime = [deadline.date, deadline.time].filter(Boolean).join(" ");
 
   return (
-    <p
+    <div
       className={cn(
-        "mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-medium",
-        locked ? "text-gray-400" : "text-gray-500"
+        "mt-2.5 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-2.5",
+        locked ? "text-gray-500" : "text-amber-900"
       )}
     >
-      <span>Deadline: {dateTime}</span>
+      <span
+        className={cn(
+          "inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold leading-none",
+          locked ? "bg-gray-100 text-gray-600" : "bg-amber-50 text-amber-800"
+        )}
+      >
+        <Calendar size={12} strokeWidth={2} className="shrink-0" aria-hidden />
+        Deadline
+      </span>
+      <span
+        className={cn(
+          "text-[12px] font-semibold tabular-nums leading-snug",
+          locked ? "text-gray-600" : "text-gray-900"
+        )}
+      >
+        {dateTime}
+      </span>
       {deadline.timezone ? (
-        <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium leading-none text-gray-400">
+        <span
+          className={cn(
+            "rounded px-1.5 py-0.5 text-[10px] font-medium leading-none",
+            locked ? "bg-gray-100 text-gray-500" : "bg-amber-100/80 text-amber-800"
+          )}
+        >
           {deadline.timezone}
         </span>
       ) : null}
-    </p>
+    </div>
   );
 }
 
@@ -537,14 +555,9 @@ function ScriptBriefH5Overview({
   return (
     <H5PageShell>
           <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-            <div className="flex flex-col gap-2">
-              <span className="inline-flex w-fit rounded-full bg-brand-50 px-3 py-1 text-[12px] font-semibold text-brand">
-                H5 Hub
-              </span>
-              <h1 className="text-[23px] font-bold leading-tight text-gray-950">
-                Budweiser 2024 Sales Drive
-              </h1>
-            </div>
+            <h1 className="text-[23px] font-bold leading-tight text-gray-950">
+              Budweiser 2024 Sales Drive
+            </h1>
 
             <p className="mt-2 text-[14px] leading-relaxed text-gray-500">
               Open each H5 step to review, submit, and continue the workflow.
