@@ -146,9 +146,9 @@ export function getStageBadgeInteractiveHoverClass(tone: BadgeTone) {
   return badgeInteractiveHoverClass[tone];
 }
 
-/** Compact status pill — Script hub KOL list + draft review (21px tall). */
+/** Status pill — 24px tall, matches PipelineStageCell pill height. */
 export const STAGE_STATUS_PILL_CLASS =
-  "inline-flex shrink-0 items-center h-[21px] rounded-full border px-2 text-[10px] font-semibold leading-none";
+  "inline-flex h-6 shrink-0 items-center whitespace-nowrap rounded-full border px-2.5 text-[11px] font-semibold leading-none";
 
 const toneDotClass: Record<BadgeTone, string> = {
   amber: "bg-amber-400",

@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { CaptionCoverKolDraftPanel } from "@/components/CaptionCoverKolDraftPanel";
 import { ContentGuidelinesDisplayBlock, ContentGuidelinesTranslationNote } from "@/components/ContentGuidelinesDisplayBlock";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { ScriptKolDraftPanel } from "@/components/ScriptKolDraftPanel";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -347,14 +348,22 @@ function ReferenceScriptsContinueControls({
 function ReferenceScriptsGeneratePanel({
   kolName,
   onIdeasGenerated,
+  figmaCapture = false,
 }: {
   kolName: string;
   onIdeasGenerated?: (ideas: ScriptBriefPublished["referenceScripts"]) => void;
+  figmaCapture?: boolean;
 }) {
+  const captureIdeas = useMemo(
+    () => (figmaCapture ? buildMockScriptIdeas("Campaign brief", kolName) : []),
+    [figmaCapture, kolName]
+  );
   const [customPrompt, setCustomPrompt] = useState("");
-  const [phase, setPhase] = useState<GenerateIdeasPhase>("idle");
-  const [ideas, setIdeas] = useState<ScriptIdea[]>([]);
-  const [generationRuns, setGenerationRuns] = useState(0);
+  const [phase, setPhase] = useState<GenerateIdeasPhase>(
+    figmaCapture ? "results" : "idle"
+  );
+  const [ideas, setIdeas] = useState<ScriptIdea[]>(captureIdeas);
+  const [generationRuns, setGenerationRuns] = useState(figmaCapture ? 1 : 0);
   const generationLimitReached = generationRuns >= 3;
 
   const syncIdeas = (nextIdeas: ScriptIdea[]) => {
@@ -386,30 +395,16 @@ function ReferenceScriptsGeneratePanel({
     if (next.length === 0) setPhase("idle");
   };
 
-  const showInitialPrompt = phase === "idle";
-  const showContinueControls = phase !== "loading";
+  useEffect(() => {
+    if (!figmaCapture || captureIdeas.length === 0) return;
+    onIdeasGenerated?.(captureIdeas.map(scriptIdeaToReferenceScript));
+  }, [captureIdeas, figmaCapture, onIdeasGenerated]);
+
+  const showPanelChrome = phase !== "loading";
 
   return (
     <div className="rounded-xl border border-gray-100 bg-gray-50 p-5">
       <div className="flex flex-col gap-4">
-        {showInitialPrompt ? (
-          <div className="flex items-start gap-3 rounded-xl border border-sky-100 bg-sky-50/70 px-4 py-3.5">
-            <Sparkles size={16} className="mt-0.5 shrink-0 text-amber-500" strokeWidth={2} />
-            <p className="text-[13px] leading-relaxed text-gray-600">
-              Click{" "}
-              <button
-                type="button"
-                onClick={() => handleGenerate()}
-                disabled={generationLimitReached}
-                className="font-semibold text-brand transition-colors hover:text-brand/80 disabled:cursor-not-allowed disabled:opacity-45"
-              >
-                Generate
-              </button>{" "}
-              to brainstorm reference scripts for the KOL.
-            </p>
-          </div>
-        ) : null}
-
         {phase === "loading" ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <span
@@ -434,7 +429,7 @@ function ReferenceScriptsGeneratePanel({
           </div>
         ) : null}
 
-        {showContinueControls ? (
+        {showPanelChrome ? (
           <ReferenceScriptsContinueControls
             customPrompt={customPrompt}
             onCustomPromptChange={setCustomPrompt}
@@ -443,7 +438,7 @@ function ReferenceScriptsGeneratePanel({
           />
         ) : null}
 
-        {showContinueControls ? (
+        {showPanelChrome ? (
           <div className="text-[13px] leading-relaxed text-gray-500">
             <p>
               Selected:{" "}
@@ -510,21 +505,25 @@ function BriefSettingsSectionHeader({
 
   if (description) {
     return (
-      <div className={cn("flex gap-3", hasBottomSpacing && "mb-3")}>
-        <Icon size={16} className="mt-0.5 shrink-0 text-brand self-start" strokeWidth={2} />
-        <div className="min-w-0 flex-1 space-y-1">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h3 className={briefSectionTitleClass}>{title}</h3>
-            {trailing}
-            {collapsible && onToggle ? (
-              <BriefSectionCollapseButton
-                expanded={expanded ?? false}
-                onToggle={onToggle}
-                sectionLabel={title}
-              />
-            ) : null}
+      <div className={cn(hasBottomSpacing && "mb-3")}>
+        <div className="flex gap-3">
+          <div className="flex h-5 shrink-0 items-center text-brand">
+            <Icon size={16} strokeWidth={2} />
           </div>
-          {description}
+          <div className="min-w-0 flex-1 space-y-1">
+            <div className="flex min-h-5 flex-wrap items-center gap-x-3 gap-y-1">
+              <h3 className={cn(briefSectionTitleClass, "leading-5")}>{title}</h3>
+              {trailing}
+              {collapsible && onToggle ? (
+                <BriefSectionCollapseButton
+                  expanded={expanded ?? false}
+                  onToggle={onToggle}
+                  sectionLabel={title}
+                />
+              ) : null}
+            </div>
+            {description}
+          </div>
         </div>
       </div>
     );
@@ -533,7 +532,7 @@ function BriefSettingsSectionHeader({
   return (
     <div className={cn("flex items-center gap-3", hasBottomSpacing && "mb-3")}>
       <Icon size={16} className="shrink-0 text-brand" strokeWidth={2} />
-      <h3 className={briefSectionTitleClass}>{title}</h3>
+      <h3 className={cn(briefSectionTitleClass, "shrink-0")}>{title}</h3>
       {trailing}
       {collapsible && onToggle ? (
         <BriefSectionCollapseButton
@@ -561,8 +560,8 @@ function ReferenceScriptsSectionHeader({
       onToggle={onToggle}
       collapsible
       trailing={
-        <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
-          <Sparkles size={13} className="text-amber-600" strokeWidth={2} />
+        <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-amber-600">
+          <Sparkles size={13} className="shrink-0 text-amber-600" strokeWidth={2} />
           AI Generate Ideas
         </span>
       }
@@ -615,39 +614,70 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+function formatDeadlineDateForDisplay(isoDate: string) {
+  const match = isoDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) return `${match[1]}/${match[2]}/${match[3]}`;
+  return isoDate;
+}
+
+const submissionDeadlineInputClass =
+  "h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 shadow-[0_1px_2px_rgba(0,0,0,0.03)] outline-none transition-colors focus:border-brand/40 focus:ring-2 focus:ring-brand/10";
+
 function SubmissionDeadlineFields({
   deadline,
   onChange,
+  figmaCapture = false,
 }: {
   deadline: SubmissionDeadline;
   onChange: (patch: Partial<SubmissionDeadline>) => void;
+  figmaCapture?: boolean;
 }) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       <div className="min-w-0">
-        <input
-          type="date"
-          value={deadline.date}
-          onChange={(e) => onChange({ date: e.target.value })}
-          aria-label="Submission deadline date"
-          className={cn(
-            "h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 shadow-[0_1px_2px_rgba(0,0,0,0.03)] outline-none transition-colors focus:border-brand/40 focus:ring-2 focus:ring-brand/10",
-            !deadline.date && "text-gray-400"
-          )}
-        />
+        {figmaCapture ? (
+          <div
+            aria-label="Submission deadline date"
+            className={cn(
+              submissionDeadlineInputClass,
+              "flex items-center",
+              !deadline.date && "text-gray-400"
+            )}
+          >
+            {deadline.date ? formatDeadlineDateForDisplay(deadline.date) : "Select date"}
+          </div>
+        ) : (
+          <input
+            type="date"
+            value={deadline.date}
+            onChange={(e) => onChange({ date: e.target.value })}
+            aria-label="Submission deadline date"
+            className={cn(submissionDeadlineInputClass, !deadline.date && "text-gray-400")}
+          />
+        )}
       </div>
 
       <div className="min-w-0">
-        <input
-          type="time"
-          value={deadline.time}
-          onChange={(e) => onChange({ time: e.target.value })}
-          aria-label="Submission deadline time"
-          className={cn(
-            "h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 shadow-[0_1px_2px_rgba(0,0,0,0.03)] outline-none transition-colors focus:border-brand/40 focus:ring-2 focus:ring-brand/10",
-            !deadline.time && "text-gray-400"
-          )}
-        />
+        {figmaCapture ? (
+          <div
+            aria-label="Submission deadline time"
+            className={cn(
+              submissionDeadlineInputClass,
+              "flex items-center",
+              !deadline.time && "text-gray-400"
+            )}
+          >
+            {deadline.time || "Select time"}
+          </div>
+        ) : (
+          <input
+            type="time"
+            value={deadline.time}
+            onChange={(e) => onChange({ time: e.target.value })}
+            aria-label="Submission deadline time"
+            className={cn(submissionDeadlineInputClass, !deadline.time && "text-gray-400")}
+          />
+        )}
       </div>
 
       <div className="min-w-0">
@@ -690,6 +720,7 @@ function BriefSettingsPanel({
   onReferenceScriptsChange,
   showReferenceScripts = true,
   showSubmissionDeadline = true,
+  figmaCapture = false,
 }: {
   kolName: string;
   briefContent: Pick<
@@ -702,9 +733,11 @@ function BriefSettingsPanel({
   onReferenceScriptsChange: (scripts: ScriptBriefPublished["referenceScripts"]) => void;
   showReferenceScripts?: boolean;
   showSubmissionDeadline?: boolean;
+  figmaCapture?: boolean;
 }) {
   const [referenceExpanded, setReferenceExpanded] = useState(true);
   const [guidelinesExpanded, setGuidelinesExpanded] = useState(true);
+  const guidelinesVisible = figmaCapture || guidelinesExpanded;
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-6">
@@ -715,18 +748,22 @@ function BriefSettingsPanel({
             title="Submission Deadline"
             withBottomSpacing
           />
-          <SubmissionDeadlineFields deadline={deadline} onChange={onDeadlineChange} />
+          <SubmissionDeadlineFields
+            deadline={deadline}
+            onChange={onDeadlineChange}
+            figmaCapture={figmaCapture}
+          />
         </section>
       ) : null}
 
       <section>
         <ContentGuidelinesSectionHeader
-          expanded={guidelinesExpanded}
+          expanded={guidelinesVisible}
           referenceWebsiteUrl={referenceWebsiteUrl}
           onToggle={() => setGuidelinesExpanded((prev) => !prev)}
-          showTranslationNote={guidelinesExpanded}
+          showTranslationNote={guidelinesVisible}
         />
-        {guidelinesExpanded ? (
+        {guidelinesVisible ? (
           <ContentGuidelinesDisplayBlock
             guidelines={briefContent.guidelines}
             mention={briefContent.mention}
@@ -747,6 +784,7 @@ function BriefSettingsPanel({
             <ReferenceScriptsGeneratePanel
               kolName={kolName}
               onIdeasGenerated={onReferenceScriptsChange}
+              figmaCapture={figmaCapture}
             />
           ) : null}
         </section>
@@ -786,17 +824,23 @@ function ContentScriptReviewSheetInner({
   kolName,
   platform,
   track,
+  initialTab = "comments",
+  onOpenChange,
+  figmaCapture = false,
 }: {
   kolId: string;
   kolName: string;
   platform: string;
   track: ContentReviewTrack;
+  initialTab?: SheetTab;
+  onOpenChange: (open: boolean) => void;
+  figmaCapture?: boolean;
 }) {
   const draftKolId = getContentReviewDraftKolId(kolId, track);
   const showReferenceScripts = track === "script";
   const showSubmissionDeadline = track !== "caption";
   const initialBrief = loadContentScriptBriefState(kolId);
-  const [tab, setTab] = useState<SheetTab>("comments");
+  const [tab, setTab] = useState<SheetTab>(initialTab);
   const [guidelines, setGuidelines] = useState(initialBrief.guidelines);
   const [briefContent, setBriefContent] = useState(initialBrief.briefContent);
   const [deadline, setDeadline] = useState<SubmissionDeadline>(initialBrief.deadline);
@@ -822,7 +866,7 @@ function ContentScriptReviewSheetInner({
     };
   }, [draftKolId, loadBrief]);
 
-  const persistBrief = useCallback(() => {
+  const handleSave = () => {
     const brief = getScriptBriefH5Data(kolId);
     const existingPublished = getScriptBriefPublished(kolId);
     const defaults = getScriptBriefH5Defaults(kolId);
@@ -842,9 +886,8 @@ function ContentScriptReviewSheetInner({
             timezone: brief.deadline.timezone,
           },
     });
-  }, [kolId, referenceScripts, deadline, showSubmissionDeadline]);
-
-  useEffect(() => () => persistBrief(), [persistBrief]);
+    onOpenChange(false);
+  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -924,9 +967,32 @@ function ContentScriptReviewSheetInner({
               onReferenceScriptsChange={setReferenceScripts}
               showReferenceScripts={showReferenceScripts}
               showSubmissionDeadline={showSubmissionDeadline}
+              figmaCapture={figmaCapture}
             />
           )}
         </div>
+
+        {tab === "brief" ? (
+          <div className="shrink-0 border-t border-gray-100 bg-white px-5 py-4">
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                className="text-[13px] font-medium text-gray-500 transition-colors hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <Button
+                type="button"
+                variant="brand"
+                className="h-9 px-4 text-[13px]"
+                onClick={handleSave}
+              >
+                Save & Update
+              </Button>
+            </div>
+          </div>
+        ) : null}
     </div>
   );
 }
@@ -938,6 +1004,8 @@ export function ContentScriptReviewSheet({
   kolName,
   platform,
   track = "script",
+  initialTab,
+  figmaCapture,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -945,12 +1013,15 @@ export function ContentScriptReviewSheet({
   kolName: string;
   platform: string;
   track?: ContentReviewTrack;
+  initialTab?: SheetTab;
+  figmaCapture?: boolean;
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
         showCloseButton={false}
+        data-figma-capture={figmaCapture ? "content-review-sheet" : undefined}
         className="flex h-full min-h-0 flex-col gap-0 border-l border-gray-100 bg-white p-0 data-[side=right]:w-full data-[side=right]:max-w-[720px] data-[side=right]:sm:max-w-[720px]"
       >
         {open ? (
@@ -959,6 +1030,9 @@ export function ContentScriptReviewSheet({
             kolName={kolName}
             platform={platform}
             track={track}
+            initialTab={initialTab}
+            onOpenChange={onOpenChange}
+            figmaCapture={figmaCapture}
           />
         ) : null}
       </SheetContent>

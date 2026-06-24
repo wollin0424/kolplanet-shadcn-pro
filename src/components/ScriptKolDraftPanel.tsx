@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,7 +16,12 @@ import {
   type ScriptDraftMessageAuthor,
   type ScriptDraftSubmission,
 } from "@/lib/scriptDraftSubmissions";
-import { getStageBadgeClass, STAGE_STATUS_PILL_CLASS } from "@/lib/pipeline/stageStatuses";
+import {
+  CONTENT_HUB_STAGE_STATUS_CONFIG,
+  getStageBadgeClass,
+  STAGE_STATUS_PILL_CLASS,
+  type ContentHubStageStatus,
+} from "@/lib/pipeline/stageStatuses";
 import { cn } from "@/lib/utils";
 import {
   ArrowRight,
@@ -29,26 +34,18 @@ import {
   X,
 } from "@/lib/icons";
 
-function formatDraftStatus(status: ScriptDraftSubmission["status"]) {
-  if (status === "Under Review") return "Under review";
-  return status;
-}
-
 type KolScriptStatus = "Under Review" | "Approved";
 
-const KOL_STATUS_BADGE: Record<KolScriptStatus, string> = {
-  "Under Review": getStageBadgeClass("sky"),
-  Approved: "border-emerald-200 bg-emerald-50 text-emerald-700",
-};
-
-function formatKolStatusLabel(status: KolScriptStatus) {
-  return status;
+function draftStatusToHubStatus(status: ScriptDraftSubmission["status"]): ContentHubStageStatus {
+  if (status === "Approved") return "Approved";
+  return "Under Review";
 }
 
-function KolStatusBadge({ status }: { status: KolScriptStatus }) {
+export function ContentReviewStatusBadge({ status }: { status: ContentHubStageStatus }) {
+  const config = CONTENT_HUB_STAGE_STATUS_CONFIG[status];
   return (
-    <span className={cn(STAGE_STATUS_PILL_CLASS, KOL_STATUS_BADGE[status])}>
-      {formatKolStatusLabel(status)}
+    <span className={cn(STAGE_STATUS_PILL_CLASS, getStageBadgeClass(config.tone))}>
+      {config.label}
     </span>
   );
 }
@@ -58,20 +55,26 @@ function draftStatusToKolStatus(status: ScriptDraftSubmission["status"]): KolScr
   return "Under Review";
 }
 
-function KolScriptPanel({
+export function ReviewSectionTitle({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-5 items-center gap-2">
+      <p className="text-xs font-semibold text-gray-800">{children}</p>
+    </div>
+  );
+}
+
+export function KolScriptPanel({
   content,
   showLabel = true,
+  label = "KOL Script",
 }: {
   content: string;
   showLabel?: boolean;
+  label?: string;
 }) {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col space-y-2">
-      {showLabel ? (
-        <div className="flex min-h-5 items-center gap-2">
-          <p className="text-xs font-semibold text-gray-800">KOL Script</p>
-        </div>
-      ) : null}
+      {showLabel ? <ReviewSectionTitle>{label}</ReviewSectionTitle> : null}
       <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700">{content}</p>
       <ScriptAiAutoCheckAlert />
     </div>
@@ -179,25 +182,8 @@ function ChatMessage({ message }: { message: ScriptDraftSubmission["messages"][n
   );
 }
 
-function DiscussionThread({
-  messages,
-  emptyLabel = "No replies yet.\nStart the conversation below.",
-}: {
-  messages: ScriptDraftSubmission["messages"];
-  emptyLabel?: string;
-}) {
-  if (messages.length === 0) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center py-6 text-center">
-        <span className="mb-2 inline-flex size-9 items-center justify-center rounded-full bg-gray-100 text-gray-400">
-          <MessageSquare size={16} strokeWidth={2} />
-        </span>
-        <p className="max-w-[260px] whitespace-pre-line text-[12px] leading-snug text-gray-400">
-          {emptyLabel}
-        </p>
-      </div>
-    );
-  }
+function DiscussionThread({ messages }: { messages: ScriptDraftSubmission["messages"] }) {
+  if (messages.length === 0) return null;
 
   return (
     <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-0.5">
@@ -269,7 +255,25 @@ export function DiscussionComposer({
     setPendingImages([]);
   };
 
-  if (!canCompose) return null;
+  if (!canCompose) {
+    return (
+      <div className="flex h-10 items-center rounded-lg border border-gray-200 bg-gray-50 px-2">
+        <div className="flex w-full items-center gap-0.5">
+          <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-gray-300">
+            <Plus size={17} strokeWidth={1.75} />
+          </span>
+          <input
+            disabled
+            placeholder={placeholder}
+            className="h-8 min-w-0 flex-1 cursor-not-allowed border-0 bg-transparent px-1 text-[13px] text-gray-400 outline-none placeholder:text-gray-400"
+          />
+          <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-brand-50/60 text-brand/40">
+            <ArrowRight size={15} strokeWidth={2} />
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -351,22 +355,27 @@ export function DiscussionComposer({
   );
 }
 
-function VersionDiscussionSection({
+export function VersionDiscussionSection({
   kolId,
   submission,
   composerAuthor,
   composerLabel,
   readOnly = false,
   placeholder,
-  emptyLabel,
+  onSendMessage,
 }: {
   kolId: string;
-  submission: ScriptDraftSubmission;
+  submission: Pick<ScriptDraftSubmission, "version" | "messages">;
   composerAuthor: ScriptDraftMessageAuthor;
   composerLabel: string;
   readOnly?: boolean;
   placeholder?: string;
-  emptyLabel?: string;
+  onSendMessage?: (payload: {
+    author: ScriptDraftMessageAuthor;
+    authorLabel: string;
+    content: string;
+    images?: string[];
+  }) => void;
 }) {
   const replyCount = submission.messages.length;
   const hasMessages = replyCount > 0;
@@ -376,10 +385,11 @@ function VersionDiscussionSection({
     author: composerAuthor,
     authorLabel: composerLabel,
     placeholder,
+    readOnly,
   };
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col space-y-2">
+    <div className="flex h-full min-h-0 min-w-0 flex-col space-y-2">
       <div className="flex min-h-5 items-center gap-2">
         <MessageSquare size={14} className="text-brand" strokeWidth={2} />
         <p className="text-xs font-semibold text-gray-800">Client Feedback</p>
@@ -390,17 +400,11 @@ function VersionDiscussionSection({
 
       <div className="flex min-h-[200px] min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-100 bg-gray-50/90">
         <div className="flex min-h-0 flex-1 flex-col p-3">
-          {hasMessages ? (
-            <DiscussionThread messages={submission.messages} emptyLabel={emptyLabel} />
-          ) : readOnly ? (
-            <DiscussionThread messages={[]} emptyLabel={emptyLabel} />
-          ) : null}
+          {hasMessages ? <DiscussionThread messages={submission.messages} /> : null}
         </div>
-        {!readOnly ? (
-          <div className="shrink-0 px-3 pb-3 pt-0">
-            <DiscussionComposer {...composerProps} />
-          </div>
-        ) : null}
+        <div className="shrink-0 px-3 pb-3 pt-0">
+          <DiscussionComposer {...composerProps} onSendMessage={onSendMessage} />
+        </div>
       </div>
     </div>
   );
@@ -413,7 +417,6 @@ function VersionReviewSplit({
   composerLabel,
   readOnly = false,
   placeholder,
-  emptyLabel,
 }: {
   kolId: string;
   submission: ScriptDraftSubmission;
@@ -421,10 +424,9 @@ function VersionReviewSplit({
   composerLabel: string;
   readOnly?: boolean;
   placeholder?: string;
-  emptyLabel?: string;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 items-stretch gap-4">
       <KolScriptPanel content={submission.content} />
       <VersionDiscussionSection
         kolId={kolId}
@@ -433,7 +435,6 @@ function VersionReviewSplit({
         composerLabel={composerLabel}
         readOnly={readOnly}
         placeholder={placeholder}
-        emptyLabel={emptyLabel}
       />
     </div>
   );
@@ -471,7 +472,6 @@ export function H5ScriptSubmissionCard({
 }) {
   const isApproved = submission.status === "Approved";
   const feedbackReadOnly = isApproved || discussionLocked;
-  const showFeedbackSection = submission.messages.length > 0 || !feedbackReadOnly;
 
   return (
     <div className="mt-4 rounded-2xl border border-brand/20 bg-white p-4">
@@ -480,16 +480,7 @@ export function H5ScriptSubmissionCard({
           <p className="text-[15px] font-semibold text-gray-900">Version {submission.version}</p>
           <p className="mt-0.5 text-[12px] text-gray-500">{submission.submittedAt}</p>
         </div>
-        <span
-          className={cn(
-            STAGE_STATUS_PILL_CLASS,
-            submission.status === "Approved"
-              ? KOL_STATUS_BADGE.Approved
-              : KOL_STATUS_BADGE["Under Review"]
-          )}
-        >
-          {formatDraftStatus(submission.status)}
-        </span>
+        <ContentReviewStatusBadge status={draftStatusToHubStatus(submission.status)} />
       </div>
 
       <p className="mt-3 whitespace-pre-wrap text-[14px] leading-relaxed text-gray-900">
@@ -498,25 +489,22 @@ export function H5ScriptSubmissionCard({
 
       <ScriptAiAutoCheckAlert />
 
-      {showFeedbackSection ? (
-        <div className="mt-4 rounded-xl bg-gray-50 p-3">
-          {submission.messages.length > 0 ? (
-            <H5FeedbackThread messages={submission.messages} />
-          ) : null}
-          {!feedbackReadOnly ? (
-            <div className={submission.messages.length > 0 ? "mt-3" : undefined}>
-              <DiscussionComposer
-                kolId={kolId}
-                version={submission.version}
-                author="kol"
-                authorLabel={kolName}
-                placeholder="Write feedback..."
-                onSendMessage={(payload) => addScriptDraftMessage(kolId, submission.version, payload)}
-              />
-            </div>
-          ) : null}
+      <div className="mt-4 rounded-xl bg-gray-50 p-3">
+        {submission.messages.length > 0 ? (
+          <H5FeedbackThread messages={submission.messages} />
+        ) : null}
+        <div className={submission.messages.length > 0 ? "mt-3" : undefined}>
+          <DiscussionComposer
+            kolId={kolId}
+            version={submission.version}
+            author="kol"
+            authorLabel={kolName}
+            readOnly={feedbackReadOnly}
+            placeholder="Write feedback..."
+            onSendMessage={(payload) => addScriptDraftMessage(kolId, submission.version, payload)}
+          />
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }
@@ -628,7 +616,7 @@ function KolDraftReviewCard({
         <p className="text-xs text-gray-500">{submission.submittedAt}</p>
       </div>
       <div className="flex items-center gap-2">
-        <KolStatusBadge status={displayStatus} />
+        <ContentReviewStatusBadge status={displayStatus} />
         {collapsible ? (
           expanded ? (
             <ChevronUp size={16} className="text-gray-400" strokeWidth={2} />
@@ -663,7 +651,6 @@ function KolDraftReviewCard({
             composerLabel="Client"
             readOnly={feedbackReadOnly}
             placeholder="Write feedback..."
-            emptyLabel={"No replies yet.\nShare feedback or questions about this script."}
           />
 
           {isLatest && !isApproved ? (

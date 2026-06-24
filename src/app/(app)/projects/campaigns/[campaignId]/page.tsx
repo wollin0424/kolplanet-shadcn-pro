@@ -6,12 +6,29 @@ export default async function CampaignDetailPage({
   searchParams,
 }: {
   params: Promise<{ campaignId: string }>;
-  searchParams: Promise<{ tab?: string; section?: string; kol?: string; figmaCapture?: string }>;
+  searchParams: Promise<{
+    tab?: string;
+    section?: string;
+    kol?: string;
+    figmaCapture?: string;
+    figmaOpenFilters?: string;
+    figmaOpenReview?: string;
+    figmaReviewTab?: string;
+    figmaReviewKol?: string;
+  }>;
 }) {
   const { campaignId } = await params;
   const query = await searchParams;
-  const { initialTab, initialHubSection, initialScriptKolId, figmaCapture } =
-    parseCampaignDetailSearchParams(query);
+  const {
+    initialTab,
+    initialHubSection,
+    initialScriptKolId,
+    figmaCapture,
+    figmaOpenFilters,
+    figmaOpenReview,
+    figmaReviewTab,
+    figmaReviewKol,
+  } = parseCampaignDetailSearchParams(query);
 
   return (
     <CampaignDetailView
@@ -20,6 +37,10 @@ export default async function CampaignDetailPage({
       initialHubSection={initialHubSection}
       initialScriptKolId={initialScriptKolId}
       figmaCapture={figmaCapture}
+      figmaOpenFilters={figmaOpenFilters}
+      figmaOpenReview={figmaOpenReview}
+      figmaReviewTab={figmaReviewTab}
+      figmaReviewKol={figmaReviewKol}
     />
   );
 }

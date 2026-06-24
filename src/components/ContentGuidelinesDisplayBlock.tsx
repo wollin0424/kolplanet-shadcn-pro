@@ -11,6 +11,8 @@ const GUIDELINES_TAB_CLASS =
 const GUIDELINE_BUBBLE_CLASS =
   "overflow-hidden rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]";
 
+export const CONTENT_GUIDELINES_CARD_CLASS = GUIDELINE_BUBBLE_CLASS;
+
 function guidelinesTabClass(active: boolean) {
   return cn(
     GUIDELINES_TAB_CLASS,
@@ -116,57 +118,68 @@ function GuidelineBubbleSection({
 
 export function ContentGuidelinesDisplayBlock({
   guidelines,
-  mention,
-  hashtag,
-  attachments,
-  referenceLinks,
+  mention = "",
+  hashtag = "",
+  attachments = [],
+  referenceLinks = [],
   layout = "default",
+  part = "all",
 }: Pick<
   ScriptBriefH5Data,
   "guidelines" | "mention" | "hashtag" | "attachments" | "referenceLinks"
 > & {
   layout?: "default" | "h5";
+  /** Split H5 page: guidelines tabs only, or mention/hashtag/attachments below. */
+  part?: "all" | "guidelines" | "supplement";
 }) {
   const [guidelinesView, setGuidelinesView] = useState<"original" | "translation">("original");
   const activeGuidelines =
     (guidelinesView === "original" ? guidelines.original : guidelines.translation).trim() ||
     "No content guidelines yet.";
 
-  return (
-    <div className="space-y-3">
-      <div className={cn(GUIDELINE_BUBBLE_CLASS, "space-y-3")}>
-        <div className="flex w-full min-w-0 items-center gap-0.5 overflow-x-auto border-b border-gray-100">
-          <button
-            type="button"
-            onClick={() => setGuidelinesView("original")}
-            className={guidelinesTabClass(guidelinesView === "original")}
-          >
-            Original
-          </button>
-          <button
-            type="button"
-            onClick={() => setGuidelinesView("translation")}
-            className={guidelinesTabClass(guidelinesView === "translation")}
-          >
-            Translation
-          </button>
-        </div>
-        <div className="rounded-lg border border-gray-100 bg-gray-50/40 px-3.5 py-3">
-          <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700">
-            {activeGuidelines}
-          </p>
-        </div>
+  const guidelinesTabsPanel = (
+    <>
+      <div className="flex w-full min-w-0 items-center gap-0.5 overflow-x-auto border-b border-gray-100">
+        <button
+          type="button"
+          onClick={() => setGuidelinesView("original")}
+          className={guidelinesTabClass(guidelinesView === "original")}
+        >
+          Original
+        </button>
+        <button
+          type="button"
+          onClick={() => setGuidelinesView("translation")}
+          className={guidelinesTabClass(guidelinesView === "translation")}
+        >
+          Translation
+        </button>
       </div>
+      <div className="rounded-lg border border-gray-100 bg-gray-50/40 px-3.5 py-3">
+        <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700">
+          {activeGuidelines}
+        </p>
+      </div>
+    </>
+  );
 
-      <div className={GUIDELINE_BUBBLE_CLASS}>
-        <div className={cn(layout === "h5" ? "space-y-3" : "grid grid-cols-2 gap-3")}>
-          <GuidelineDetailField icon={LinkIcon} label="Mention" value={mention} />
-          <GuidelineDetailField icon={Tag} label="Hashtag" value={hashtag} />
-        </div>
-      </div>
+  if (part === "guidelines") {
+    return <div className="space-y-3">{guidelinesTabsPanel}</div>;
+  }
+
+  const mentionHashtagSection = (
+    <div className={cn(layout === "default" ? "grid grid-cols-2 gap-3" : "space-y-3")}>
+      <GuidelineDetailField icon={LinkIcon} label="Mention" value={mention} />
+      <GuidelineDetailField icon={Tag} label="Hashtag" value={hashtag} />
+    </div>
+  );
+
+  const supplementSections = (
+    <>
+      <div className={GUIDELINE_BUBBLE_CLASS}>{mentionHashtagSection}</div>
 
       {attachments.length > 0 ? (
-        <GuidelineBubbleSection title="Attachment">
+        <GuidelineBubbleSection title={layout === "h5" ? "Brief Attachment" : "Attachment"}>
           <div className="space-y-2">
             {attachments.map((attachment, index) => (
               <ReadonlyAttachmentRow
@@ -189,6 +202,17 @@ export function ContentGuidelinesDisplayBlock({
           <ReadonlyLinkField value="" />
         )}
       </GuidelineBubbleSection>
+    </>
+  );
+
+  if (part === "supplement") {
+    return <div className="space-y-3">{supplementSections}</div>;
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className={cn(GUIDELINE_BUBBLE_CLASS, "space-y-3")}>{guidelinesTabsPanel}</div>
+      {supplementSections}
     </div>
   );
 }

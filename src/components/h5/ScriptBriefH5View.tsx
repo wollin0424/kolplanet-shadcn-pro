@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ContentGuidelinesDisplayBlock, ContentGuidelinesTranslationNote } from "@/components/ContentGuidelinesDisplayBlock";
+import { ContentGuidelinesDisplayBlock, ContentGuidelinesTranslationNote, CONTENT_GUIDELINES_CARD_CLASS } from "@/components/ContentGuidelinesDisplayBlock";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +17,7 @@ import {
   Eye,
   FileText,
   Lightbulb,
+  Link as LinkIcon,
   Lock,
   MessageSquare,
   Share2,
@@ -212,31 +213,62 @@ function H5CampaignBriefSection({
   );
 }
 
+const H5_SECTION_HELPER_CLASS = "text-[12px] leading-relaxed text-gray-500";
+
+function H5ReferenceWebsiteLink({ href }: { href: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex w-full items-center justify-between gap-3 rounded-lg border border-gray-100 bg-white px-3 py-2.5 text-[13px] font-medium text-gray-800 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors hover:border-brand/20 hover:bg-brand-50/50"
+    >
+      <span className="inline-flex min-w-0 items-center gap-2">
+        <LinkIcon size={14} strokeWidth={2} className="shrink-0 text-brand" />
+        <span>Reference Website</span>
+      </span>
+      <ChevronRight size={14} strokeWidth={2} className="shrink-0 text-gray-400" />
+    </a>
+  );
+}
+
 function SectionHeading({
   icon: Icon,
   title,
   trailing,
   description,
   className,
+  descriptionClassName,
 }: {
   icon: typeof FileText;
   title: string;
   trailing?: ReactNode;
   description?: ReactNode;
   className?: string;
+  descriptionClassName?: string;
 }) {
   return (
-    <div className={cn("mb-3", className)}>
+    <div className={cn(description ? "mb-4" : "mb-3", className)}>
       <div className="flex items-start gap-2">
         <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
           <Icon size={15} strokeWidth={2} />
         </span>
-        <div className="min-w-0 flex-1 space-y-1">
+        <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <h2 className="text-[15px] font-semibold text-gray-900">{title}</h2>
             {trailing}
           </div>
-          {description}
+          {description ? (
+            <div
+              className={cn(
+                "mt-2 space-y-2",
+                H5_SECTION_HELPER_CLASS,
+                descriptionClassName
+              )}
+            >
+              {description}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
@@ -550,11 +582,7 @@ function ScriptBriefH5Overview({ kolId }: { kolId: string }) {
                 <ChevronRight size={14} strokeWidth={2} />
               </a>
             }
-            description={
-              <p className="text-[13px] leading-relaxed text-gray-500">
-                Tap for full brief and creation requirements.
-              </p>
-            }
+            description="Tap for full brief and creation requirements."
           />
 
           <div className="mt-5 space-y-4">
@@ -613,23 +641,28 @@ function ScriptBriefH5Guidelines({ kolId }: { kolId: string }) {
   return (
     <H5PageShell backHref={overviewHref} pageTitle="Content Guidelines">
       <div className="space-y-3">
-        <SectionHeading
-          icon={FileText}
-          title="Content Guidelines"
-          trailing={
-            <a
-              href={data.referenceWebsiteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
-            >
-              Reference Website
-              <ExternalLink size={12} strokeWidth={2} />
-            </a>
-          }
-          description={<ContentGuidelinesTranslationNote />}
-        />
+        <H5ReferenceWebsiteLink href={data.referenceWebsiteUrl} />
+        <div className={cn(CONTENT_GUIDELINES_CARD_CLASS, "space-y-4")}>
+          <div className="flex items-start gap-2">
+            <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
+              <FileText size={15} strokeWidth={2} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-[15px] font-semibold text-gray-900">Content Guidelines</h2>
+              <ContentGuidelinesTranslationNote className="mt-1.5" />
+            </div>
+          </div>
+          <ContentGuidelinesDisplayBlock
+            part="guidelines"
+            guidelines={data.guidelines}
+            mention={data.mention}
+            hashtag={data.hashtag}
+            attachments={data.attachments}
+            referenceLinks={data.referenceLinks}
+          />
+        </div>
         <ContentGuidelinesDisplayBlock
+          part="supplement"
           layout="h5"
           guidelines={data.guidelines}
           mention={data.mention}
@@ -857,16 +890,19 @@ function ScriptBriefH5CaptionCover({ kolId }: { kolId: string }) {
       />
 
       <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-        <SectionHeading icon={FileText} title="Caption & Cover Submission" />
-        <div className="mb-4 space-y-2 text-[12px] leading-relaxed text-gray-500">
-          <p>
-            Please provide the final caption and cover image for publishing.
-          </p>
-          <p>
-            <span className="font-semibold text-gray-600">Note:</span> The feedback section is for
-            client use only.
-          </p>
-        </div>
+        <SectionHeading
+          icon={FileText}
+          title="Caption & Cover Submission"
+          description={
+            <>
+              <p>Please provide the final caption and cover image for publishing.</p>
+              <p>
+                <span className="font-semibold text-gray-600">Note:</span> The feedback section is
+                for client use only.
+              </p>
+            </>
+          }
+        />
 
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
@@ -996,18 +1032,24 @@ function ScriptBriefH5VideoDraft({ kolId }: { kolId: string }) {
       />
 
       <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-        <SectionHeading icon={MessageSquare} title="Draft Submission & Feedback" />
-        <div className="mb-4 space-y-2 text-[12px] leading-relaxed text-gray-500">
-          <p>
-            Upload your video to a cloud drive (e.g., Google Drive) and paste the link below.
-            Ensure access is set to{" "}
-            <span className="font-semibold text-gray-600">&apos;Anyone with the link&apos;</span>.
-          </p>
-          <p>
-            <span className="font-semibold text-gray-600">Note:</span> The feedback section is for
-            client use only.
-          </p>
-        </div>
+        <SectionHeading
+          icon={MessageSquare}
+          title="Draft Submission & Feedback"
+          description={
+            <>
+              <p>
+                Upload your video to a cloud drive (e.g., Google Drive) and paste the link below.
+                Ensure access is set to{" "}
+                <span className="font-semibold text-gray-600">&apos;Anyone with the link&apos;</span>
+                .
+              </p>
+              <p>
+                <span className="font-semibold text-gray-600">Note:</span> The feedback section is
+                for client use only.
+              </p>
+            </>
+          }
+        />
         <Textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -1128,11 +1170,17 @@ function ScriptBriefH5ViewInner({
             icon={Lightbulb}
             title="Reference Scripts"
             className={referenceScriptsExpanded ? undefined : "mb-0"}
+            description={
+              referenceScriptsExpanded
+                ? "These scripts are AI-generated. Use them as inspiration and adapt them into your own original content while meeting campaign requirements and your personal style."
+                : undefined
+            }
+            descriptionClassName="mt-1.5"
             trailing={
               <button
                 type="button"
                 onClick={() => setReferenceScriptsExpanded((expanded) => !expanded)}
-                className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:border-gray-300 hover:text-gray-800"
+                className="inline-flex shrink-0 items-center justify-center p-0.5 text-gray-400 transition-colors hover:text-gray-700"
                 aria-expanded={referenceScriptsExpanded}
                 aria-label={
                   referenceScriptsExpanded
@@ -1141,7 +1189,7 @@ function ScriptBriefH5ViewInner({
                 }
               >
                 <ChevronUp
-                  size={16}
+                  size={18}
                   strokeWidth={2}
                   className={cn(
                     "transition-transform duration-200",
@@ -1153,11 +1201,6 @@ function ScriptBriefH5ViewInner({
           />
           {referenceScriptsExpanded ? (
             <>
-              <p className="mb-4 text-[12px] leading-relaxed text-gray-500">
-                These scripts are AI-generated. Use them as inspiration and adapt them into your own
-                original content while meeting campaign requirements and your personal style.
-              </p>
-
               {data.referenceScripts.length > 0 ? (
                 <div className="space-y-4">
                   {data.referenceScripts.map((script, index) => (

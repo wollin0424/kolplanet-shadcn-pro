@@ -65,3 +65,57 @@ html.figma-capture .figma-capture-table-scroll {
   max-height: none !important;
   flex: none !important;
 }
+
+/* H5 mobile shell — expand scroll containers for full-page capture */
+html.figma-capture .flex.h-dvh,
+html.figma-capture .flex.h-dvh > .max-w-\[480px\] {
+  height: auto !important;
+  min-height: 100vh;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* Content review sheet — full height including footer buttons */
+html.figma-capture [data-figma-capture="content-review-sheet"] {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  left: auto !important;
+  bottom: auto !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  max-height: none !important;
+  width: 720px !important;
+  max-width: 720px !important;
+  transform: none !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+}
+
+html.figma-capture [data-figma-capture="content-review-sheet"] > .flex.min-h-0.flex-1.flex-col {
+  flex: none !important;
+  min-height: auto !important;
+  height: auto !important;
+}
+
+html.figma-capture [data-figma-capture="content-review-sheet"] .no-scrollbar.min-h-0.flex-1.overflow-y-auto {
+  flex: none !important;
+  min-height: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+html.figma-capture [data-slot="sheet-overlay"] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Keep filters popover visible during element capture */
+html.figma-capture .figma-capture-content-filters {
+  position: fixed !important;
+  top: 120px !important;
+  left: 120px !important;
+  transform: none !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}

@@ -265,12 +265,20 @@ export default function CampaignHub({
   initialSection,
   initialScriptKolId,
   figmaCapture,
+  figmaOpenFilters,
+  figmaOpenReview,
+  figmaReviewTab,
+  figmaReviewKol,
 }: {
   campaignId: string;
   onNavigate?: (tab: CampaignTab) => void;
   initialSection?: HubSection;
   initialScriptKolId?: string;
   figmaCapture?: boolean;
+  figmaOpenFilters?: boolean;
+  figmaOpenReview?: "script" | "visual" | "caption";
+  figmaReviewTab?: "comments" | "brief";
+  figmaReviewKol?: string;
 }) {
   const [activeSection, setActiveSection] = useState<HubSection | null>(
     initialSection ?? null
@@ -306,6 +314,10 @@ export default function CampaignHub({
         campaignId={campaignId}
         onBack={() => setActiveSection(null)}
         figmaCapture={figmaCapture}
+        figmaOpenFilters={figmaOpenFilters}
+        figmaOpenReview={figmaOpenReview}
+        figmaReviewTab={figmaReviewTab}
+        figmaReviewKol={figmaReviewKol}
       />
     );
   }

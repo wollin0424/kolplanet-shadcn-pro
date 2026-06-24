@@ -3,9 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
+  ContentReviewStatusBadge,
   DiscussionComposer,
   H5FeedbackThread,
+  KolScriptPanel,
+  ReviewSectionTitle,
   ScriptAiAutoCheckAlert,
+  VersionDiscussionSection,
 } from "@/components/ScriptKolDraftPanel";
 import {
   addCaptionCoverMessage,
@@ -15,14 +19,8 @@ import {
   type CaptionCoverFile,
   type CaptionCoverSubmission,
 } from "@/lib/captionCoverSubmissions";
-import { getStageBadgeClass, STAGE_STATUS_PILL_CLASS } from "@/lib/pipeline/stageStatuses";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronUp, Eye, MessageSquare } from "@/lib/icons";
-
-function formatCaptionCoverStatus(status: CaptionCoverSubmission["status"]) {
-  if (status === "Under Review") return "Under review";
-  return status;
-}
+import { ChevronDown, ChevronUp, Eye } from "@/lib/icons";
 
 function VerticalCoverPreview({
   cover,
@@ -66,7 +64,6 @@ export function H5CaptionCoverSubmissionCard({
 }) {
   const isApproved = submission.status === "Approved";
   const feedbackReadOnly = isApproved || discussionLocked;
-  const showFeedbackSection = submission.messages.length > 0 || !feedbackReadOnly;
 
   return (
     <div className="mt-4 rounded-2xl border border-brand/20 bg-white p-4">
@@ -75,59 +72,43 @@ export function H5CaptionCoverSubmissionCard({
           <p className="text-[15px] font-semibold text-gray-900">Version {submission.version}</p>
           <p className="mt-0.5 text-[12px] text-gray-500">{submission.submittedAt}</p>
         </div>
-        <span
-          className={cn(
-            STAGE_STATUS_PILL_CLASS,
-            submission.status === "Approved"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-              : getStageBadgeClass("sky")
-          )}
-        >
-          {formatCaptionCoverStatus(submission.status)}
-        </span>
+        <ContentReviewStatusBadge
+          status={submission.status === "Approved" ? "Approved" : "Under Review"}
+        />
       </div>
 
-      <p className="mt-4 text-[11px] font-semibold tracking-wide text-gray-400 uppercase">Caption</p>
-      <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-gray-900">
+      <p className="mt-3 whitespace-pre-wrap text-[14px] leading-relaxed text-gray-900">
         {submission.caption}
       </p>
 
-      <div className="mt-3">
-        <ScriptAiAutoCheckAlert />
-      </div>
+      <ScriptAiAutoCheckAlert />
 
       {submission.cover ? (
-        <>
-          <p className="mt-4 text-[11px] font-semibold tracking-wide text-gray-400 uppercase">Cover</p>
-          <div className="mt-2 flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50/70 p-2.5">
-            <VerticalCoverPreview cover={submission.cover} />
-            <div className="min-w-0 pt-1">
-              <p className="truncate text-[13px] font-medium text-gray-900">{submission.cover.name}</p>
-              <p className="text-[11px] text-gray-500">{submission.cover.sizeLabel}</p>
-            </div>
+        <div className="mt-4 flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50/70 p-2.5">
+          <VerticalCoverPreview cover={submission.cover} />
+          <div className="min-w-0 pt-1">
+            <p className="truncate text-[13px] font-medium text-gray-900">{submission.cover.name}</p>
+            <p className="text-[11px] text-gray-500">{submission.cover.sizeLabel}</p>
           </div>
-        </>
-      ) : null}
-
-      {showFeedbackSection ? (
-        <div className="mt-4 rounded-xl bg-gray-50 p-3">
-          {submission.messages.length > 0 ? (
-            <H5FeedbackThread messages={submission.messages} />
-          ) : null}
-          {!feedbackReadOnly ? (
-            <div className={submission.messages.length > 0 ? "mt-3" : undefined}>
-              <DiscussionComposer
-                kolId={kolId}
-                version={submission.version}
-                author="kol"
-                authorLabel={kolName}
-                placeholder="Write feedback..."
-                onSendMessage={(payload) => addCaptionCoverMessage(kolId, submission.version, payload)}
-              />
-            </div>
-          ) : null}
         </div>
       ) : null}
+
+      <div className="mt-4 rounded-xl bg-gray-50 p-3">
+        {submission.messages.length > 0 ? (
+          <H5FeedbackThread messages={submission.messages} />
+        ) : null}
+        <div className={submission.messages.length > 0 ? "mt-3" : undefined}>
+          <DiscussionComposer
+            kolId={kolId}
+            version={submission.version}
+            author="kol"
+            authorLabel={kolName}
+            readOnly={feedbackReadOnly}
+            placeholder="Write feedback..."
+            onSendMessage={(payload) => addCaptionCoverMessage(kolId, submission.version, payload)}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -135,16 +116,10 @@ export function H5CaptionCoverSubmissionCard({
 function CaptionCoverContentPanel({ submission }: { submission: CaptionCoverSubmission }) {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col space-y-3">
-      <div className="space-y-2">
-        <p className="text-xs font-semibold text-gray-800">Caption</p>
-        <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700">
-          {submission.caption}
-        </p>
-        <ScriptAiAutoCheckAlert />
-      </div>
+      <KolScriptPanel content={submission.caption} label="Caption" />
       {submission.cover ? (
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-gray-800">Cover</p>
+          <ReviewSectionTitle>Cover</ReviewSectionTitle>
           <div className="flex items-start gap-3 rounded-lg border border-gray-100 bg-gray-50/70 p-2.5">
             <VerticalCoverPreview cover={submission.cover} />
             <div className="min-w-0 pt-1">
@@ -154,73 +129,6 @@ function CaptionCoverContentPanel({ submission }: { submission: CaptionCoverSubm
           </div>
         </div>
       ) : null}
-    </div>
-  );
-}
-
-function CaptionCoverDiscussionSection({
-  kolId,
-  submission,
-  readOnly = false,
-}: {
-  kolId: string;
-  submission: CaptionCoverSubmission;
-  readOnly?: boolean;
-}) {
-  const replyCount = submission.messages.length;
-
-  return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col space-y-2">
-      <div className="flex min-h-5 items-center gap-2">
-        <MessageSquare size={14} className="text-brand" strokeWidth={2} />
-        <p className="text-xs font-semibold text-gray-800">Client Feedback</p>
-        <span className="text-[11px] text-gray-400">
-          {replyCount} {replyCount === 1 ? "reply" : "replies"}
-        </span>
-      </div>
-
-      <div className="flex min-h-[200px] min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-100 bg-gray-50/90">
-        <div className="flex min-h-0 flex-1 flex-col p-3">
-          {submission.messages.length > 0 ? (
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-0.5">
-              {submission.messages.map((message) => (
-                <div key={message.id} className="space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <span className="text-[11px] font-semibold text-brand">From **</span>
-                    <span className="text-[11px] text-gray-400">{message.sentAt}</span>
-                  </div>
-                  <div className="rounded-lg bg-white/70 px-3 py-2.5">
-                    {message.content ? (
-                      <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-gray-800">
-                        {message.content}
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : readOnly ? (
-            <div className="flex flex-1 flex-col items-center justify-center py-6 text-center">
-              <p className="max-w-[260px] whitespace-pre-line text-[12px] leading-snug text-gray-400">
-                No replies yet.
-                {"\n"}Share feedback or questions about this caption and cover.
-              </p>
-            </div>
-          ) : null}
-        </div>
-        {!readOnly ? (
-          <div className="shrink-0 px-3 pb-3 pt-0">
-            <DiscussionComposer
-              kolId={kolId}
-              version={submission.version}
-              author="client"
-              authorLabel="Client"
-              placeholder="Write feedback..."
-              onSendMessage={(payload) => addCaptionCoverMessage(kolId, submission.version, payload)}
-            />
-          </div>
-        ) : null}
-      </div>
     </div>
   );
 }
@@ -253,16 +161,9 @@ function CaptionCoverReviewCard({
         <p className="text-xs text-gray-500">{submission.submittedAt}</p>
       </div>
       <div className="flex items-center gap-2">
-        <span
-          className={cn(
-            STAGE_STATUS_PILL_CLASS,
-            submission.status === "Approved"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-              : getStageBadgeClass("sky")
-          )}
-        >
-          {formatCaptionCoverStatus(submission.status)}
-        </span>
+        <ContentReviewStatusBadge
+          status={submission.status === "Approved" ? "Approved" : "Under Review"}
+        />
         {collapsible ? (
           expanded ? (
             <ChevronUp size={16} className="text-gray-400" strokeWidth={2} />
@@ -290,12 +191,16 @@ function CaptionCoverReviewCard({
 
       {expanded ? (
         <div className={cn(collapsible && "mt-4", "flex flex-col")}>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 items-stretch gap-4">
             <CaptionCoverContentPanel submission={submission} />
-            <CaptionCoverDiscussionSection
+            <VersionDiscussionSection
               kolId={kolId}
               submission={submission}
+              composerAuthor="client"
+              composerLabel="Client"
               readOnly={feedbackReadOnly}
+              placeholder="Write feedback..."
+              onSendMessage={(payload) => addCaptionCoverMessage(kolId, submission.version, payload)}
             />
           </div>
 

@@ -14,12 +14,20 @@ export default function CampaignDetailView({
   initialHubSection,
   initialScriptKolId,
   figmaCapture,
+  figmaOpenFilters,
+  figmaOpenReview,
+  figmaReviewTab,
+  figmaReviewKol,
 }: {
   campaignId: string;
   initialTab?: CampaignTab;
   initialHubSection?: HubSection;
   initialScriptKolId?: string;
   figmaCapture?: boolean;
+  figmaOpenFilters?: boolean;
+  figmaOpenReview?: "script" | "visual" | "caption";
+  figmaReviewTab?: "comments" | "brief";
+  figmaReviewKol?: string;
 }) {
   const [tab, setTab] = useState<CampaignTab>(initialTab ?? "Pipeline");
   const [hubMountKey, setHubMountKey] = useState(0);
@@ -53,6 +61,10 @@ export default function CampaignDetailView({
             initialSection={hubMountKey === 0 ? initialHubSection : undefined}
             initialScriptKolId={hubMountKey === 0 ? initialScriptKolId : undefined}
             figmaCapture={hubMountKey === 0 ? figmaCapture : undefined}
+            figmaOpenFilters={hubMountKey === 0 ? figmaOpenFilters : undefined}
+            figmaOpenReview={hubMountKey === 0 ? figmaOpenReview : undefined}
+            figmaReviewTab={hubMountKey === 0 ? figmaReviewTab : undefined}
+            figmaReviewKol={hubMountKey === 0 ? figmaReviewKol : undefined}
           />
         ) : (
           <PagePlaceholder

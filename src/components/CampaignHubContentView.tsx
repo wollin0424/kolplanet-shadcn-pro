@@ -216,9 +216,17 @@ function H5LinkCell({ path }: { path: string }) {
 function CampaignHubContentTable({
   campaignId,
   figmaCapture,
+  figmaOpenFilters,
+  figmaOpenReview,
+  figmaReviewTab,
+  figmaReviewKol,
 }: {
   campaignId: string;
   figmaCapture?: boolean;
+  figmaOpenFilters?: boolean;
+  figmaOpenReview?: ContentReviewTrack;
+  figmaReviewTab?: "comments" | "brief";
+  figmaReviewKol?: string;
 }) {
   const [rows, setRows] = useState<ContentHubRow[]>(CONTENT_HUB_MOCK_ROWS);
   const [query, setQuery] = useState("");
@@ -233,7 +241,12 @@ function CampaignHubContentTable({
   const [contentReview, setContentReview] = useState<{
     row: ContentHubRow;
     track: ContentReviewTrack;
-  } | null>(null);
+  } | null>(() => {
+    if (!figmaCapture || !figmaOpenReview) return null;
+    const kolId = figmaReviewKol ?? "s1";
+    const row = CONTENT_HUB_MOCK_ROWS.find((item) => item.id === kolId);
+    return row ? { row, track: figmaOpenReview } : null;
+  });
 
   useEffect(() => {
     const refresh = () => setRows(getContentHubRowsWithLiveStatus());
@@ -321,7 +334,7 @@ function CampaignHubContentTable({
 
       <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-gray-100 px-5 py-3">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-          <Popover>
+          <Popover open={figmaOpenFilters ? true : undefined}>
             <PopoverTrigger
               type="button"
               className={cn(
@@ -337,7 +350,15 @@ function CampaignHubContentTable({
                 </span>
               ) : null}
             </PopoverTrigger>
-            <PopoverContent align="start" sideOffset={8} className="w-[300px] gap-0 p-0">
+            <PopoverContent
+              align="start"
+              sideOffset={8}
+              className={cn(
+                "w-[300px] gap-0 p-0",
+                figmaCapture && figmaOpenFilters && "figma-capture-content-filters"
+              )}
+              data-figma-capture={figmaCapture && figmaOpenFilters ? "content-filters" : undefined}
+            >
               <div className="border-b border-gray-100 px-4 py-3">
                 <p className="text-[13px] font-semibold text-gray-900">Filters</p>
               </div>
@@ -593,6 +614,8 @@ function CampaignHubContentTable({
           kolName={contentReview.row.name}
           platform={contentReview.row.platform}
           track={contentReview.track}
+          initialTab={figmaReviewTab}
+          figmaCapture={figmaCapture}
         />
       ) : null}
       </div>
@@ -604,10 +627,18 @@ export default function CampaignHubContentView({
   campaignId,
   onBack,
   figmaCapture,
+  figmaOpenFilters,
+  figmaOpenReview,
+  figmaReviewTab,
+  figmaReviewKol,
 }: {
   campaignId: string;
   onBack: () => void;
   figmaCapture?: boolean;
+  figmaOpenFilters?: boolean;
+  figmaOpenReview?: ContentReviewTrack;
+  figmaReviewTab?: "comments" | "brief";
+  figmaReviewKol?: string;
 }) {
   return (
     <div
@@ -623,7 +654,14 @@ export default function CampaignHubContentView({
           figmaCapture && "figma-capture-content-card"
         )}
       >
-        <CampaignHubContentTable campaignId={campaignId} figmaCapture={figmaCapture} />
+        <CampaignHubContentTable
+          campaignId={campaignId}
+          figmaCapture={figmaCapture}
+          figmaOpenFilters={figmaOpenFilters}
+          figmaOpenReview={figmaOpenReview}
+          figmaReviewTab={figmaReviewTab}
+          figmaReviewKol={figmaReviewKol}
+        />
       </div>
     </div>
   );
