@@ -39,7 +39,6 @@ import {
 import { formInputClass } from "@/lib/formControls";
 import { cn } from "@/lib/utils";
 import {
-  ArrowRight,
   Calendar,
   Check,
   ChevronDown,
@@ -294,12 +293,19 @@ function ReferenceScriptsContinueControls({
   onCustomPromptChange,
   onGenerate,
   disabled,
+  generationRuns,
+  generationLimit = 3,
 }: {
   customPrompt: string;
   onCustomPromptChange: (value: string) => void;
   onGenerate: (prompt?: string) => void;
   disabled: boolean;
+  generationRuns: number;
+  generationLimit?: number;
 }) {
+  const hasCustomPrompt = customPrompt.trim().length > 0;
+  const canSubmitCustom = hasCustomPrompt && !disabled;
+
   return (
     <div className="rounded-xl border border-gray-100 bg-white/70 p-4">
       <p className="mb-3 text-[13px] leading-relaxed text-gray-500">
@@ -318,29 +324,43 @@ function ReferenceScriptsContinueControls({
           </button>
         ))}
       </div>
-      <div className="relative">
-        <Input
-          value={customPrompt}
-          onChange={(e) => onCustomPromptChange(e.target.value)}
-          placeholder="Add your own style or generation instruction."
-          className={formInputClass(
-            "h-9 pr-10 text-[13px] leading-normal font-normal text-gray-600 placeholder:text-[13px] placeholder:font-normal placeholder:text-gray-400"
-          )}
-          disabled={disabled}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onGenerate();
-          }}
-        />
-        <button
-          type="button"
-          onClick={() => onGenerate()}
-          disabled={disabled}
-          className="absolute top-1/2 right-2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full bg-brand-50 text-brand transition-colors hover:bg-brand hover:text-white disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-brand-50 disabled:hover:text-brand"
-          aria-label="Generate with custom prompt"
-        >
-          <ArrowRight size={14} strokeWidth={2} />
-        </button>
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <div className="flex min-w-0 items-stretch">
+          <Input
+            value={customPrompt}
+            onChange={(e) => onCustomPromptChange(e.target.value)}
+            placeholder="Add your own style or generation instruction"
+            className={formInputClass(
+              "h-10 min-w-0 flex-1 rounded-none border-0 bg-transparent px-3 text-[13px] leading-normal font-normal text-gray-700 shadow-none placeholder:text-[13px] placeholder:font-normal placeholder:text-gray-400 focus-visible:ring-0"
+            )}
+            disabled={disabled}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && canSubmitCustom) onGenerate();
+            }}
+          />
+          <div className="w-px shrink-0 self-stretch bg-gray-200" aria-hidden />
+          <button
+            type="button"
+            onClick={() => onGenerate()}
+            disabled={!canSubmitCustom}
+            className={cn(
+              "inline-flex shrink-0 items-center gap-1.5 px-4 text-[13px] font-medium transition-colors",
+              canSubmitCustom
+                ? "bg-amber-500 text-white hover:bg-amber-600"
+                : "cursor-not-allowed bg-gray-50 text-gray-400"
+            )}
+          >
+            <Sparkles size={13} strokeWidth={2} />
+            Generate
+          </button>
+        </div>
       </div>
+      <p className="mt-2 text-[11px] text-gray-400">
+        Generations used:{" "}
+        <span className="tabular-nums text-gray-500">
+          {generationRuns}/{generationLimit}
+        </span>
+      </p>
     </div>
   );
 }
@@ -401,10 +421,29 @@ function ReferenceScriptsGeneratePanel({
   }, [captureIdeas, figmaCapture, onIdeasGenerated]);
 
   const showPanelChrome = phase !== "loading";
+  const showInitialPrompt = phase === "idle";
 
   return (
     <div className="rounded-xl border border-gray-100 bg-gray-50 p-5">
       <div className="flex flex-col gap-4">
+        {showInitialPrompt ? (
+          <div className="flex items-start gap-3 rounded-xl border border-sky-100 bg-sky-50/70 px-4 py-3.5">
+            <Sparkles size={16} className="mt-0.5 shrink-0 text-amber-500" strokeWidth={2} />
+            <p className="text-[13px] leading-relaxed text-gray-600">
+              Click{" "}
+              <button
+                type="button"
+                onClick={() => handleGenerate()}
+                disabled={generationLimitReached}
+                className="font-semibold text-brand transition-colors hover:text-brand/80 disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                Generate
+              </button>{" "}
+              to brainstorm reference scripts for the KOL.
+            </p>
+          </div>
+        ) : null}
+
         {phase === "loading" ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <span
@@ -435,23 +474,8 @@ function ReferenceScriptsGeneratePanel({
             onCustomPromptChange={setCustomPrompt}
             onGenerate={handleGenerate}
             disabled={generationLimitReached}
+            generationRuns={generationRuns}
           />
-        ) : null}
-
-        {showPanelChrome ? (
-          <div className="text-[13px] leading-relaxed text-gray-500">
-            <p>
-              Selected:{" "}
-              <span className="font-semibold tabular-nums text-gray-600">0/3</span>
-            </p>
-            <p className="mt-0.5">
-              Generation limit (
-              <span className="font-semibold tabular-nums text-gray-600">
-                {generationRuns}/3
-              </span>
-              ) reached.
-            </p>
-          </div>
         ) : null}
       </div>
     </div>
