@@ -78,12 +78,6 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
         url: "https://www.tiktok.com/@amelia-mirror/video/7123456789",
         postedDate: "15 Jun, 2026",
       },
-      {
-        type: "Mirrored",
-        url: "https://www.youtube.com/watch?v=amelia-mirror",
-        postedDate: "25 Jun, 2026",
-        issues: ["Missing hashtag"],
-      },
     ],
     insightReports: ["Amelia_Insight_Deck.pdf"],
     planDate: "Jun 30, 2026",
@@ -97,7 +91,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     postingStatus: "Posted",
     postLinks: [
       {
-        type: "Mirrored",
+        type: "Master",
         url: "https://www.instagram.com/p/DKx9AvaCollins/",
         issues: ["Missing hashtag"],
       },
@@ -113,6 +107,11 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     postingStatus: "Post Approved",
     postLinks: [
       {
+        type: "Master",
+        url: "https://www.instagram.com/p/DKx9ChloeReed/",
+        issues: ["Data fetch failed"],
+      },
+      {
         type: "Mirrored",
         url: "https://www.instagram.com/p/1-mirror-1",
         issues: ["Data fetch failed"],
@@ -120,11 +119,6 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
       {
         type: "Mirrored",
         url: "https://www.instagram.com/p/1-mirror-2",
-        issues: ["Data fetch failed"],
-      },
-      {
-        type: "Mirrored",
-        url: "https://www.instagram.com/p/1-mirror-3",
         issues: ["Data fetch failed"],
       },
     ],
@@ -184,7 +178,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     postingStatus: "Pending",
     postLinks: [
       {
-        type: "Mirrored",
+        type: "Master",
         url: "https://www.instagram.com/p/DKx9JadeWilson/",
         issues: ["Private account"],
       },
@@ -306,8 +300,14 @@ export function getPostLinkTooltipCopy(link: PostLink): PostLinkTooltipCopy {
   };
 }
 
+export const MAX_VISIBLE_MIRRORED_LINKS = 2;
+
 export function getPostLinksByType(links: PostLink[] | undefined, type: PostLinkType) {
   return links?.filter((link) => link.type === type) ?? [];
+}
+
+export function getVisibleMirroredLinks(links?: PostLink[]) {
+  return getPostLinksByType(links, "Mirrored").slice(0, MAX_VISIBLE_MIRRORED_LINKS);
 }
 
 /** Each row has at most one Master link. */

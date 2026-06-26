@@ -38,7 +38,7 @@ import {
   getMasterContentValidation,
   getMasterPostLink,
   getPostLinkDateEntries,
-  getPostLinksByType,
+  getVisibleMirroredLinks,
   getPostLinkStatus,
   getPostLinkTooltipCopy,
   type ContentValidationStatus,
@@ -256,11 +256,13 @@ function PostingHubEmptyActionButton({
   icon: Icon,
   onClick,
   disabled = false,
+  variant = "brand",
 }: {
   label: string;
   icon: typeof RefreshCcw;
   onClick: () => void;
   disabled?: boolean;
+  variant?: "brand" | "ai";
 }) {
   return (
     <button
@@ -271,11 +273,33 @@ function PostingHubEmptyActionButton({
         "inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-semibold leading-none transition-colors",
         disabled
           ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400"
-          : "border-brand/20 bg-brand-50 text-brand hover:bg-brand-100/70"
+          : variant === "ai"
+            ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100/80"
+            : "border-brand/20 bg-brand-50 text-brand hover:bg-brand-100/70"
       )}
     >
-      <Icon size={11} strokeWidth={2.2} className="shrink-0" />
+      <Icon
+        size={11}
+        strokeWidth={2.2}
+        className={cn("shrink-0", !disabled && variant === "ai" && "text-amber-600")}
+      />
       {label}
+    </button>
+  );
+}
+
+function PostLinkEmptyState({ onFetch }: { onFetch: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onFetch}
+      className="inline-flex items-center gap-2 text-left transition-opacity hover:opacity-80"
+      aria-label="Fetch post links"
+    >
+      <span className="inline-flex size-[18px] shrink-0 items-center justify-center rounded-full border border-brand/25 text-brand">
+        <RefreshCcw size={10} strokeWidth={2.2} />
+      </span>
+      <span className="text-[12px] italic text-gray-400">Not fetched yet</span>
     </button>
   );
 }
@@ -289,42 +313,29 @@ function PostLinkCell({
 }) {
   const links = row.postLinks;
   const master = getMasterPostLink(links);
-  const mirrored = getPostLinksByType(links, "Mirrored");
+  const mirrored = getVisibleMirroredLinks(links);
 
-  if (!master && !mirrored.length) {
-    return (
-      <PostingHubEmptyActionButton
-        label="Fetch Post Links"
-        icon={RefreshCcw}
-        onClick={() => onFetchPostLinks(row)}
-      />
-    );
+  if (!master) {
+    return <PostLinkEmptyState onFetch={() => onFetchPostLinks(row)} />;
   }
-
-  const pills: { key: string; link: PostLink; label: string; linkType: PostLinkType }[] = [];
-
-  if (master) {
-    pills.push({ key: "master", link: master, label: "Master", linkType: "Master" });
-  }
-  mirrored.forEach((link, index) => {
-    pills.push({
-      key: `${link.url}-${index}`,
-      link,
-      label: mirrored.length === 1 ? "Mirrored" : `Mirrored ${index + 1}`,
-      linkType: "Mirrored",
-    });
-  });
 
   return (
-    <div className="flex min-w-0 flex-wrap gap-1.5">
-      {pills.map((pill) => (
-        <PostLinkPillWithTooltip
-          key={pill.key}
-          link={pill.link}
-          label={pill.label}
-          linkType={pill.linkType}
-        />
-      ))}
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <div className="flex flex-wrap gap-1.5">
+        <PostLinkPillWithTooltip link={master} label="Master" linkType="Master" />
+      </div>
+      {mirrored.length ? (
+        <div className="flex flex-wrap gap-1.5">
+          {mirrored.map((link, index) => (
+            <PostLinkPillWithTooltip
+              key={`${link.url}-${index}`}
+              link={link}
+              label={mirrored.length === 1 ? "Mirrored" : `Mirrored ${index + 1}`}
+              linkType="Mirrored"
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -344,6 +355,7 @@ function ContentValidationCell({
       <PostingHubEmptyActionButton
         label="Auto Validate"
         icon={Sparkles}
+        variant="ai"
         onClick={() => onAutoValidate(row)}
         disabled={!hasMaster}
       />
