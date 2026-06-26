@@ -4,9 +4,11 @@ import CampaignHubContentView from "@/components/CampaignHubContentView";
 import { ContentHubOverview } from "@/components/ContentHubOverview";
 import CampaignHubContractView from "@/components/CampaignHubContractView";
 import CampaignHubLogisticsView from "@/components/CampaignHubLogisticsView";
+import CampaignHubPostingView from "@/components/CampaignHubPostingView";
 import CampaignHubScriptView from "@/components/CampaignHubScriptView";
 import { CampaignHubDetailHeader } from "@/components/CampaignHubDetailToolbar";
 import CampaignPaymentTable from "@/components/CampaignPaymentTable";
+import { HubProgressOverview, HubStatus, HubStatusList } from "@/components/HubProgressOverview";
 import type { CampaignTab } from "@/components/CampaignDetailHeader";
 import { cn } from "@/lib/utils";
 import { useState, type MouseEvent } from "react";
@@ -18,20 +20,9 @@ import {
   CreditCard,
   Clapperboard,
   Send,
-  ScrollText,
   type AppIcon,
 } from "@/lib/icons";
 import type { ReactNode } from "react";
-
-type StatusTone =
-  | "green"
-  | "sky"
-  | "amber"
-  | "gray"
-  | "brand"
-  | "purple"
-  | "red"
-  | "violet";
 
 function HubGoButton({ onClick }: { onClick?: (e: MouseEvent<HTMLButtonElement>) => void }) {
   return (
@@ -46,44 +37,13 @@ function HubGoButton({ onClick }: { onClick?: (e: MouseEvent<HTMLButtonElement>)
   );
 }
 
-const statusToneClass: Record<StatusTone, string> = {
-  green: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  sky: "border-sky-200 bg-sky-50 text-sky-700",
-  amber: "border-amber-200 bg-amber-50 text-amber-700",
-  gray: "border-gray-200 bg-gray-50 text-gray-700",
-  brand: "border-brand/20 bg-brand-50 text-brand",
-  purple: "border-violet-200 bg-violet-50 text-violet-700",
-  red: "border-red-200 bg-red-50 text-red-700",
-  violet: "border-violet-200 bg-violet-50 text-violet-700",
-};
-
-/** Count chip: color encodes state; no per-tag icons (consistent SaaS breakdown pattern). */
-function HubStatus({
-  label,
-  value,
-  tone = "sky",
-}: {
-  label: string;
-  value: string | number;
-  tone?: StatusTone;
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex w-fit max-w-full items-center rounded-full border px-3 py-2 text-xs font-medium leading-none whitespace-nowrap",
-        statusToneClass[tone]
-      )}
-    >
-      {label}: {value}
-    </span>
-  );
-}
-
-function HubStatusList({ children }: { children: ReactNode }) {
-  return <div className="mt-0 flex flex-wrap gap-x-2 gap-y-2">{children}</div>;
-}
-
-export type HubSection = "contract" | "logistics" | "payment" | "content" | "script";
+export type HubSection =
+  | "contract"
+  | "logistics"
+  | "payment"
+  | "content"
+  | "script"
+  | "posting";
 
 /** Fixed hub tile height — fits progress ring + two rows of status chips + Go. */
 const HUB_CELL_HEIGHT_CLASS = "h-[300px]";
@@ -163,83 +123,6 @@ function HubCell({
   );
 }
 
-function HubProgressRing({
-  percent,
-  size = "md",
-}: {
-  percent: number;
-  size?: "md" | "lg";
-}) {
-  const large = size === "lg";
-  const r = large ? 26 : 22;
-  const box = large ? "h-16 w-16" : "h-14 w-14";
-  const view = large ? 64 : 56;
-  const center = large ? 32 : 28;
-  const circumference = 2 * Math.PI * r;
-  const offset = circumference * (1 - percent / 100);
-
-  return (
-    <div className={cn("relative shrink-0", box)}>
-      <svg className={cn(box, "-rotate-90")} viewBox={`0 0 ${view} ${view}`} aria-hidden>
-        <circle
-          cx={center}
-          cy={center}
-          r={r}
-          fill="none"
-          stroke="var(--brand-100)"
-          strokeWidth={large ? 5 : 4}
-        />
-        <circle
-          cx={center}
-          cy={center}
-          r={r}
-          fill="none"
-          stroke="var(--brand)"
-          strokeWidth={large ? 5 : 4}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-        />
-      </svg>
-      <span
-        className={cn(
-          "absolute inset-0 flex items-center justify-center font-bold text-gray-900",
-          large ? "text-sm" : "text-xs"
-        )}
-      >
-        {percent}%
-      </span>
-    </div>
-  );
-}
-
-function HubProgressOverview({
-  statusLabel,
-  current,
-  total,
-  percent,
-}: {
-  statusLabel: string;
-  current: number;
-  total: number;
-  percent: number;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-brand">
-          {statusLabel}
-        </p>
-        <p className="mt-2 text-[22px] font-bold leading-none tabular-nums">
-          <span className="text-brand">{current}</span>{" "}
-          <span className="text-sm font-semibold text-gray-400">/ {total}</span>
-        </p>
-      </div>
-      <HubProgressRing percent={percent} />
-    </div>
-  );
-}
-
 function ContractHubOverview() {
   return (
     <>
@@ -249,7 +132,7 @@ function ContractHubOverview() {
         total={8}
         percent={25}
       />
-      <HubStatusList>
+      <HubStatusList className="mt-0">
         <HubStatus label="Awaiting Info" value={2} tone="amber" />
         <HubStatus label="Pending Draft" value={1} tone="sky" />
         <HubStatus label="Awaiting Sending" value={2} tone="sky" />
@@ -288,7 +171,7 @@ export default function CampaignHub({
   const openLogistics = () => setActiveSection("logistics");
   const openPayment = () => setActiveSection("payment");
   const openContent = () => setActiveSection("content");
-  const openScript = () => setActiveSection("script");
+  const openPosting = () => setActiveSection("posting");
 
   if (activeSection === "contract") {
     return (
@@ -347,6 +230,15 @@ export default function CampaignHub({
     );
   }
 
+  if (activeSection === "posting") {
+    return (
+      <CampaignHubPostingView
+        campaignId={campaignId}
+        onBack={() => setActiveSection(null)}
+      />
+    );
+  }
+
   return (
     <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-auto">
       <span className="sr-only">{campaignId}</span>
@@ -375,7 +267,7 @@ export default function CampaignHub({
               total={8}
               percent={0}
             />
-            <HubStatusList>
+            <HubStatusList className="mt-0">
               <HubStatus label="Awaiting Pickup" value={3} tone="amber" />
               <HubStatus label="In Transit" value={1} tone="sky" />
               <HubStatus label="Out of Delivery" value={1} tone="purple" />
@@ -399,7 +291,7 @@ export default function CampaignHub({
               total={5}
               percent={20}
             />
-            <HubStatusList>
+            <HubStatusList className="mt-0">
               <HubStatus label="Waiting for Validation" value={1} tone="amber" />
               <HubStatus label="Validated" value={1} tone="green" />
               <HubStatus label="Partially Paid" value={1} tone="sky" />
@@ -422,7 +314,8 @@ export default function CampaignHub({
           title="Posting"
           icon={Send}
           iconClassName="bg-emerald-50 text-emerald-600"
-          onGo={() => onNavigate?.("Pipeline")}
+          onEnter={openPosting}
+          onGo={openPosting}
         >
           <>
             <HubProgressOverview
@@ -431,30 +324,9 @@ export default function CampaignHub({
               total={8}
               percent={13}
             />
-            <HubStatusList>
+            <HubStatusList className="mt-0">
               <HubStatus label="Ready" value={7} tone="sky" />
               <HubStatus label="In Progress" value={7} tone="amber" />
-            </HubStatusList>
-          </>
-        </HubCell>
-
-        <HubCell
-          title="Script"
-          icon={ScrollText}
-          iconClassName="bg-sky-50 text-sky-600"
-          onEnter={openScript}
-          onGo={openScript}
-        >
-          <>
-            <HubProgressOverview
-              statusLabel="Approved"
-              current={2}
-              total={8}
-              percent={25}
-            />
-            <HubStatusList>
-              <HubStatus label="Pending" value={5} tone="gray" />
-              <HubStatus label="Waiting for Approval" value={1} tone="sky" />
             </HubStatusList>
           </>
         </HubCell>

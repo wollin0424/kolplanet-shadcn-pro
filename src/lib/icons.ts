@@ -46,6 +46,7 @@ import {
   MessageSquare as LucideMessageSquare,
   MoreHorizontal as LucideMoreHorizontal,
   MoreVertical as LucideMoreVertical,
+  Paperclip as LucidePaperclip,
   Pencil as LucidePencil,
   Plus as LucidePlus,
   Play as LucidePlay,
@@ -119,6 +120,7 @@ export const Mail = createIcon(LucideMail, "Mail");
 export const MessageSquare = createIcon(LucideMessageSquare, "MessageSquare");
 export const MoreHorizontal = createIcon(LucideMoreHorizontal, "MoreHorizontal");
 export const MoreVertical = createIcon(LucideMoreVertical, "MoreVertical");
+export const Paperclip = createIcon(LucidePaperclip, "Paperclip");
 export const Pencil = createIcon(LucidePencil, "Pencil");
 export const Plus = createIcon(LucidePlus, "Plus");
 export const Play = createIcon(LucidePlay, "Play");
