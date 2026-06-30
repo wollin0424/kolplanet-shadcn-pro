@@ -57,6 +57,7 @@ import {
   Search as LucideSearch,
   Send as LucideSend,
   Share2 as LucideShare2,
+  Star as LucideStar,
   Settings as LucideSettings,
   ShieldCheck as LucideShieldCheck,
   SlidersHorizontal as LucideSlidersHorizontal,
@@ -67,6 +68,7 @@ import {
   TrendingUp as LucideTrendingUp,
   Truck as LucideTruck,
   Upload as LucideUpload,
+  Image as LucideImage,
   UserPlus as LucideUserPlus,
   UserRound as LucideUserRound,
   Users as LucideUsers,
@@ -131,6 +133,7 @@ export const ScrollText = createIcon(LucideScrollText, "ScrollText");
 export const Search = createIcon(LucideSearch, "Search");
 export const Send = createIcon(LucideSend, "Send");
 export const Share2 = createIcon(LucideShare2, "Share2");
+export const Star = createIcon(LucideStar, "Star");
 export const Settings = createIcon(LucideSettings, "Settings");
 export const ShieldCheck = createIcon(LucideShieldCheck, "ShieldCheck");
 export const SlidersHorizontal = createIcon(LucideSlidersHorizontal, "SlidersHorizontal");
@@ -141,6 +144,7 @@ export const Trash2 = createIcon(LucideTrash2, "Trash2");
 export const TrendingUp = createIcon(LucideTrendingUp, "TrendingUp");
 export const Truck = createIcon(LucideTruck, "Truck");
 export const Upload = createIcon(LucideUpload, "Upload");
+export const Image = createIcon(LucideImage, "Image");
 export const UserPlus = createIcon(LucideUserPlus, "UserPlus");
 export const UserRound = createIcon(LucideUserRound, "UserRound");
 export const Users = createIcon(LucideUsers, "Users");

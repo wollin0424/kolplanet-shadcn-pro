@@ -40,6 +40,7 @@ export type ScriptBriefH5Data = {
   }>;
   deadline: ScriptBriefDeadline;
   submissionLimit: number;
+  contractPaymentComplete: boolean;
 };
 
 const DEFAULT_SCRIPT = {
@@ -60,10 +61,10 @@ Execution notes: Keep the language natural for ID audience, preserve Amelia Ston
 
 export function getScriptBriefH5Defaults(kolId: string): ScriptBriefH5Data {
   return {
-    campaignTitle: "Budweiser 2024 Sales Promotion Campaign",
+    campaignTitle: "Budweiser 2024 Sales Drive",
     campaignSubtitle: "Campaign Brief",
     intro:
-      "Review the brief and references before starting your script.",
+      "Open each H5 step to review, submit, and continue the workflow.",
     influencer: {
       name: "Amelia Stone",
       handle: "@instagram ins",
@@ -99,6 +100,7 @@ export function getScriptBriefH5Defaults(kolId: string): ScriptBriefH5Data {
       timezone: "UTC+08:00",
     },
     submissionLimit: 5,
+    contractPaymentComplete: false,
   };
 }
 

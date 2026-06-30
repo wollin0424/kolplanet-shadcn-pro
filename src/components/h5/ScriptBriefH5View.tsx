@@ -2,18 +2,23 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { H5InfluencerCard } from "@/components/h5/H5InfluencerCard";
+import { H5PageShell } from "@/components/h5/H5PageShell";
+import { H5PostingReportingView } from "@/components/h5/H5PostingReportingView";
+import { H5SectionHeading } from "@/components/h5/H5SectionHeading";
 import { ContentGuidelinesDisplayBlock, ContentGuidelinesTranslationNote, CONTENT_GUIDELINES_CARD_CLASS } from "@/components/ContentGuidelinesDisplayBlock";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Check,
+  BookOpen,
   Calendar,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
   Copy,
-  ExternalLink,
+  CreditCard,
   Eye,
   FileText,
   Lightbulb,
@@ -185,35 +190,17 @@ function ReferenceScriptCard({
 
 function H5CampaignBriefSection({
   data,
-  intro,
 }: {
   data: ReturnType<typeof getScriptBriefH5Defaults>;
-  intro?: string;
 }) {
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-      <h1 className="text-[22px] leading-tight font-bold text-gray-900">{data.campaignTitle}</h1>
-      <p className="mt-2 text-[13px] leading-relaxed text-gray-500">{intro ?? data.intro}</p>
-
-      <div className="mt-4 flex items-center gap-3 rounded-2xl bg-gray-50 px-3 py-2.5">
-        <InfluencerAvatar
-          src={data.influencer.avatar}
-          alt={data.influencer.name}
-          platform="Instagram"
-          size="md"
-          fallback={data.influencer.name.slice(0, 2)}
-          fallbackClassName="bg-violet-100 text-violet-700"
-        />
-        <div className="min-w-0">
-          <p className="truncate text-[13px] font-semibold text-gray-900">{data.influencer.handle}</p>
-          <p className="truncate text-[11px] text-gray-500">{data.influencer.platform}</p>
-        </div>
-      </div>
-    </section>
+    <H5InfluencerCard
+      name={data.influencer.name}
+      handle={data.influencer.handle}
+      avatar={data.influencer.avatar}
+    />
   );
 }
-
-const H5_SECTION_HELPER_CLASS = "text-[12px] leading-relaxed text-gray-500";
 
 function H5ReferenceWebsiteLink({ href }: { href: string }) {
   return (
@@ -232,46 +219,49 @@ function H5ReferenceWebsiteLink({ href }: { href: string }) {
   );
 }
 
-function SectionHeading({
+function H5OverviewLinkRow({
+  href,
   icon: Icon,
+  iconTone = "brand",
   title,
-  trailing,
   description,
-  className,
-  descriptionClassName,
+  actionLabel,
 }: {
+  href: string;
   icon: typeof FileText;
+  iconTone?: "brand" | "amber" | "emerald";
   title: string;
-  trailing?: ReactNode;
-  description?: ReactNode;
-  className?: string;
-  descriptionClassName?: string;
+  description: string;
+  actionLabel: string;
 }) {
+  const iconToneClass = {
+    brand: "bg-brand-50 text-brand",
+    amber: "bg-amber-50 text-amber-700",
+    emerald: "bg-emerald-50 text-emerald-700",
+  }[iconTone];
+
   return (
-    <div className={cn(description ? "mb-4" : "mb-3", className)}>
-      <div className="flex items-start gap-2">
-        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
-          <Icon size={15} strokeWidth={2} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <h2 className="text-[15px] font-semibold text-gray-900">{title}</h2>
-            {trailing}
-          </div>
-          {description ? (
-            <div
-              className={cn(
-                "mt-2 space-y-2",
-                H5_SECTION_HELPER_CLASS,
-                descriptionClassName
-              )}
-            >
-              {description}
-            </div>
-          ) : null}
-        </div>
+    <a
+      href={href}
+      className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-colors hover:border-brand/20 hover:bg-brand-50/25 active:bg-brand-50/35"
+    >
+      <span
+        className={cn(
+          "inline-flex size-9 shrink-0 items-center justify-center rounded-full",
+          iconToneClass
+        )}
+      >
+        <Icon size={16} strokeWidth={2} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[14px] font-semibold leading-snug text-gray-900">{title}</p>
+        <p className="mt-0.5 text-[12px] leading-relaxed text-gray-500">{description}</p>
       </div>
-    </div>
+      <span className="inline-flex shrink-0 items-center gap-0.5 text-[13px] font-medium text-brand">
+        {actionLabel}
+        <ChevronRight size={14} strokeWidth={2} />
+      </span>
+    </a>
   );
 }
 
@@ -280,71 +270,9 @@ export default function ScriptBriefH5View({
   view = "overview",
 }: {
   kolId: string;
-  view?: "overview" | "script" | "guidelines" | "video" | "caption" | "posting";
+  view?: "overview" | "script" | "guidelines" | "contract" | "video" | "caption" | "posting";
 }) {
   return <ScriptBriefH5ViewInner kolId={kolId} view={view} />;
-}
-
-function H5PageShell({
-  backHref,
-  pageTitle,
-  children,
-}: {
-  backHref?: string;
-  pageTitle?: string;
-  children: ReactNode;
-}) {
-  const brand = (
-    <img
-      src="/kolplanet-logo.png"
-      alt="KOLPlanet"
-      className="h-6 w-auto shrink-0"
-    />
-  );
-
-  return (
-    <div className="flex min-h-full flex-col bg-[#f4f6f9]">
-      <header className="sticky top-0 z-10 shrink-0 border-b border-gray-100 bg-white px-4 py-3">
-        {backHref && pageTitle ? (
-          <div className="flex min-w-0 items-center gap-2">
-            <Link
-              href={backHref}
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition-colors hover:border-gray-300 hover:text-gray-900"
-              aria-label="Back to Hub"
-            >
-              <ChevronLeft size={16} strokeWidth={2} />
-            </Link>
-            <h1 className="min-w-0 truncate text-left text-[17px] font-bold leading-snug text-gray-950">
-              {pageTitle}
-            </h1>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2">
-              {backHref ? (
-                <Link href={backHref} className="flex min-w-0 items-center gap-2">
-                  {brand}
-                </Link>
-              ) : (
-                <div className="flex min-w-0 items-center gap-2">{brand}</div>
-              )}
-            </div>
-            <button
-              type="button"
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:border-gray-300 hover:text-gray-800"
-              aria-label="Share"
-            >
-              <Share2 size={16} strokeWidth={2} />
-            </button>
-          </div>
-        )}
-      </header>
-
-      <main className="space-y-5 px-4 py-5 pb-8">
-        {children}
-      </main>
-    </div>
-  );
 }
 
 function H5OverviewDeadline({
@@ -534,6 +462,7 @@ function ScriptBriefH5Overview({ kolId }: { kolId: string }) {
   const captionCompleted = captionSubmissions.some((submission) => submission.status === "Approved");
 
   const baseHref = `/h5/kol-info/${encodeURIComponent(kolId)}`;
+  const contractHref = `${baseHref}?view=contract`;
   const guidelinesHref = `${baseHref}?view=guidelines`;
   const scriptHref = `${baseHref}?view=script`;
   const videoHref = `${baseHref}?view=video`;
@@ -544,11 +473,11 @@ function ScriptBriefH5Overview({ kolId }: { kolId: string }) {
     <H5PageShell>
           <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
             <h1 className="text-[23px] font-bold leading-tight text-gray-950">
-              Budweiser 2024 Sales Drive
+              {data.campaignTitle}
             </h1>
 
             <p className="mt-2 text-[14px] leading-relaxed text-gray-500">
-              Open each H5 step to review, submit, and continue the workflow.
+              {data.intro}
             </p>
 
             <div className="mt-4 flex items-center gap-3 rounded-2xl bg-gray-50 px-3 py-2.5">
@@ -570,22 +499,32 @@ function ScriptBriefH5Overview({ kolId }: { kolId: string }) {
           </section>
 
           <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-          <SectionHeading
-            icon={FileText}
-            title="Content Guidelines"
-            trailing={
-              <a
+            <p className="mb-3 text-[12px] font-semibold uppercase tracking-wide text-gray-400">
+              Before you start
+            </p>
+            <div className="space-y-2">
+              <H5OverviewLinkRow
+                href={contractHref}
+                icon={CreditCard}
+                iconTone={data.contractPaymentComplete ? "emerald" : "amber"}
+                title="Contract & Payment Details"
+                description="Fill in agreement and payout information."
+                actionLabel={data.contractPaymentComplete ? "View" : "Fill"}
+              />
+              <H5OverviewLinkRow
                 href={guidelinesHref}
-                className="inline-flex shrink-0 items-center gap-0.5 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
-              >
-                View
-                <ChevronRight size={14} strokeWidth={2} />
-              </a>
-            }
-            description="Tap for full brief and creation requirements."
-          />
+                icon={BookOpen}
+                title="Content Guidelines"
+                description="Review the full brief and creation requirements."
+                actionLabel="View"
+              />
+            </div>
+          </section>
 
-          <div className="mt-5 space-y-4">
+          <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+          <h2 className="mb-4 text-[15px] font-semibold text-gray-900">Submission workflow</h2>
+
+          <div className="space-y-4">
             <H5OverviewCard
               title="Script"
               description="Tap to submit your script and track client feedback."
@@ -624,6 +563,61 @@ function ScriptBriefH5Overview({ kolId }: { kolId: string }) {
             />
           </div>
           </section>
+    </H5PageShell>
+  );
+}
+
+function ScriptBriefH5Contract({ kolId }: { kolId: string }) {
+  const overviewHref = `/h5/kol-info/${encodeURIComponent(kolId)}`;
+
+  return (
+    <H5PageShell backHref={overviewHref} pageTitle="Contract & Payment">
+      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+        <H5SectionHeading
+          icon={CreditCard}
+          title="Contract & Payment Details"
+          description="Complete your agreement and payout information so payment can be processed after delivery."
+          className="mb-0"
+        />
+      </section>
+
+      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+        <h3 className="text-[14px] font-semibold text-gray-900">Collaboration details</h3>
+        <p className="mt-2 text-[12px] leading-relaxed text-gray-500">
+          Commercial terms are provided by the brand team. Review the agreement amount and deliverables
+          before confirming.
+        </p>
+        <div className="mt-4 space-y-3">
+          <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
+            <p className="text-[11px] font-medium text-gray-500">Total amount</p>
+            <p className="mt-1 text-[14px] font-semibold tabular-nums text-gray-900">USD 2,500</p>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
+            <p className="text-[11px] font-medium text-gray-500">Deliverables</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-gray-800">
+              1 × Instagram Reel + 1 × Story mention
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+        <h3 className="text-[14px] font-semibold text-gray-900">Payment details</h3>
+        <p className="mt-2 text-[12px] leading-relaxed text-gray-500">
+          Add the bank or wallet details used for payout. Fields below are placeholders for the H5 form.
+        </p>
+        <div className="mt-4 space-y-3">
+          {["Account holder name", "Bank name", "Account number"].map((label) => (
+            <div key={label} className="space-y-1.5">
+              <label className="text-[12px] font-medium text-gray-700">{label}</label>
+              <div className="h-10 rounded-lg border border-dashed border-gray-200 bg-gray-50/80" />
+            </div>
+          ))}
+        </div>
+        <Button type="button" className="mt-5 h-10 w-full text-[13px] font-semibold">
+          Submit details
+        </Button>
+      </section>
     </H5PageShell>
   );
 }
@@ -883,14 +877,15 @@ function ScriptBriefH5CaptionCover({ kolId }: { kolId: string }) {
   const discussionLocked = submissionLocked;
 
   return (
-    <H5PageShell backHref={overviewHref} pageTitle="Caption & Cover">
-      <H5CampaignBriefSection
-        data={data}
-        intro="Review the video draft and submit the caption and cover before the deadline."
-      />
+    <H5PageShell
+      backHref={overviewHref}
+      pageTitle="Caption & Cover"
+      pageIntro="Review the video draft and submit the caption and cover before the deadline."
+    >
+      <H5CampaignBriefSection data={data} />
 
       <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-        <SectionHeading
+        <H5SectionHeading
           icon={FileText}
           title="Caption & Cover Submission"
           description={
@@ -964,34 +959,8 @@ function ScriptBriefH5CaptionCover({ kolId }: { kolId: string }) {
 }
 
 function ScriptBriefH5Posting({ kolId }: { kolId: string }) {
-  const [data, setData] = useState(() => getScriptBriefH5Defaults(kolId));
   const overviewHref = `/h5/kol-info/${encodeURIComponent(kolId)}`;
-
-  useEffect(() => {
-    const sync = () => setData(getScriptBriefH5Data(kolId));
-    sync();
-    return subscribeScriptBriefH5DataChanges(sync);
-  }, [kolId]);
-
-  return (
-    <H5PageShell backHref={overviewHref} pageTitle="Posting">
-      <H5CampaignBriefSection
-        data={data}
-        intro="Final posting workflow for the selected creator."
-      />
-
-      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-        <div className="inline-flex items-center gap-1.5 text-[13px] font-medium text-brand">
-          <span>Posting</span>
-          <ExternalLink size={14} strokeWidth={2} />
-        </div>
-
-        <div className="mt-3 rounded-xl border border-brand/10 bg-brand-50/40 px-3.5 py-3 text-[13px] leading-relaxed text-gray-600">
-          Posting content is not configured yet. This page is ready for the final posting workflow.
-        </div>
-      </section>
-    </H5PageShell>
-  );
+  return <H5PostingReportingView kolId={kolId} overviewHref={overviewHref} />;
 }
 
 function ScriptBriefH5VideoDraft({ kolId }: { kolId: string }) {
@@ -1025,14 +994,15 @@ function ScriptBriefH5VideoDraft({ kolId }: { kolId: string }) {
   const discussionLocked = submissionLocked;
 
   return (
-    <H5PageShell backHref={overviewHref} pageTitle="Visual Draft">
-      <H5CampaignBriefSection
-        data={data}
-        intro="Review the approved script, shoot your video, and submit the draft before the deadline."
-      />
+    <H5PageShell
+      backHref={overviewHref}
+      pageTitle="Visual Draft"
+      pageIntro="Review the approved script, shoot your video, and submit the draft before the deadline."
+    >
+      <H5CampaignBriefSection data={data} />
 
       <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-        <SectionHeading
+        <H5SectionHeading
           icon={MessageSquare}
           title="Draft Submission & Feedback"
           description={
@@ -1147,6 +1117,10 @@ function ScriptBriefH5ViewInner({
     return <ScriptBriefH5Guidelines kolId={kolId} />;
   }
 
+  if (view === "contract") {
+    return <ScriptBriefH5Contract kolId={kolId} />;
+  }
+
   if (view === "video") {
     return <ScriptBriefH5VideoDraft kolId={kolId} />;
   }
@@ -1162,11 +1136,11 @@ function ScriptBriefH5ViewInner({
   const overviewHref = `/h5/kol-info/${encodeURIComponent(kolId)}`;
 
   return (
-    <H5PageShell backHref={overviewHref} pageTitle="Script">
+    <H5PageShell backHref={overviewHref} pageTitle="Script" pageIntro={data.intro}>
         <H5CampaignBriefSection data={data} />
 
         <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-          <SectionHeading
+          <H5SectionHeading
             icon={Lightbulb}
             title="Reference Scripts"
             className={referenceScriptsExpanded ? undefined : "mb-0"}
@@ -1226,7 +1200,7 @@ function ScriptBriefH5ViewInner({
         </section>
 
         <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-          <SectionHeading icon={MessageSquare} title="Script Submission & Feedback" />
+          <H5SectionHeading icon={MessageSquare} title="Script Submission & Feedback" />
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <p className="text-[12px] font-medium text-gray-500">Your script</p>

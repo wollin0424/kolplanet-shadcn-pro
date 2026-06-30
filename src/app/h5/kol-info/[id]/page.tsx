@@ -14,9 +14,10 @@ export default async function KolInfoH5Page({
 
 function resolveH5View(
   view: string | undefined
-): "overview" | "script" | "guidelines" | "video" | "caption" | "posting" {
+): "overview" | "script" | "guidelines" | "contract" | "video" | "caption" | "posting" {
   if (view === "script") return "script";
   if (view === "guidelines") return "guidelines";
+  if (view === "contract") return "contract";
   if (view === "video") return "video";
   if (view === "caption") return "caption";
   if (view === "posting") return "posting";
