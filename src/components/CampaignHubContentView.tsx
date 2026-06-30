@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactElement, type ReactNode } from "react";
+import { CampaignHubH5LinkCell } from "@/components/CampaignHubH5LinkCell";
 import { CampaignHubDetailHeader } from "@/components/CampaignHubDetailToolbar";
 import { CampaignHubFilterSelect } from "@/components/CampaignHubFilterSelect";
 import { InfluencerMetaIcons } from "@/components/InfluencerMetaIcons";
@@ -50,7 +51,7 @@ import {
   type ContentHubStageStatus,
 } from "@/lib/pipeline/stageStatuses";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Copy, Search, SlidersHorizontal } from "@/lib/icons";
+import { ChevronDown, Search, SlidersHorizontal } from "@/lib/icons";
 
 type StageFilter = "All" | ContentHubStageStatus;
 
@@ -176,39 +177,6 @@ function ContentStageCell({
     <div className={STAGE_CELL_WRAPPER}>
       {statusBlock}
       {showOverdueInline ? <OverdueDeadline deadline={deadline!} /> : null}
-    </div>
-  );
-}
-
-function H5LinkCell({ path }: { path: string }) {
-  const handleCopy = async () => {
-    const copyValue =
-      typeof window !== "undefined" ? `${window.location.origin}${path}` : path;
-    try {
-      await navigator.clipboard.writeText(copyValue);
-    } catch {
-      // Clipboard may be unavailable outside secure context.
-    }
-  };
-
-  return (
-    <div className="flex min-w-[160px] items-center gap-2">
-      <a
-        href={path}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="truncate text-[12px] font-medium text-gray-700 transition-colors hover:text-brand hover:underline hover:underline-offset-[3px] hover:decoration-brand/40"
-      >
-        {path}
-      </a>
-      <button
-        type="button"
-        onClick={handleCopy}
-        className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-brand transition-colors hover:bg-brand-50"
-        aria-label="Copy H5 link"
-      >
-        <Copy size={14} strokeWidth={2} />
-      </button>
     </div>
   );
 }
@@ -573,7 +541,7 @@ function CampaignHubContentTable({
                   </div>
                 </TableCell>
                 <TableCell className="py-4">
-                  <H5LinkCell path={row.h5Path} />
+                  <CampaignHubH5LinkCell path={row.h5Path} />
                 </TableCell>
                 <TableCell className="py-4">
                   <ContentStageCell

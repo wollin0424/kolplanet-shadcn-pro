@@ -155,6 +155,10 @@ export function updateMirroredDraftUrl(kolId: string, entryId: string, url: stri
   }));
 }
 
+export function submitMasterLink(kolId: string, entryId: string) {
+  refreshMasterLink(kolId, entryId);
+}
+
 export function submitMirroredLink(kolId: string, entryId: string) {
   updateState(kolId, (state) => ({
     ...state,

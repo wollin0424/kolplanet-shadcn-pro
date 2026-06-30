@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { Trash2, Upload } from "@/lib/icons";
+import { FORM_FIELD_RADIUS } from "@/lib/formControls";
 import { cn } from "@/lib/utils";
 
 export type H5UploadedImage = {
@@ -83,7 +84,8 @@ export function H5MultiImageUploadField({
           disabled={disabled}
           onClick={() => inputRef.current?.click()}
           className={cn(
-            "flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-200 bg-gray-50/70 px-4 py-8 text-center transition-colors",
+            "flex w-full flex-col items-center justify-center gap-2 border border-dashed border-gray-200 bg-gray-50/70 px-4 py-8 text-center transition-colors",
+            FORM_FIELD_RADIUS,
             !disabled && "hover:border-brand/35 hover:bg-brand-50/40"
           )}
         >
@@ -100,7 +102,7 @@ export function H5MultiImageUploadField({
           {files.map((file) => (
             <div
               key={file.id}
-              className="group/file relative overflow-hidden rounded-xl border border-gray-200 bg-white"
+              className={cn("group/file relative overflow-hidden border border-gray-200 bg-white", FORM_FIELD_RADIUS)}
             >
               <img
                 src={file.previewUrl}

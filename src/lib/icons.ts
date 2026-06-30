@@ -33,6 +33,7 @@ import {
   FileLock as LucideFileLock,
   Flag as LucideFlag,
   FileText as LucideFileText,
+  FileX as LucideFileX,
   FolderKanban as LucideFolderKanban,
   Hammer as LucideHammer,
   History as LucideHistory,
@@ -110,6 +111,7 @@ export const Eye = createIcon(LucideEye, "Eye");
 export const FileLock = createIcon(LucideFileLock, "FileLock");
 export const Flag = createIcon(LucideFlag, "Flag");
 export const FileText = createIcon(LucideFileText, "FileText");
+export const FileX = createIcon(LucideFileX, "FileX");
 export const FolderKanban = createIcon(LucideFolderKanban, "FolderKanban");
 export const Hammer = createIcon(LucideHammer, "Hammer");
 export const History = createIcon(LucideHistory, "History");

@@ -5,6 +5,11 @@ import { H5PageShell } from "@/components/h5/H5PageShell";
 import { H5MultiImageUploadField } from "@/components/h5/H5MultiImageUploadField";
 import { H5SectionHeading } from "@/components/h5/H5SectionHeading";
 import { H5InfluencerCard } from "@/components/h5/H5InfluencerCard";
+import {
+  H5_DASHED_ADD_BUTTON_CLASS,
+  H5_INPUT_CLASS,
+  H5_PRIMARY_BUTTON_CLASS,
+} from "@/components/h5/h5ControlStyles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,12 +21,14 @@ import {
   addInsightDraftFiles,
   addMasterPost,
   addMirroredPost,
+  getDefaultH5PostingState,
   getH5PostingState,
   hasVerifiedMasterPost,
   refreshMasterLink,
   refreshMirroredLink,
   removeInsightDraftFile,
   submitInsightReport,
+  submitMasterLink,
   submitMirroredLink,
   subscribeH5PostingChanges,
   updateMasterUrl,
@@ -42,16 +49,24 @@ import {
   Upload,
 } from "@/lib/icons";
 
-const H5_LINK_INPUT_CLASS =
-  "h-10 flex-1 rounded-xl border-gray-200 bg-white px-3 text-[13px] shadow-none focus-visible:ring-2 focus-visible:ring-brand/20";
+const H5_LINK_INPUT_CLASS = H5_INPUT_CLASS;
 
-function H5PostLinkStatusBadge({ health }: { health: H5PostLinkHealth }) {
+function H5PostLinkStatusBadge({
+  health,
+  submitted = false,
+}: {
+  health: H5PostLinkHealth;
+  submitted?: boolean;
+}) {
   if (health !== "private" && health !== "issue") return null;
 
   const copy =
     health === "private"
       ? { label: "Private account", className: "border-amber-200 bg-amber-50 text-amber-700" }
-      : { label: "Link issue", className: "border-red-200 bg-red-50 text-red-700" };
+      : {
+          label: submitted ? "Data fetch failed" : "Link issue",
+          className: "border-red-200 bg-red-50 text-red-700",
+        };
 
   return (
     <span
@@ -66,7 +81,13 @@ function H5PostLinkStatusBadge({ health }: { health: H5PostLinkHealth }) {
   );
 }
 
-function H5PostLinkHealthNote({ health }: { health: H5PostLinkHealth }) {
+function H5PostLinkHealthNote({
+  health,
+  submitted = false,
+}: {
+  health: H5PostLinkHealth;
+  submitted?: boolean;
+}) {
   if (health === "private") {
     return (
       <p className="text-[11px] leading-relaxed text-amber-700">
@@ -77,7 +98,9 @@ function H5PostLinkHealthNote({ health }: { health: H5PostLinkHealth }) {
   if (health === "issue") {
     return (
       <p className="text-[11px] leading-relaxed text-red-700">
-        We could not access this link. Check that it is public and try again.
+        {submitted
+          ? "Update your post and verify again."
+          : "We could not access this link. Check that it is public and try again."}
       </p>
     );
   }
@@ -99,9 +122,33 @@ function H5PostLinkRefreshButton({
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      className="inline-grid size-10 shrink-0 place-items-center rounded-full border border-amber-200 bg-amber-50 p-0 text-amber-600 transition-colors hover:bg-amber-100/80 disabled:cursor-not-allowed disabled:opacity-40"
+      className="inline-grid size-10 shrink-0 place-items-center rounded-full border border-brand/25 bg-brand-50 p-0 text-brand transition-colors hover:border-brand/40 hover:bg-brand-100/80 disabled:cursor-not-allowed disabled:opacity-40"
     >
       <RefreshCcw size={14} strokeWidth={2.2} />
+    </button>
+  );
+}
+
+function H5PostLinkSubmitButton({
+  disabled,
+  onClick,
+}: {
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        H5_PRIMARY_BUTTON_CLASS,
+        disabled
+          ? "cursor-not-allowed border border-gray-200 bg-gray-50 text-gray-400"
+          : "bg-brand text-white hover:bg-brand/90"
+      )}
+    >
+      Submit Link
     </button>
   );
 }
@@ -111,19 +158,22 @@ function H5MasterPostRow({
   label,
   onUrlChange,
   onRefresh,
+  onSubmit,
 }: {
   entry: H5PostLinkEntry;
   label: string;
   onUrlChange: (url: string) => void;
   onRefresh: () => void;
+  onSubmit: () => void;
 }) {
   const readOnly = entry.submitted && entry.health === "verified";
+  const showRefresh = entry.submitted;
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <p className="text-[12px] font-medium text-gray-500">{label}</p>
-        <H5PostLinkStatusBadge health={entry.health} />
+        <H5PostLinkStatusBadge health={entry.health} submitted={entry.submitted} />
       </div>
       <div className="flex items-center gap-2">
         <Input
@@ -134,13 +184,24 @@ function H5MasterPostRow({
           placeholder="Paste your live post link here..."
           className={cn(H5_LINK_INPUT_CLASS, readOnly && "bg-gray-50 text-gray-700")}
         />
-        <H5PostLinkRefreshButton
-          onClick={onRefresh}
-          disabled={!entry.url.trim()}
-          ariaLabel={`Refresh ${label}`}
-        />
+        {showRefresh ? (
+          <H5PostLinkRefreshButton
+            onClick={onRefresh}
+            disabled={!entry.url.trim()}
+            ariaLabel={`Refresh ${label}`}
+          />
+        ) : null}
       </div>
-      <H5PostLinkHealthNote health={entry.health} />
+      {!entry.submitted ? (
+        <>
+          <H5PostLinkSubmitButton disabled={!entry.url.trim()} onClick={onSubmit} />
+          <p className="text-[11px] leading-relaxed text-gray-400">
+            Make sure the link is public and accessible.
+          </p>
+        </>
+      ) : (
+        <H5PostLinkHealthNote health={entry.health} submitted={entry.submitted} />
+      )}
     </div>
   );
 }
@@ -150,19 +211,22 @@ function H5MirroredPostRow({
   label,
   onUrlChange,
   onRefresh,
+  onSubmit,
 }: {
   entry: H5PostLinkEntry;
   label: string;
   onUrlChange: (url: string) => void;
   onRefresh: () => void;
+  onSubmit: () => void;
 }) {
   const readOnly = entry.submitted && entry.health === "verified";
+  const showRefresh = entry.submitted;
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <p className="text-[12px] font-medium text-gray-500">{label}</p>
-        <H5PostLinkStatusBadge health={entry.health} />
+        <H5PostLinkStatusBadge health={entry.health} submitted={entry.submitted} />
       </div>
       <div className="flex items-center gap-2">
         <Input
@@ -173,13 +237,24 @@ function H5MirroredPostRow({
           placeholder="Paste repost link here..."
           className={cn(H5_LINK_INPUT_CLASS, readOnly && "bg-gray-50 text-gray-700")}
         />
-        <H5PostLinkRefreshButton
-          onClick={onRefresh}
-          disabled={!entry.url.trim()}
-          ariaLabel={`Refresh ${label}`}
-        />
+        {showRefresh ? (
+          <H5PostLinkRefreshButton
+            onClick={onRefresh}
+            disabled={!entry.url.trim()}
+            ariaLabel={`Refresh ${label}`}
+          />
+        ) : null}
       </div>
-      <H5PostLinkHealthNote health={entry.health} />
+      {!entry.submitted ? (
+        <>
+          <H5PostLinkSubmitButton disabled={!entry.url.trim()} onClick={onSubmit} />
+          <p className="text-[11px] leading-relaxed text-gray-400">
+            Make sure the link is public and accessible.
+          </p>
+        </>
+      ) : (
+        <H5PostLinkHealthNote health={entry.health} submitted={entry.submitted} />
+      )}
     </div>
   );
 }
@@ -244,7 +319,7 @@ function H5InsightUploadSection({
       <Button
         type="button"
         variant="brand"
-        className="mt-3 h-11 w-full text-[14px] font-semibold"
+        className={cn(H5_PRIMARY_BUTTON_CLASS, "mt-3")}
         disabled={locked || files.length === 0}
         onClick={onSubmit}
       >
@@ -269,7 +344,7 @@ type H5PostingReportingViewProps = {
 
 export function H5PostingReportingView({ kolId, overviewHref }: H5PostingReportingViewProps) {
   const [brief, setBrief] = useState(() => getScriptBriefH5Defaults(kolId));
-  const [posting, setPosting] = useState<H5PostingState>(() => getH5PostingState(kolId));
+  const [posting, setPosting] = useState<H5PostingState>(() => getDefaultH5PostingState(kolId));
 
   useEffect(() => {
     const syncBrief = () => setBrief(getScriptBriefH5Data(kolId));
@@ -284,9 +359,6 @@ export function H5PostingReportingView({ kolId, overviewHref }: H5PostingReporti
   }, [kolId]);
 
   const insightUnlocked = hasVerifiedMasterPost(posting);
-  const activeMirrored =
-    posting.mirrored.find((entry) => !entry.submitted) ?? posting.mirrored[posting.mirrored.length - 1];
-  const canSubmitMirrored = Boolean(activeMirrored?.url.trim()) && !activeMirrored?.submitted;
 
   return (
     <H5PageShell
@@ -318,6 +390,7 @@ export function H5PostingReportingView({ kolId, overviewHref }: H5PostingReporti
               label={getMasterLabel(index, posting.masters.length)}
               onUrlChange={(url) => updateMasterUrl(kolId, entry.id, url)}
               onRefresh={() => refreshMasterLink(kolId, entry.id)}
+              onSubmit={() => submitMasterLink(kolId, entry.id)}
             />
           ))}
         </div>
@@ -325,7 +398,7 @@ export function H5PostingReportingView({ kolId, overviewHref }: H5PostingReporti
         <button
           type="button"
           onClick={() => addMasterPost(kolId)}
-          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-brand/30 bg-white px-3 py-2.5 text-[13px] font-medium text-brand transition-colors hover:border-brand/45 hover:bg-brand-50/30"
+          className={cn(H5_DASHED_ADD_BUTTON_CLASS, "mt-4")}
         >
           <Plus size={14} strokeWidth={2.2} />
           Add another original post
@@ -354,29 +427,15 @@ export function H5PostingReportingView({ kolId, overviewHref }: H5PostingReporti
               label={getMirroredLabel(index, posting.mirrored.length)}
               onUrlChange={(url) => updateMirroredDraftUrl(kolId, entry.id, url)}
               onRefresh={() => refreshMirroredLink(kolId, entry.id)}
+              onSubmit={() => submitMirroredLink(kolId, entry.id)}
             />
           ))}
         </div>
 
-        {activeMirrored && !activeMirrored.submitted ? (
-          <Button
-            type="button"
-            disabled={!canSubmitMirrored}
-            onClick={() => submitMirroredLink(kolId, activeMirrored.id)}
-            className="mt-4 h-10 w-full text-[13px] font-semibold"
-          >
-            Submit Link
-          </Button>
-        ) : null}
-
-        <p className="mt-3 text-center text-[11px] text-gray-400">
-          Make sure the link is public and accessible.
-        </p>
-
         <button
           type="button"
           onClick={() => addMirroredPost(kolId)}
-          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-brand/30 bg-white px-3 py-2.5 text-[13px] font-medium text-brand transition-colors hover:border-brand/45 hover:bg-brand-50/30"
+          className={cn(H5_DASHED_ADD_BUTTON_CLASS, "mt-3")}
         >
           <Plus size={14} strokeWidth={2.2} />
           Add another repost

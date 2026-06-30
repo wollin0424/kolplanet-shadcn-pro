@@ -68,6 +68,7 @@ export type PostingHubRow = {
   name: string;
   handle: string;
   platform: string;
+  h5Path: string;
   postingStatus: PostingHubStatus;
   postLinks?: PostLink[];
   insightReports?: string[];
@@ -82,6 +83,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     name: "Amelia Stone",
     handle: "@instagram.ins",
     platform: "Instagram",
+    h5Path: "/h5/kol-info/s1",
     postingStatus: "Posted",
     postLinks: [
       {
@@ -122,6 +124,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     name: "Ava Collins",
     handle: "@instagram.ins",
     platform: "Instagram",
+    h5Path: "/h5/kol-info/s2",
     postingStatus: "Posted",
     postLinks: [
       {
@@ -157,6 +160,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     name: "Chloe Reed",
     handle: "@instagram.ins",
     platform: "Instagram",
+    h5Path: "/h5/kol-info/s3",
     postingStatus: "Post Approved",
     postLinks: [
       {
@@ -188,6 +192,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     name: "Ella Brooks",
     handle: "@instagram.ins",
     platform: "Instagram",
+    h5Path: "/h5/kol-info/s4",
     postingStatus: "Pending",
     planDate: "Jul 2, 2026",
   },
@@ -196,6 +201,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     name: "Grace Turner",
     handle: "@instagram.ins",
     platform: "Instagram",
+    h5Path: "/h5/kol-info/s5",
     postingStatus: "Pending",
     planDate: "Jul 3, 2026",
   },
@@ -204,6 +210,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     name: "Harper Lane",
     handle: "@instagram.ins",
     platform: "Instagram",
+    h5Path: "/h5/kol-info/s6",
     postingStatus: "Pending",
     planDate: "Jul 4, 2026",
   },
@@ -212,6 +219,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     name: "Ivy Morgan",
     handle: "@instagram.ins",
     platform: "Instagram",
+    h5Path: "/h5/kol-info/s7",
     postingStatus: "Posted",
     postLinks: [
       {
@@ -250,6 +258,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     name: "Jade Wilson",
     handle: "@instagram.ins",
     platform: "Instagram",
+    h5Path: "/h5/kol-info/s8",
     postingStatus: "Pending",
     postLinks: [
       {
@@ -547,6 +556,25 @@ export function applyMockValidationToPostLinks(links?: PostLink[]): PostLink[] {
   });
 }
 
+export function applyMockValidationToMasterLink(
+  links: PostLink[] | undefined,
+  masterIndex: number
+): PostLink[] {
+  if (!links?.length) return [];
+
+  const masters = getMasterPostLinks(links);
+  const target = masters[masterIndex];
+  if (!target?.url.trim()) return links;
+
+  let masterCount = 0;
+  return links.map((link) => {
+    if (link.type !== "Master") return link;
+    const currentIndex = masterCount++;
+    if (currentIndex !== masterIndex || link.validation) return link;
+    return { ...link, validation: MOCK_AUTO_VALIDATION_RESULT };
+  });
+}
+
 export function getMirroredAggregateStatus(links: PostLink[]): PostLinkHealthStatus {
   const statuses = links.map(getPostLinkStatus);
   if (statuses.includes("error")) return "error";
@@ -575,7 +603,7 @@ export function getPostLinkDateLabel(links: PostLink[], link: PostLink): string 
 
 export function getPostLinkDateEntries(
   links?: PostLink[]
-): { label: string; date: string }[] {
+): { label: string; date: string; linkType: PostLinkType }[] {
   if (!links?.length) return [];
 
   const masters = getMasterPostLinks(links);
@@ -587,5 +615,6 @@ export function getPostLinkDateEntries(
     .map((link) => ({
       label: getPostLinkDateLabel(links, link),
       date: link.postedDate!,
+      linkType: link.type,
     }));
 }

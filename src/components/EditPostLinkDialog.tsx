@@ -14,12 +14,19 @@ import {
   getPostLinksByType,
   type PostLink,
 } from "@/lib/postingHubMock";
+import { formInputClass } from "@/lib/formControls";
 import { cn } from "@/lib/utils";
 import { Pencil, Plus, Trash2 } from "@/lib/icons";
 
 const MIRRORED_PLACEHOLDER = "https://www.tiktok.com/@username/video/...";
 
 const MASTER_BADGE_CLASS = "border-brand/25 bg-brand-50 text-brand";
+
+const EDIT_POST_LINK_INPUT_CLASS = formInputClass(
+  "px-3 text-[13px] shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+);
+
+const EDIT_POST_LINK_FIELD_STACK_CLASS = "space-y-3";
 
 type MirroredDraft = {
   id: string;
@@ -191,7 +198,7 @@ function EditPostLinkDialogPanel({
         </div>
 
         <div className="max-h-[min(52vh,420px)] space-y-5 overflow-y-auto px-6 py-5">
-          <div className="space-y-2">
+          <div className={EDIT_POST_LINK_FIELD_STACK_CLASS}>
             <div className="flex items-center gap-2">
               <label htmlFor={`${baseId}-master`} className="text-xs font-medium text-gray-700">
                 Post Link
@@ -212,8 +219,9 @@ function EditPostLinkDialogPanel({
               onBlur={() => setMasterError(validateMasterUrl(masterUrl))}
               aria-invalid={Boolean(masterError)}
               className={cn(
-                "h-10 bg-white px-3 text-[13px] shadow-[0_1px_2px_rgba(0,0,0,0.03)]",
-                masterError && "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
+                EDIT_POST_LINK_INPUT_CLASS,
+                masterError &&
+                  "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
               )}
             />
             {masterError ? (
@@ -232,30 +240,30 @@ function EditPostLinkDialogPanel({
             </button>
 
             {mirrored.map((item, index) => (
-              <div key={item.id} className="flex items-start gap-2">
-                <div className="min-w-0 flex-1 space-y-2">
-                  <label
-                    htmlFor={`${baseId}-mirrored-${item.id}`}
-                    className="text-xs font-medium text-gray-700"
-                  >
-                    Mirrored Link {mirrored.length > 1 ? index + 1 : ""}
-                  </label>
+              <div key={item.id} className={EDIT_POST_LINK_FIELD_STACK_CLASS}>
+                <label
+                  htmlFor={`${baseId}-mirrored-${item.id}`}
+                  className="text-xs font-medium text-gray-700"
+                >
+                  Mirrored Link {mirrored.length > 1 ? index + 1 : ""}
+                </label>
+                <div className="flex items-center gap-2">
                   <Input
                     id={`${baseId}-mirrored-${item.id}`}
                     value={item.url}
                     onChange={(e) => handleMirroredChange(item.id, e.target.value)}
                     placeholder={MIRRORED_PLACEHOLDER}
-                    className="h-10 bg-white px-3 text-[13px] shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+                    className={cn(EDIT_POST_LINK_INPUT_CLASS, "min-w-0 flex-1")}
                   />
+                  <button
+                    type="button"
+                    className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50"
+                    aria-label="Remove mirrored link"
+                    onClick={() => handleRemoveMirrored(item.id)}
+                  >
+                    <Trash2 size={15} strokeWidth={2} />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="mt-7 inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50"
-                  aria-label="Remove mirrored link"
-                  onClick={() => handleRemoveMirrored(item.id)}
-                >
-                  <Trash2 size={15} strokeWidth={2} />
-                </button>
               </div>
             ))}
           </div>

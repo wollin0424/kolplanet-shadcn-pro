@@ -20,7 +20,7 @@ export function H5PageShell({
   );
 
   return (
-    <div className="flex min-h-full flex-col bg-[#f4f6f9]">
+    <div className="flex flex-col bg-[#f4f6f9]">
       <header className="sticky top-0 z-20 shrink-0 border-b border-gray-100 bg-white px-4 py-3">
         {backHref && pageTitle ? (
           <div>

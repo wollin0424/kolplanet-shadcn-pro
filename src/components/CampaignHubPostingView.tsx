@@ -6,6 +6,7 @@ import {
   CampaignHubDetailToolbar,
   CampaignHubToolbarActionButton,
 } from "@/components/CampaignHubDetailToolbar";
+import { CampaignHubH5LinkCell } from "@/components/CampaignHubH5LinkCell";
 import { CampaignHubFilterSelect } from "@/components/CampaignHubFilterSelect";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import PostingHubStatusSelect from "@/components/pipeline/PostingHubStatusSelect";
@@ -34,6 +35,7 @@ import {
   POST_LINK_STATUS_FILTER_OPTIONS,
   CONTENT_VALIDATION_FILTER_OPTIONS,
   applyMockValidationToPostLinks,
+  applyMockValidationToMasterLink,
   buildMockFetchedPostLinks,
   formatPostingPlanDate,
   getContentValidationTooltipDescription,
@@ -58,14 +60,13 @@ import {
   type PostingHubStatus,
 } from "@/lib/postingHubMock";
 import { cn } from "@/lib/utils";
-import { TooltipLabeledRows } from "@/components/ui/tooltip-labeled-rows";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { AlertCircle, Calendar, CheckCircle2, ChevronDown, Circle, Copy, FileText, MoreHorizontal, Paperclip, Pencil, RefreshCcw, Sparkles, Upload, X } from "@/lib/icons";
+import { AlertCircle, Calendar, CheckCircle2, ChevronDown, Copy, FileText, FileX, MoreHorizontal, Paperclip, Pencil, RefreshCcw, Sparkles, Upload, X } from "@/lib/icons";
 
 const STATUS_ICON_CLASS: Record<"success" | "warning" | "error", string> = {
   success: "text-emerald-600",
@@ -103,7 +104,7 @@ const VALIDATION_STATUS_CONFIG: Record<
   "No Draft": {
     tagClassName: "border-gray-200 bg-gray-50 text-gray-600",
     iconClassName: "text-gray-400",
-    Icon: Circle,
+    Icon: FileX,
     title: "No Draft",
   },
 };
@@ -134,6 +135,36 @@ const POST_LINK_TYPE_CLASS: Record<PostLinkType, string> = {
   Mirrored: "border-gray-200 bg-gray-50 text-gray-500",
 };
 
+function PostLinkTypeLabelPill({ label, linkType }: { label: string; linkType: PostLinkType }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex h-[22px] shrink-0 items-center rounded-full border px-1.5 text-[11px] font-semibold leading-none",
+        POST_LINK_TYPE_CLASS[linkType]
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
+function PostingDateTooltipContent({
+  rows,
+}: {
+  rows: { label: string; value: string; linkType: PostLinkType }[];
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      {rows.map((row) => (
+        <div key={row.label} className="flex items-center gap-2 text-[12px] leading-snug">
+          <PostLinkTypeLabelPill label={row.label} linkType={row.linkType} />
+          <span className="font-medium text-gray-700">{row.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function initials(name: string) {
   return name
     .split(" ")
@@ -150,10 +181,12 @@ const PostLinkPill = forwardRef<
     linkType: PostLinkType;
     status: PostLinkHealthStatus;
     showStatusIcon?: boolean;
+    /** Aggregated count badge inside the pill (e.g. Mirrored group). */
+    inlineCount?: number;
     className?: string;
   } & ComponentPropsWithoutRef<"span">
 >(function PostLinkPill(
-  { label, linkType, status, showStatusIcon = true, className, ...props },
+  { label, linkType, status, showStatusIcon = true, inlineCount, className, ...props },
   ref
 ) {
   const config = POST_LINK_STATUS_CONFIG[status];
@@ -173,6 +206,14 @@ const PostLinkPill = forwardRef<
         <Icon size={13} strokeWidth={2.2} className={cn("shrink-0", config.iconClassName)} />
       ) : null}
       {label}
+      {inlineCount != null && inlineCount > 1 ? (
+        <span
+          aria-hidden
+          className="inline-grid size-[15px] shrink-0 place-items-center rounded-full border border-gray-200 bg-white text-[9px] font-semibold leading-none tabular-nums text-gray-500"
+        >
+          {inlineCount}
+        </span>
+      ) : null}
     </span>
   );
 });
@@ -185,6 +226,22 @@ const ROW_ACTION_BUTTON_CLASS =
 function RowHoverAction({ children }: { children: ReactNode }) {
   return (
     <div className="pointer-events-none inline-flex shrink-0 items-center leading-none opacity-0 transition-opacity duration-200 group-hover/posting-row:pointer-events-auto group-hover/posting-row:opacity-100 group-focus-within/posting-row:pointer-events-auto group-focus-within/posting-row:opacity-100">
+      {children}
+    </div>
+  );
+}
+
+function LinkRowHoverAction({ children }: { children: ReactNode }) {
+  return (
+    <div className="pointer-events-none inline-flex shrink-0 items-center leading-none opacity-0 transition-opacity duration-200 group-hover/master-link:pointer-events-auto group-hover/master-link:opacity-100 group-focus-within/master-link:pointer-events-auto group-focus-within/master-link:opacity-100">
+      {children}
+    </div>
+  );
+}
+
+function ValidationRowHoverAction({ children }: { children: ReactNode }) {
+  return (
+    <div className="pointer-events-none inline-flex shrink-0 items-center leading-none opacity-0 transition-opacity duration-200 group-hover/validation-row:pointer-events-auto group-hover/validation-row:opacity-100 group-focus-within/validation-row:pointer-events-auto group-focus-within/validation-row:opacity-100">
       {children}
     </div>
   );
@@ -220,6 +277,23 @@ function PostLinkRowAction({
   );
 }
 
+const VALIDATION_MICRO_PILL_CLASS =
+  "inline-flex h-[22px] items-center gap-1 rounded-full border border-gray-200 bg-white px-1.5 text-[10px] font-semibold leading-none";
+
+const VALIDATION_MICRO_PILL_WIDTH: Record<ContentValidationField, string> = {
+  Caption: "min-w-[69px]",
+  Cover: "min-w-[60px]",
+  Video: "min-w-[59px]",
+};
+
+function ValidationMicroIconSlot({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-flex size-[13px] shrink-0 items-center justify-center overflow-hidden leading-none">
+      {children}
+    </span>
+  );
+}
+
 function ValidationMicro({
   label,
   status,
@@ -237,12 +311,15 @@ function ValidationMicro({
         render={
           <span
             className={cn(
-              "inline-flex h-[22px] min-w-0 cursor-default items-center gap-1 rounded-full border px-1.5 text-[10px] font-semibold leading-none",
-              config.tagClassName
+              VALIDATION_MICRO_PILL_CLASS,
+              VALIDATION_MICRO_PILL_WIDTH[label],
+              "cursor-default text-gray-600"
             )}
           >
-            <Icon size={13} strokeWidth={2.2} className={cn("shrink-0", config.iconClassName)} />
-            <span className="truncate">{label}</span>
+            <ValidationMicroIconSlot>
+              <Icon size={13} strokeWidth={2.2} className={cn("shrink-0", config.iconClassName)} />
+            </ValidationMicroIconSlot>
+            <span className="whitespace-nowrap">{label}</span>
           </span>
         }
       />
@@ -286,7 +363,7 @@ function PostLinkTooltipContent({ link }: { link: PostLink }) {
         </a>
         <button
           type="button"
-          className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+          className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-brand transition-colors hover:bg-brand-50"
           aria-label="Copy post link"
           onPointerDown={(e) => e.stopPropagation()}
           onClick={() => void navigator.clipboard.writeText(link.url)}
@@ -330,7 +407,7 @@ function PostLinkPillWithTooltip({
       />
       <TooltipContent
         variant="light"
-        side="bottom"
+        side="top"
         align="start"
         className="w-[min(300px,calc(100vw-2rem))] max-w-none gap-0 px-3 py-2.5"
       >
@@ -340,7 +417,7 @@ function PostLinkPillWithTooltip({
   );
 }
 
-const POST_LINK_CELL_WIDTH = "w-[248px]";
+const POST_LINK_CELL_WIDTH = "w-[224px] min-w-[224px]";
 
 function PostLinkMasterRow({
   link,
@@ -358,7 +435,7 @@ function PostLinkMasterRow({
   const hasUrl = Boolean(link.url.trim());
 
   return (
-    <div className={cn(POST_LINK_ROW_CLASS, "w-fit max-w-full")}>
+    <div className={cn(POST_LINK_ROW_CLASS, "group/master-link w-fit max-w-full")}>
       {hasUrl ? (
         <PostLinkPillWithTooltip link={link} label={label} linkType="Master" />
       ) : (
@@ -367,25 +444,24 @@ function PostLinkMasterRow({
         </span>
       )}
       {trailingAction === "edit" ? (
-        <RowHoverAction>
+        <LinkRowHoverAction>
           <PostLinkRowAction variant="edit" onClick={onEdit!} ariaLabel="Edit post links" />
-        </RowHoverAction>
+        </LinkRowHoverAction>
       ) : trailingAction === "fetch" ? (
-        <RowHoverAction>
+        <LinkRowHoverAction>
           <PostLinkRowAction variant="fetch" onClick={onFetch!} ariaLabel={`Fetch ${label}`} />
-        </RowHoverAction>
+        </LinkRowHoverAction>
       ) : null}
     </div>
   );
 }
 
 function getPostLinkMasterTrailingAction(
-  index: number,
   link: PostLink,
   hasAnyUrl: boolean
 ): "edit" | "fetch" | null {
-  if (index === 0 && hasAnyUrl) return "edit";
   if (!link.url.trim()) return "fetch";
+  if (hasAnyUrl) return "edit";
   return null;
 }
 
@@ -409,45 +485,57 @@ function PostLinkMirroredTooltipContent({ links }: { links: PostLink[] }) {
   );
 }
 
-function PostLinkMirroredGroup({ links }: { links: PostLink[] }) {
+function PostLinkMirroredPillWithTooltip({ links }: { links: PostLink[] }) {
   const count = links.length;
 
   return (
-    <div className={POST_LINK_ROW_CLASS}>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <span
-              className="inline-flex cursor-default items-center gap-1"
-              aria-label={count === 1 ? "Mirrored link" : `${count} mirrored links`}
-            >
-              <PostLinkPill
-                label="Mirrored"
-                linkType="Mirrored"
-                status="success"
-                showStatusIcon={false}
-                className="w-fit"
-              />
-              {count > 1 ? (
-                <span
-                  aria-hidden
-                  className="inline-grid size-[18px] shrink-0 place-items-center rounded-full border border-gray-200 bg-white p-0 text-[10px] font-medium leading-none tabular-nums text-gray-500"
-                >
-                  {count}
-                </span>
-              ) : null}
-            </span>
-          }
-        />
-        <TooltipContent
-          variant="light"
-          side="bottom"
-          align="start"
-          className="w-[min(300px,calc(100vw-2rem))] max-w-none gap-0 px-3 py-2.5"
-        >
-          <PostLinkMirroredTooltipContent links={links} />
-        </TooltipContent>
-      </Tooltip>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <span
+            className="inline-flex w-fit cursor-default items-center"
+            aria-label={count === 1 ? "Mirrored link" : `${count} mirrored links`}
+          >
+            <PostLinkPill
+              label="Mirrored"
+              linkType="Mirrored"
+              status="success"
+              showStatusIcon={false}
+              inlineCount={count}
+              className="pointer-events-none w-fit"
+            />
+          </span>
+        }
+      />
+      <TooltipContent
+        variant="light"
+        side="top"
+        align="start"
+        className="w-[min(300px,calc(100vw-2rem))] max-w-none gap-0 px-3 py-2.5"
+      >
+        <PostLinkMirroredTooltipContent links={links} />
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function PostLinkMirroredGroup({
+  links,
+  showEdit,
+  onEdit,
+}: {
+  links: PostLink[];
+  showEdit: boolean;
+  onEdit?: () => void;
+}) {
+  return (
+    <div className={cn(POST_LINK_ROW_CLASS, "group/master-link w-fit max-w-full")}>
+      <PostLinkMirroredPillWithTooltip links={links} />
+      {showEdit ? (
+        <LinkRowHoverAction>
+          <PostLinkRowAction variant="edit" onClick={onEdit!} ariaLabel="Edit post links" />
+        </LinkRowHoverAction>
+      ) : null}
     </div>
   );
 }
@@ -490,6 +578,12 @@ function AutoValidateRowAction({
 function PostLinkEmptyState({ onFetch }: { onFetch: () => void }) {
   return (
     <div className={cn(POST_LINK_ROW_CLASS, "w-fit max-w-full")}>
+      <PostLinkRowAction
+        variant="fetch"
+        emphasized
+        onClick={onFetch}
+        ariaLabel="Fetch post links"
+      />
       <button
         type="button"
         onClick={onFetch}
@@ -497,12 +591,6 @@ function PostLinkEmptyState({ onFetch }: { onFetch: () => void }) {
       >
         Not fetched yet
       </button>
-      <PostLinkRowAction
-        variant="fetch"
-        emphasized
-        onClick={onFetch}
-        ariaLabel="Fetch post links"
-      />
     </div>
   );
 }
@@ -535,40 +623,87 @@ function PostLinkCell({
           key={`${link.url || "empty"}-${index}`}
           link={link}
           label={getMasterLabel(index, masters.length)}
-          trailingAction={getPostLinkMasterTrailingAction(index, link, hasAnyUrl)}
+          trailingAction={getPostLinkMasterTrailingAction(link, hasAnyUrl)}
           onEdit={() => onEditPostLink(row)}
           onFetch={() => onFetchMasterLink(row, index)}
         />
       ))}
       {mirrored.length ? (
         <div className="border-t border-gray-100/80 pt-1">
-          <PostLinkMirroredGroup links={mirrored} />
+          <PostLinkMirroredGroup
+            links={mirrored}
+            showEdit={hasAnyUrl}
+            onEdit={() => onEditPostLink(row)}
+          />
         </div>
       ) : null}
     </div>
   );
 }
 
+function ValidationMicroPlaceholder({ label }: { label: ContentValidationField }) {
+  return (
+    <span
+      className={cn(
+        VALIDATION_MICRO_PILL_CLASS,
+        VALIDATION_MICRO_PILL_WIDTH[label],
+        "text-gray-400"
+      )}
+    >
+      <ValidationMicroIconSlot>
+        <span aria-hidden className="text-[9px] font-semibold leading-none tracking-tight text-gray-300">
+          --
+        </span>
+      </ValidationMicroIconSlot>
+      <span className="whitespace-nowrap">{label}</span>
+    </span>
+  );
+}
+
+function ContentValidationUnvalidatedPills() {
+  return (
+    <>
+      <ValidationMicroPlaceholder label="Caption" />
+      <ValidationMicroPlaceholder label="Cover" />
+      <ValidationMicroPlaceholder label="Video" />
+    </>
+  );
+}
+
+function ContentValidationPlaceholderRow({
+  disabled,
+  onAutoValidate,
+}: {
+  disabled: boolean;
+  onAutoValidate: () => void;
+}) {
+  return (
+    <div className={cn(POST_LINK_ROW_CLASS, "group/validation-row w-fit max-w-full")}>
+      <ContentValidationUnvalidatedPills />
+      <ValidationRowHoverAction>
+        <AutoValidateRowAction disabled={disabled} onClick={onAutoValidate} />
+      </ValidationRowHoverAction>
+    </div>
+  );
+}
+
 function ContentValidationMasterRow({
   link,
-  showAutoValidate,
-  autoValidateDisabled,
   onAutoValidate,
 }: {
   link: PostLink;
-  showAutoValidate: boolean;
-  autoValidateDisabled: boolean;
   onAutoValidate: () => void;
 }) {
   const validation = link.validation;
   const hasUrl = Boolean(link.url.trim());
+  const canAutoValidate = hasUrl && !validation;
 
   return (
-    <div className={cn(POST_LINK_ROW_CLASS, "w-fit max-w-full")}>
+    <div className={cn(POST_LINK_ROW_CLASS, "group/validation-row w-fit max-w-full")}>
       {!hasUrl ? (
         <span className="text-[11px] text-gray-300">—</span>
       ) : !validation ? (
-        <span className="text-[11px] italic text-gray-400">Not validated yet</span>
+        <ContentValidationUnvalidatedPills />
       ) : (
         <>
           <ValidationMicro label="Caption" status={validation.caption} />
@@ -576,11 +711,9 @@ function ContentValidationMasterRow({
           <ValidationMicro label="Video" status={validation.video} />
         </>
       )}
-      {showAutoValidate ? (
-        <RowHoverAction>
-          <AutoValidateRowAction disabled={autoValidateDisabled} onClick={onAutoValidate} />
-        </RowHoverAction>
-      ) : null}
+      <ValidationRowHoverAction>
+        <AutoValidateRowAction disabled={!canAutoValidate} onClick={onAutoValidate} />
+      </ValidationRowHoverAction>
     </div>
   );
 }
@@ -598,7 +731,7 @@ function ContentValidationCell({
   onAutoValidate,
 }: {
   row: PostingHubRow;
-  onAutoValidate: (row: PostingHubRow) => void;
+  onAutoValidate: (row: PostingHubRow, masterIndex: number) => void;
 }) {
   const masters = getMasterPostLinks(row.postLinks);
   const mirrored = getVisibleMirroredLinks(row.postLinks);
@@ -608,27 +741,17 @@ function ContentValidationCell({
 
   if (isEmpty) {
     return (
-      <div className={POST_LINK_ROW_CLASS}>
-        <span className="text-[12px] italic text-gray-400">Auto Validate</span>
-        <RowHoverAction>
-          <AutoValidateRowAction disabled onClick={() => onAutoValidate(row)} />
-        </RowHoverAction>
-      </div>
+      <ContentValidationPlaceholderRow disabled onAutoValidate={() => onAutoValidate(row, 0)} />
     );
   }
 
   if (masters.length === 0) {
     return (
       <div className="flex min-w-0 flex-col gap-1 py-0.5">
-        <div className={POST_LINK_ROW_CLASS}>
-          <span className="text-[12px] text-gray-400">Auto Validate</span>
-          <RowHoverAction>
-            <AutoValidateRowAction
-              disabled={!hasFetchedMaster}
-              onClick={() => onAutoValidate(row)}
-            />
-          </RowHoverAction>
-        </div>
+        <ContentValidationPlaceholderRow
+          disabled={!hasFetchedMaster}
+          onAutoValidate={() => onAutoValidate(row, 0)}
+        />
         {mirrored.length ? (
           <div className="border-t border-gray-100/80 pt-1">
             <ContentValidationMirroredRow />
@@ -644,9 +767,7 @@ function ContentValidationCell({
         <ContentValidationMasterRow
           key={`${link.url || "empty"}-${index}`}
           link={link}
-          showAutoValidate={index === 0}
-          autoValidateDisabled={!hasFetchedMaster}
-          onAutoValidate={() => onAutoValidate(row)}
+          onAutoValidate={() => onAutoValidate(row, index)}
         />
       ))}
       {mirrored.length ? (
@@ -684,7 +805,7 @@ function InsightReportCell({ files }: { files?: string[] }) {
           </span>
         }
       />
-      <TooltipContent variant="light" side="bottom" align="start" className="min-w-[220px] px-3 py-2.5">
+      <TooltipContent variant="light" side="top" align="start" className="min-w-[220px] px-3 py-2.5">
         <ul className="flex flex-col gap-2">
           {reportFiles.map((fileName) => (
             <li key={fileName} className="flex min-w-0 items-center gap-2">
@@ -698,7 +819,13 @@ function InsightReportCell({ files }: { files?: string[] }) {
   );
 }
 
-function PostingDateCountBadge({ count, rows }: { count: number; rows: { label: string; value: string }[] }) {
+function PostingDateCountBadge({
+  count,
+  rows,
+}: {
+  count: number;
+  rows: { label: string; value: string; linkType: PostLinkType }[];
+}) {
   return (
     <Tooltip>
       <TooltipTrigger
@@ -713,11 +840,11 @@ function PostingDateCountBadge({ count, rows }: { count: number; rows: { label: 
       />
       <TooltipContent
         variant="light"
-        side="bottom"
+        side="top"
         align="start"
         className="flex flex-col gap-0 px-3.5 py-2.5"
       >
-        <TooltipLabeledRows rows={rows} />
+        <PostingDateTooltipContent rows={rows} />
       </TooltipContent>
     </Tooltip>
   );
@@ -728,6 +855,7 @@ function PostingDateCell({ row }: { row: PostingHubRow }) {
   const breakdownRows = dateEntries.map((entry) => ({
     label: entry.label,
     value: entry.date,
+    linkType: entry.linkType,
   }));
 
   return (
@@ -773,7 +901,7 @@ function PostingHubTable({
   onUploadInsightReport: (row: PostingHubRow) => void;
   onFetchPostLinks: (row: PostingHubRow) => void;
   onFetchMasterLink: (row: PostingHubRow, masterIndex: number) => void;
-  onAutoValidate: (row: PostingHubRow) => void;
+  onAutoValidate: (row: PostingHubRow, masterIndex: number) => void;
 }) {
   const allSelected = rows.length > 0 && rows.every((row) => selectedIds.has(row.id));
 
@@ -791,6 +919,9 @@ function PostingHubTable({
             </TableHead>
             <TableHead className="min-w-[180px] text-[11px] font-semibold text-gray-500">
               Influencer
+            </TableHead>
+            <TableHead className="min-w-[160px] py-3 text-[11px] font-semibold text-gray-500">
+              H5 Link
             </TableHead>
             <TableHead className="min-w-[120px] text-[11px] font-semibold text-gray-500">
               Posting Status
@@ -835,6 +966,9 @@ function PostingHubTable({
                     <p className="mt-0.5 truncate text-[11px] text-gray-500">{row.handle}</p>
                   </div>
                 </div>
+              </TableCell>
+              <TableCell className="py-4">
+                <CampaignHubH5LinkCell path={row.h5Path} />
               </TableCell>
               <TableCell>
                 <PostingHubStatusSelect
@@ -1037,11 +1171,14 @@ export default function CampaignHubPostingView({
     );
   };
 
-  const handleAutoValidate = (row: PostingHubRow) => {
-    if (!getMasterPostLinks(row.postLinks).some((link) => link.url.trim())) return;
+  const handleAutoValidate = (row: PostingHubRow, masterIndex: number) => {
+    const masters = getMasterPostLinks(row.postLinks);
+    if (!masters[masterIndex]?.url.trim()) return;
     setRows((prev) =>
       prev.map((item) =>
-        item.id === row.id ? { ...item, postLinks: applyMockValidationToPostLinks(item.postLinks) } : item
+        item.id === row.id
+          ? { ...item, postLinks: applyMockValidationToMasterLink(item.postLinks, masterIndex) }
+          : item
       )
     );
   };
