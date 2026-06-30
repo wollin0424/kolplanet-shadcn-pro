@@ -21,7 +21,7 @@ export function H5PageShell({
 
   return (
     <div className="flex min-h-full flex-col bg-[#f4f6f9]">
-      <header className="sticky top-0 z-10 shrink-0 border-b border-gray-100 bg-white px-4 py-3">
+      <header className="sticky top-0 z-20 shrink-0 border-b border-gray-100 bg-white px-4 py-3">
         {backHref && pageTitle ? (
           <div>
             <div className="flex items-center gap-2">
@@ -37,7 +37,10 @@ export function H5PageShell({
               </h1>
             </div>
             {pageIntro ? (
-              <p className="mt-2 pl-11 text-[13px] leading-relaxed text-gray-600">{pageIntro}</p>
+              <div className="mt-1 grid grid-cols-[2.25rem_minmax(0,1fr)] gap-x-2">
+                <div aria-hidden className="col-start-1" />
+                <p className="col-start-2 text-[13px] leading-snug text-gray-600">{pageIntro}</p>
+              </div>
             ) : null}
           </div>
         ) : (

@@ -3,13 +3,41 @@ import type { StageBadgeConfig } from "@/lib/pipeline/stageStatuses";
 /** Posting hub detail page statuses (dropdown options). */
 export type PostingHubStatus = "Pending" | "Posted" | "Post Approved";
 
-export type ContentValidationStatus = "Verified" | "Mismatched" | "Cannot Verify";
+export type ContentValidationStatus =
+  | "Verified"
+  | "Mismatched"
+  | "Cannot Verify"
+  | "No Draft";
 
 export type ContentValidation = {
   caption: ContentValidationStatus;
   cover: ContentValidationStatus;
   video: ContentValidationStatus;
 };
+
+export type ContentValidationField = "Caption" | "Cover" | "Video";
+
+const CONTENT_VALIDATION_MISMATCH_DESCRIPTIONS: Record<ContentValidationField, string> = {
+  Caption: "Caption text does not match the approved version.",
+  Cover: "Cover image does not match the approved version.",
+  Video: "Video does not match the approved version.",
+};
+
+export function getContentValidationTooltipDescription(
+  field: ContentValidationField,
+  status: ContentValidationStatus
+): string {
+  switch (status) {
+    case "Verified":
+      return "Content matches draft (AI-checked).";
+    case "Mismatched":
+      return CONTENT_VALIDATION_MISMATCH_DESCRIPTIONS[field];
+    case "Cannot Verify":
+      return "Unable to retrieve media or content from the provided post link.";
+    case "No Draft":
+      return "No approved baseline draft exists yet, so validation cannot be completed.";
+  }
+}
 
 export type PostLinkType = "Master" | "Mirrored";
 
@@ -101,8 +129,8 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
         url: "https://www.instagram.com/p/DKx9AvaCollins-1/",
         validation: {
           caption: "Verified",
-          cover: "Verified",
-          video: "Verified",
+          cover: "Mismatched",
+          video: "No Draft",
         },
       },
       {
@@ -111,8 +139,8 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
         issues: ["Missing hashtag"],
         validation: {
           caption: "Cannot Verify",
-          cover: "Cannot Verify",
-          video: "Cannot Verify",
+          cover: "Mismatched",
+          video: "Verified",
         },
       },
       {
@@ -137,8 +165,8 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
         issues: ["Data fetch failed"],
         validation: {
           caption: "Mismatched",
-          cover: "Mismatched",
-          video: "Mismatched",
+          cover: "Verified",
+          video: "No Draft",
         },
       },
       {
@@ -201,16 +229,16 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
         validation: {
           caption: "Mismatched",
           cover: "Mismatched",
-          video: "Mismatched",
+          video: "Cannot Verify",
         },
       },
       {
         type: "Master",
         url: "https://www.instagram.com/p/DKx9IvyMorgan-3/",
         validation: {
-          caption: "Cannot Verify",
-          cover: "Cannot Verify",
-          video: "Cannot Verify",
+          caption: "No Draft",
+          cover: "Verified",
+          video: "Mismatched",
         },
       },
     ],
@@ -285,7 +313,11 @@ export function getPostLinkStatus(link: PostLink): PostLinkHealthStatus {
   if (link.type === "Master" && link.validation) {
     const statuses = [link.validation.caption, link.validation.cover, link.validation.video];
     if (statuses.some((status) => status === "Mismatched")) return "error";
-    if (statuses.some((status) => status === "Cannot Verify")) return "warning";
+    if (
+      statuses.some((status) => status === "Cannot Verify" || status === "No Draft")
+    ) {
+      return "warning";
+    }
   }
   return "success";
 }
@@ -337,6 +369,15 @@ export function getPostLinkTooltipCopy(link: PostLink): PostLinkTooltipCopy {
         tag: "Fetch Failed",
         description: "Cannot verify because no approved baseline exists for reference.",
         tagClassName: POST_LINK_TOOLTIP_TAG_CLASS.warning,
+      };
+    }
+    if (caption === "No Draft" || cover === "No Draft" || video === "No Draft") {
+      const field =
+        caption === "No Draft" ? "Caption" : cover === "No Draft" ? "Cover" : "Video";
+      return {
+        tag: "No Draft",
+        description: `No approved baseline draft exists yet, so ${field.toLowerCase()} validation cannot be completed.`,
+        tagClassName: "border-gray-200 bg-gray-50 text-gray-600",
       };
     }
   }
@@ -437,7 +478,15 @@ export function matchesContentValidationFilter(
   const masters = getMasterPostLinks(row.postLinks).filter((link) => link.url.trim());
 
   if (filter === "Has No Draft") {
-    return masters.length > 0 && masters.some((link) => !link.validation);
+    return (
+      masters.length > 0 &&
+      masters.some((link) => {
+        if (!link.validation) return true;
+        return [link.validation.caption, link.validation.cover, link.validation.video].some(
+          (status) => status === "No Draft"
+        );
+      })
+    );
   }
 
   const validations = masters

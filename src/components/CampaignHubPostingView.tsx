@@ -36,10 +36,10 @@ import {
   applyMockValidationToPostLinks,
   buildMockFetchedPostLinks,
   formatPostingPlanDate,
+  getContentValidationTooltipDescription,
   getMasterPostLinks,
   getMasterLabel,
   getMirroredLabel,
-  getMirroredAggregateStatus,
   hasFetchedPostLinks,
   getPostLinkDateEntries,
   getVisibleMirroredLinks,
@@ -47,6 +47,7 @@ import {
   getPostLinkTooltipCopy,
   matchesContentValidationFilter,
   matchesPostLinkStatusFilter,
+  type ContentValidationField,
   type ContentValidationFilter,
   type ContentValidationStatus,
   type PostLink,
@@ -64,7 +65,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { AlertCircle, Calendar, CheckCircle2, ChevronDown, Copy, FileText, MoreHorizontal, Paperclip, Pencil, RefreshCcw, Sparkles, Upload, X } from "@/lib/icons";
+import { AlertCircle, Calendar, CheckCircle2, ChevronDown, Circle, Copy, FileText, MoreHorizontal, Paperclip, Pencil, RefreshCcw, Sparkles, Upload, X } from "@/lib/icons";
 
 const STATUS_ICON_CLASS: Record<"success" | "warning" | "error", string> = {
   success: "text-emerald-600",
@@ -74,7 +75,12 @@ const STATUS_ICON_CLASS: Record<"success" | "warning" | "error", string> = {
 
 const VALIDATION_STATUS_CONFIG: Record<
   ContentValidationStatus,
-  { tagClassName: string; iconClassName: string; Icon: typeof CheckCircle2; title: string }
+  {
+    tagClassName: string;
+    iconClassName: string;
+    Icon: typeof CheckCircle2;
+    title: string;
+  }
 > = {
   Verified: {
     tagClassName: "border-emerald-200/90 bg-emerald-50 text-emerald-700",
@@ -93,6 +99,12 @@ const VALIDATION_STATUS_CONFIG: Record<
     iconClassName: STATUS_ICON_CLASS.warning,
     Icon: AlertCircle,
     title: "Fetch Failed",
+  },
+  "No Draft": {
+    tagClassName: "border-gray-200 bg-gray-50 text-gray-600",
+    iconClassName: "text-gray-400",
+    Icon: Circle,
+    title: "No Draft",
   },
 };
 
@@ -137,9 +149,13 @@ const PostLinkPill = forwardRef<
     label: string;
     linkType: PostLinkType;
     status: PostLinkHealthStatus;
+    showStatusIcon?: boolean;
     className?: string;
   } & ComponentPropsWithoutRef<"span">
->(function PostLinkPill({ label, linkType, status, className, ...props }, ref) {
+>(function PostLinkPill(
+  { label, linkType, status, showStatusIcon = true, className, ...props },
+  ref
+) {
   const config = POST_LINK_STATUS_CONFIG[status];
   const Icon = config.Icon;
 
@@ -153,7 +169,9 @@ const PostLinkPill = forwardRef<
       )}
       {...props}
     >
-      <Icon size={13} strokeWidth={2.2} className={cn("shrink-0", config.iconClassName)} />
+      {showStatusIcon ? (
+        <Icon size={13} strokeWidth={2.2} className={cn("shrink-0", config.iconClassName)} />
+      ) : null}
       {label}
     </span>
   );
@@ -206,11 +224,12 @@ function ValidationMicro({
   label,
   status,
 }: {
-  label: string;
+  label: ContentValidationField;
   status: ContentValidationStatus;
 }) {
   const config = VALIDATION_STATUS_CONFIG[status];
   const Icon = config.Icon;
+  const description = getContentValidationTooltipDescription(label, status);
 
   return (
     <Tooltip>
@@ -227,8 +246,23 @@ function ValidationMicro({
           </span>
         }
       />
-      <TooltipContent variant="light" side="top" sideOffset={4} className="px-2.5 py-1.5 text-[11px]">
-        {label}: {config.title}
+      <TooltipContent
+        variant="light"
+        side="top"
+        sideOffset={4}
+        className="w-[min(280px,calc(100vw-2rem))] max-w-none gap-0 px-3 py-2.5"
+      >
+        <div className="flex flex-col gap-2">
+          <span
+            className={cn(
+              "inline-flex w-fit rounded-full border px-2.5 py-0.5 text-[11px] font-semibold leading-none",
+              config.tagClassName
+            )}
+          >
+            {config.title}
+          </span>
+          <p className="text-[11px] leading-relaxed text-gray-500">{description}</p>
+        </div>
       </TooltipContent>
     </Tooltip>
   );
@@ -376,7 +410,6 @@ function PostLinkMirroredTooltipContent({ links }: { links: PostLink[] }) {
 }
 
 function PostLinkMirroredGroup({ links }: { links: PostLink[] }) {
-  const aggregateStatus = getMirroredAggregateStatus(links);
   const count = links.length;
 
   return (
@@ -391,7 +424,8 @@ function PostLinkMirroredGroup({ links }: { links: PostLink[] }) {
               <PostLinkPill
                 label="Mirrored"
                 linkType="Mirrored"
-                status={aggregateStatus}
+                status="success"
+                showStatusIcon={false}
                 className="w-fit"
               />
               {count > 1 ? (

@@ -20,6 +20,7 @@ import {
   ChevronLeft as LucideChevronLeft,
   ChevronRight as LucideChevronRight,
   ChevronUp as LucideChevronUp,
+  Circle as LucideCircle,
   CircleDashed as LucideCircleDashed,
   Clapperboard as LucideClapperboard,
   Clock as LucideClock,
@@ -96,6 +97,7 @@ export const ChevronDown = createIcon(LucideChevronDown, "ChevronDown");
 export const ChevronLeft = createIcon(LucideChevronLeft, "ChevronLeft");
 export const ChevronRight = createIcon(LucideChevronRight, "ChevronRight");
 export const ChevronUp = createIcon(LucideChevronUp, "ChevronUp");
+export const Circle = createIcon(LucideCircle, "Circle");
 export const CircleDashed = createIcon(LucideCircleDashed, "CircleDashed");
 export const Clapperboard = createIcon(LucideClapperboard, "Clapperboard");
 export const Clock = createIcon(LucideClock, "Clock");
