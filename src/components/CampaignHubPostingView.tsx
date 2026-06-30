@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useMemo, useState, type ComponentPropsWithoutRef } from "react";
+import { forwardRef, useMemo, useState, type ComponentPropsWithoutRef, type ReactNode } from "react";
 import {
   CampaignHubDetailHeader,
   CampaignHubDetailToolbar,
@@ -11,7 +11,6 @@ import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import PostingHubStatusSelect from "@/components/pipeline/PostingHubStatusSelect";
 import { SetPostingDateDialog } from "@/components/SetPostingDateDialog";
 import { EditPostLinkDialog } from "@/components/EditPostLinkDialog";
-import { UpdatePostStatusDialog } from "@/components/UpdatePostStatusDialog";
 import { UploadInsightReportDialog } from "@/components/UploadInsightReportDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -32,18 +31,27 @@ import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
 import {
   POSTING_HUB_MOCK_ROWS,
   POSTING_HUB_STATUS_OPTIONS,
+  POST_LINK_STATUS_FILTER_OPTIONS,
+  CONTENT_VALIDATION_FILTER_OPTIONS,
   applyMockValidationToPostLinks,
   buildMockFetchedPostLinks,
   formatPostingPlanDate,
-  getMasterContentValidation,
-  getMasterPostLink,
+  getMasterPostLinks,
+  getMasterLabel,
+  getMirroredLabel,
+  getMirroredAggregateStatus,
+  hasFetchedPostLinks,
   getPostLinkDateEntries,
   getVisibleMirroredLinks,
   getPostLinkStatus,
   getPostLinkTooltipCopy,
+  matchesContentValidationFilter,
+  matchesPostLinkStatusFilter,
+  type ContentValidationFilter,
   type ContentValidationStatus,
   type PostLink,
   type PostLinkHealthStatus,
+  type PostLinkStatusFilter,
   type PostLinkType,
   type PostingHubRow,
   type PostingHubStatus,
@@ -56,24 +64,33 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { AlertCircle, Calendar, CheckCircle2, ChevronDown, Copy, Download, FileText, MoreHorizontal, Paperclip, Pencil, RefreshCcw, Sparkles, Upload, X } from "@/lib/icons";
+import { AlertCircle, Calendar, CheckCircle2, ChevronDown, Copy, FileText, MoreHorizontal, Paperclip, Pencil, RefreshCcw, Sparkles, Upload, X } from "@/lib/icons";
+
+const STATUS_ICON_CLASS: Record<"success" | "warning" | "error", string> = {
+  success: "text-emerald-600",
+  warning: "text-amber-600",
+  error: "text-red-600",
+};
 
 const VALIDATION_STATUS_CONFIG: Record<
   ContentValidationStatus,
-  { tagClassName: string; Icon: typeof CheckCircle2; title: string }
+  { tagClassName: string; iconClassName: string; Icon: typeof CheckCircle2; title: string }
 > = {
   Verified: {
-    tagClassName: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    tagClassName: "border-emerald-200/90 bg-emerald-50 text-emerald-700",
+    iconClassName: STATUS_ICON_CLASS.success,
     Icon: CheckCircle2,
     title: "Verified",
   },
   Mismatched: {
-    tagClassName: "border-red-200 bg-red-50 text-red-700",
+    tagClassName: "border-red-200/90 bg-red-50 text-red-700",
+    iconClassName: STATUS_ICON_CLASS.error,
     Icon: X,
     title: "Mismatched",
   },
   "Cannot Verify": {
-    tagClassName: "border-amber-200 bg-amber-50 text-amber-700",
+    tagClassName: "border-amber-200/90 bg-amber-50 text-amber-700",
+    iconClassName: STATUS_ICON_CLASS.warning,
     Icon: AlertCircle,
     title: "Fetch Failed",
   },
@@ -81,23 +98,20 @@ const VALIDATION_STATUS_CONFIG: Record<
 
 const POST_LINK_STATUS_CONFIG: Record<
   PostLinkHealthStatus,
-  { iconClassName: string; tagClassName: string; Icon: typeof CheckCircle2; title: string }
+  { iconClassName: string; Icon: typeof CheckCircle2; title: string }
 > = {
   success: {
-    iconClassName: "text-emerald-600",
-    tagClassName: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    iconClassName: STATUS_ICON_CLASS.success,
     Icon: CheckCircle2,
     title: "Verified",
   },
   warning: {
-    iconClassName: "text-amber-500",
-    tagClassName: "border-amber-200 bg-amber-50 text-amber-700",
+    iconClassName: STATUS_ICON_CLASS.warning,
     Icon: AlertCircle,
     title: "Needs attention",
   },
   error: {
-    iconClassName: "text-red-500",
-    tagClassName: "border-red-200 bg-red-50 text-red-700",
+    iconClassName: STATUS_ICON_CLASS.error,
     Icon: X,
     title: "Issue found",
   },
@@ -133,19 +147,62 @@ const PostLinkPill = forwardRef<
     <span
       ref={ref}
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-1.5 py-1 text-[11px] font-semibold leading-none",
+        "inline-flex h-[22px] items-center gap-1 rounded-full border px-1.5 text-[11px] font-semibold leading-none",
         POST_LINK_TYPE_CLASS[linkType],
         className
       )}
       {...props}
     >
-      <Icon size={11} strokeWidth={2.2} className={cn("shrink-0", config.iconClassName)} />
+      <Icon size={13} strokeWidth={2.2} className={cn("shrink-0", config.iconClassName)} />
       {label}
     </span>
   );
 });
 
-function ValidationTag({
+const POST_LINK_ROW_CLASS = "flex h-7 min-w-0 items-center gap-1.5";
+
+const ROW_ACTION_BUTTON_CLASS =
+  "inline-grid size-[22px] shrink-0 place-items-center rounded-full border p-0 leading-none";
+
+function RowHoverAction({ children }: { children: ReactNode }) {
+  return (
+    <div className="pointer-events-none inline-flex shrink-0 items-center leading-none opacity-0 transition-opacity duration-200 group-hover/posting-row:pointer-events-auto group-hover/posting-row:opacity-100 group-focus-within/posting-row:pointer-events-auto group-focus-within/posting-row:opacity-100">
+      {children}
+    </div>
+  );
+}
+
+function PostLinkRowAction({
+  variant,
+  onClick,
+  ariaLabel,
+  emphasized = false,
+}: {
+  variant: "edit" | "fetch";
+  onClick: () => void;
+  ariaLabel: string;
+  emphasized?: boolean;
+}) {
+  const Icon = variant === "edit" ? Pencil : RefreshCcw;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      className={cn(
+        ROW_ACTION_BUTTON_CLASS,
+        emphasized
+          ? "border-brand/25 bg-brand-50 text-brand transition-colors hover:border-brand/40 hover:bg-brand-100/80"
+          : "border-gray-200 bg-white text-gray-500 transition-colors hover:border-brand/30 hover:bg-brand-50/40 hover:text-brand"
+      )}
+    >
+      <Icon size={12} strokeWidth={2.2} />
+    </button>
+  );
+}
+
+function ValidationMicro({
   label,
   status,
 }: {
@@ -161,17 +218,17 @@ function ValidationTag({
         render={
           <span
             className={cn(
-              "inline-flex cursor-default items-center gap-1 rounded-full border px-1.5 py-1 text-[11px] font-semibold leading-none",
+              "inline-flex h-[22px] min-w-0 cursor-default items-center gap-1 rounded-full border px-1.5 text-[10px] font-semibold leading-none",
               config.tagClassName
             )}
           >
-            <Icon size={11} strokeWidth={2.2} className="shrink-0" />
-            {label}
+            <Icon size={13} strokeWidth={2.2} className={cn("shrink-0", config.iconClassName)} />
+            <span className="truncate">{label}</span>
           </span>
         }
       />
       <TooltipContent variant="light" side="top" sideOffset={4} className="px-2.5 py-1.5 text-[11px]">
-        {config.title}
+        {label}: {config.title}
       </TooltipContent>
     </Tooltip>
   );
@@ -249,93 +306,255 @@ function PostLinkPillWithTooltip({
   );
 }
 
-const POST_LINK_CELL_WIDTH = "w-[240px]";
+const POST_LINK_CELL_WIDTH = "w-[248px]";
 
-function PostingHubEmptyActionButton({
+function PostLinkMasterRow({
+  link,
   label,
-  icon: Icon,
-  onClick,
-  disabled = false,
-  variant = "brand",
+  trailingAction,
+  onEdit,
+  onFetch,
 }: {
+  link: PostLink;
   label: string;
-  icon: typeof RefreshCcw;
+  trailingAction: "edit" | "fetch" | null;
+  onEdit?: () => void;
+  onFetch?: () => void;
+}) {
+  const hasUrl = Boolean(link.url.trim());
+
+  return (
+    <div className={cn(POST_LINK_ROW_CLASS, "w-fit max-w-full")}>
+      {hasUrl ? (
+        <PostLinkPillWithTooltip link={link} label={label} linkType="Master" />
+      ) : (
+        <span className="inline-flex h-[22px] items-center rounded-full border border-dashed border-gray-200 bg-gray-50 px-1.5 text-[11px] font-semibold leading-none text-gray-400">
+          {label}
+        </span>
+      )}
+      {trailingAction === "edit" ? (
+        <RowHoverAction>
+          <PostLinkRowAction variant="edit" onClick={onEdit!} ariaLabel="Edit post links" />
+        </RowHoverAction>
+      ) : trailingAction === "fetch" ? (
+        <RowHoverAction>
+          <PostLinkRowAction variant="fetch" onClick={onFetch!} ariaLabel={`Fetch ${label}`} />
+        </RowHoverAction>
+      ) : null}
+    </div>
+  );
+}
+
+function getPostLinkMasterTrailingAction(
+  index: number,
+  link: PostLink,
+  hasAnyUrl: boolean
+): "edit" | "fetch" | null {
+  if (index === 0 && hasAnyUrl) return "edit";
+  if (!link.url.trim()) return "fetch";
+  return null;
+}
+
+function PostLinkMirroredTooltipContent({ links }: { links: PostLink[] }) {
+  return (
+    <ul className="flex flex-col">
+      {links.map((link, index) => (
+        <li
+          key={`${link.url}-${index}`}
+          className={cn("flex flex-col gap-2.5", index > 0 && "mt-3 border-t border-gray-100 pt-3")}
+        >
+          {links.length > 1 ? (
+            <p className="text-[11px] font-semibold text-gray-500">
+              {getMirroredLabel(index, links.length)}
+            </p>
+          ) : null}
+          <PostLinkTooltipContent link={link} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function PostLinkMirroredGroup({ links }: { links: PostLink[] }) {
+  const aggregateStatus = getMirroredAggregateStatus(links);
+  const count = links.length;
+
+  return (
+    <div className={POST_LINK_ROW_CLASS}>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <span
+              className="inline-flex cursor-default items-center gap-1"
+              aria-label={count === 1 ? "Mirrored link" : `${count} mirrored links`}
+            >
+              <PostLinkPill
+                label="Mirrored"
+                linkType="Mirrored"
+                status={aggregateStatus}
+                className="w-fit"
+              />
+              {count > 1 ? (
+                <span
+                  aria-hidden
+                  className="inline-grid size-[18px] shrink-0 place-items-center rounded-full border border-gray-200 bg-white p-0 text-[10px] font-medium leading-none tabular-nums text-gray-500"
+                >
+                  {count}
+                </span>
+              ) : null}
+            </span>
+          }
+        />
+        <TooltipContent
+          variant="light"
+          side="bottom"
+          align="start"
+          className="w-[min(300px,calc(100vw-2rem))] max-w-none gap-0 px-3 py-2.5"
+        >
+          <PostLinkMirroredTooltipContent links={links} />
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
+
+function AutoValidateRowAction({
+  disabled,
+  onClick,
+}: {
+  disabled: boolean;
   onClick: () => void;
-  disabled?: boolean;
-  variant?: "brand" | "ai";
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-semibold leading-none transition-colors",
-        disabled
-          ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400"
-          : variant === "ai"
-            ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100/80"
-            : "border-brand/20 bg-brand-50 text-brand hover:bg-brand-100/70"
-      )}
-    >
-      <Icon
-        size={11}
-        strokeWidth={2.2}
-        className={cn("shrink-0", !disabled && variant === "ai" && "text-amber-600")}
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <button
+            type="button"
+            onClick={onClick}
+            disabled={disabled}
+            aria-label="Auto Validate"
+            className={cn(
+              ROW_ACTION_BUTTON_CLASS,
+              "transition-colors",
+              disabled
+                ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-300"
+                : "border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100/80"
+            )}
+          >
+            <Sparkles size={12} strokeWidth={2.2} />
+          </button>
+        }
       />
-      {label}
-    </button>
+      <TooltipContent variant="light" side="top" sideOffset={4} className="px-2.5 py-1.5 text-[11px]">
+        Auto Validate
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
 function PostLinkEmptyState({ onFetch }: { onFetch: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onFetch}
-      className="inline-flex items-center gap-2 text-left transition-opacity hover:opacity-80"
-      aria-label="Fetch post links"
-    >
-      <span className="inline-flex size-[18px] shrink-0 items-center justify-center rounded-full border border-brand/25 text-brand">
-        <RefreshCcw size={10} strokeWidth={2.2} />
-      </span>
-      <span className="text-[12px] italic text-gray-400">Not fetched yet</span>
-    </button>
+    <div className={cn(POST_LINK_ROW_CLASS, "w-fit max-w-full")}>
+      <button
+        type="button"
+        onClick={onFetch}
+        className="text-left text-[12px] text-gray-500 transition-colors hover:text-gray-600"
+      >
+        Not fetched yet
+      </button>
+      <PostLinkRowAction
+        variant="fetch"
+        emphasized
+        onClick={onFetch}
+        ariaLabel="Fetch post links"
+      />
+    </div>
   );
 }
 
 function PostLinkCell({
   row,
   onFetchPostLinks,
+  onEditPostLink,
+  onFetchMasterLink,
 }: {
   row: PostingHubRow;
   onFetchPostLinks: (row: PostingHubRow) => void;
+  onEditPostLink: (row: PostingHubRow) => void;
+  onFetchMasterLink: (row: PostingHubRow, masterIndex: number) => void;
 }) {
   const links = row.postLinks;
-  const master = getMasterPostLink(links);
+  const masters = getMasterPostLinks(links);
   const mirrored = getVisibleMirroredLinks(links);
 
-  if (!master) {
+  if (!hasFetchedPostLinks(links) && masters.length === 0 && mirrored.length === 0) {
     return <PostLinkEmptyState onFetch={() => onFetchPostLinks(row)} />;
   }
 
+  const hasAnyUrl = hasFetchedPostLinks(links);
+
   return (
-    <div className="flex min-w-0 flex-col gap-1.5">
-      <div className="flex flex-wrap gap-1.5">
-        <PostLinkPillWithTooltip link={master} label="Master" linkType="Master" />
-      </div>
+    <div className="flex min-w-0 flex-col gap-1 py-0.5">
+      {masters.map((link, index) => (
+        <PostLinkMasterRow
+          key={`${link.url || "empty"}-${index}`}
+          link={link}
+          label={getMasterLabel(index, masters.length)}
+          trailingAction={getPostLinkMasterTrailingAction(index, link, hasAnyUrl)}
+          onEdit={() => onEditPostLink(row)}
+          onFetch={() => onFetchMasterLink(row, index)}
+        />
+      ))}
       {mirrored.length ? (
-        <div className="flex flex-wrap gap-1.5">
-          {mirrored.map((link, index) => (
-            <PostLinkPillWithTooltip
-              key={`${link.url}-${index}`}
-              link={link}
-              label={mirrored.length === 1 ? "Mirrored" : `Mirrored ${index + 1}`}
-              linkType="Mirrored"
-            />
-          ))}
+        <div className="border-t border-gray-100/80 pt-1">
+          <PostLinkMirroredGroup links={mirrored} />
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function ContentValidationMasterRow({
+  link,
+  showAutoValidate,
+  autoValidateDisabled,
+  onAutoValidate,
+}: {
+  link: PostLink;
+  showAutoValidate: boolean;
+  autoValidateDisabled: boolean;
+  onAutoValidate: () => void;
+}) {
+  const validation = link.validation;
+  const hasUrl = Boolean(link.url.trim());
+
+  return (
+    <div className={cn(POST_LINK_ROW_CLASS, "w-fit max-w-full")}>
+      {!hasUrl ? (
+        <span className="text-[11px] text-gray-300">—</span>
+      ) : !validation ? (
+        <span className="text-[11px] italic text-gray-400">Not validated yet</span>
+      ) : (
+        <>
+          <ValidationMicro label="Caption" status={validation.caption} />
+          <ValidationMicro label="Cover" status={validation.cover} />
+          <ValidationMicro label="Video" status={validation.video} />
+        </>
+      )}
+      {showAutoValidate ? (
+        <RowHoverAction>
+          <AutoValidateRowAction disabled={autoValidateDisabled} onClick={onAutoValidate} />
+        </RowHoverAction>
+      ) : null}
+    </div>
+  );
+}
+
+function ContentValidationMirroredRow() {
+  return (
+    <div className={POST_LINK_ROW_CLASS}>
+      <span className="text-[11px] text-gray-300">—</span>
     </div>
   );
 }
@@ -347,26 +566,60 @@ function ContentValidationCell({
   row: PostingHubRow;
   onAutoValidate: (row: PostingHubRow) => void;
 }) {
-  const validation = getMasterContentValidation(row.postLinks);
-  const hasMaster = Boolean(getMasterPostLink(row.postLinks));
+  const masters = getMasterPostLinks(row.postLinks);
+  const mirrored = getVisibleMirroredLinks(row.postLinks);
+  const hasFetchedMaster = masters.some((link) => link.url.trim());
+  const isEmpty =
+    !hasFetchedPostLinks(row.postLinks) && masters.length === 0 && mirrored.length === 0;
 
-  if (!validation) {
+  if (isEmpty) {
     return (
-      <PostingHubEmptyActionButton
-        label="Auto Validate"
-        icon={Sparkles}
-        variant="ai"
-        onClick={() => onAutoValidate(row)}
-        disabled={!hasMaster}
-      />
+      <div className={POST_LINK_ROW_CLASS}>
+        <span className="text-[12px] italic text-gray-400">Auto Validate</span>
+        <RowHoverAction>
+          <AutoValidateRowAction disabled onClick={() => onAutoValidate(row)} />
+        </RowHoverAction>
+      </div>
+    );
+  }
+
+  if (masters.length === 0) {
+    return (
+      <div className="flex min-w-0 flex-col gap-1 py-0.5">
+        <div className={POST_LINK_ROW_CLASS}>
+          <span className="text-[12px] text-gray-400">Auto Validate</span>
+          <RowHoverAction>
+            <AutoValidateRowAction
+              disabled={!hasFetchedMaster}
+              onClick={() => onAutoValidate(row)}
+            />
+          </RowHoverAction>
+        </div>
+        {mirrored.length ? (
+          <div className="border-t border-gray-100/80 pt-1">
+            <ContentValidationMirroredRow />
+          </div>
+        ) : null}
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5">
-      <ValidationTag label="Caption" status={validation.caption} />
-      <ValidationTag label="Cover" status={validation.cover} />
-      <ValidationTag label="Video" status={validation.video} />
+    <div className="flex min-w-0 flex-col gap-1 py-0.5">
+      {masters.map((link, index) => (
+        <ContentValidationMasterRow
+          key={`${link.url || "empty"}-${index}`}
+          link={link}
+          showAutoValidate={index === 0}
+          autoValidateDisabled={!hasFetchedMaster}
+          onAutoValidate={() => onAutoValidate(row)}
+        />
+      ))}
+      {mirrored.length ? (
+        <div className="border-t border-gray-100/80 pt-1">
+          <ContentValidationMirroredRow />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -417,10 +670,10 @@ function PostingDateCountBadge({ count, rows }: { count: number; rows: { label: 
       <TooltipTrigger
         render={
           <span
-            className="inline-flex size-[18px] cursor-default items-center justify-center rounded-full border border-gray-200 bg-gray-50 text-[10px] font-medium tabular-nums text-gray-500"
+            className="inline-grid size-[18px] shrink-0 place-items-center rounded-full border border-gray-200 bg-gray-50 p-0 text-[10px] font-medium leading-none tabular-nums text-gray-500"
             aria-label={`${count} posting dates`}
           >
-            ({count})
+            {count}
           </span>
         }
       />
@@ -471,9 +724,9 @@ function PostingHubTable({
   onStatusChange,
   onSetPostingDate,
   onEditPostLink,
-  onUpdatePostStatus,
   onUploadInsightReport,
   onFetchPostLinks,
+  onFetchMasterLink,
   onAutoValidate,
 }: {
   rows: PostingHubRow[];
@@ -483,9 +736,9 @@ function PostingHubTable({
   onStatusChange: (id: string, status: PostingHubStatus) => void;
   onSetPostingDate: (row: PostingHubRow) => void;
   onEditPostLink: (row: PostingHubRow) => void;
-  onUpdatePostStatus: (row: PostingHubRow) => void;
   onUploadInsightReport: (row: PostingHubRow) => void;
   onFetchPostLinks: (row: PostingHubRow) => void;
+  onFetchMasterLink: (row: PostingHubRow, masterIndex: number) => void;
   onAutoValidate: (row: PostingHubRow) => void;
 }) {
   const allSelected = rows.length > 0 && rows.every((row) => selectedIds.has(row.id));
@@ -511,7 +764,7 @@ function PostingHubTable({
             <TableHead className={cn(POST_LINK_CELL_WIDTH, "shrink-0 whitespace-normal px-5 pr-2 text-[11px] font-semibold text-gray-500")}>
               Post Link
             </TableHead>
-            <TableHead className="min-w-[148px] pl-2 pr-5 text-[11px] font-semibold text-gray-500">
+            <TableHead className="min-w-[188px] pl-2 pr-5 text-[11px] font-semibold text-gray-500">
               Content Validation
             </TableHead>
             <TableHead className="min-w-[100px] text-[11px] font-semibold text-gray-500">
@@ -525,7 +778,7 @@ function PostingHubTable({
         </TableHeader>
         <TableBody>
           {rows.map((row) => (
-            <TableRow key={row.id} className="hover:bg-gray-50/40">
+            <TableRow key={row.id} className="group/posting-row hover:bg-gray-50/40">
               <TableCell>
                 <Checkbox
                   checked={selectedIds.has(row.id)}
@@ -555,10 +808,15 @@ function PostingHubTable({
                   onChange={(next) => onStatusChange(row.id, next)}
                 />
               </TableCell>
-              <TableCell className={cn(POST_LINK_CELL_WIDTH, "whitespace-normal px-5 pr-2")}>
-                <PostLinkCell row={row} onFetchPostLinks={onFetchPostLinks} />
+              <TableCell className={cn(POST_LINK_CELL_WIDTH, "align-top whitespace-normal px-5 py-3 pr-2")}>
+                <PostLinkCell
+                  row={row}
+                  onFetchPostLinks={onFetchPostLinks}
+                  onEditPostLink={onEditPostLink}
+                  onFetchMasterLink={onFetchMasterLink}
+                />
               </TableCell>
-              <TableCell className="pl-2 pr-5">
+              <TableCell className="align-top py-3 pl-2 pr-5">
                 <ContentValidationCell row={row} onAutoValidate={onAutoValidate} />
               </TableCell>
               <TableCell>
@@ -595,13 +853,6 @@ function PostingHubTable({
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="cursor-pointer gap-2.5 whitespace-nowrap rounded-md px-2.5 py-2 text-gray-800"
-                      onSelect={() => onUpdatePostStatus(row)}
-                    >
-                      <CheckCircle2 size={16} className="shrink-0 text-brand" strokeWidth={2} />
-                      Update Post Status
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="cursor-pointer gap-2.5 whitespace-nowrap rounded-md px-2.5 py-2 text-gray-800"
                       onSelect={() => onUploadInsightReport(row)}
                     >
                       <Upload size={16} className="shrink-0 text-brand" strokeWidth={2} />
@@ -628,6 +879,9 @@ export default function CampaignHubPostingView({
   const [rows, setRows] = useState(POSTING_HUB_MOCK_ROWS);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<PostingHubStatus | "All">("All");
+  const [postLinkStatusFilter, setPostLinkStatusFilter] = useState<PostLinkStatusFilter>("All");
+  const [contentValidationFilter, setContentValidationFilter] =
+    useState<ContentValidationFilter>("All");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [postingDateDialog, setPostingDateDialog] = useState<{
     open: boolean;
@@ -635,10 +889,6 @@ export default function CampaignHubPostingView({
     label: string;
   }>({ open: false, targetIds: [], label: "" });
   const [editPostLinkDialog, setEditPostLinkDialog] = useState<{
-    open: boolean;
-    rowId: string | null;
-  }>({ open: false, rowId: null });
-  const [updatePostStatusDialog, setUpdatePostStatusDialog] = useState<{
     open: boolean;
     rowId: string | null;
   }>({ open: false, rowId: null });
@@ -681,13 +931,20 @@ export default function CampaignHubPostingView({
     );
   };
 
-  const handleUpdatePostStatusConfirm = () => {
-    if (!updatePostStatusDialog.rowId) return;
+  const handleBulkContentValidation = () => {
     setRows((prev) =>
       prev.map((row) =>
-        row.id === updatePostStatusDialog.rowId
-          ? { ...row, postingStatus: "Post Approved" }
+        selectedIds.has(row.id) && getMasterPostLinks(row.postLinks).some((link) => link.url.trim())
+          ? { ...row, postLinks: applyMockValidationToPostLinks(row.postLinks) }
           : row
+      )
+    );
+  };
+
+  const handleBulkMarkAsApproved = () => {
+    setRows((prev) =>
+      prev.map((row) =>
+        selectedIds.has(row.id) ? { ...row, postingStatus: "Post Approved" } : row
       )
     );
   };
@@ -716,8 +973,38 @@ export default function CampaignHubPostingView({
     );
   };
 
+  const handleFetchMasterLink = (row: PostingHubRow, masterIndex: number) => {
+    setRows((prev) =>
+      prev.map((item) => {
+        if (item.id !== row.id) return item;
+        const links = [...(item.postLinks ?? [])];
+        const masters = getMasterPostLinks(links);
+        const target = masters[masterIndex];
+        const fetchedLink: PostLink = {
+          type: "Master",
+          url: `https://www.instagram.com/p/${item.id}-master-${masterIndex + 1}/`,
+          postedDate: item.actualDate ?? item.planDate,
+        };
+
+        if (target) {
+          const linkIndex = links.indexOf(target);
+          links[linkIndex] = { ...target, ...fetchedLink, validation: target.validation };
+        } else {
+          links.push(fetchedLink);
+        }
+
+        return {
+          ...item,
+          postLinks: links,
+          postingStatus: item.postingStatus === "Pending" ? "Posted" : item.postingStatus,
+          actualDate: item.actualDate ?? item.planDate,
+        };
+      })
+    );
+  };
+
   const handleAutoValidate = (row: PostingHubRow) => {
-    if (!getMasterPostLink(row.postLinks)) return;
+    if (!getMasterPostLinks(row.postLinks).some((link) => link.url.trim())) return;
     setRows((prev) =>
       prev.map((item) =>
         item.id === row.id ? { ...item, postLinks: applyMockValidationToPostLinks(item.postLinks) } : item
@@ -733,9 +1020,11 @@ export default function CampaignHubPostingView({
         row.name.toLowerCase().includes(normalized) ||
         row.handle.toLowerCase().includes(normalized);
       const matchesStatus = statusFilter === "All" || row.postingStatus === statusFilter;
-      return matchesQuery && matchesStatus;
+      const matchesPostLinkStatus = matchesPostLinkStatusFilter(row, postLinkStatusFilter);
+      const matchesContentValidation = matchesContentValidationFilter(row, contentValidationFilter);
+      return matchesQuery && matchesStatus && matchesPostLinkStatus && matchesContentValidation;
     });
-  }, [query, rows, statusFilter]);
+  }, [query, rows, statusFilter, postLinkStatusFilter, contentValidationFilter]);
 
   const toggleAll = (checked: boolean) => {
     if (!checked) {
@@ -770,24 +1059,32 @@ export default function CampaignHubPostingView({
           onSearchChange={setQuery}
           searchPlaceholder="Search Influencer by Name or Handle"
           filters={
-            <CampaignHubFilterSelect
-              label="Posting Status"
-              value={statusFilter}
-              options={["All", ...POSTING_HUB_STATUS_OPTIONS]}
-              onChange={(value) => setStatusFilter(value as PostingHubStatus | "All")}
-            />
+            <>
+              <CampaignHubFilterSelect
+                label="Posting Status"
+                value={statusFilter}
+                options={["All", ...POSTING_HUB_STATUS_OPTIONS]}
+                onChange={(value) => setStatusFilter(value as PostingHubStatus | "All")}
+              />
+              <CampaignHubFilterSelect
+                label="Post Link Status"
+                value={postLinkStatusFilter}
+                options={POST_LINK_STATUS_FILTER_OPTIONS}
+                onChange={(value) => setPostLinkStatusFilter(value as PostLinkStatusFilter)}
+              />
+              <CampaignHubFilterSelect
+                label="Content Validation"
+                value={contentValidationFilter}
+                options={CONTENT_VALIDATION_FILTER_OPTIONS}
+                onChange={(value) => setContentValidationFilter(value as ContentValidationFilter)}
+              />
+            </>
           }
           actions={
-            <>
-              <CampaignHubToolbarActionButton>
-                <Upload size={13} />
-                Import
-              </CampaignHubToolbarActionButton>
-              <CampaignHubToolbarActionButton>
-                <Download size={13} />
-                Download
-              </CampaignHubToolbarActionButton>
-            </>
+            <CampaignHubToolbarActionButton>
+              <Upload size={13} />
+              Import
+            </CampaignHubToolbarActionButton>
           }
         />
 
@@ -808,9 +1105,6 @@ export default function CampaignHubPostingView({
               <ChevronDown size={13} className="shrink-0" strokeWidth={2} />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="min-w-[180px] w-auto text-[13px]">
-              <DropdownMenuItem disabled={selectedIds.size === 0} className="whitespace-nowrap">
-                Fetch Post Links
-              </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={selectedIds.size === 0}
                 className="whitespace-nowrap"
@@ -825,8 +1119,22 @@ export default function CampaignHubPostingView({
               >
                 Set Posting Date
               </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={selectedIds.size === 0}
+                className="whitespace-nowrap"
+                onSelect={handleBulkContentValidation}
+              >
+                Content Validation
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={selectedIds.size === 0}
+                className="whitespace-nowrap"
+                onSelect={handleBulkMarkAsApproved}
+              >
+                Mark as Approved
+              </DropdownMenuItem>
               <DropdownMenuItem disabled={selectedIds.size === 0} className="whitespace-nowrap">
-                Mark as Posted
+                Download
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -840,13 +1148,11 @@ export default function CampaignHubPostingView({
           onStatusChange={updateStatus}
           onSetPostingDate={(row) => openPostingDateDialog([row.id], row.name)}
           onEditPostLink={(row) => setEditPostLinkDialog({ open: true, rowId: row.id })}
-          onUpdatePostStatus={(row) =>
-            setUpdatePostStatusDialog({ open: true, rowId: row.id })
-          }
           onUploadInsightReport={(row) =>
             setUploadInsightReportDialog({ open: true, rowId: row.id })
           }
           onFetchPostLinks={handleFetchPostLinks}
+          onFetchMasterLink={handleFetchMasterLink}
           onAutoValidate={handleAutoValidate}
         />
       </div>
@@ -863,12 +1169,6 @@ export default function CampaignHubPostingView({
         onOpenChange={(open) => setEditPostLinkDialog((prev) => ({ ...prev, open }))}
         initialLinks={editPostLinkRow?.postLinks}
         onSubmit={handleEditPostLinkSubmit}
-      />
-
-      <UpdatePostStatusDialog
-        open={updatePostStatusDialog.open}
-        onOpenChange={(open) => setUpdatePostStatusDialog((prev) => ({ ...prev, open }))}
-        onConfirm={handleUpdatePostStatusConfirm}
       />
 
       <UploadInsightReportDialog

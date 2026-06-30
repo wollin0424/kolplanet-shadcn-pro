@@ -78,6 +78,12 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
         url: "https://www.tiktok.com/@amelia-mirror/video/7123456789",
         postedDate: "15 Jun, 2026",
       },
+      {
+        type: "Mirrored",
+        url: "https://www.tiktok.com/@amelia-mirror/video/7123456790",
+        postedDate: "16 Jun, 2026",
+        issues: ["Missing hashtag"],
+      },
     ],
     insightReports: ["Amelia_Insight_Deck.pdf"],
     planDate: "Jun 30, 2026",
@@ -92,8 +98,27 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     postLinks: [
       {
         type: "Master",
-        url: "https://www.instagram.com/p/DKx9AvaCollins/",
+        url: "https://www.instagram.com/p/DKx9AvaCollins-1/",
+        validation: {
+          caption: "Verified",
+          cover: "Verified",
+          video: "Verified",
+        },
+      },
+      {
+        type: "Master",
+        url: "https://www.instagram.com/p/DKx9AvaCollins-2/",
         issues: ["Missing hashtag"],
+        validation: {
+          caption: "Cannot Verify",
+          cover: "Cannot Verify",
+          video: "Cannot Verify",
+        },
+      },
+      {
+        type: "Mirrored",
+        url: "https://www.tiktok.com/@ava-mirror/video/1",
+        issues: ["Caption mismatch"],
       },
     ],
     planDate: "Jun 30, 2026",
@@ -110,6 +135,11 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
         type: "Master",
         url: "https://www.instagram.com/p/DKx9ChloeReed/",
         issues: ["Data fetch failed"],
+        validation: {
+          caption: "Mismatched",
+          cover: "Mismatched",
+          video: "Mismatched",
+        },
       },
       {
         type: "Mirrored",
@@ -119,7 +149,6 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
       {
         type: "Mirrored",
         url: "https://www.instagram.com/p/1-mirror-2",
-        issues: ["Data fetch failed"],
       },
     ],
     insightReports: ["Chloe_Insight_Deck.pdf", "Chloe_UGC_Stats.xlsx"],
@@ -159,11 +188,29 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     postLinks: [
       {
         type: "Master",
-        url: "https://www.instagram.com/p/DKx9IvyMorgan/",
+        url: "https://www.instagram.com/p/DKx9IvyMorgan-1/",
         validation: {
-          caption: "Mismatched",
+          caption: "Verified",
           cover: "Verified",
           video: "Verified",
+        },
+      },
+      {
+        type: "Master",
+        url: "https://www.instagram.com/p/DKx9IvyMorgan-2/",
+        validation: {
+          caption: "Mismatched",
+          cover: "Mismatched",
+          video: "Mismatched",
+        },
+      },
+      {
+        type: "Master",
+        url: "https://www.instagram.com/p/DKx9IvyMorgan-3/",
+        validation: {
+          caption: "Cannot Verify",
+          cover: "Cannot Verify",
+          video: "Cannot Verify",
         },
       },
     ],
@@ -233,6 +280,7 @@ function getIssuesHealthStatus(issues: string[]): PostLinkHealthStatus {
 }
 
 export function getPostLinkStatus(link: PostLink): PostLinkHealthStatus {
+  if (!link.url.trim()) return "warning";
   if (link.issues?.length) return getIssuesHealthStatus(link.issues);
   if (link.type === "Master" && link.validation) {
     const statuses = [link.validation.caption, link.validation.cover, link.validation.video];
@@ -300,23 +348,121 @@ export function getPostLinkTooltipCopy(link: PostLink): PostLinkTooltipCopy {
   };
 }
 
-export const MAX_VISIBLE_MIRRORED_LINKS = 2;
-
 export function getPostLinksByType(links: PostLink[] | undefined, type: PostLinkType) {
   return links?.filter((link) => link.type === type) ?? [];
 }
 
 export function getVisibleMirroredLinks(links?: PostLink[]) {
-  return getPostLinksByType(links, "Mirrored").slice(0, MAX_VISIBLE_MIRRORED_LINKS);
+  return getPostLinksByType(links, "Mirrored");
 }
 
-/** Each row has at most one Master link. */
+export function getMasterPostLinks(links?: PostLink[]) {
+  return getPostLinksByType(links, "Master");
+}
+
+/** First master link, if any. */
 export function getMasterPostLink(links?: PostLink[]) {
-  return links?.find((link) => link.type === "Master") ?? null;
+  return getMasterPostLinks(links)[0] ?? null;
+}
+
+export function getMasterLabel(index: number, total: number) {
+  return total === 1 ? "Master" : `Master ${index + 1}`;
+}
+
+export function getMirroredLabel(index: number, total: number) {
+  return total === 1 ? "Mirrored" : `Mirrored ${index + 1}`;
+}
+
+export function hasFetchedPostLinks(links?: PostLink[]) {
+  return (links ?? []).some((link) => link.url.trim().length > 0);
 }
 
 export function getMasterContentValidation(links?: PostLink[]): ContentValidation | null {
   return getMasterPostLink(links)?.validation ?? null;
+}
+
+export type PostLinkStatusFilter = "All" | "Not Fetched Yet" | "All Verified" | "Has Exceptions";
+
+export type ContentValidationFilter =
+  | "All"
+  | "All Verified"
+  | "Has Mismatched"
+  | "Has Fetch Failed"
+  | "Has No Draft";
+
+export const POST_LINK_STATUS_FILTER_OPTIONS: PostLinkStatusFilter[] = [
+  "All",
+  "Not Fetched Yet",
+  "All Verified",
+  "Has Exceptions",
+];
+
+export const CONTENT_VALIDATION_FILTER_OPTIONS: ContentValidationFilter[] = [
+  "All",
+  "All Verified",
+  "Has Mismatched",
+  "Has Fetch Failed",
+  "Has No Draft",
+];
+
+export function getRowPostLinkFilterStatus(
+  row: PostingHubRow
+): "not_fetched" | "all_verified" | "has_exceptions" {
+  const links = row.postLinks ?? [];
+  if (!hasFetchedPostLinks(links)) return "not_fetched";
+  const statuses = links.filter((link) => link.url.trim()).map(getPostLinkStatus);
+  if (!statuses.length) return "not_fetched";
+  if (statuses.every((status) => status === "success")) return "all_verified";
+  return "has_exceptions";
+}
+
+export function matchesPostLinkStatusFilter(
+  row: PostingHubRow,
+  filter: PostLinkStatusFilter
+): boolean {
+  if (filter === "All") return true;
+  const status = getRowPostLinkFilterStatus(row);
+  if (filter === "Not Fetched Yet") return status === "not_fetched";
+  if (filter === "All Verified") return status === "all_verified";
+  if (filter === "Has Exceptions") return status === "has_exceptions";
+  return true;
+}
+
+export function matchesContentValidationFilter(
+  row: PostingHubRow,
+  filter: ContentValidationFilter
+): boolean {
+  if (filter === "All") return true;
+
+  const masters = getMasterPostLinks(row.postLinks).filter((link) => link.url.trim());
+
+  if (filter === "Has No Draft") {
+    return masters.length > 0 && masters.some((link) => !link.validation);
+  }
+
+  const validations = masters
+    .map((link) => link.validation)
+    .filter((validation): validation is ContentValidation => Boolean(validation));
+
+  if (!validations.length) return false;
+
+  const allStatuses = validations.flatMap((validation) => [
+    validation.caption,
+    validation.cover,
+    validation.video,
+  ]);
+
+  if (filter === "All Verified") {
+    return masters.every((link) => {
+      if (!link.validation) return false;
+      return [link.validation.caption, link.validation.cover, link.validation.video].every(
+        (status) => status === "Verified"
+      );
+    });
+  }
+  if (filter === "Has Mismatched") return allStatuses.some((status) => status === "Mismatched");
+  if (filter === "Has Fetch Failed") return allStatuses.some((status) => status === "Cannot Verify");
+  return true;
 }
 
 export const MOCK_AUTO_VALIDATION_RESULT: ContentValidation = {
@@ -329,7 +475,12 @@ export function buildMockFetchedPostLinks(row: PostingHubRow): PostLink[] {
   return [
     {
       type: "Master",
-      url: `https://www.instagram.com/p/${row.id}-master/`,
+      url: `https://www.instagram.com/p/${row.id}-master-1/`,
+      postedDate: row.actualDate ?? row.planDate,
+    },
+    {
+      type: "Master",
+      url: `https://www.instagram.com/p/${row.id}-master-2/`,
       postedDate: row.actualDate ?? row.planDate,
     },
     {
@@ -341,9 +492,10 @@ export function buildMockFetchedPostLinks(row: PostingHubRow): PostLink[] {
 }
 
 export function applyMockValidationToPostLinks(links?: PostLink[]): PostLink[] {
-  return (links ?? []).map((link) =>
-    link.type === "Master" ? { ...link, validation: MOCK_AUTO_VALIDATION_RESULT } : link
-  );
+  return (links ?? []).map((link) => {
+    if (link.type !== "Master" || !link.url.trim() || link.validation) return link;
+    return { ...link, validation: MOCK_AUTO_VALIDATION_RESULT };
+  });
 }
 
 export function getMirroredAggregateStatus(links: PostLink[]): PostLinkHealthStatus {
@@ -362,10 +514,14 @@ export function formatPostLinkHost(url: string) {
 }
 
 export function getPostLinkDateLabel(links: PostLink[], link: PostLink): string {
-  if (link.type === "Master") return "Master";
+  if (link.type === "Master") {
+    const masters = getMasterPostLinks(links);
+    const index = masters.indexOf(link);
+    return getMasterLabel(index, masters.length);
+  }
   const mirrored = getPostLinksByType(links, "Mirrored");
   const index = mirrored.indexOf(link);
-  return mirrored.length === 1 ? "Mirrored" : `Mirrored ${index + 1}`;
+  return getMirroredLabel(index, mirrored.length);
 }
 
 export function getPostLinkDateEntries(
@@ -373,9 +529,9 @@ export function getPostLinkDateEntries(
 ): { label: string; date: string }[] {
   if (!links?.length) return [];
 
-  const master = getMasterPostLink(links);
+  const masters = getMasterPostLinks(links);
   const mirrored = getPostLinksByType(links, "Mirrored");
-  const ordered = [...(master ? [master] : []), ...mirrored];
+  const ordered = [...masters, ...mirrored];
 
   return ordered
     .filter((link) => link.postedDate)

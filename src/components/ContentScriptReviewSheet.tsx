@@ -6,6 +6,13 @@ import { ContentGuidelinesDisplayBlock, ContentGuidelinesTranslationNote } from 
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { ScriptKolDraftPanel } from "@/components/ScriptKolDraftPanel";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -119,6 +126,8 @@ const SCRIPT_IDEA_STYLES = [
 
 type GenerateIdeasPhase = "idle" | "loading" | "results";
 
+type ScriptIdeaBody = Pick<ScriptIdea, "hook" | "coreFlow" | "executionNotes" | "cta">;
+
 type ScriptIdea = {
   title: string;
   summary: string;
@@ -126,7 +135,60 @@ type ScriptIdea = {
   coreFlow: string;
   executionNotes: string;
   cta: string;
+  translation?: ScriptIdeaBody;
+  targetLanguage?: string;
 };
+
+const REFERENCE_SCRIPT_TARGET_LANGUAGES = [
+  "Bahasa Indonesia",
+  "Bahasa Melayu",
+  "Thai",
+  "Vietnamese",
+  "Japanese",
+  "English",
+  "Chinese (Traditional)",
+] as const;
+
+const referenceScriptTabClass = (active: boolean) =>
+  cn(
+    "inline-flex h-9 shrink-0 items-center border-b-2 px-2.5 text-[12px] font-medium leading-none transition-colors",
+    active
+      ? "border-brand text-gray-900"
+      : "border-transparent text-gray-500 hover:text-gray-800"
+  );
+
+function translateScriptIdeaBody(idea: ScriptIdeaBody, targetLanguage: string): ScriptIdeaBody {
+  const translate = (text: string) => `[${targetLanguage}] ${text}`;
+  return {
+    hook: translate(idea.hook),
+    coreFlow: translate(idea.coreFlow),
+    executionNotes: translate(idea.executionNotes),
+    cta: translate(idea.cta),
+  };
+}
+
+function formatReferenceScriptTranslation(body: ScriptIdeaBody) {
+  return `Hook: ${body.hook}\n\nCore flow: ${body.coreFlow}\n\nExecution notes: ${body.executionNotes}\n\nCTA: ${body.cta}`;
+}
+
+function ReferenceScriptIdeaBodyView({ body }: { body: ScriptIdeaBody }) {
+  return (
+    <div className="space-y-2.5 text-[13px] font-normal leading-relaxed text-gray-600">
+      <p>
+        <span className="font-semibold text-gray-800">Hook:</span> {body.hook}
+      </p>
+      <p>
+        <span className="font-semibold text-gray-800">Core flow:</span> {body.coreFlow}
+      </p>
+      <p>
+        <span className="font-semibold text-gray-800">Execution notes:</span> {body.executionNotes}
+      </p>
+      <p>
+        <span className="font-semibold text-gray-800">CTA:</span> {body.cta}
+      </p>
+    </div>
+  );
+}
 
 function buildMockScriptIdeas(prompt: string, influencerName: string): ScriptIdea[] {
   const direction = prompt.trim() || "Keep the creator's established tone.";
@@ -170,75 +232,298 @@ function parseIdeaBody(
 }
 
 function scriptIdeaToReferenceScript(idea: ScriptIdea): ScriptBriefPublished["referenceScripts"][number] {
-  const body = `Hook: ${idea.hook}\n\nCore flow: ${idea.coreFlow}\n\nExecution notes: ${idea.executionNotes}\n\nCTA: ${idea.cta}`;
+  const body = formatReferenceScriptTranslation(idea);
   return {
     title: idea.title,
     original: body,
-    translation: body,
+    translation: idea.translation ? formatReferenceScriptTranslation(idea.translation) : body,
   };
 }
 
 const cardActionClass =
   "inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 transition-colors hover:text-gray-800";
 
-function ReferenceScriptIdeaCard({
-  idea,
-  onEdit,
-  onRemove,
+function ReferenceScriptTranslatorDialogBody({
+  ideas,
+  originIndex,
+  onOpenChange,
+  onConfirm,
 }: {
-  idea: ScriptIdea;
-  onEdit: (patch: Pick<ScriptIdea, "hook" | "coreFlow" | "executionNotes" | "cta">) => void;
-  onRemove: () => void;
+  ideas: ScriptIdea[];
+  originIndex: number;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: (targetLanguage: string, indices: number[]) => void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [draftBody, setDraftBody] = useState(() => formatIdeaBody(idea));
+  const [targetLanguage, setTargetLanguage] = useState("");
+  const [translateAll, setTranslateAll] = useState(false);
+
+  const canConfirm = Boolean(targetLanguage);
 
   return (
-    <div className="group/card relative rounded-xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-      <span className="inline-flex rounded-md bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[420px]" showCloseButton>
+        <div className="border-b border-gray-100 bg-gradient-to-b from-gray-50/80 to-white px-6 pt-6 pb-5">
+          <div className="flex items-start gap-3 pr-6">
+            <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand ring-1 ring-brand/10">
+              <Languages size={18} strokeWidth={2} />
+            </span>
+            <div className="min-w-0 pt-0.5">
+              <DialogTitle className="text-base font-semibold text-gray-900">Translator</DialogTitle>
+              <DialogDescription className="mt-1 text-sm text-gray-500">
+                Choose a target language to generate a reference translation.
+              </DialogDescription>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4 px-6 py-5">
+          <div className="space-y-3">
+            <label className="block text-xs font-medium text-gray-700">Target language</label>
+            <Select
+              modal={false}
+              value={targetLanguage || null}
+              onValueChange={(value) => {
+                if (value) setTargetLanguage(value);
+              }}
+            >
+              <SelectTrigger
+                size="default"
+                className="h-10! w-full rounded-lg border-gray-200 bg-white px-3 py-0 text-sm shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+              >
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent alignItemWithTrigger={false}>
+                {REFERENCE_SCRIPT_TARGET_LANGUAGES.map((language) => (
+                  <SelectItem key={language} value={language} className="text-xs">
+                    {language}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {ideas.length > 1 ? (
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-gray-100 bg-gray-50/50 px-3 py-2.5">
+              <Checkbox
+                checked={translateAll}
+                onCheckedChange={(checked) => setTranslateAll(checked === true)}
+                aria-label="Translate all script ideas"
+              />
+              <span className="text-[13px] text-gray-700">Translate all script ideas</span>
+            </label>
+          ) : null}
+        </div>
+
+        <div className="flex items-center justify-center gap-2 border-t border-gray-100 bg-gray-50/50 px-6 py-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 px-4 text-[13px]"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="brand"
+            className="h-9 px-4 text-[13px]"
+            disabled={!canConfirm}
+            onClick={() => {
+              if (!canConfirm) return;
+              const indices = translateAll ? ideas.map((_, index) => index) : [originIndex];
+              onConfirm(targetLanguage, indices);
+              onOpenChange(false);
+            }}
+          >
+            Translate
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ReferenceScriptTranslatorDialog({
+  open,
+  onOpenChange,
+  ideas,
+  originIndex,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  ideas: ScriptIdea[];
+  originIndex: number;
+  onConfirm: (targetLanguage: string, indices: number[]) => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <ReferenceScriptTranslatorDialogBody
+      key={originIndex}
+      ideas={ideas}
+      originIndex={originIndex}
+      onOpenChange={onOpenChange}
+      onConfirm={onConfirm}
+    />
+  );
+}
+
+function ReferenceScriptIdeaCard({
+  idea,
+  selected,
+  onToggleSelect,
+  onEdit,
+  onEditTranslation,
+  onRemove,
+  onOpenTranslator,
+}: {
+  idea: ScriptIdea;
+  selected: boolean;
+  onToggleSelect: () => void;
+  onEdit: (patch: ScriptIdeaBody) => void;
+  onEditTranslation: (patch: ScriptIdeaBody) => void;
+  onRemove: () => void;
+  onOpenTranslator: () => void;
+}) {
+  const [editingOriginal, setEditingOriginal] = useState(false);
+  const [originalDraft, setOriginalDraft] = useState(() => formatIdeaBody(idea));
+  const [translationDraft, setTranslationDraft] = useState(() =>
+    idea.translation ? formatIdeaBody(idea.translation) : ""
+  );
+  const [translationFocused, setTranslationFocused] = useState(false);
+  const [contentView, setContentView] = useState<"original" | "translation">("original");
+
+  const hasTranslation = Boolean(idea.translation);
+  const showingTranslation = contentView === "translation" && hasTranslation && Boolean(idea.translation);
+
+  useEffect(() => {
+    if (idea.translation && !translationFocused) {
+      setTranslationDraft(formatIdeaBody(idea.translation));
+    }
+  }, [idea.translation, translationFocused]);
+
+  const startEditingOriginal = () => {
+    setOriginalDraft(formatIdeaBody(idea));
+    setEditingOriginal(true);
+  };
+
+  const cancelEditingOriginal = () => {
+    setOriginalDraft(formatIdeaBody(idea));
+    setEditingOriginal(false);
+  };
+
+  const saveEditingOriginal = () => {
+    onEdit(parseIdeaBody(originalDraft, idea));
+    setContentView("original");
+    setEditingOriginal(false);
+  };
+
+  const saveTranslationDraft = () => {
+    if (!idea.translation) return;
+    onEditTranslation(parseIdeaBody(translationDraft, idea.translation));
+  };
+
+  return (
+    <div
+      className={cn(
+        "group/card relative rounded-xl border bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-colors",
+        selected ? "border-brand/40 ring-1 ring-brand/15" : "border-gray-100"
+      )}
+    >
+      <Checkbox
+        checked={selected}
+        onCheckedChange={onToggleSelect}
+        className="absolute top-4 right-4"
+        aria-label={`Select ${idea.title}`}
+      />
+      <span className="inline-flex max-w-[calc(100%-2rem)] rounded-md bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
         {idea.title}
       </span>
       {idea.summary ? (
         <p className="mt-2 text-xs leading-relaxed text-gray-500">{idea.summary}</p>
       ) : null}
 
-      {editing ? (
+      {hasTranslation && !editingOriginal ? (
+        <div className="mt-4 flex items-center gap-0.5 overflow-x-auto border-b border-gray-100">
+          <button
+            type="button"
+            onClick={() => setContentView("original")}
+            className={referenceScriptTabClass(contentView === "original")}
+          >
+            Original
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (idea.translation) {
+                setTranslationDraft(formatIdeaBody(idea.translation));
+              }
+              setContentView("translation");
+            }}
+            className={referenceScriptTabClass(contentView === "translation")}
+          >
+            Translation
+            {idea.targetLanguage ? (
+              <span className="ml-1.5 text-[11px] font-normal text-gray-400">({idea.targetLanguage})</span>
+            ) : null}
+          </button>
+        </div>
+      ) : null}
+
+      {editingOriginal ? (
         <Textarea
-          value={draftBody}
-          onChange={(e) => setDraftBody(e.target.value)}
+          value={originalDraft}
+          onChange={(e) => setOriginalDraft(e.target.value)}
           className="mt-4 min-h-[160px] resize-none border-brand/50 text-[13px] leading-relaxed ring-1 ring-brand/15 focus-visible:border-brand focus-visible:ring-brand/25"
+          placeholder="Edit the original script…"
         />
+      ) : showingTranslation ? (
+        <div className="group/translation relative mt-3">
+          <label className="block cursor-text">
+            <Textarea
+              value={translationDraft}
+              onChange={(e) => setTranslationDraft(e.target.value)}
+              onFocus={() => setTranslationFocused(true)}
+              onBlur={() => {
+                setTranslationFocused(false);
+                saveTranslationDraft();
+              }}
+              className={cn(
+                "min-h-[220px] resize-y text-[13px] leading-relaxed text-gray-700 transition-all duration-200",
+                translationFocused
+                  ? "border-brand/50 bg-white ring-1 ring-brand/15 focus-visible:border-brand focus-visible:ring-brand/25"
+                  : "border-gray-100 bg-gray-50/60 shadow-none group-hover/translation:border-brand/30 group-hover/translation:bg-white group-hover/translation:ring-1 group-hover/translation:ring-brand/10"
+              )}
+            />
+          </label>
+          {!translationFocused ? (
+            <div className="pointer-events-none absolute top-3 right-3 flex items-center gap-1 rounded-md bg-white/95 px-2 py-1 text-[11px] font-medium text-gray-500 opacity-0 shadow-sm ring-1 ring-gray-100 transition-opacity group-hover/translation:opacity-100">
+              <Pencil size={11} strokeWidth={2} />
+              Click to edit
+            </div>
+          ) : null}
+          <ContentGuidelinesTranslationNote className="mt-3" />
+        </div>
       ) : (
-        <div className="mt-4 space-y-2.5 text-[13px] font-normal leading-relaxed text-gray-600">
-          <p>
-            <span className="font-semibold text-gray-800">Hook:</span> {idea.hook}
-          </p>
-          <p>
-            <span className="font-semibold text-gray-800">Core flow:</span> {idea.coreFlow}
-          </p>
-          <p>
-            <span className="font-semibold text-gray-800">Execution notes:</span> {idea.executionNotes}
-          </p>
-          <p>
-            <span className="font-semibold text-gray-800">CTA:</span> {idea.cta}
-          </p>
+        <div className={cn(hasTranslation ? "mt-3" : "mt-4")}>
+          <ReferenceScriptIdeaBodyView body={idea} />
         </div>
       )}
 
       <div
         className={cn(
-          "mt-4 flex justify-end gap-4 transition-opacity",
-          editing ? "opacity-100" : "opacity-0 group-hover/card:opacity-100"
+          "mt-4 flex justify-end gap-4 transition-opacity duration-200",
+          editingOriginal
+            ? "opacity-100"
+            : "pointer-events-none opacity-0 group-hover/card:pointer-events-auto group-hover/card:opacity-100 group-focus-within/card:pointer-events-auto group-focus-within/card:opacity-100"
         )}
       >
-        {editing ? (
+        {editingOriginal ? (
           <>
             <button
               type="button"
-              onClick={() => {
-                onEdit(parseIdeaBody(draftBody, idea));
-                setEditing(false);
-              }}
+              onClick={saveEditingOriginal}
               className={cn(cardActionClass, "text-brand hover:text-brand/80")}
             >
               <Check size={13} strokeWidth={2} />
@@ -246,10 +531,7 @@ function ReferenceScriptIdeaCard({
             </button>
             <button
               type="button"
-              onClick={() => {
-                setDraftBody(formatIdeaBody(idea));
-                setEditing(false);
-              }}
+              onClick={cancelEditingOriginal}
               className={cardActionClass}
             >
               <X size={13} strokeWidth={2} />
@@ -258,21 +540,26 @@ function ReferenceScriptIdeaCard({
           </>
         ) : (
           <>
-            <button type="button" className={cn(cardActionClass, "hover:text-brand")}>
-              <Languages size={13} className="text-brand" strokeWidth={2} />
-              Translator
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setDraftBody(formatIdeaBody(idea));
-                setEditing(true);
-              }}
-              className={cardActionClass}
-            >
-              <Pencil size={13} strokeWidth={2} />
-              Edit
-            </button>
+            {!showingTranslation ? (
+              <button
+                type="button"
+                className={cn(cardActionClass, "hover:text-brand")}
+                onClick={onOpenTranslator}
+              >
+                <Languages size={13} className="text-brand" strokeWidth={2} />
+                Translator
+              </button>
+            ) : null}
+            {!showingTranslation ? (
+              <button
+                type="button"
+                onClick={startEditingOriginal}
+                className={cardActionClass}
+              >
+                <Pencil size={13} strokeWidth={2} />
+                Edit
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={onRemove}
@@ -383,12 +670,37 @@ function ReferenceScriptsGeneratePanel({
     figmaCapture ? "results" : "idle"
   );
   const [ideas, setIdeas] = useState<ScriptIdea[]>(captureIdeas);
+  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
   const [generationRuns, setGenerationRuns] = useState(figmaCapture ? 1 : 0);
+  const [translatorOpen, setTranslatorOpen] = useState(false);
+  const [translatorOriginIndex, setTranslatorOriginIndex] = useState(0);
   const generationLimitReached = generationRuns >= 3;
 
-  const syncIdeas = (nextIdeas: ScriptIdea[]) => {
+  const publishSelectedIdeas = useCallback(
+    (ideaList: ScriptIdea[], selected: Set<number>) => {
+      onIdeasGenerated?.(
+        [...selected]
+          .sort((a, b) => a - b)
+          .map((index) => ideaList[index])
+          .filter(Boolean)
+          .map(scriptIdeaToReferenceScript)
+      );
+    },
+    [onIdeasGenerated]
+  );
+
+  const syncIdeas = (nextIdeas: ScriptIdea[], nextSelected = new Set<number>()) => {
     setIdeas(nextIdeas);
-    onIdeasGenerated?.(nextIdeas.map(scriptIdeaToReferenceScript));
+    setSelectedIndices(nextSelected);
+  };
+
+  const toggleSelect = (index: number) => {
+    setSelectedIndices((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else if (next.size < 3) next.add(index);
+      return next;
+    });
   };
 
   const handleGenerate = (prompt?: string) => {
@@ -402,31 +714,59 @@ function ReferenceScriptsGeneratePanel({
     }, GENERATION_LOADING_MS);
   };
 
-  const updateIdea = (
-    index: number,
-    patch: Pick<ScriptIdea, "hook" | "coreFlow" | "executionNotes" | "cta">
-  ) => {
-    syncIdeas(ideas.map((idea, ideaIndex) => (ideaIndex === index ? { ...idea, ...patch } : idea)));
+  const updateIdea = (index: number, patch: Partial<ScriptIdea>) => {
+    setIdeas((prev) =>
+      prev.map((idea, ideaIndex) => (ideaIndex === index ? { ...idea, ...patch } : idea))
+    );
   };
 
   const removeIdea = (index: number) => {
     const next = ideas.filter((_, ideaIndex) => ideaIndex !== index);
-    syncIdeas(next);
+    const nextSelected = new Set<number>();
+    [...selectedIndices]
+      .sort((a, b) => a - b)
+      .forEach((selectedIndex) => {
+        if (selectedIndex < index) nextSelected.add(selectedIndex);
+        else if (selectedIndex > index) nextSelected.add(selectedIndex - 1);
+      });
+    syncIdeas(next, nextSelected);
     if (next.length === 0) setPhase("idle");
   };
 
+  const openTranslator = (index: number) => {
+    setTranslatorOriginIndex(index);
+    setTranslatorOpen(true);
+  };
+
+  const handleBatchTranslate = (targetLanguage: string, indices: number[]) => {
+    setIdeas((prev) =>
+      prev.map((idea, index) =>
+        indices.includes(index)
+          ? {
+              ...idea,
+              translation: translateScriptIdeaBody(idea, targetLanguage),
+              targetLanguage,
+            }
+          : idea
+      )
+    );
+  };
+
+  useEffect(() => {
+    publishSelectedIdeas(ideas, selectedIndices);
+  }, [ideas, selectedIndices, publishSelectedIdeas]);
+
   useEffect(() => {
     if (!figmaCapture || captureIdeas.length === 0) return;
-    onIdeasGenerated?.(captureIdeas.map(scriptIdeaToReferenceScript));
-  }, [captureIdeas, figmaCapture, onIdeasGenerated]);
+    syncIdeas(captureIdeas, new Set(captureIdeas.map((_, index) => index)));
+  }, [captureIdeas, figmaCapture]);
 
   const showPanelChrome = phase !== "loading";
-  const showInitialPrompt = phase === "idle";
 
   return (
     <div className="rounded-xl border border-gray-100 bg-gray-50 p-5">
       <div className="flex flex-col gap-4">
-        {showInitialPrompt ? (
+        {showPanelChrome ? (
           <div className="flex items-start gap-3 rounded-xl border border-sky-100 bg-sky-50/70 px-4 py-3.5">
             <Sparkles size={16} className="mt-0.5 shrink-0 text-amber-500" strokeWidth={2} />
             <p className="text-[13px] leading-relaxed text-gray-600">
@@ -442,6 +782,16 @@ function ReferenceScriptsGeneratePanel({
               to brainstorm reference scripts for the KOL.
             </p>
           </div>
+        ) : null}
+
+        {showPanelChrome ? (
+          <ReferenceScriptsContinueControls
+            customPrompt={customPrompt}
+            onCustomPromptChange={setCustomPrompt}
+            onGenerate={handleGenerate}
+            disabled={generationLimitReached}
+            generationRuns={generationRuns}
+          />
         ) : null}
 
         {phase === "loading" ? (
@@ -461,22 +811,30 @@ function ReferenceScriptsGeneratePanel({
               <ReferenceScriptIdeaCard
                 key={`${idea.title}-${index}`}
                 idea={idea}
-                onEdit={(patch) => updateIdea(index, patch)}
+                selected={selectedIndices.has(index)}
+                onToggleSelect={() => toggleSelect(index)}
+                onEdit={(patch) =>
+                  updateIdea(index, { ...patch, translation: undefined, targetLanguage: undefined })
+                }
+                onEditTranslation={(patch) => updateIdea(index, { translation: patch })}
                 onRemove={() => removeIdea(index)}
+                onOpenTranslator={() => openTranslator(index)}
               />
             ))}
+            <p className="text-[13px] leading-relaxed text-gray-500">
+              Selected:{" "}
+              <span className="font-semibold tabular-nums text-gray-600">{selectedIndices.size}/3</span>
+            </p>
           </div>
         ) : null}
 
-        {showPanelChrome ? (
-          <ReferenceScriptsContinueControls
-            customPrompt={customPrompt}
-            onCustomPromptChange={setCustomPrompt}
-            onGenerate={handleGenerate}
-            disabled={generationLimitReached}
-            generationRuns={generationRuns}
-          />
-        ) : null}
+        <ReferenceScriptTranslatorDialog
+          open={translatorOpen}
+          onOpenChange={setTranslatorOpen}
+          ideas={ideas}
+          originIndex={translatorOriginIndex}
+          onConfirm={handleBatchTranslate}
+        />
       </div>
     </div>
   );

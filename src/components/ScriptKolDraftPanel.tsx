@@ -609,38 +609,57 @@ function KolDraftReviewCard({
     onApproved?.();
   };
 
-  const header = (
-    <div className="flex flex-1 items-start justify-between gap-3">
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <p className="text-sm font-semibold text-gray-900">Version {submission.version}</p>
-        <p className="text-xs text-gray-500">{submission.submittedAt}</p>
-      </div>
-      <div className="flex items-center gap-2">
-        <ContentReviewStatusBadge status={displayStatus} />
-        {collapsible ? (
-          expanded ? (
-            <ChevronUp size={16} className="text-gray-400" strokeWidth={2} />
-          ) : (
-            <ChevronDown size={16} className="text-gray-400" strokeWidth={2} />
-          )
-        ) : null}
-      </div>
+  const showApprove = isLatest && !isApproved;
+
+  const headerTitle = (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <p className="text-sm font-semibold text-gray-900">Version {submission.version}</p>
+      <p className="text-xs text-gray-500">{submission.submittedAt}</p>
+      <ContentReviewStatusBadge status={displayStatus} />
     </div>
   );
 
   return (
     <div className="rounded-xl border border-brand/15 bg-brand-50/20 p-4">
-      {collapsible ? (
-        <button
-          type="button"
-          onClick={() => setExpanded((value) => !value)}
-          className="flex w-full items-start text-left"
-        >
-          {header}
-        </button>
-      ) : (
-        <div className="mb-4">{header}</div>
-      )}
+      <div className={cn("flex items-start justify-between gap-3", !collapsible && "mb-4")}>
+        {collapsible ? (
+          <button
+            type="button"
+            onClick={() => setExpanded((value) => !value)}
+            className="min-w-0 flex-1 text-left"
+          >
+            {headerTitle}
+          </button>
+        ) : (
+          <div className="min-w-0 flex-1">{headerTitle}</div>
+        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {showApprove ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-7 shrink-0 border-brand/20 bg-brand-50/40 px-3.5 text-[12px] font-medium text-brand shadow-none hover:border-brand/30 hover:bg-brand-50 hover:text-brand"
+              onClick={() => setApproveDialogOpen(true)}
+            >
+              Approve
+            </Button>
+          ) : null}
+          {collapsible ? (
+            <button
+              type="button"
+              onClick={() => setExpanded((value) => !value)}
+              className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              aria-label={expanded ? "Collapse version" : "Expand version"}
+            >
+              {expanded ? (
+                <ChevronUp size={16} strokeWidth={2} />
+              ) : (
+                <ChevronDown size={16} strokeWidth={2} />
+              )}
+            </button>
+          ) : null}
+        </div>
+      </div>
 
       {expanded ? (
         <div className={cn(collapsible && "mt-4", "flex flex-col")}>
@@ -652,28 +671,16 @@ function KolDraftReviewCard({
             readOnly={feedbackReadOnly}
             placeholder="Write feedback..."
           />
-
-          {isLatest && !isApproved ? (
-            <>
-              <div className="-mx-4 mt-4 flex shrink-0 justify-end border-t border-gray-100 px-4 pt-3">
-                <Button
-                  type="button"
-                  variant="brand"
-                  className="h-9 px-5 text-[13px]"
-                  onClick={() => setApproveDialogOpen(true)}
-                >
-                  Approve
-                </Button>
-              </div>
-              <ScriptApprovalConfirmDialog
-                open={approveDialogOpen}
-                onOpenChange={setApproveDialogOpen}
-                alreadyApproved={false}
-                onConfirm={handleConfirmApprove}
-              />
-            </>
-          ) : null}
         </div>
+      ) : null}
+
+      {isLatest && !isApproved ? (
+        <ScriptApprovalConfirmDialog
+          open={approveDialogOpen}
+          onOpenChange={setApproveDialogOpen}
+          alreadyApproved={false}
+          onConfirm={handleConfirmApprove}
+        />
       ) : null}
     </div>
   );
@@ -739,7 +746,7 @@ export function ScriptKolDraftPanel({
           submission={submission}
           displayStatus={draftStatusToKolStatus(submission.status)}
           defaultExpanded={index === 0}
-          collapsible={index > 0}
+          collapsible
           isLatest={index === 0}
           discussionLocked={discussionLocked}
           onApproved={onApproved}
