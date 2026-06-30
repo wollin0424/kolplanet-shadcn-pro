@@ -1066,7 +1066,7 @@ function ScriptBriefH5ViewInner({
   view,
 }: {
   kolId: string;
-  view: "overview" | "script" | "guidelines" | "video" | "caption" | "posting";
+  view: "overview" | "script" | "guidelines" | "contract" | "video" | "caption" | "posting";
 }) {
   const [data, setData] = useState(() => getScriptBriefH5Defaults(kolId));
   const [draft, setDraft] = useState("");

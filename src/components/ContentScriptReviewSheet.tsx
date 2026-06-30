@@ -208,8 +208,8 @@ function formatIdeaBody(idea: Pick<ScriptIdea, "hook" | "coreFlow" | "executionN
 
 function parseIdeaBody(
   text: string,
-  fallback: ScriptIdea
-): Pick<ScriptIdea, "hook" | "coreFlow" | "executionNotes" | "cta"> {
+  fallback: ScriptIdeaBody
+): ScriptIdeaBody {
   const readSection = (label: string, nextLabels: string[]) => {
     const escaped = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     if (nextLabels.length === 0) {
