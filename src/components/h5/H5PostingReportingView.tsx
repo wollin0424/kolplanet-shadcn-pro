@@ -293,16 +293,11 @@ function H5InsightUploadSection({
         hint="PNG / JPG screenshots"
       />
 
-      {hasSubmittedFiles ? (
-        <p className="text-[11px] leading-relaxed text-gray-500">
-          Submitted screenshots cannot be removed. New uploads can be deleted until you submit
-          again.
-        </p>
-      ) : (
+      {!hasSubmittedFiles ? (
         <p className="text-[11px] leading-relaxed text-gray-400">
           Upload completes the draft only. Click Submit to finalize the report.
         </p>
-      )}
+      ) : null}
 
       {hasSubmittedFiles && pendingFiles.length === 0 ? (
         <p className="text-[11px] font-medium text-emerald-700">

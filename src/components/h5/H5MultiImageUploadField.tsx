@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { Trash2, Upload } from "@/lib/icons";
+import { CheckCircle2, Eye, Trash2, Upload } from "@/lib/icons";
 import { FORM_FIELD_RADIUS } from "@/lib/formControls";
 import { cn } from "@/lib/utils";
 
@@ -103,28 +103,49 @@ export function H5MultiImageUploadField({
           {files.map((file) => (
             <div
               key={file.id}
-              className={cn("group/file relative overflow-hidden border border-gray-200 bg-white", FORM_FIELD_RADIUS)}
+              className={cn(
+                "group/file overflow-hidden border bg-white",
+                file.locked ? "border-emerald-200/90 ring-1 ring-emerald-100" : "border-gray-200",
+                FORM_FIELD_RADIUS
+              )}
             >
-              <img
-                src={file.previewUrl}
-                alt={file.name}
-                className="aspect-[4/3] w-full object-cover"
-              />
-              {!disabled && !file.locked ? (
-                <button
-                  type="button"
-                  onClick={() => onRemoveFile(file.id)}
-                  className="absolute right-1.5 top-1.5 inline-grid size-6 place-items-center rounded-full bg-black/55 text-white"
-                  aria-label={`Remove ${file.name}`}
-                >
-                  <Trash2 size={12} strokeWidth={2.2} />
-                </button>
-              ) : null}
-              {file.locked ? (
-                <span className="pointer-events-none absolute left-1.5 top-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white">
-                  Submitted
-                </span>
-              ) : null}
+              <div className="relative aspect-[4/3] w-full overflow-hidden">
+                <img
+                  src={file.previewUrl}
+                  alt={file.name}
+                  className="size-full object-cover"
+                />
+                {file.locked ? (
+                  <span className="pointer-events-none absolute left-1.5 top-1.5 z-10 inline-flex items-center gap-1 rounded-full border border-emerald-300/50 bg-emerald-600 px-2 py-1 text-[10px] font-semibold leading-none text-white shadow-md backdrop-blur-sm">
+                    <CheckCircle2 size={11} strokeWidth={2.4} />
+                    Submitted
+                  </span>
+                ) : null}
+                <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 transition-colors group-hover/file:bg-black/35">
+                  <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover/file:opacity-100">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        window.open(file.previewUrl, "_blank", "noopener,noreferrer")
+                      }
+                      className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+                      aria-label={`Preview ${file.name}`}
+                    >
+                      <Eye size={16} strokeWidth={2} />
+                    </button>
+                    {!disabled && !file.locked ? (
+                      <button
+                        type="button"
+                        onClick={() => onRemoveFile(file.id)}
+                        className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+                        aria-label={`Remove ${file.name}`}
+                      >
+                        <Trash2 size={16} strokeWidth={2} />
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
               <div className="px-2 py-1.5">
                 <p className="truncate text-[11px] font-medium text-gray-800">{file.name}</p>
                 <p className="text-[10px] text-gray-400">{file.sizeLabel}</p>
