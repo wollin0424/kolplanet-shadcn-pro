@@ -34,7 +34,6 @@ import {
   POSTING_HUB_STATUS_OPTIONS,
   POST_LINK_STATUS_FILTER_OPTIONS,
   CONTENT_VALIDATION_FILTER_OPTIONS,
-  applyMockValidationToPostLinks,
   applyMockValidationToMasterLink,
   buildMockFetchedPostLinks,
   formatPostingPlanDate,
@@ -77,6 +76,7 @@ const STATUS_ICON_CLASS: Record<"success" | "warning" | "error", string> = {
 const VALIDATION_STATUS_CONFIG: Record<
   ContentValidationStatus,
   {
+    pillSurfaceClassName: string;
     tagClassName: string;
     iconClassName: string;
     Icon: typeof CheckCircle2;
@@ -84,24 +84,28 @@ const VALIDATION_STATUS_CONFIG: Record<
   }
 > = {
   Verified: {
+    pillSurfaceClassName: "border-emerald-200/90 bg-emerald-50",
     tagClassName: "border-emerald-200/90 bg-emerald-50 text-emerald-700",
     iconClassName: STATUS_ICON_CLASS.success,
     Icon: CheckCircle2,
     title: "Verified",
   },
   Mismatched: {
+    pillSurfaceClassName: "border-red-200/90 bg-red-50",
     tagClassName: "border-red-200/90 bg-red-50 text-red-700",
     iconClassName: STATUS_ICON_CLASS.error,
     Icon: X,
     title: "Mismatched",
   },
   "Cannot Verify": {
+    pillSurfaceClassName: "border-amber-200/90 bg-amber-50",
     tagClassName: "border-amber-200/90 bg-amber-50 text-amber-700",
     iconClassName: STATUS_ICON_CLASS.warning,
     Icon: AlertCircle,
     title: "Fetch Failed",
   },
   "No Draft": {
+    pillSurfaceClassName: "border-gray-200 bg-gray-50",
     tagClassName: "border-gray-200 bg-gray-50 text-gray-600",
     iconClassName: "text-gray-400",
     Icon: FileX,
@@ -135,11 +139,14 @@ const POST_LINK_TYPE_CLASS: Record<PostLinkType, string> = {
   Mirrored: "border-gray-200 bg-gray-50 text-gray-500",
 };
 
+const POSTING_DATE_TAG_PILL_WIDTH = "w-[76px] justify-center whitespace-nowrap";
+
 function PostLinkTypeLabelPill({ label, linkType }: { label: string; linkType: PostLinkType }) {
   return (
     <span
       className={cn(
         "inline-flex h-[22px] shrink-0 items-center rounded-full border px-1.5 text-[11px] font-semibold leading-none",
+        POSTING_DATE_TAG_PILL_WIDTH,
         POST_LINK_TYPE_CLASS[linkType]
       )}
     >
@@ -223,9 +230,16 @@ const POST_LINK_ROW_CLASS = "flex h-7 min-w-0 items-center gap-1.5";
 const ROW_ACTION_BUTTON_CLASS =
   "inline-grid size-[22px] shrink-0 place-items-center rounded-full border p-0 leading-none";
 
+const POSTING_ROW_HOVER_ACTION_CLASS = "posting-row-hover-action";
+
 function RowHoverAction({ children }: { children: ReactNode }) {
   return (
-    <div className="pointer-events-none inline-flex shrink-0 items-center leading-none opacity-0 transition-opacity duration-200 group-hover/posting-row:pointer-events-auto group-hover/posting-row:opacity-100 group-focus-within/posting-row:pointer-events-auto group-focus-within/posting-row:opacity-100">
+    <div
+      className={cn(
+        POSTING_ROW_HOVER_ACTION_CLASS,
+        "pointer-events-none inline-flex shrink-0 items-center leading-none opacity-0 transition-opacity duration-200 group-hover/posting-row:pointer-events-auto group-hover/posting-row:opacity-100 group-focus-within/posting-row:pointer-events-auto group-focus-within/posting-row:opacity-100"
+      )}
+    >
       {children}
     </div>
   );
@@ -233,7 +247,12 @@ function RowHoverAction({ children }: { children: ReactNode }) {
 
 function LinkRowHoverAction({ children }: { children: ReactNode }) {
   return (
-    <div className="pointer-events-none inline-flex shrink-0 items-center leading-none opacity-0 transition-opacity duration-200 group-hover/master-link:pointer-events-auto group-hover/master-link:opacity-100 group-focus-within/master-link:pointer-events-auto group-focus-within/master-link:opacity-100">
+    <div
+      className={cn(
+        POSTING_ROW_HOVER_ACTION_CLASS,
+        "pointer-events-none inline-flex shrink-0 items-center leading-none opacity-0 transition-opacity duration-200 group-hover/master-link:pointer-events-auto group-hover/master-link:opacity-100 group-focus-within/master-link:pointer-events-auto group-focus-within/master-link:opacity-100"
+      )}
+    >
       {children}
     </div>
   );
@@ -241,7 +260,12 @@ function LinkRowHoverAction({ children }: { children: ReactNode }) {
 
 function ValidationRowHoverAction({ children }: { children: ReactNode }) {
   return (
-    <div className="pointer-events-none inline-flex shrink-0 items-center leading-none opacity-0 transition-opacity duration-200 group-hover/validation-row:pointer-events-auto group-hover/validation-row:opacity-100 group-focus-within/validation-row:pointer-events-auto group-focus-within/validation-row:opacity-100">
+    <div
+      className={cn(
+        POSTING_ROW_HOVER_ACTION_CLASS,
+        "pointer-events-none inline-flex shrink-0 items-center leading-none opacity-0 transition-opacity duration-200 group-hover/validation-row:pointer-events-auto group-hover/validation-row:opacity-100 group-focus-within/validation-row:pointer-events-auto group-focus-within/validation-row:opacity-100"
+      )}
+    >
       {children}
     </div>
   );
@@ -259,6 +283,7 @@ function PostLinkRowAction({
   emphasized?: boolean;
 }) {
   const Icon = variant === "edit" ? Pencil : RefreshCcw;
+  const isBrandStyled = emphasized || variant === "edit";
 
   return (
     <button
@@ -267,7 +292,7 @@ function PostLinkRowAction({
       aria-label={ariaLabel}
       className={cn(
         ROW_ACTION_BUTTON_CLASS,
-        emphasized
+        isBrandStyled
           ? "border-brand/25 bg-brand-50 text-brand transition-colors hover:border-brand/40 hover:bg-brand-100/80"
           : "border-gray-200 bg-white text-gray-500 transition-colors hover:border-brand/30 hover:bg-brand-50/40 hover:text-brand"
       )}
@@ -278,7 +303,7 @@ function PostLinkRowAction({
 }
 
 const VALIDATION_MICRO_PILL_CLASS =
-  "inline-flex h-[22px] items-center gap-1 rounded-full border border-gray-200 bg-white px-1.5 text-[10px] font-semibold leading-none";
+  "inline-flex h-[22px] items-center gap-1 rounded-full border px-1.5 text-[10px] font-semibold leading-none";
 
 const VALIDATION_MICRO_PILL_WIDTH: Record<ContentValidationField, string> = {
   Caption: "min-w-[69px]",
@@ -294,7 +319,7 @@ function ValidationMicroIconSlot({ children }: { children: ReactNode }) {
   );
 }
 
-function ValidationMicro({
+function ValidationMicroTooltipBody({
   label,
   status,
 }: {
@@ -302,46 +327,101 @@ function ValidationMicro({
   status: ContentValidationStatus;
 }) {
   const config = VALIDATION_STATUS_CONFIG[status];
-  const Icon = config.Icon;
   const description = getContentValidationTooltipDescription(label, status);
 
   return (
+    <div className="flex flex-col gap-2">
+      <span
+        className={cn(
+          "inline-flex w-fit rounded-full border px-2.5 py-0.5 text-[11px] font-semibold leading-none",
+          config.tagClassName
+        )}
+      >
+        {config.title}
+      </span>
+      <p className="text-[11px] leading-relaxed text-gray-500">{description}</p>
+    </div>
+  );
+}
+
+function validationStatusCaptureId(status: ContentValidationStatus) {
+  return status.toLowerCase().replace(/\s+/g, "-");
+}
+
+const FIGMA_VALIDATION_TOOLTIP_STATUSES: ContentValidationStatus[] = [
+  "Verified",
+  "Mismatched",
+  "Cannot Verify",
+  "No Draft",
+];
+
+function ValidationMicro({
+  label,
+  status,
+  figmaTooltipPinned = false,
+}: {
+  label: ContentValidationField;
+  status: ContentValidationStatus;
+  figmaTooltipPinned?: boolean;
+}) {
+  const config = VALIDATION_STATUS_CONFIG[status];
+  const Icon = config.Icon;
+
+  const pill = (
+    <span
+      className={cn(
+        VALIDATION_MICRO_PILL_CLASS,
+        VALIDATION_MICRO_PILL_WIDTH[label],
+        config.pillSurfaceClassName,
+        "cursor-default text-gray-600"
+      )}
+    >
+      <ValidationMicroIconSlot>
+        <Icon size={13} strokeWidth={2.2} className={cn("shrink-0", config.iconClassName)} />
+      </ValidationMicroIconSlot>
+      <span className="whitespace-nowrap">{label}</span>
+    </span>
+  );
+
+  if (figmaTooltipPinned) {
+    return (
+      <div
+        className="flex flex-col items-start gap-2"
+        data-figma-capture={`posting-validation-tooltip-${validationStatusCaptureId(status)}`}
+      >
+        {pill}
+        <div className="inline-flex w-[min(280px,calc(100vw-2rem))] max-w-none flex-col gap-0 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-[12px] text-gray-900 shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+          <ValidationMicroTooltipBody label={label} status={status} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
     <Tooltip>
-      <TooltipTrigger
-        render={
-          <span
-            className={cn(
-              VALIDATION_MICRO_PILL_CLASS,
-              VALIDATION_MICRO_PILL_WIDTH[label],
-              "cursor-default text-gray-600"
-            )}
-          >
-            <ValidationMicroIconSlot>
-              <Icon size={13} strokeWidth={2.2} className={cn("shrink-0", config.iconClassName)} />
-            </ValidationMicroIconSlot>
-            <span className="whitespace-nowrap">{label}</span>
-          </span>
-        }
-      />
+      <TooltipTrigger render={pill} />
       <TooltipContent
         variant="light"
         side="top"
         sideOffset={4}
         className="w-[min(280px,calc(100vw-2rem))] max-w-none gap-0 px-3 py-2.5"
       >
-        <div className="flex flex-col gap-2">
-          <span
-            className={cn(
-              "inline-flex w-fit rounded-full border px-2.5 py-0.5 text-[11px] font-semibold leading-none",
-              config.tagClassName
-            )}
-          >
-            {config.title}
-          </span>
-          <p className="text-[11px] leading-relaxed text-gray-500">{description}</p>
-        </div>
+        <ValidationMicroTooltipBody label={label} status={status} />
       </TooltipContent>
     </Tooltip>
+  );
+}
+
+function PostingValidationTooltipsFigmaCapture() {
+  return (
+    <div
+      className="fixed left-0 top-0 z-[300] flex flex-col gap-5 p-20"
+      data-figma-capture="posting-validation-tooltips-panel"
+    >
+      {FIGMA_VALIDATION_TOOLTIP_STATUSES.map((status) => (
+        <ValidationMicro key={status} label="Caption" status={status} figmaTooltipPinned />
+      ))}
+    </div>
   );
 }
 
@@ -485,11 +565,17 @@ function PostLinkMirroredTooltipContent({ links }: { links: PostLink[] }) {
   );
 }
 
-function PostLinkMirroredPillWithTooltip({ links }: { links: PostLink[] }) {
+function PostLinkMirroredPillWithTooltip({
+  links,
+  figmaTooltipOpen = false,
+}: {
+  links: PostLink[];
+  figmaTooltipOpen?: boolean;
+}) {
   const count = links.length;
 
   return (
-    <Tooltip>
+    <Tooltip open={figmaTooltipOpen ? true : undefined}>
       <TooltipTrigger
         render={
           <span
@@ -512,6 +598,7 @@ function PostLinkMirroredPillWithTooltip({ links }: { links: PostLink[] }) {
         side="top"
         align="start"
         className="w-[min(300px,calc(100vw-2rem))] max-w-none gap-0 px-3 py-2.5"
+        data-figma-capture={figmaTooltipOpen ? "posting-mirrored-link-tooltip" : undefined}
       >
         <PostLinkMirroredTooltipContent links={links} />
       </TooltipContent>
@@ -523,14 +610,16 @@ function PostLinkMirroredGroup({
   links,
   showEdit,
   onEdit,
+  figmaTooltipOpen = false,
 }: {
   links: PostLink[];
   showEdit: boolean;
   onEdit?: () => void;
+  figmaTooltipOpen?: boolean;
 }) {
   return (
     <div className={cn(POST_LINK_ROW_CLASS, "group/master-link w-fit max-w-full")}>
-      <PostLinkMirroredPillWithTooltip links={links} />
+      <PostLinkMirroredPillWithTooltip links={links} figmaTooltipOpen={figmaTooltipOpen} />
       {showEdit ? (
         <LinkRowHoverAction>
           <PostLinkRowAction variant="edit" onClick={onEdit!} ariaLabel="Edit post links" />
@@ -597,11 +686,13 @@ function PostLinkEmptyState({ onFetch }: { onFetch: () => void }) {
 
 function PostLinkCell({
   row,
+  figmaMirroredTooltipOpen = false,
   onFetchPostLinks,
   onEditPostLink,
   onFetchMasterLink,
 }: {
   row: PostingHubRow;
+  figmaMirroredTooltipOpen?: boolean;
   onFetchPostLinks: (row: PostingHubRow) => void;
   onEditPostLink: (row: PostingHubRow) => void;
   onFetchMasterLink: (row: PostingHubRow, masterIndex: number) => void;
@@ -634,6 +725,7 @@ function PostLinkCell({
             links={mirrored}
             showEdit={hasAnyUrl}
             onEdit={() => onEditPostLink(row)}
+            figmaTooltipOpen={figmaMirroredTooltipOpen}
           />
         </div>
       ) : null}
@@ -647,7 +739,7 @@ function ValidationMicroPlaceholder({ label }: { label: ContentValidationField }
       className={cn(
         VALIDATION_MICRO_PILL_CLASS,
         VALIDATION_MICRO_PILL_WIDTH[label],
-        "text-gray-400"
+        "border-gray-200 bg-white text-gray-400"
       )}
     >
       <ValidationMicroIconSlot>
@@ -719,11 +811,7 @@ function ContentValidationMasterRow({
 }
 
 function ContentValidationMirroredRow() {
-  return (
-    <div className={POST_LINK_ROW_CLASS}>
-      <span className="text-[11px] text-gray-300">—</span>
-    </div>
-  );
+  return <div className={POST_LINK_ROW_CLASS} aria-hidden />;
 }
 
 function ContentValidationCell({
@@ -872,13 +960,19 @@ function PostingDateCell({ row }: { row: PostingHubRow }) {
           ) : null}
         </p>
       ) : (
-        <p className="text-[11px] text-gray-400">—</p>
+        <p className="text-[11px] text-gray-400">
+          <span>Actual:</span> <span>--</span>
+        </p>
       )}
     </div>
   );
 }
 
 function PostingHubTable({
+  figmaCapture = false,
+  figmaPostingHoverRowId,
+  figmaPostingActionsOpen = false,
+  figmaPostingMirroredTooltipRowId,
   rows,
   selectedIds,
   onToggleAll,
@@ -891,6 +985,10 @@ function PostingHubTable({
   onFetchMasterLink,
   onAutoValidate,
 }: {
+  figmaCapture?: boolean;
+  figmaPostingHoverRowId?: string;
+  figmaPostingActionsOpen?: boolean;
+  figmaPostingMirroredTooltipRowId?: string;
   rows: PostingHubRow[];
   selectedIds: Set<string>;
   onToggleAll: (checked: boolean) => void;
@@ -906,7 +1004,12 @@ function PostingHubTable({
   const allSelected = rows.length > 0 && rows.every((row) => selectedIds.has(row.id));
 
   return (
-    <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
+    <div
+      className={cn(
+        "no-scrollbar min-h-0 flex-1 overflow-y-auto",
+        figmaCapture && "figma-capture-posting-table"
+      )}
+    >
       <Table className="w-full table-auto border-separate border-spacing-0 text-[13px] [&_tbody_td]:border-b [&_tbody_td]:border-gray-100 [&_td]:px-5 [&_td]:align-middle [&_th]:border-b [&_th]:border-gray-100 [&_th]:px-5 [&_th]:align-middle">
         <TableHeader>
           <TableRow className="bg-gray-50/70 hover:bg-gray-50/70">
@@ -942,8 +1045,23 @@ function PostingHubTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.id} className="group/posting-row hover:bg-gray-50/40">
+          {rows.map((row) => {
+            const isFigmaHoveredRow = Boolean(
+              (figmaPostingHoverRowId && row.id === figmaPostingHoverRowId) ||
+                (figmaPostingMirroredTooltipRowId && row.id === figmaPostingMirroredTooltipRowId)
+            );
+            const isFigmaMirroredTooltipOpen = Boolean(
+              figmaPostingMirroredTooltipRowId && row.id === figmaPostingMirroredTooltipRowId
+            );
+
+            return (
+            <TableRow
+              key={row.id}
+              className={cn(
+                "group/posting-row hover:bg-gray-50/40",
+                isFigmaHoveredRow && "figma-capture-posting-hovered-row bg-gray-50/40"
+              )}
+            >
               <TableCell>
                 <Checkbox
                   checked={selectedIds.has(row.id)}
@@ -967,7 +1085,7 @@ function PostingHubTable({
                   </div>
                 </div>
               </TableCell>
-              <TableCell className="py-4">
+              <TableCell className="min-w-[160px] max-w-[220px] whitespace-normal py-4">
                 <CampaignHubH5LinkCell path={row.h5Path} />
               </TableCell>
               <TableCell>
@@ -979,6 +1097,7 @@ function PostingHubTable({
               <TableCell className={cn(POST_LINK_CELL_WIDTH, "align-top whitespace-normal px-5 py-3 pr-2")}>
                 <PostLinkCell
                   row={row}
+                  figmaMirroredTooltipOpen={isFigmaMirroredTooltipOpen}
                   onFetchPostLinks={onFetchPostLinks}
                   onEditPostLink={onEditPostLink}
                   onFetchMasterLink={onFetchMasterLink}
@@ -994,7 +1113,7 @@ function PostingHubTable({
                 <PostingDateCell row={row} />
               </TableCell>
               <TableCell>
-                <DropdownMenu>
+                <DropdownMenu open={isFigmaHoveredRow && figmaPostingActionsOpen ? true : undefined}>
                   <DropdownMenuTrigger
                     type="button"
                     className="inline-flex size-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
@@ -1030,7 +1149,8 @@ function PostingHubTable({
                 </DropdownMenu>
               </TableCell>
             </TableRow>
-          ))}
+            );
+          })}
         </TableBody>
       </Table>
     </div>
@@ -1040,9 +1160,27 @@ function PostingHubTable({
 export default function CampaignHubPostingView({
   campaignId,
   onBack,
+  figmaCapture = false,
+  figmaPostingHoverRowId,
+  figmaPostingActionsOpen = false,
+  figmaPostingMirroredTooltipRowId,
+  figmaPostingValidationTooltips = false,
+  figmaOpenEditPostLink = false,
+  figmaEditPostLinkRowId,
+  figmaOpenUploadInsightReport = false,
+  figmaUploadInsightRowId,
 }: {
   campaignId: string;
   onBack: () => void;
+  figmaCapture?: boolean;
+  figmaPostingHoverRowId?: string;
+  figmaPostingActionsOpen?: boolean;
+  figmaPostingMirroredTooltipRowId?: string;
+  figmaPostingValidationTooltips?: boolean;
+  figmaOpenEditPostLink?: boolean;
+  figmaEditPostLinkRowId?: string;
+  figmaOpenUploadInsightReport?: boolean;
+  figmaUploadInsightRowId?: string;
 }) {
   const [rows, setRows] = useState(POSTING_HUB_MOCK_ROWS);
   const [query, setQuery] = useState("");
@@ -1059,11 +1197,19 @@ export default function CampaignHubPostingView({
   const [editPostLinkDialog, setEditPostLinkDialog] = useState<{
     open: boolean;
     rowId: string | null;
-  }>({ open: false, rowId: null });
+  }>(() =>
+    figmaCapture && figmaOpenEditPostLink
+      ? { open: true, rowId: figmaEditPostLinkRowId ?? "p4" }
+      : { open: false, rowId: null }
+  );
   const [uploadInsightReportDialog, setUploadInsightReportDialog] = useState<{
     open: boolean;
     rowId: string | null;
-  }>({ open: false, rowId: null });
+  }>(() =>
+    figmaCapture && figmaOpenUploadInsightReport
+      ? { open: true, rowId: figmaUploadInsightRowId ?? "p3" }
+      : { open: false, rowId: null }
+  );
 
   const uploadInsightReportRow = useMemo(
     () => rows.find((row) => row.id === uploadInsightReportDialog.rowId) ?? null,
@@ -1095,16 +1241,6 @@ export default function CampaignHubPostingView({
     setRows((prev) =>
       prev.map((row) =>
         row.id === editPostLinkDialog.rowId ? { ...row, postLinks } : row
-      )
-    );
-  };
-
-  const handleBulkContentValidation = () => {
-    setRows((prev) =>
-      prev.map((row) =>
-        selectedIds.has(row.id) && getMasterPostLinks(row.postLinks).some((link) => link.url.trim())
-          ? { ...row, postLinks: applyMockValidationToPostLinks(row.postLinks) }
-          : row
       )
     );
   };
@@ -1220,9 +1356,21 @@ export default function CampaignHubPostingView({
 
   return (
     <TooltipProvider delay={0} closeDelay={200}>
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col gap-3 overflow-hidden",
+          figmaCapture && "figma-capture-posting-root",
+          figmaCapture && figmaPostingValidationTooltips && "figma-capture-posting-validation-tooltips"
+        )}
+      >
+      {figmaCapture && figmaPostingValidationTooltips ? <PostingValidationTooltipsFigmaCapture /> : null}
       <CampaignHubDetailHeader title="Posting" onBack={onBack} />
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
+          figmaCapture && "figma-capture-posting-card"
+        )}
+      >
         <span className="sr-only">{campaignId}</span>
 
         <CampaignHubDetailToolbar
@@ -1293,13 +1441,6 @@ export default function CampaignHubPostingView({
               <DropdownMenuItem
                 disabled={selectedIds.size === 0}
                 className="whitespace-nowrap"
-                onSelect={handleBulkContentValidation}
-              >
-                Content Validation
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={selectedIds.size === 0}
-                className="whitespace-nowrap"
                 onSelect={handleBulkMarkAsApproved}
               >
                 Mark as Approved
@@ -1312,6 +1453,10 @@ export default function CampaignHubPostingView({
         </div>
 
         <PostingHubTable
+          figmaCapture={figmaCapture}
+          figmaPostingHoverRowId={figmaPostingHoverRowId}
+          figmaPostingActionsOpen={figmaPostingActionsOpen}
+          figmaPostingMirroredTooltipRowId={figmaPostingMirroredTooltipRowId}
           rows={filtered}
           selectedIds={selectedIds}
           onToggleAll={toggleAll}
@@ -1340,6 +1485,7 @@ export default function CampaignHubPostingView({
         onOpenChange={(open) => setEditPostLinkDialog((prev) => ({ ...prev, open }))}
         initialLinks={editPostLinkRow?.postLinks}
         onSubmit={handleEditPostLinkSubmit}
+        figmaCapture={figmaCapture && figmaOpenEditPostLink}
       />
 
       <UploadInsightReportDialog
@@ -1347,6 +1493,7 @@ export default function CampaignHubPostingView({
         onOpenChange={(open) => setUploadInsightReportDialog((prev) => ({ ...prev, open }))}
         initialFiles={uploadInsightReportRow?.insightReports}
         onSubmit={handleUploadInsightReportSubmit}
+        figmaCapture={figmaCapture && figmaOpenUploadInsightReport}
       />
     </div>
     </TooltipProvider>

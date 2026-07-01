@@ -46,7 +46,6 @@ import {
   Plus,
   RefreshCcw,
   Star,
-  Upload,
 } from "@/lib/icons";
 
 const H5_LINK_INPUT_CLASS = H5_INPUT_CLASS;
@@ -262,39 +261,19 @@ function H5MirroredPostRow({
 function H5InsightUploadSection({
   files,
   locked,
-  submitted,
   onAddFiles,
   onRemoveFile,
   onSubmit,
 }: {
   files: H5InsightFile[];
   locked: boolean;
-  submitted: boolean;
   onAddFiles: (files: H5InsightFile[]) => void;
   onRemoveFile: (fileId: string) => void;
   onSubmit: () => void;
 }) {
-  if (submitted) {
-    return (
-      <>
-        <div className="flex items-center gap-2 text-[12px] font-medium text-gray-600">
-          <Upload size={14} strokeWidth={2} className="shrink-0 text-brand" />
-          Insight report submitted
-        </div>
-        <H5MultiImageUploadField
-          files={files}
-          onAddFiles={() => undefined}
-          onRemoveFile={() => undefined}
-          disabled
-          showDropzone={false}
-          dropLabel="Drop screenshots here"
-        />
-        <p className="text-[11px] font-medium text-emerald-700">
-          Insight report submitted successfully. Files are now locked.
-        </p>
-      </>
-    );
-  }
+  const hasSubmittedFiles = files.some((file) => file.locked);
+  const pendingFiles = files.filter((file) => !file.locked);
+  const canSubmit = !locked && pendingFiles.length > 0;
 
   return (
     <>
@@ -309,22 +288,39 @@ function H5InsightUploadSection({
         onAddFiles={onAddFiles}
         onRemoveFile={onRemoveFile}
         disabled={locked}
+        showDropzone={!locked}
         dropLabel="Drop screenshots here"
         hint="PNG / JPG screenshots"
       />
 
-      <p className="mt-3 text-[11px] leading-relaxed text-gray-400">
-        Upload completes the draft only. Click Submit to finalize the report.
-      </p>
-      <Button
-        type="button"
-        variant="brand"
-        className={cn(H5_PRIMARY_BUTTON_CLASS, "mt-3")}
-        disabled={locked || files.length === 0}
-        onClick={onSubmit}
-      >
-        Submit
-      </Button>
+      {hasSubmittedFiles ? (
+        <p className="text-[11px] leading-relaxed text-gray-500">
+          Submitted screenshots cannot be removed. New uploads can be deleted until you submit
+          again.
+        </p>
+      ) : (
+        <p className="text-[11px] leading-relaxed text-gray-400">
+          Upload completes the draft only. Click Submit to finalize the report.
+        </p>
+      )}
+
+      {hasSubmittedFiles && pendingFiles.length === 0 ? (
+        <p className="text-[11px] font-medium text-emerald-700">
+          Insight report submitted successfully. Files are now locked.
+        </p>
+      ) : null}
+
+      {!locked ? (
+        <Button
+          type="button"
+          variant="brand"
+          className={cn(H5_PRIMARY_BUTTON_CLASS, "mt-3")}
+          disabled={!canSubmit}
+          onClick={onSubmit}
+        >
+          Submit
+        </Button>
+      ) : null}
     </>
   );
 }
@@ -462,7 +458,6 @@ export function H5PostingReportingView({ kolId, overviewHref }: H5PostingReporti
         <H5InsightUploadSection
           files={posting.insightDraftFiles}
           locked={!insightUnlocked}
-          submitted={posting.insightSubmitted}
           onAddFiles={(files) => addInsightDraftFiles(kolId, files)}
           onRemoveFile={(fileId) => removeInsightDraftFile(kolId, fileId)}
           onSubmit={() => submitInsightReport(kolId)}

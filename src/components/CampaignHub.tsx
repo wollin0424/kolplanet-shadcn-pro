@@ -150,6 +150,14 @@ export default function CampaignHub({
   figmaCapture,
   figmaOpenFilters,
   figmaOpenReview,
+  figmaPostingHoverRowId,
+  figmaPostingActionsOpen,
+  figmaOpenEditPostLink,
+  figmaEditPostLinkRowId,
+  figmaOpenUploadInsightReport,
+  figmaUploadInsightRowId,
+  figmaPostingMirroredTooltipRowId,
+  figmaPostingValidationTooltips,
   figmaReviewTab,
   figmaReviewKol,
 }: {
@@ -160,6 +168,14 @@ export default function CampaignHub({
   figmaCapture?: boolean;
   figmaOpenFilters?: boolean;
   figmaOpenReview?: "script" | "visual" | "caption";
+  figmaPostingHoverRowId?: string;
+  figmaPostingActionsOpen?: boolean;
+  figmaOpenEditPostLink?: boolean;
+  figmaEditPostLinkRowId?: string;
+  figmaOpenUploadInsightReport?: boolean;
+  figmaUploadInsightRowId?: string;
+  figmaPostingMirroredTooltipRowId?: string;
+  figmaPostingValidationTooltips?: boolean;
   figmaReviewTab?: "comments" | "brief";
   figmaReviewKol?: string;
 }) {
@@ -235,6 +251,15 @@ export default function CampaignHub({
       <CampaignHubPostingView
         campaignId={campaignId}
         onBack={() => setActiveSection(null)}
+        figmaCapture={figmaCapture}
+        figmaPostingHoverRowId={figmaPostingHoverRowId}
+        figmaPostingActionsOpen={figmaPostingActionsOpen}
+        figmaOpenEditPostLink={figmaOpenEditPostLink}
+        figmaEditPostLinkRowId={figmaEditPostLinkRowId}
+        figmaOpenUploadInsightReport={figmaOpenUploadInsightReport}
+        figmaUploadInsightRowId={figmaUploadInsightRowId}
+        figmaPostingMirroredTooltipRowId={figmaPostingMirroredTooltipRowId}
+        figmaPostingValidationTooltips={figmaPostingValidationTooltips}
       />
     );
   }

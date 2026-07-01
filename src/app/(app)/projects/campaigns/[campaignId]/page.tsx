@@ -13,6 +13,16 @@ export default async function CampaignDetailPage({
     figmaCapture?: string;
     figmaOpenFilters?: string;
     figmaOpenReview?: string;
+    figmaPostingHover?: string;
+    figmaPostingHoverRow?: string;
+    figmaPostingActionsOpen?: string;
+    figmaOpenEditPostLink?: string;
+    figmaEditPostLinkRow?: string;
+    figmaOpenUploadInsightReport?: string;
+    figmaUploadInsightRow?: string;
+    figmaPostingMirroredTooltip?: string;
+    figmaPostingMirroredTooltipRow?: string;
+    figmaPostingValidationTooltips?: string;
     figmaReviewTab?: string;
     figmaReviewKol?: string;
   }>;
@@ -26,6 +36,14 @@ export default async function CampaignDetailPage({
     figmaCapture,
     figmaOpenFilters,
     figmaOpenReview,
+    figmaPostingHoverRowId,
+    figmaPostingActionsOpen,
+    figmaOpenEditPostLink,
+    figmaEditPostLinkRowId,
+    figmaOpenUploadInsightReport,
+    figmaUploadInsightRowId,
+    figmaPostingMirroredTooltipRowId,
+    figmaPostingValidationTooltips,
     figmaReviewTab,
     figmaReviewKol,
   } = parseCampaignDetailSearchParams(query);
@@ -39,6 +57,14 @@ export default async function CampaignDetailPage({
       figmaCapture={figmaCapture}
       figmaOpenFilters={figmaOpenFilters}
       figmaOpenReview={figmaOpenReview}
+      figmaPostingHoverRowId={figmaPostingHoverRowId}
+      figmaPostingActionsOpen={figmaPostingActionsOpen}
+      figmaOpenEditPostLink={figmaOpenEditPostLink}
+      figmaEditPostLinkRowId={figmaEditPostLinkRowId}
+      figmaOpenUploadInsightReport={figmaOpenUploadInsightReport}
+      figmaUploadInsightRowId={figmaUploadInsightRowId}
+      figmaPostingMirroredTooltipRowId={figmaPostingMirroredTooltipRowId}
+      figmaPostingValidationTooltips={figmaPostingValidationTooltips}
       figmaReviewTab={figmaReviewTab}
       figmaReviewKol={figmaReviewKol}
     />

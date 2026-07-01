@@ -10,6 +10,7 @@ export type H5UploadedImage = {
   name: string;
   previewUrl: string;
   sizeLabel: string;
+  locked?: boolean;
 };
 
 export function H5MultiImageUploadField({
@@ -109,15 +110,20 @@ export function H5MultiImageUploadField({
                 alt={file.name}
                 className="aspect-[4/3] w-full object-cover"
               />
-              {!disabled ? (
+              {!disabled && !file.locked ? (
                 <button
                   type="button"
                   onClick={() => onRemoveFile(file.id)}
-                  className="absolute right-1.5 top-1.5 inline-grid size-6 place-items-center rounded-full bg-black/55 text-white opacity-0 transition-opacity group-hover/file:opacity-100"
+                  className="absolute right-1.5 top-1.5 inline-grid size-6 place-items-center rounded-full bg-black/55 text-white"
                   aria-label={`Remove ${file.name}`}
                 >
                   <Trash2 size={12} strokeWidth={2.2} />
                 </button>
+              ) : null}
+              {file.locked ? (
+                <span className="pointer-events-none absolute left-1.5 top-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white">
+                  Submitted
+                </span>
               ) : null}
               <div className="px-2 py-1.5">
                 <p className="truncate text-[11px] font-medium text-gray-800">{file.name}</p>

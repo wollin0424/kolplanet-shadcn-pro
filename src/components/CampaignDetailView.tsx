@@ -16,6 +16,14 @@ export default function CampaignDetailView({
   figmaCapture,
   figmaOpenFilters,
   figmaOpenReview,
+  figmaPostingHoverRowId,
+  figmaPostingActionsOpen,
+  figmaOpenEditPostLink,
+  figmaEditPostLinkRowId,
+  figmaOpenUploadInsightReport,
+  figmaUploadInsightRowId,
+  figmaPostingMirroredTooltipRowId,
+  figmaPostingValidationTooltips,
   figmaReviewTab,
   figmaReviewKol,
 }: {
@@ -26,6 +34,14 @@ export default function CampaignDetailView({
   figmaCapture?: boolean;
   figmaOpenFilters?: boolean;
   figmaOpenReview?: "script" | "visual" | "caption";
+  figmaPostingHoverRowId?: string;
+  figmaPostingActionsOpen?: boolean;
+  figmaOpenEditPostLink?: boolean;
+  figmaEditPostLinkRowId?: string;
+  figmaOpenUploadInsightReport?: boolean;
+  figmaUploadInsightRowId?: string;
+  figmaPostingMirroredTooltipRowId?: string;
+  figmaPostingValidationTooltips?: boolean;
   figmaReviewTab?: "comments" | "brief";
   figmaReviewKol?: string;
 }) {
@@ -63,6 +79,14 @@ export default function CampaignDetailView({
             figmaCapture={hubMountKey === 0 ? figmaCapture : undefined}
             figmaOpenFilters={hubMountKey === 0 ? figmaOpenFilters : undefined}
             figmaOpenReview={hubMountKey === 0 ? figmaOpenReview : undefined}
+            figmaPostingHoverRowId={hubMountKey === 0 ? figmaPostingHoverRowId : undefined}
+            figmaPostingActionsOpen={hubMountKey === 0 ? figmaPostingActionsOpen : undefined}
+            figmaOpenEditPostLink={hubMountKey === 0 ? figmaOpenEditPostLink : undefined}
+            figmaEditPostLinkRowId={hubMountKey === 0 ? figmaEditPostLinkRowId : undefined}
+            figmaOpenUploadInsightReport={hubMountKey === 0 ? figmaOpenUploadInsightReport : undefined}
+            figmaUploadInsightRowId={hubMountKey === 0 ? figmaUploadInsightRowId : undefined}
+            figmaPostingMirroredTooltipRowId={hubMountKey === 0 ? figmaPostingMirroredTooltipRowId : undefined}
+            figmaPostingValidationTooltips={hubMountKey === 0 ? figmaPostingValidationTooltips : undefined}
             figmaReviewTab={hubMountKey === 0 ? figmaReviewTab : undefined}
             figmaReviewKol={hubMountKey === 0 ? figmaReviewKol : undefined}
           />

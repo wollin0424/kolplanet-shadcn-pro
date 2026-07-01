@@ -12,6 +12,8 @@ export type H5InsightFile = {
   name: string;
   previewUrl: string;
   sizeLabel: string;
+  /** Locked after a successful submit; cannot be removed. */
+  locked?: boolean;
 };
 
 export type H5PostingState = {
@@ -87,7 +89,15 @@ export function getDefaultH5PostingState(kolId: string): H5PostingState {
 export function getH5PostingState(kolId: string): H5PostingState {
   const stored = readAll()[kolId];
   if (!stored) return getDefaultH5PostingState(kolId);
-  return stored;
+  if (!stored.insightSubmitted) return stored;
+  return {
+    ...stored,
+    insightDraftFiles: stored.insightDraftFiles.map((file) => ({
+      ...file,
+      // Pending uploads must explicitly set locked: false; legacy rows without the field stay locked.
+      locked: file.locked === false ? false : true,
+    })),
+  };
 }
 
 export function subscribeH5PostingChanges(listener: () => void) {
@@ -195,20 +205,33 @@ export function addMirroredPost(kolId: string) {
 export function addInsightDraftFiles(kolId: string, files: H5InsightFile[]) {
   updateState(kolId, (state) => ({
     ...state,
-    insightDraftFiles: [...state.insightDraftFiles, ...files],
+    insightDraftFiles: [
+      ...state.insightDraftFiles,
+      ...files.map((file) => ({ ...file, locked: false as const })),
+    ],
   }));
 }
 
 export function removeInsightDraftFile(kolId: string, fileId: string) {
   updateState(kolId, (state) => ({
     ...state,
-    insightDraftFiles: state.insightDraftFiles.filter((file) => file.id !== fileId),
+    insightDraftFiles: state.insightDraftFiles.filter(
+      (file) => file.id !== fileId || file.locked
+    ),
   }));
 }
 
 export function submitInsightReport(kolId: string) {
-  updateState(kolId, (state) => ({
-    ...state,
-    insightSubmitted: state.insightDraftFiles.length > 0,
-  }));
+  updateState(kolId, (state) => {
+    const hasPending = state.insightDraftFiles.some((file) => !file.locked);
+    if (!hasPending) return state;
+
+    return {
+      ...state,
+      insightSubmitted: true,
+      insightDraftFiles: state.insightDraftFiles.map((file) =>
+        file.locked ? file : { ...file, locked: true }
+      ),
+    };
+  });
 }

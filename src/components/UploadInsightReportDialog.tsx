@@ -19,11 +19,13 @@ export function UploadInsightReportDialog({
   onOpenChange,
   initialFiles,
   onSubmit,
+  figmaCapture = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialFiles?: string[];
   onSubmit: (files: string[]) => void;
+  figmaCapture?: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -33,6 +35,7 @@ export function UploadInsightReportDialog({
           initialFiles={initialFiles}
           onSubmit={onSubmit}
           onOpenChange={onOpenChange}
+          figmaCapture={figmaCapture}
         />
       ) : null}
     </Dialog>
@@ -43,10 +46,12 @@ function UploadInsightReportDialogPanel({
   onOpenChange,
   initialFiles,
   onSubmit,
+  figmaCapture = false,
 }: {
   onOpenChange: (open: boolean) => void;
   initialFiles?: string[];
   onSubmit: (files: string[]) => void;
+  figmaCapture?: boolean;
 }) {
   const [existingFiles, setExistingFiles] = useState<string[]>(initialFiles ?? []);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -89,6 +94,7 @@ function UploadInsightReportDialogPanel({
     <DialogContent
         className="gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[520px]"
         showCloseButton
+        data-figma-capture={figmaCapture ? "upload-insight-report-dialog" : undefined}
       >
         <div className="border-b border-gray-100 bg-gradient-to-b from-gray-50/80 to-white px-6 pt-6 pb-5">
           <div className="flex items-start gap-3 pr-6">

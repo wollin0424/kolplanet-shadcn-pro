@@ -14,12 +14,12 @@ export function CampaignHubH5LinkCell({ path }: { path: string }) {
   };
 
   return (
-    <div className="flex min-w-[160px] items-center gap-2">
+    <div className="flex min-w-0 items-center gap-2">
       <a
         href={path}
         target="_blank"
         rel="noopener noreferrer"
-        className="truncate text-[12px] font-medium text-gray-700 transition-colors hover:text-brand hover:underline hover:underline-offset-[3px] hover:decoration-brand/40"
+        className="min-w-0 flex-1 truncate text-[12px] font-medium text-gray-700 underline-offset-[3px] transition-colors hover:text-brand hover:underline hover:decoration-brand/40"
       >
         {path}
       </a>
