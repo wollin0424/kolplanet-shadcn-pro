@@ -28,8 +28,8 @@ export type ScriptBriefH5Data = {
     original: string;
     translation: string;
   };
-  mention: string;
-  hashtag: string;
+  mention: string[];
+  hashtag: string[];
   addLink: string;
   referenceLinks: string[];
   attachments: Array<{ name: string; locked?: boolean }>;
@@ -82,8 +82,8 @@ export function getScriptBriefH5Defaults(kolId: string): ScriptBriefH5Data {
           ? "打算赌神的萨达爱上打算打算赌神啊赌神啊打算的"
           : "Harap ikuti panduan kampanye, gunakan nada yang natural, dan sesuaikan penyampaian dengan audiens lokal.",
     },
-    mention: kolId === "s1" ? "打算大的赌神啊d" : "@brandhandle",
-    hashtag: kolId === "s1" ? "打算打算赌神啊赌神啊" : "#Campaign2026",
+    mention: kolId === "s1" ? ["@trip", "哈哈"] : ["@brandhandle"],
+    hashtag: kolId === "s1" ? ["#JackieChan"] : ["#Campaign2026"],
     addLink: "",
     referenceLinks: [],
     attachments:
@@ -180,8 +180,8 @@ function mergeCampaignExecutionGuide(defaults: ScriptBriefH5Data): ScriptBriefH5
       original: guide.contentGuidelines.trim() || defaults.guidelines.original,
       translation: defaults.guidelines.translation,
     },
-    mention: guide.mention.trim() || defaults.mention,
-    hashtag: guide.hashtag.trim() || defaults.hashtag,
+    mention: guide.mention.length > 0 ? guide.mention : defaults.mention,
+    hashtag: guide.hashtag.length > 0 ? guide.hashtag : defaults.hashtag,
     referenceLinks: referenceLinks.length > 0 ? referenceLinks : defaults.referenceLinks,
     addLink: referenceLinks[0] ?? defaults.addLink,
     attachments: mergedAttachments.length > 0 ? mergedAttachments : defaults.attachments,

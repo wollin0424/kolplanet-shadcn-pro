@@ -38,9 +38,13 @@ function GuidelineDetailField({
 }: {
   icon: typeof LinkIcon;
   label: string;
-  value: string;
+  value: string | string[];
 }) {
-  const display = value.trim() || "—";
+  const tags = Array.isArray(value)
+    ? value.map((item) => item.trim()).filter(Boolean)
+    : value.trim()
+      ? [value.trim()]
+      : [];
 
   return (
     <div className="min-w-0">
@@ -48,8 +52,21 @@ function GuidelineDetailField({
         <Icon size={14} strokeWidth={2} className="shrink-0 text-gray-500" />
         {label}
       </div>
-      <div className="mt-2 rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2.5">
-        <p className="break-words text-[13px] leading-relaxed text-gray-800">{display}</p>
+      <div className="mt-2 min-h-10 rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2">
+        {tags.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {tags.map((tag, index) => (
+              <span
+                key={`${tag}-${index}`}
+                className="inline-flex max-w-full items-center rounded-md bg-gray-100 px-2 py-0.5 text-[13px] text-gray-800"
+              >
+                <span className="truncate">{tag}</span>
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-[13px] text-gray-400">—</p>
+        )}
       </div>
     </div>
   );
@@ -118,8 +135,8 @@ function GuidelineBubbleSection({
 
 export function ContentGuidelinesDisplayBlock({
   guidelines,
-  mention = "",
-  hashtag = "",
+  mention = [],
+  hashtag = [],
   attachments = [],
   referenceLinks = [],
   layout = "default",
