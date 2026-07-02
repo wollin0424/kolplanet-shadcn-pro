@@ -1,4 +1,4 @@
-export type H5PostLinkHealth = "empty" | "verified" | "private" | "issue";
+export type H5PostLinkHealth = "empty" | "verifying" | "verified" | "private" | "issue";
 
 export type H5PostLinkEntry = {
   id: string;
@@ -51,6 +51,42 @@ export function formatH5InsightFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+const VERIFICATION_DELAY_MS = 2000;
+
+function scheduleMasterVerification(kolId: string, entryId: string) {
+  if (typeof window === "undefined") return;
+  window.setTimeout(() => {
+    updateState(kolId, (state) => ({
+      ...state,
+      masters: state.masters.map((entry) => {
+        if (entry.id !== entryId || entry.health !== "verifying") return entry;
+        return {
+          ...entry,
+          health: resolveLinkHealth(entry.url),
+          submitted: true,
+        };
+      }),
+    }));
+  }, VERIFICATION_DELAY_MS);
+}
+
+function scheduleMirroredVerification(kolId: string, entryId: string) {
+  if (typeof window === "undefined") return;
+  window.setTimeout(() => {
+    updateState(kolId, (state) => ({
+      ...state,
+      mirrored: state.mirrored.map((entry) => {
+        if (entry.id !== entryId || entry.health !== "verifying") return entry;
+        return {
+          ...entry,
+          health: resolveLinkHealth(entry.url),
+          submitted: true,
+        };
+      }),
+    }));
+  }, VERIFICATION_DELAY_MS);
 }
 
 function resolveLinkHealth(url: string): H5PostLinkHealth {
@@ -312,6 +348,16 @@ export function refreshMasterLink(kolId: string, entryId: string) {
     ...state,
     masters: state.masters.map((entry) => {
       if (entry.id !== entryId) return entry;
+      if (!entry.url.trim()) {
+        return { ...entry, health: "empty" as const, submitted: false };
+      }
+      if (entry.health === "verifying") {
+        return {
+          ...entry,
+          health: resolveLinkHealth(entry.url),
+          submitted: true,
+        };
+      }
       const health = resolveLinkHealth(entry.url);
       return {
         ...entry,
@@ -344,19 +390,29 @@ export function updateMirroredDraftUrl(kolId: string, entryId: string, url: stri
 }
 
 export function submitMasterLink(kolId: string, entryId: string) {
-  refreshMasterLink(kolId, entryId);
+  let shouldVerify = false;
+  updateState(kolId, (state) => ({
+    ...state,
+    masters: state.masters.map((entry) => {
+      if (entry.id !== entryId || !entry.url.trim() || entry.submitted) return entry;
+      shouldVerify = true;
+      return { ...entry, submitted: true, health: "verifying" as const };
+    }),
+  }));
+  if (shouldVerify) scheduleMasterVerification(kolId, entryId);
 }
 
 export function submitMirroredLink(kolId: string, entryId: string) {
+  let shouldVerify = false;
   updateState(kolId, (state) => ({
     ...state,
     mirrored: state.mirrored.map((entry) => {
-      if (entry.id !== entryId) return entry;
-      if (!entry.url.trim()) return entry;
-      const health = resolveLinkHealth(entry.url);
-      return { ...entry, health, submitted: true };
+      if (entry.id !== entryId || !entry.url.trim() || entry.submitted) return entry;
+      shouldVerify = true;
+      return { ...entry, submitted: true, health: "verifying" as const };
     }),
   }));
+  if (shouldVerify) scheduleMirroredVerification(kolId, entryId);
 }
 
 export function refreshMirroredLink(kolId: string, entryId: string) {
@@ -364,8 +420,22 @@ export function refreshMirroredLink(kolId: string, entryId: string) {
     ...state,
     mirrored: state.mirrored.map((entry) => {
       if (entry.id !== entryId) return entry;
+      if (!entry.url.trim()) {
+        return { ...entry, health: "empty" as const, submitted: false };
+      }
+      if (entry.health === "verifying") {
+        return {
+          ...entry,
+          health: resolveLinkHealth(entry.url),
+          submitted: true,
+        };
+      }
       const health = resolveLinkHealth(entry.url);
-      return { ...entry, health, submitted: entry.url.trim().length > 0 };
+      return {
+        ...entry,
+        health,
+        submitted: entry.url.trim().length > 0,
+      };
     }),
   }));
 }

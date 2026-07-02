@@ -61,6 +61,18 @@ function H5PostLinkStatusBadge({
   health: H5PostLinkHealth;
   submitted?: boolean;
 }) {
+  if (health === "verifying") {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold leading-none text-gray-600">
+        <span
+          className="inline-block size-2.5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600"
+          aria-hidden
+        />
+        Verifying
+      </span>
+    );
+  }
+
   if (health !== "private" && health !== "issue") return null;
 
   const copy =
@@ -169,8 +181,9 @@ function H5MasterPostRow({
   onRefresh: () => void;
   onSubmit: () => void;
 }) {
-  const readOnly = entry.submitted && entry.health === "verified";
+  const readOnly = entry.submitted;
   const showRefresh = entry.submitted;
+  const isVerifying = entry.health === "verifying";
 
   return (
     <div className="space-y-2">
@@ -202,7 +215,7 @@ function H5MasterPostRow({
             Make sure the link is public and accessible.
           </p>
         </>
-      ) : (
+      ) : isVerifying ? null : (
         <H5PostLinkHealthNote health={entry.health} submitted={entry.submitted} />
       )}
     </div>
@@ -222,8 +235,9 @@ function H5MirroredPostRow({
   onRefresh: () => void;
   onSubmit: () => void;
 }) {
-  const readOnly = entry.submitted && entry.health === "verified";
+  const readOnly = entry.submitted;
   const showRefresh = entry.submitted;
+  const isVerifying = entry.health === "verifying";
 
   return (
     <div className="space-y-2">
@@ -255,7 +269,7 @@ function H5MirroredPostRow({
             Make sure the link is public and accessible.
           </p>
         </>
-      ) : (
+      ) : isVerifying ? null : (
         <H5PostLinkHealthNote health={entry.health} submitted={entry.submitted} />
       )}
     </div>
