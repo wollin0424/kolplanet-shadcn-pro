@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   CampaignHubDetailHeader,
   CampaignHubDetailToolbar,
@@ -64,6 +64,11 @@ import {
   type PostingHubRow,
   type PostingHubStatus,
 } from "@/lib/postingHubMock";
+import { getH5PostingState, subscribeH5InsightSync } from "@/lib/h5PostingSubmissions";
+import {
+  mergeInsightReportFileNames,
+  parseKolIdFromH5Path,
+} from "@/lib/insightReportSync";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -72,6 +77,33 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { AlertCircle, Calendar, CheckCircle2, ChevronDown, Copy, FileText, FileX, MoreHorizontal, Paperclip, Pencil, RefreshCcw, Sparkles, Upload, X } from "@/lib/icons";
+
+function mergePostingHubRowsInsightReports(rows: PostingHubRow[]): PostingHubRow[] {
+  return rows.map((row) => {
+    const kolId = parseKolIdFromH5Path(row.h5Path);
+    if (!kolId) return row;
+
+    const merged = mergeInsightReportFileNames(
+      row.insightReports ?? [],
+      getH5PostingState(kolId).insightDraftFiles
+    );
+    const current = row.insightReports ?? [];
+
+    if (
+      merged.length === current.length &&
+      merged.every((name, index) => name === current[index])
+    ) {
+      return row;
+    }
+
+    return {
+      ...row,
+      insightReports: merged,
+      insightReportShareUrl:
+        merged.length > 0 ? buildInsightReportShareUrl(row.id) : row.insightReportShareUrl,
+    };
+  });
+}
 
 const STATUS_ICON_CLASS: Record<"success" | "warning" | "error", string> = {
   success: "text-emerald-600",
@@ -1129,7 +1161,9 @@ export default function CampaignHubPostingView({
   figmaUploadInsightRowId?: string;
   figmaOpenImportPostLinks?: boolean;
 }) {
-  const [rows, setRows] = useState(POSTING_HUB_MOCK_ROWS);
+  const [rows, setRows] = useState(() =>
+    figmaCapture ? POSTING_HUB_MOCK_ROWS : mergePostingHubRowsInsightReports(POSTING_HUB_MOCK_ROWS)
+  );
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<PostingHubStatus | "All">("All");
   const [postLinkStatusFilter, setPostLinkStatusFilter] = useState<PostLinkStatusFilter>("All");
@@ -1165,6 +1199,36 @@ export default function CampaignHubPostingView({
     () => rows.find((row) => row.id === uploadInsightReportDialog.rowId) ?? null,
     [uploadInsightReportDialog.rowId, rows]
   );
+
+  const syncRowInsightReportsFromH5 = (kolId: string) => {
+    setRows((prev) =>
+      prev.map((row) => {
+        if (parseKolIdFromH5Path(row.h5Path) !== kolId) return row;
+
+        const merged = mergeInsightReportFileNames(row.insightReports ?? [], getH5PostingState(kolId).insightDraftFiles);
+        const current = row.insightReports ?? [];
+
+        if (
+          merged.length === current.length &&
+          merged.every((name, index) => name === current[index])
+        ) {
+          return row;
+        }
+
+        return {
+          ...row,
+          insightReports: merged,
+          insightReportShareUrl:
+            merged.length > 0 ? buildInsightReportShareUrl(row.id) : row.insightReportShareUrl,
+        };
+      })
+    );
+  };
+
+  useEffect(() => {
+    if (figmaCapture) return;
+    return subscribeH5InsightSync(syncRowInsightReportsFromH5);
+  }, [figmaCapture]);
 
   const editPostLinkRow = useMemo(
     () => rows.find((row) => row.id === editPostLinkDialog.rowId) ?? null,
@@ -1453,6 +1517,7 @@ export default function CampaignHubPostingView({
         initialFiles={uploadInsightReportRow?.insightReports}
         submissionLink={uploadInsightReportRow?.insightReportShareUrl}
         rowId={uploadInsightReportDialog.rowId ?? undefined}
+        h5KolId={parseKolIdFromH5Path(uploadInsightReportRow?.h5Path ?? "")}
         onSubmit={handleUploadInsightReportSubmit}
         figmaCapture={figmaCapture && figmaOpenUploadInsightReport}
       />

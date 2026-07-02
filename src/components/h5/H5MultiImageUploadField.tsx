@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { CheckCircle2, Eye, Trash2, Upload } from "@/lib/icons";
+import { Eye, Trash2, Upload } from "@/lib/icons";
 import { FORM_FIELD_RADIUS } from "@/lib/formControls";
 import { cn } from "@/lib/utils";
 
@@ -22,33 +22,22 @@ type H5InsightImageCardProps = {
 
 function H5InsightImageCard({ file, variant, disabled, onRemoveFile }: H5InsightImageCardProps) {
   const isSubmitted = variant === "submitted";
+  const showRemove = !isSubmitted && !disabled && Boolean(onRemoveFile);
 
   return (
     <div
       className={cn(
-        "group/file overflow-hidden border",
+        "group/file overflow-hidden border border-gray-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
         FORM_FIELD_RADIUS,
-        isSubmitted
-          ? "border-emerald-200/90 bg-gray-50/70 ring-1 ring-emerald-100"
-          : "border-brand/30 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+        !isSubmitted && "border-brand/30"
       )}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden">
         <img
           src={file.previewUrl}
           alt={file.name}
-          className={cn("size-full object-cover", isSubmitted && "opacity-95 saturate-[0.92]")}
+          className="size-full object-cover"
         />
-        {isSubmitted ? (
-          <span className="pointer-events-none absolute left-1.5 top-1.5 z-10 inline-flex items-center gap-1 rounded-full border border-emerald-300/50 bg-emerald-600 px-2 py-1 text-[10px] font-semibold leading-none text-white shadow-sm">
-            <CheckCircle2 size={11} strokeWidth={2.4} />
-            Submitted
-          </span>
-        ) : (
-          <span className="pointer-events-none absolute left-1.5 top-1.5 z-10 rounded-full bg-brand px-2 py-1 text-[10px] font-semibold leading-none text-white shadow-sm">
-            Draft
-          </span>
-        )}
         <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 transition-colors group-hover/file:bg-black/35">
           <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover/file:opacity-100">
             <button
@@ -59,10 +48,10 @@ function H5InsightImageCard({ file, variant, disabled, onRemoveFile }: H5Insight
             >
               <Eye size={16} strokeWidth={2} />
             </button>
-            {!isSubmitted && !disabled && onRemoveFile ? (
+            {showRemove ? (
               <button
                 type="button"
-                onClick={() => onRemoveFile(file.id)}
+                onClick={() => onRemoveFile?.(file.id)}
                 className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
                 aria-label={`Remove ${file.name}`}
               >
@@ -94,7 +83,7 @@ function H5InsightImageGrid({
   if (!files.length) return null;
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-3 gap-2">
       {files.map((file) => (
         <H5InsightImageCard
           key={file.id}

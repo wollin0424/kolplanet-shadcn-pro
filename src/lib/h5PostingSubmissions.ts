@@ -321,6 +321,18 @@ export function subscribeH5PostingChanges(listener: () => void) {
   return () => window.removeEventListener(CHANGE_EVENT, handler);
 }
 
+export function subscribeH5InsightSync(listener: (kolId: string) => void) {
+  if (typeof window === "undefined") return () => undefined;
+
+  const handler = (event: Event) => {
+    const detail = (event as CustomEvent<{ kolId: string }>).detail;
+    if (detail?.kolId) listener(detail.kolId);
+  };
+
+  window.addEventListener("kolplanet:h5-insight-sync", handler);
+  return () => window.removeEventListener("kolplanet:h5-insight-sync", handler);
+}
+
 function updateState(kolId: string, updater: (state: H5PostingState) => H5PostingState) {
   const all = readAll();
   const current = all[kolId] ?? getDefaultH5PostingState(kolId);
@@ -469,6 +481,24 @@ export function removeInsightDraftFile(kolId: string, fileId: string) {
   }));
 }
 
+/** Web admin: remove any H5 insight file, including submitted/locked ones. */
+export function removeH5InsightFile(kolId: string, fileId: string) {
+  updateState(kolId, (state) => {
+    const insightDraftFiles = state.insightDraftFiles.filter((file) => file.id !== fileId);
+    return {
+      ...state,
+      insightDraftFiles,
+      insightSubmitted: insightDraftFiles.length > 0 ? state.insightSubmitted : false,
+    };
+  });
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("kolplanet:h5-insight-sync", { detail: { kolId } })
+    );
+  }
+}
+
 export function submitInsightReport(kolId: string) {
   updateState(kolId, (state) => {
     const hasPending = state.insightDraftFiles.some((file) => !file.locked);
@@ -482,4 +512,10 @@ export function submitInsightReport(kolId: string) {
       ),
     };
   });
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("kolplanet:h5-insight-sync", { detail: { kolId } })
+    );
+  }
 }

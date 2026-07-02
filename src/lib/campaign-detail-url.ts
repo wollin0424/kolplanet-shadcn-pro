@@ -41,6 +41,7 @@ export function parseCampaignDetailSearchParams(searchParams: {
   figmaOpenUploadInsightReport?: string;
   figmaUploadInsightRow?: string;
   figmaOpenImportPostLinks?: string;
+  figmaOpenExecutionGuide?: string;
   figmaPostingMirroredTooltip?: string;
   figmaPostingMirroredTooltipRow?: string;
   figmaPostingValidationTooltips?: string;
@@ -61,6 +62,7 @@ export function parseCampaignDetailSearchParams(searchParams: {
   figmaOpenUploadInsightReport?: boolean;
   figmaUploadInsightRowId?: string;
   figmaOpenImportPostLinks?: boolean;
+  figmaOpenExecutionGuide?: boolean;
   figmaPostingMirroredTooltipRowId?: string;
   figmaPostingValidationTooltips?: boolean;
   figmaReviewTab?: "comments" | "brief";
@@ -97,6 +99,7 @@ export function parseCampaignDetailSearchParams(searchParams: {
     ? searchParams.figmaUploadInsightRow?.trim() || "p3"
     : undefined;
   const figmaOpenImportPostLinks = searchParams.figmaOpenImportPostLinks === "1";
+  const figmaOpenExecutionGuide = searchParams.figmaOpenExecutionGuide === "1";
   const figmaPostingMirroredTooltip = searchParams.figmaPostingMirroredTooltip === "1";
   const figmaPostingMirroredTooltipRowId = figmaPostingMirroredTooltip
     ? searchParams.figmaPostingMirroredTooltipRow?.trim() || "p1"
@@ -127,6 +130,7 @@ export function parseCampaignDetailSearchParams(searchParams: {
     figmaOpenUploadInsightReport,
     figmaUploadInsightRowId,
     figmaOpenImportPostLinks,
+    figmaOpenExecutionGuide,
     figmaPostingMirroredTooltipRowId,
     figmaPostingValidationTooltips,
     figmaReviewTab:

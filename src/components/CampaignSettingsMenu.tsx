@@ -54,8 +54,16 @@ function SettingsStatusIcon({ complete }: { complete: boolean }) {
   );
 }
 
-export function CampaignSettingsMenu() {
-  const [openSection, setOpenSection] = useState<CampaignSettingsSection | null>(null);
+export function CampaignSettingsMenu({
+  figmaCapture = false,
+  figmaOpenExecutionGuide = false,
+}: {
+  figmaCapture?: boolean;
+  figmaOpenExecutionGuide?: boolean;
+} = {}) {
+  const [openSection, setOpenSection] = useState<CampaignSettingsSection | null>(() =>
+    figmaCapture && figmaOpenExecutionGuide ? "execution-guide" : null
+  );
 
   const openSheet = (section: CampaignSettingsSection) => {
     setOpenSection(section);
@@ -108,6 +116,7 @@ export function CampaignSettingsMenu() {
         onOpenChange={(open) => {
           if (!open && openSection === "execution-guide") setOpenSection(null);
         }}
+        figmaCapture={figmaCapture && figmaOpenExecutionGuide}
       />
 
       <CampaignSettingsPlaceholderSheet

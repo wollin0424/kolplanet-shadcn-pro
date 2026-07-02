@@ -24,6 +24,7 @@ export default function CampaignDetailView({
   figmaOpenUploadInsightReport,
   figmaUploadInsightRowId,
   figmaOpenImportPostLinks,
+  figmaOpenExecutionGuide,
   figmaPostingMirroredTooltipRowId,
   figmaPostingValidationTooltips,
   figmaReviewTab,
@@ -44,6 +45,7 @@ export default function CampaignDetailView({
   figmaOpenUploadInsightReport?: boolean;
   figmaUploadInsightRowId?: string;
   figmaOpenImportPostLinks?: boolean;
+  figmaOpenExecutionGuide?: boolean;
   figmaPostingMirroredTooltipRowId?: string;
   figmaPostingValidationTooltips?: boolean;
   figmaReviewTab?: "comments" | "brief";
@@ -61,7 +63,13 @@ export default function CampaignDetailView({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <CampaignDetailHeader campaignId={campaignId} tab={tab} onTabChange={handleTabChange} />
+      <CampaignDetailHeader
+        campaignId={campaignId}
+        tab={tab}
+        onTabChange={handleTabChange}
+        figmaCapture={figmaCapture}
+        figmaOpenExecutionGuide={figmaOpenExecutionGuide}
+      />
 
       <div
         className={cn(

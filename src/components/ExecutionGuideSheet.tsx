@@ -594,9 +594,10 @@ function ContentGuidelinesCoreBlock({
             type="button"
             onClick={onAddLink}
             disabled={!linkDraft.trim()}
-            className="shrink-0 text-[13px] font-medium text-brand transition-colors hover:text-brand/80 disabled:cursor-not-allowed disabled:text-gray-300"
+            className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-brand transition-colors hover:bg-brand-50/50 hover:text-brand disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-transparent"
+            aria-label="Add link"
           >
-            Add Link
+            <Plus size={18} strokeWidth={2} />
           </button>
         </div>
         {referenceLinks.length > 0 ? (
@@ -621,18 +622,24 @@ const REQUIRED_OPTIONS = ["Required", "Not Required"] as const;
 export function ExecutionGuideSheet({
   open,
   onOpenChange,
+  figmaCapture = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  figmaCapture?: boolean;
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="flex h-full w-full flex-col gap-0 border-l border-gray-100 bg-[#f8f9fb] p-0 data-[side=right]:max-w-[540px] data-[side=right]:sm:max-w-[540px]"
+        className={cn(
+          "flex h-full w-full flex-col gap-0 border-l border-gray-100 bg-[#f8f9fb] p-0 data-[side=right]:max-w-[540px] data-[side=right]:sm:max-w-[540px]",
+          figmaCapture && "figma-capture-execution-guide-sheet"
+        )}
+        data-figma-capture={figmaCapture ? "execution-guide-sheet" : undefined}
       >
-        {open ? <ExecutionGuideSheetForm onOpenChange={onOpenChange} /> : null}
+        {open ? <ExecutionGuideSheetForm onOpenChange={onOpenChange} figmaCapture={figmaCapture} /> : null}
       </SheetContent>
     </Sheet>
   );
@@ -640,22 +647,28 @@ export function ExecutionGuideSheet({
 
 function ExecutionGuideSheetForm({
   onOpenChange,
+  figmaCapture = false,
 }: {
   onOpenChange: (open: boolean) => void;
+  figmaCapture?: boolean;
 }) {
   const guide = getCampaignExecutionGuide();
 
   const [brandLogo, setBrandLogo] = useState<BrandLogoFile | null>(null);
   const [brandDescription, setBrandDescription] = useState("");
-  const [previewLink, setPreviewLink] = useState("");
-  const [objectives, setObjectives] = useState("");
+  const [previewLink, setPreviewLink] = useState(figmaCapture ? "https://brand-preview.example.com" : "");
+  const [objectives, setObjectives] = useState(
+    figmaCapture ? "1M Views, $2 CPM target, Brand Awareness" : ""
+  );
   const [contentGuidelines, setContentGuidelines] = useState(guide.contentGuidelines);
   const [mention, setMention] = useState(guide.mention);
   const [hashtag, setHashtag] = useState(guide.hashtag);
   const [briefFiles, setBriefFiles] = useState(guide.briefFiles);
   const [referenceLinks, setReferenceLinks] = useState(guide.referenceLinks);
   const [linkDraft, setLinkDraft] = useState("");
-  const [deliverables, setDeliverables] = useState("");
+  const [deliverables, setDeliverables] = useState(
+    figmaCapture ? "Instagram Reels*1, TikTok Video*1, Link in Bios" : ""
+  );
   const [contentUsage, setContentUsage] = useState<string>("60 Days");
   const [postRetention, setPostRetention] = useState<string>("Permanent");
   const [postBoosting, setPostBoosting] = useState<string>("60 Days");

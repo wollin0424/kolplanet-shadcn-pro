@@ -1,32 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Eye, Paperclip, Trash2 } from "@/lib/icons";
-import { buildInsightReportFilePreviewUrl, buildInsightReportShareUrl } from "@/lib/postingHubMock";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { FORM_FIELD_RADIUS } from "@/lib/formControls";
+import { getH5PostingState, removeH5InsightFile, subscribeH5PostingChanges, type H5InsightFile } from "@/lib/h5PostingSubmissions";
+import { Eye, Trash2 } from "@/lib/icons";
+import {
+  mergeInsightReportFileNames,
+  mergeInsightReportImagesFromRecords,
+  splitInitialWebInsightFileNames,
+  type InsightReportImage,
+  type WebInsightFileRecord,
+} from "@/lib/insightReportSync";
+import {
+  buildInsightReportShareUrl,
+  getFigmaCaptureInsightReportState,
+  getInsightReportPreviewUrl,
+} from "@/lib/postingHubMock";
+import { cn } from "@/lib/utils";
 
-const ACCEPT_INPUT = ".pdf,.xlsx,.csv,.ppt,.pptx,image/*";
+const ACCEPT_INPUT = "image/png,image/jpeg,image/jpg,image/webp";
 
-const ACCEPTED_EXTENSIONS = [
-  ".pdf",
-  ".xlsx",
-  ".csv",
-  ".ppt",
-  ".pptx",
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".webp",
-];
+const ACCEPTED_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"];
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 function resolveShareLink(
   submissionLink: string | undefined,
@@ -51,12 +61,124 @@ function InsightReportShareLink({ url }: { url: string }) {
   );
 }
 
+function buildInitialWebInsightFiles(
+  initialFiles: string[] | undefined,
+  h5Files: H5InsightFile[],
+  rowId?: string
+): WebInsightFileRecord[] {
+  return splitInitialWebInsightFileNames(initialFiles, h5Files).map((name) => ({
+    name,
+    previewUrl: getInsightReportPreviewUrl(rowId ?? "", name),
+    sizeLabel: "2.1 KB",
+  }));
+}
+
+function InsightReportImageCard({
+  file,
+  variant,
+  onRemove,
+  forceHover = false,
+}: {
+  file: InsightReportImage;
+  variant: "submitted" | "draft";
+  onRemove?: () => void;
+  forceHover?: boolean;
+}) {
+  const isSubmitted = variant === "submitted";
+  const showRemove = Boolean(onRemove);
+
+  return (
+    <div
+      className={cn(
+        "group/file overflow-hidden border border-gray-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
+        FORM_FIELD_RADIUS,
+        !isSubmitted && "border-brand/30",
+        forceHover && "figma-capture-insight-card-hovered"
+      )}
+    >
+      <div className="relative aspect-[4/3] w-full overflow-hidden">
+        <img
+          src={file.previewUrl}
+          alt={file.name}
+          className="size-full object-cover"
+        />
+        {file.source === "H5" ? (
+          <span className="pointer-events-none absolute left-1.5 top-1.5 z-10 max-w-[calc(100%-0.75rem)] rounded-md bg-sky-600 px-1.5 py-0.5 text-[9px] font-semibold leading-tight text-white shadow-sm">
+            Submitted by KOL
+          </span>
+        ) : null}
+        <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 transition-colors group-hover/file:bg-black/35">
+          <div className="insight-card-preview-actions flex items-center gap-2 opacity-0 transition-opacity group-hover/file:opacity-100">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                window.open(file.previewUrl, "_blank", "noopener,noreferrer");
+              }}
+              className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+              aria-label={`Preview ${file.name}`}
+            >
+              <Eye size={16} strokeWidth={2} />
+            </button>
+            {showRemove ? (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onRemove?.();
+                }}
+                className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+                aria-label={`Remove ${file.name}`}
+              >
+                <Trash2 size={16} strokeWidth={2} />
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+      <div className="px-2 py-1.5">
+        <p className="truncate text-[11px] font-medium text-gray-800">{file.name}</p>
+        <p className="text-[10px] text-gray-400">{file.sizeLabel}</p>
+      </div>
+    </div>
+  );
+}
+
+function InsightReportImageGrid({
+  files,
+  variant,
+  onRemoveFile,
+  hoverCardId,
+}: {
+  files: InsightReportImage[];
+  variant: "submitted" | "draft";
+  onRemoveFile?: (fileId: string) => void;
+  hoverCardId?: string;
+}) {
+  if (!files.length) return null;
+
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {files.map((file) => (
+        <InsightReportImageCard
+          key={file.id}
+          file={file}
+          variant={variant}
+          onRemove={onRemoveFile ? () => onRemoveFile(file.id) : undefined}
+          forceHover={hoverCardId === file.id}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function UploadInsightReportDialog({
   open,
   onOpenChange,
   initialFiles,
   submissionLink,
   rowId,
+  h5KolId,
   onSubmit,
   figmaCapture = false,
 }: {
@@ -65,31 +187,34 @@ export function UploadInsightReportDialog({
   initialFiles?: string[];
   submissionLink?: string;
   rowId?: string;
+  h5KolId?: string;
   onSubmit: (files: string[]) => void;
   figmaCapture?: boolean;
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       {open ? (
-        <UploadInsightReportDialogPanel
+        <UploadInsightReportSheetPanel
           key={rowId ?? "insight-upload"}
           initialFiles={initialFiles}
           submissionLink={submissionLink}
           rowId={rowId}
+          h5KolId={h5KolId}
           onSubmit={onSubmit}
           onOpenChange={onOpenChange}
           figmaCapture={figmaCapture}
         />
       ) : null}
-    </Dialog>
+    </Sheet>
   );
 }
 
-function UploadInsightReportDialogPanel({
+function UploadInsightReportSheetPanel({
   onOpenChange,
   initialFiles,
   submissionLink,
   rowId,
+  h5KolId,
   onSubmit,
   figmaCapture = false,
 }: {
@@ -97,159 +222,222 @@ function UploadInsightReportDialogPanel({
   initialFiles?: string[];
   submissionLink?: string;
   rowId?: string;
+  h5KolId?: string;
   onSubmit: (files: string[]) => void;
   figmaCapture?: boolean;
 }) {
-  const [existingFiles, setExistingFiles] = useState<string[]>(initialFiles ?? []);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const captureState = figmaCapture ? getFigmaCaptureInsightReportState() : null;
+
+  const [webInsightFiles, setWebInsightFiles] = useState<WebInsightFileRecord[]>(() => {
+    if (captureState) {
+      return captureState.existingFiles.map((file) => ({
+        name: file.name,
+        previewUrl: file.previewUrl,
+        sizeLabel: file.sizeLabel,
+      }));
+    }
+    const h5Files = h5KolId ? getH5PostingState(h5KolId).insightDraftFiles : [];
+    return buildInitialWebInsightFiles(initialFiles, h5Files, rowId);
+  });
+  const [h5InsightFiles, setH5InsightFiles] = useState(() =>
+    h5KolId && !figmaCapture ? getH5PostingState(h5KolId).insightDraftFiles : []
+  );
+  const [pendingFile, setPendingFile] = useState<InsightReportImage | null>(() =>
+    captureState
+      ? {
+          id: `pending-${captureState.pendingFile.name}`,
+          name: captureState.pendingFile.name,
+          previewUrl: captureState.pendingFile.previewUrl,
+          sizeLabel: captureState.pendingFile.sizeLabel,
+          source: "Web",
+        }
+      : null
+  );
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | undefined>(
-    resolveShareLink(submissionLink, rowId, initialFiles?.length ?? 0)
+    captureState?.shareUrl ??
+      resolveShareLink(submissionLink, rowId, initialFiles?.length ?? 0)
+  );
+
+  useEffect(() => {
+    if (figmaCapture || !h5KolId) return;
+
+    return subscribeH5PostingChanges(() => {
+      setH5InsightFiles(getH5PostingState(h5KolId).insightDraftFiles);
+    });
+  }, [figmaCapture, h5KolId]);
+
+  const existingFiles = useMemo(() => {
+    if (captureState) {
+      return captureState.existingFiles.map((file) => ({
+        id: file.name,
+        name: file.name,
+        previewUrl: file.previewUrl,
+        sizeLabel: file.sizeLabel,
+        source: "Web" as const,
+      }));
+    }
+
+    return mergeInsightReportImagesFromRecords(webInsightFiles, h5InsightFiles);
+  }, [captureState, h5InsightFiles, webInsightFiles]);
+
+  const existingFileNames = useMemo(
+    () =>
+      captureState
+        ? captureState.existingFiles.map((file) => file.name)
+        : mergeInsightReportFileNames(
+            webInsightFiles.map((file) => file.name),
+            h5InsightFiles
+          ),
+    [captureState, h5InsightFiles, webInsightFiles]
   );
 
   const headerShareLink =
     shareLink ??
     (rowId && existingFiles.length > 0 ? buildInsightReportShareUrl(rowId) : undefined);
 
-  const handleRemoveExisting = (fileName: string) => {
-    const nextFiles = existingFiles.filter((name) => name !== fileName);
-    setExistingFiles(nextFiles);
-    setShareLink(resolveShareLink(submissionLink, rowId, nextFiles.length));
-    onSubmit(nextFiles);
+  const handleRemoveExisting = (fileId: string) => {
+    const target = existingFiles.find((file) => file.id === fileId);
+    if (!target) return;
+
+    if (target.source === "H5") {
+      if (!h5KolId) return;
+      const h5FileId = target.id.startsWith("h5-") ? target.id.slice(3) : target.id;
+      removeH5InsightFile(h5KolId, h5FileId);
+      const nextH5Files = getH5PostingState(h5KolId).insightDraftFiles;
+      setH5InsightFiles(nextH5Files);
+      const nextNames = mergeInsightReportFileNames(
+        webInsightFiles.map((file) => file.name),
+        nextH5Files
+      );
+      setShareLink(resolveShareLink(submissionLink, rowId, nextNames.length));
+      onSubmit(nextNames);
+      return;
+    }
+
+    const nextWebInsightFiles = webInsightFiles.filter((file) => file.name !== target.name);
+    setWebInsightFiles(nextWebInsightFiles);
+    const nextNames = mergeInsightReportFileNames(
+      nextWebInsightFiles.map((file) => file.name),
+      h5InsightFiles
+    );
+    setShareLink(resolveShareLink(submissionLink, rowId, nextNames.length));
+    onSubmit(nextNames);
   };
 
   const handleStageFile = (file: File | null) => {
     if (!file) return;
 
-    if (existingFiles.includes(file.name)) {
-      setUploadError("This file is already in the list.");
+    if (existingFileNames.includes(file.name) || pendingFile?.name === file.name) {
+      setUploadError("This image is already in the list.");
       return;
     }
 
-    setPendingFile(file);
-    setUploadError(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return;
+      setPendingFile({
+        id: `pending-${file.name}`,
+        name: file.name,
+        previewUrl: reader.result,
+        sizeLabel: formatBytes(file.size),
+        source: "Web",
+      });
+      setUploadError(null);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSave = () => {
     if (!pendingFile) return;
 
-    const nextFiles = [...existingFiles, pendingFile.name];
-    setExistingFiles(nextFiles);
+    const nextWebInsightFiles = [
+      ...webInsightFiles,
+      {
+        name: pendingFile.name,
+        previewUrl: pendingFile.previewUrl,
+        sizeLabel: pendingFile.sizeLabel,
+      },
+    ];
+    setWebInsightFiles(nextWebInsightFiles);
     setPendingFile(null);
-    onSubmit(nextFiles);
+    const nextNames = mergeInsightReportFileNames(
+      nextWebInsightFiles.map((file) => file.name),
+      h5InsightFiles
+    );
+    onSubmit(nextNames);
     if (rowId) {
       setShareLink(buildInsightReportShareUrl(rowId));
     }
   };
 
   return (
-    <DialogContent
-      className="min-w-0 gap-0 overflow-hidden p-0 sm:max-w-[520px]"
-      showCloseButton
+    <SheetContent
+      side="right"
+      className={cn(
+        "flex h-full gap-0 bg-white p-0 data-[side=right]:w-full data-[side=right]:max-w-[520px] data-[side=right]:sm:max-w-[520px]",
+        figmaCapture && "figma-capture-upload-insight-report-sheet"
+      )}
       data-figma-capture={figmaCapture ? "upload-insight-report-dialog" : undefined}
     >
-      <DialogHeader className="gap-1.5 border-b border-gray-100 px-6 py-5 text-left">
-        <DialogTitle className="text-[18px] font-semibold text-gray-900">
+      <SheetHeader className="shrink-0 gap-1.5 border-b border-gray-100 bg-white px-6 py-5 text-left">
+        <SheetTitle className="text-[18px] font-semibold text-gray-900">
           Insight Reports Panel
-        </DialogTitle>
-        <DialogDescription className="text-[13px] leading-relaxed text-gray-500">
-          Add files to append to the current insight report set.
-        </DialogDescription>
-      </DialogHeader>
+        </SheetTitle>
+        <SheetDescription className="text-[13px] leading-relaxed text-gray-500">
+          Upload insight screenshots to append to the current report set.
+        </SheetDescription>
+      </SheetHeader>
 
-      <div className="mt-[24px] mb-[24px] min-w-0 max-h-[min(52vh,420px)] overflow-y-auto px-6 py-2">
-        <div className="min-w-0 space-y-6">
-          {existingFiles.length ? (
-            <div className="min-w-0 space-y-2">
-              <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-                <p className="shrink-0 text-[13px] font-semibold text-gray-800">Existing files</p>
-                {headerShareLink ? <InsightReportShareLink url={headerShareLink} /> : null}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-6 py-5">
+          <div className="min-w-0 space-y-6">
+            {existingFiles.length ? (
+              <div className="min-w-0 space-y-2">
+                <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+                  <p className="shrink-0 text-[13px] font-semibold text-gray-800">Existing files</p>
+                  {headerShareLink ? <InsightReportShareLink url={headerShareLink} /> : null}
+                </div>
+                <InsightReportImageGrid
+                  files={existingFiles}
+                  variant="submitted"
+                  onRemoveFile={handleRemoveExisting}
+                  hoverCardId={captureState?.hoverCardId}
+                />
               </div>
-              <ul className="min-w-0 space-y-2 overflow-hidden rounded-lg border border-gray-100 bg-gray-50/40 px-3 py-2.5">
-                {existingFiles.map((fileName) => (
-                  <li key={fileName} className="flex min-w-0 items-center gap-2 overflow-hidden">
-                    <Paperclip size={14} strokeWidth={2} className="shrink-0 text-gray-400" />
-                    <span
-                      className="min-w-0 flex-1 truncate text-[13px] font-medium text-gray-800"
-                      title={fileName}
-                    >
-                      {fileName}
-                    </span>
-                    {rowId ? (
-                      <button
-                        type="button"
-                        className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-                        aria-label={`Preview ${fileName}`}
-                        onClick={() =>
-                          window.open(
-                            buildInsightReportFilePreviewUrl(rowId, fileName),
-                            "_blank",
-                            "noopener,noreferrer"
-                          )
-                        }
-                      >
-                        <Eye size={14} strokeWidth={2} />
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50"
-                      aria-label={`Remove ${fileName}`}
-                      onClick={() => handleRemoveExisting(fileName)}
-                    >
-                      <Trash2 size={14} strokeWidth={2} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+            ) : null}
 
-          <div className="space-y-2">
-            <p className="text-[13px] font-semibold text-gray-800">Add more file</p>
-            <FileUploadZone
-              title="Upload File"
-              hint="Drag and drop files here, or click to browse."
-              subHint="Uploads append to the existing list. To replace a file, delete it first."
-              accept={ACCEPT_INPUT}
-              acceptedExtensions={ACCEPTED_EXTENSIONS}
-              maxBytes={20 * 1024 * 1024}
-              onFileChange={handleStageFile}
-              error={uploadError}
-              onErrorChange={setUploadError}
-              variant="brand"
-            />
-          </div>
-
-          {pendingFile ? (
             <div className="space-y-2">
-              <p className="text-[13px] font-semibold text-gray-800">Pending uploads</p>
-              <ul className="min-w-0 overflow-hidden rounded-lg border border-gray-100 bg-white px-3 py-2.5">
-                <li className="flex min-w-0 items-center gap-2 overflow-hidden">
-                  <Paperclip size={14} strokeWidth={2} className="shrink-0 text-gray-400" />
-                  <span
-                    className="min-w-0 flex-1 truncate text-[13px] font-medium text-gray-800"
-                    title={pendingFile.name}
-                  >
-                    {pendingFile.name}
-                  </span>
-                  <button
-                    type="button"
-                    className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50"
-                    aria-label={`Remove ${pendingFile.name}`}
-                    onClick={() => setPendingFile(null)}
-                  >
-                    <Trash2 size={14} strokeWidth={2} />
-                  </button>
-                </li>
-              </ul>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand/80">
+                + Add more images
+              </p>
+              <FileUploadZone
+                title="Upload image here."
+                hint="Only PNG or JPG supported."
+                accept={ACCEPT_INPUT}
+                acceptedExtensions={ACCEPTED_EXTENSIONS}
+                maxBytes={20 * 1024 * 1024}
+                onFileChange={handleStageFile}
+                error={uploadError}
+                onErrorChange={setUploadError}
+                variant="brand"
+              />
             </div>
-          ) : null}
-        </div>
-      </div>
 
-      <DialogFooter className="-mx-0 -mb-0 rounded-none border-t border-gray-100 bg-white px-6 py-4">
-        <div className="flex w-full flex-row items-center justify-end gap-3">
+            {pendingFile ? (
+              <div className="space-y-2">
+                <p className="text-[13px] font-semibold text-gray-800">Pending uploads</p>
+                <InsightReportImageGrid
+                  files={[pendingFile]}
+                  variant="draft"
+                  onRemoveFile={() => setPendingFile(null)}
+                />
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <SheetFooter className="shrink-0 flex-row justify-end gap-2 border-t border-gray-100 bg-gray-50/50 px-6 py-4">
           <Button
             type="button"
             variant="outline"
@@ -262,13 +450,13 @@ function UploadInsightReportDialogPanel({
             type="button"
             variant="brand"
             className="h-9 min-w-[88px] text-[13px]"
-            disabled={!pendingFile}
+            disabled={!pendingFile && !figmaCapture}
             onClick={handleSave}
           >
             Save &amp; Upload
           </Button>
-        </div>
-      </DialogFooter>
-    </DialogContent>
+        </SheetFooter>
+      </div>
+    </SheetContent>
   );
 }

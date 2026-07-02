@@ -17,10 +17,14 @@ export default function CampaignDetailHeader({
   campaignId,
   tab,
   onTabChange,
+  figmaCapture,
+  figmaOpenExecutionGuide,
 }: {
   campaignId: string;
   tab: CampaignTab;
   onTabChange: (t: CampaignTab) => void;
+  figmaCapture?: boolean;
+  figmaOpenExecutionGuide?: boolean;
 }) {
 
   const title = useMemo(() => {
@@ -59,7 +63,10 @@ export default function CampaignDetailHeader({
 
           {/* Right actions */}
           <div className="flex items-center gap-2.5 shrink-0">
-            <CampaignSettingsMenu />
+            <CampaignSettingsMenu
+              figmaCapture={figmaCapture}
+              figmaOpenExecutionGuide={figmaOpenExecutionGuide}
+            />
 
             <DropdownMenu>
               <DropdownMenuTrigger className="inline-flex items-center h-8 px-3 rounded-md border border-gray-200 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">

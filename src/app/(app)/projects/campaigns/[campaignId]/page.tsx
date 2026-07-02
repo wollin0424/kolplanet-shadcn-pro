@@ -22,6 +22,7 @@ export default async function CampaignDetailPage({
     figmaOpenUploadInsightReport?: string;
     figmaUploadInsightRow?: string;
     figmaOpenImportPostLinks?: string;
+    figmaOpenExecutionGuide?: string;
     figmaPostingMirroredTooltip?: string;
     figmaPostingMirroredTooltipRow?: string;
     figmaPostingValidationTooltips?: string;
@@ -46,6 +47,7 @@ export default async function CampaignDetailPage({
     figmaOpenUploadInsightReport,
     figmaUploadInsightRowId,
     figmaOpenImportPostLinks,
+    figmaOpenExecutionGuide,
     figmaPostingMirroredTooltipRowId,
     figmaPostingValidationTooltips,
     figmaReviewTab,
@@ -69,6 +71,7 @@ export default async function CampaignDetailPage({
       figmaOpenUploadInsightReport={figmaOpenUploadInsightReport}
       figmaUploadInsightRowId={figmaUploadInsightRowId}
       figmaOpenImportPostLinks={figmaOpenImportPostLinks}
+      figmaOpenExecutionGuide={figmaOpenExecutionGuide}
       figmaPostingMirroredTooltipRowId={figmaPostingMirroredTooltipRowId}
       figmaPostingValidationTooltips={figmaPostingValidationTooltips}
       figmaReviewTab={figmaReviewTab}
