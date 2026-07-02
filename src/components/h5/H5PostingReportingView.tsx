@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { H5PageShell } from "@/components/h5/H5PageShell";
-import { H5MultiImageUploadField } from "@/components/h5/H5MultiImageUploadField";
+import {
+  H5PendingImagesUploadField,
+  H5SubmittedImagesPanel,
+} from "@/components/h5/H5MultiImageUploadField";
 import { H5SectionHeading } from "@/components/h5/H5SectionHeading";
 import { H5InfluencerCard } from "@/components/h5/H5InfluencerCard";
 import {
@@ -22,6 +25,7 @@ import {
   addMasterPost,
   addMirroredPost,
   getDefaultH5PostingState,
+  getFigmaCaptureH5PostingState,
   getH5PostingState,
   hasVerifiedMasterPost,
   refreshMasterLink,
@@ -271,52 +275,61 @@ function H5InsightUploadSection({
   onRemoveFile: (fileId: string) => void;
   onSubmit: () => void;
 }) {
-  const hasSubmittedFiles = files.some((file) => file.locked);
+  const submittedFiles = files.filter((file) => file.locked);
   const pendingFiles = files.filter((file) => !file.locked);
+  const hasSubmittedFiles = submittedFiles.length > 0;
   const canSubmit = !locked && pendingFiles.length > 0;
 
   return (
-    <>
+    <div className="space-y-4">
       {locked ? (
-        <p className="mb-3 rounded-lg border border-amber-100 bg-amber-50/70 px-3 py-2 text-[12px] leading-relaxed text-amber-800">
+        <p className="rounded-lg border border-amber-100 bg-amber-50/70 px-3 py-2 text-[12px] leading-relaxed text-amber-800">
           Unlock this section after your first original post link is verified.
         </p>
       ) : null}
 
-      <H5MultiImageUploadField
-        files={files}
-        onAddFiles={onAddFiles}
-        onRemoveFile={onRemoveFile}
-        disabled={locked}
-        showDropzone={!locked}
-        dropLabel="Drop screenshots here"
-        hint="PNG / JPG screenshots"
-      />
-
-      {!hasSubmittedFiles ? (
-        <p className="text-[11px] leading-relaxed text-gray-400">
-          Upload completes the draft only. Click Submit to finalize the report.
-        </p>
-      ) : null}
-
-      {hasSubmittedFiles && pendingFiles.length === 0 ? (
-        <p className="text-[11px] font-medium text-emerald-700">
-          Insight report submitted successfully. Files are now locked.
-        </p>
-      ) : null}
+      {hasSubmittedFiles ? <H5SubmittedImagesPanel files={submittedFiles} /> : null}
 
       {!locked ? (
-        <Button
-          type="button"
-          variant="brand"
-          className={cn(H5_PRIMARY_BUTTON_CLASS, "mt-3")}
-          disabled={!canSubmit}
-          onClick={onSubmit}
+        <section
+          className={cn(
+            "space-y-3",
+            hasSubmittedFiles &&
+              "rounded-xl border border-dashed border-brand/25 bg-brand-50/20 p-3"
+          )}
         >
-          Submit
-        </Button>
+          {hasSubmittedFiles ? (
+            <h3 className="text-[12px] font-semibold text-brand">Add more screenshots</h3>
+          ) : null}
+
+          <H5PendingImagesUploadField
+            files={pendingFiles}
+            onAddFiles={onAddFiles}
+            onRemoveFile={onRemoveFile}
+            disabled={locked}
+            showDropzone
+            dropLabel="Drop screenshots here"
+            hint="PNG / JPG screenshots"
+          />
+
+          {!hasSubmittedFiles ? (
+            <p className="text-[11px] leading-relaxed text-gray-400">
+              Upload completes the draft only. Click Submit to finalize the report.
+            </p>
+          ) : null}
+
+          <Button
+            type="button"
+            variant="brand"
+            className={H5_PRIMARY_BUTTON_CLASS}
+            disabled={!canSubmit}
+            onClick={onSubmit}
+          >
+            Submit
+          </Button>
+        </section>
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -331,11 +344,22 @@ function getMirroredLabel(index: number, total: number) {
 type H5PostingReportingViewProps = {
   kolId: string;
   overviewHref: string;
+  figmaCapture?: boolean;
+  figmaPostingState?: string;
 };
 
-export function H5PostingReportingView({ kolId, overviewHref }: H5PostingReportingViewProps) {
+export function H5PostingReportingView({
+  kolId,
+  overviewHref,
+  figmaCapture = false,
+  figmaPostingState,
+}: H5PostingReportingViewProps) {
   const [brief, setBrief] = useState(() => getScriptBriefH5Defaults(kolId));
-  const [posting, setPosting] = useState<H5PostingState>(() => getDefaultH5PostingState(kolId));
+  const [posting, setPosting] = useState<H5PostingState>(() =>
+    figmaCapture
+      ? getFigmaCaptureH5PostingState(kolId, figmaPostingState)
+      : getDefaultH5PostingState(kolId)
+  );
 
   useEffect(() => {
     const syncBrief = () => setBrief(getScriptBriefH5Data(kolId));
@@ -344,14 +368,19 @@ export function H5PostingReportingView({ kolId, overviewHref }: H5PostingReporti
   }, [kolId]);
 
   useEffect(() => {
+    if (figmaCapture) return;
     const syncPosting = () => setPosting(getH5PostingState(kolId));
     syncPosting();
     return subscribeH5PostingChanges(syncPosting);
-  }, [kolId]);
+  }, [figmaCapture, kolId]);
 
   const insightUnlocked = hasVerifiedMasterPost(posting);
 
   return (
+    <div
+      className={cn(figmaCapture && "figma-capture-h5-posting-page")}
+      data-figma-capture={figmaCapture ? "h5-posting-page" : undefined}
+    >
     <H5PageShell
       backHref={overviewHref}
       pageTitle="Posting & Reporting"
@@ -459,5 +488,6 @@ export function H5PostingReportingView({ kolId, overviewHref }: H5PostingReporti
         />
       </section>
     </H5PageShell>
+    </div>
   );
 }

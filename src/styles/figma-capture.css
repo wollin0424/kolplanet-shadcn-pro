@@ -26,8 +26,11 @@ html.figma-capture main.relative.flex.min-h-0.flex-1 {
 }
 
 html.figma-capture main .absolute.inset-0.flex.min-h-0.flex-col {
-  position: absolute !important;
-  inset: 0 !important;
+  position: relative !important;
+  inset: auto !important;
+  flex: none !important;
+  height: auto !important;
+  min-height: auto !important;
   overflow: visible !important;
 }
 
@@ -71,7 +74,9 @@ html.figma-capture .figma-capture-posting-table {
 
 /* H5 mobile shell — expand scroll containers for full-page capture */
 html.figma-capture .flex.h-dvh,
-html.figma-capture .flex.h-dvh > .max-w-\[480px\] {
+html.figma-capture .flex.min-h-dvh,
+html.figma-capture .flex.h-dvh > .max-w-\[480px\],
+html.figma-capture .flex.min-h-dvh > .max-w-\[480px\] {
   height: auto !important;
   min-height: 100vh;
   max-height: none !important;
@@ -129,8 +134,56 @@ html.figma-capture tr.figma-capture-posting-hovered-row .posting-row-hover-actio
   pointer-events: auto !important;
 }
 
-/* Edit Post Link dialog — isolate for element capture */
-html.figma-capture [data-figma-capture="edit-post-link-dialog"] {
+/* Edit Post Link sheet — isolate right drawer for element capture */
+html.figma-capture [data-figma-capture="edit-post-link-dialog"],
+html.figma-capture .figma-capture-edit-post-link-sheet {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  left: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  width: 520px !important;
+  max-width: 520px !important;
+  height: auto !important;
+  min-height: 1080px !important;
+  max-height: none !important;
+}
+
+html.figma-capture [data-figma-capture="edit-post-link-dialog"] > .flex.min-h-0.flex-1.flex-col {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+html.figma-capture [data-figma-capture="edit-post-link-dialog"] .min-h-0.flex-1.overflow-y-auto {
+  flex: 1 1 auto !important;
+  min-height: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+html.figma-capture [data-figma-capture="edit-post-link-source"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+html.figma-capture [data-figma-capture="edit-post-link-source"] svg {
+  display: block !important;
+  opacity: 1 !important;
+}
+
+html.figma-capture [data-figma-capture="edit-post-link-dialog"] [data-icon] {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Import Post Links dialog — isolate for element capture */
+html.figma-capture [data-figma-capture="import-post-links-dialog"] {
   position: fixed !important;
   top: 50% !important;
   left: 50% !important;
@@ -138,11 +191,8 @@ html.figma-capture [data-figma-capture="edit-post-link-dialog"] {
   opacity: 1 !important;
   overflow: visible !important;
   max-height: none !important;
-}
-
-html.figma-capture [data-figma-capture="edit-post-link-dialog"] .max-h-\[min\(52vh\,420px\)\] {
-  max-height: none !important;
-  overflow: visible !important;
+  width: 520px !important;
+  max-width: 520px !important;
 }
 
 /* Upload Insight Report dialog — isolate for element capture */
@@ -196,4 +246,19 @@ html.figma-capture [data-figma-capture="posting-validation-tooltips-panel"] {
   opacity: 1 !important;
   overflow: visible !important;
   max-height: none !important;
+}
+
+/* H5 Posting & Reporting — full-page capture at 480px */
+html.figma-capture .figma-capture-h5-posting-page,
+html.figma-capture [data-figma-capture="h5-posting-page"] {
+  min-height: 100vh !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+html.figma-capture .figma-capture-h5-posting-page main,
+html.figma-capture [data-figma-capture="h5-posting-page"] main {
+  overflow: visible !important;
+  min-height: auto !important;
+  height: auto !important;
 }

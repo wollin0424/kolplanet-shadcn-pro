@@ -268,11 +268,22 @@ function H5OverviewLinkRow({
 export default function ScriptBriefH5View({
   kolId,
   view = "overview",
+  figmaCapture = false,
+  figmaPostingState,
 }: {
   kolId: string;
   view?: "overview" | "script" | "guidelines" | "contract" | "video" | "caption" | "posting";
+  figmaCapture?: boolean;
+  figmaPostingState?: string;
 }) {
-  return <ScriptBriefH5ViewInner kolId={kolId} view={view} />;
+  return (
+    <ScriptBriefH5ViewInner
+      kolId={kolId}
+      view={view}
+      figmaCapture={figmaCapture}
+      figmaPostingState={figmaPostingState}
+    />
+  );
 }
 
 function H5OverviewDeadline({
@@ -958,9 +969,24 @@ function ScriptBriefH5CaptionCover({ kolId }: { kolId: string }) {
   );
 }
 
-function ScriptBriefH5Posting({ kolId }: { kolId: string }) {
+function ScriptBriefH5Posting({
+  kolId,
+  figmaCapture = false,
+  figmaPostingState,
+}: {
+  kolId: string;
+  figmaCapture?: boolean;
+  figmaPostingState?: string;
+}) {
   const overviewHref = `/h5/kol-info/${encodeURIComponent(kolId)}`;
-  return <H5PostingReportingView kolId={kolId} overviewHref={overviewHref} />;
+  return (
+    <H5PostingReportingView
+      kolId={kolId}
+      overviewHref={overviewHref}
+      figmaCapture={figmaCapture}
+      figmaPostingState={figmaPostingState}
+    />
+  );
 }
 
 function ScriptBriefH5VideoDraft({ kolId }: { kolId: string }) {
@@ -1064,9 +1090,13 @@ function ScriptBriefH5VideoDraft({ kolId }: { kolId: string }) {
 function ScriptBriefH5ViewInner({
   kolId,
   view,
+  figmaCapture = false,
+  figmaPostingState,
 }: {
   kolId: string;
   view: "overview" | "script" | "guidelines" | "contract" | "video" | "caption" | "posting";
+  figmaCapture?: boolean;
+  figmaPostingState?: string;
 }) {
   const [data, setData] = useState(() => getScriptBriefH5Defaults(kolId));
   const [draft, setDraft] = useState("");
@@ -1130,7 +1160,13 @@ function ScriptBriefH5ViewInner({
   }
 
   if (view === "posting") {
-    return <ScriptBriefH5Posting kolId={kolId} />;
+    return (
+      <ScriptBriefH5Posting
+        kolId={kolId}
+        figmaCapture={figmaCapture}
+        figmaPostingState={figmaPostingState}
+      />
+    );
   }
 
   const overviewHref = `/h5/kol-info/${encodeURIComponent(kolId)}`;

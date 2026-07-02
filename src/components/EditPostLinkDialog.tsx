@@ -3,20 +3,32 @@
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  getFigmaCaptureEditPostLinkLinks,
   getMasterPostLinks,
   getPostLinksByType,
+  getPostLinkSourceLabel,
+  getPostLinkTooltipCopy,
   type PostLink,
+  type PostLinkSource,
+  type PostLinkType,
 } from "@/lib/postingHubMock";
 import { formInputClass } from "@/lib/formControls";
 import { cn } from "@/lib/utils";
-import { Pencil, Plus, Trash2 } from "@/lib/icons";
+import { Monitor, Plus, Smartphone, Trash2 } from "@/lib/icons";
 
 const MIRRORED_PLACEHOLDER = "https://www.tiktok.com/@username/video/...";
 
@@ -24,12 +36,213 @@ const EDIT_POST_LINK_INPUT_CLASS = formInputClass(
   "h-10! px-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
 );
 
-const EDIT_POST_LINK_FIELD_STACK_CLASS = "space-y-3";
+const EDIT_POST_LINK_FIELD_STACK_CLASS = "space-y-2";
+
+const EDIT_POST_LINK_LIST_CLASS = "flex flex-col gap-5";
 
 type LinkDraft = {
   id: string;
   url: string;
+  source?: PostLinkSource;
+  snapshot?: PostLink;
 };
+
+function toLinkDraft(link: PostLink, id: string): LinkDraft {
+  return {
+    id,
+    url: link.url,
+    source: link.source,
+    snapshot: link,
+  };
+}
+
+function getEditRowStatusLink(
+  snapshot: PostLink | undefined,
+  url: string,
+  type: PostLinkType
+): PostLink | null {
+  if (!url.trim()) return null;
+
+  if (!snapshot) {
+    return { type, url };
+  }
+
+  const urlUnchanged = snapshot.url.trim() === url.trim();
+
+  return {
+    ...snapshot,
+    type,
+    url,
+    issues: urlUnchanged ? snapshot.issues : undefined,
+    validation: urlUnchanged ? snapshot.validation : undefined,
+  };
+}
+
+function getDisplaySource(item: LinkDraft): PostLinkSource | undefined {
+  if (item.source) return item.source;
+  if (item.url.trim()) return "Web";
+  return undefined;
+}
+
+function FigmaCaptureSourceGlyph({ source }: { source: PostLinkSource }) {
+  const label = getPostLinkSourceLabel(source);
+  const isH5 = source === "H5";
+
+  return (
+    <div
+      data-figma-capture="edit-post-link-source"
+      className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-9 items-center justify-center"
+      aria-label={label}
+    >
+      <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden
+      >
+        {isH5 ? (
+          <>
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2" stroke="#6B7280" strokeWidth="2" />
+            <line x1="12" y1="18" x2="12.01" y2="18" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" />
+          </>
+        ) : (
+          <>
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" stroke="#6B7280" strokeWidth="2" />
+            <line x1="8" y1="21" x2="16" y2="21" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" />
+            <line x1="12" y1="17" x2="12" y2="21" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" />
+          </>
+        )}
+      </svg>
+    </div>
+  );
+}
+
+function EditPostLinkSourceIcon({
+  source,
+  figmaCapture = false,
+}: {
+  source: PostLinkSource;
+  figmaCapture?: boolean;
+}) {
+  if (figmaCapture) {
+    return <FigmaCaptureSourceGlyph source={source} />;
+  }
+
+  const Icon = source === "H5" ? Smartphone : Monitor;
+  const label = getPostLinkSourceLabel(source);
+
+  return (
+    <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-9 items-center justify-center">
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <span
+              className="pointer-events-auto inline-flex size-5 items-center justify-center text-gray-400"
+              aria-label={label}
+            >
+              <Icon size={15} strokeWidth={2} />
+            </span>
+          }
+        />
+        <TooltipContent variant="light" side="top" sideOffset={4} className="px-2.5 py-1.5 text-[11px]">
+          {label}
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
+
+function EditPostLinkFieldLabel({
+  label,
+  inputId,
+  statusLink,
+}: {
+  label: string;
+  inputId: string;
+  statusLink: PostLink | null;
+}) {
+  const status = statusLink ? getPostLinkTooltipCopy(statusLink) : null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <label htmlFor={inputId} className="text-xs font-medium text-gray-700">
+        {label}
+      </label>
+      {status ? (
+        <span
+          className={cn(
+            "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-none",
+            status.tagClassName
+          )}
+        >
+          {status.tag}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function EditPostLinkFieldRow({
+  label,
+  statusLink,
+  source,
+  inputId,
+  url,
+  onUrlChange,
+  onBlur,
+  error,
+  placeholder,
+  onRemove,
+  figmaCapture = false,
+}: {
+  label: string;
+  statusLink: PostLink | null;
+  source?: PostLinkSource;
+  inputId: string;
+  url: string;
+  onUrlChange: (value: string) => void;
+  onBlur?: () => void;
+  error?: string;
+  placeholder?: string;
+  onRemove: () => void;
+  figmaCapture?: boolean;
+}) {
+  return (
+    <div className={EDIT_POST_LINK_FIELD_STACK_CLASS}>
+      <EditPostLinkFieldLabel label={label} inputId={inputId} statusLink={statusLink} />
+      <div className="flex items-center gap-2">
+        <div className="relative min-w-0 flex-1">
+          {source ? <EditPostLinkSourceIcon source={source} figmaCapture={figmaCapture} /> : null}
+          <Input
+            id={inputId}
+            value={url}
+            onChange={(e) => onUrlChange(e.target.value)}
+            onBlur={onBlur}
+            placeholder={placeholder}
+            aria-invalid={Boolean(error)}
+            className={cn(
+              EDIT_POST_LINK_INPUT_CLASS,
+              source && "pl-9",
+              figmaCapture && source && "relative z-0",
+              error && "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
+            )}
+          />
+        </div>
+        <button
+          type="button"
+          className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50"
+          aria-label={`Remove ${label}`}
+          onClick={onRemove}
+        >
+          <Trash2 size={15} strokeWidth={2} />
+        </button>
+      </div>
+      {error ? <p className="text-[12px] leading-snug text-red-600">{error}</p> : null}
+    </div>
+  );
+}
 
 function validateMasterUrl(url: string) {
   const trimmed = url.trim();
@@ -50,23 +263,18 @@ function getLastMasterRequiredMessage(index: number) {
 }
 
 function buildDraftFromLinks(links?: PostLink[], figmaCapture = false) {
-  const masters = getMasterPostLinks(links);
-  const mirrored = getPostLinksByType(links, "Mirrored");
+  const captureLinks = figmaCapture ? getFigmaCaptureEditPostLinkLinks() : links;
+  const masters = getMasterPostLinks(captureLinks);
+  const mirrored = getPostLinksByType(captureLinks, "Mirrored");
 
   return {
     masters:
       masters.length > 0
-        ? masters.map((link, index) => ({
-            id: `master-${index}`,
-            url: link.url,
-          }))
+        ? masters.map((link, index) => toLinkDraft(link, `master-${index}`))
         : [{ id: "figma-master-0", url: "" }],
     mirrored:
       mirrored.length > 0
-        ? mirrored.map((link, index) => ({
-            id: `mirrored-${index}`,
-            url: link.url,
-          }))
+        ? mirrored.map((link, index) => toLinkDraft(link, `mirrored-${index}`))
         : figmaCapture
           ? [{ id: "figma-mirrored-0", url: "" }]
           : [],
@@ -90,6 +298,7 @@ export function buildPostLinksFromDraft(
       links.push({
         type: "Master",
         url,
+        source: prevMasters[index]?.source ?? "Web",
         validation: prevMasters[index]?.validation,
         postedDate: prevMasters[index]?.postedDate,
         issues: masterError ? [masterError] : prevMasters[index]?.issues,
@@ -103,6 +312,7 @@ export function buildPostLinksFromDraft(
       links.push({
         type: "Mirrored",
         url,
+        source: prevMirrored[index]?.source ?? "Web",
         postedDate: prevMirrored[index]?.postedDate,
         issues: prevMirrored[index]?.issues,
       });
@@ -125,9 +335,9 @@ export function EditPostLinkDialog({
   figmaCapture?: boolean;
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       {open ? (
-        <EditPostLinkDialogPanel
+        <EditPostLinkSheetPanel
           key={JSON.stringify(initialLinks ?? [])}
           initialLinks={initialLinks}
           onSubmit={onSubmit}
@@ -135,11 +345,11 @@ export function EditPostLinkDialog({
           figmaCapture={figmaCapture}
         />
       ) : null}
-    </Dialog>
+    </Sheet>
   );
 }
 
-function EditPostLinkDialogPanel({
+function EditPostLinkSheetPanel({
   onOpenChange,
   initialLinks,
   onSubmit,
@@ -241,144 +451,113 @@ function EditPostLinkDialogPanel({
   const hasMasterValidationError = Object.values(masterErrors).some(Boolean);
   const canSubmit =
     masters.some((item) => item.url.trim()) && !hasMasterValidationError;
+  const hasMasterLink = masters.some((item) => item.url.trim());
 
   return (
-    <DialogContent
-      className="gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[520px]"
-      showCloseButton
+    <SheetContent
+      side="right"
+      className={cn(
+        "flex h-full gap-0 bg-white p-0 data-[side=right]:w-full data-[side=right]:max-w-[520px] data-[side=right]:sm:max-w-[520px]",
+        figmaCapture && "figma-capture-edit-post-link-sheet"
+      )}
       data-figma-capture={figmaCapture ? "edit-post-link-dialog" : undefined}
     >
-      <div className="border-b border-gray-100 bg-gradient-to-b from-gray-50/80 to-white px-6 pt-6 pb-5">
-        <div className="flex items-start gap-3 pr-6">
-          <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand ring-1 ring-brand/10">
-            <Pencil size={18} strokeWidth={2} />
-          </span>
-          <div className="min-w-0 pt-0.5">
-            <DialogTitle className="text-base font-semibold text-gray-900">
-              Edit Post Link
-            </DialogTitle>
-            <DialogDescription className="mt-2 text-[13px] leading-relaxed text-gray-500">
-              The system failed to fetch the post link automatically. Please manually enter the
-              published URL below. The system will initiate content validation immediately after
-              submission.
-            </DialogDescription>
-          </div>
-        </div>
-      </div>
+      <SheetHeader className="shrink-0 gap-1.5 border-b border-gray-100 bg-white px-6 py-5 text-left">
+        <SheetTitle className="text-[18px] font-semibold text-gray-900">Edit Post Link</SheetTitle>
+        <SheetDescription className="text-[13px] leading-relaxed text-gray-500">
+          The system failed to fetch the post link automatically. Please manually enter the
+          published URL below. The system will initiate content validation immediately after
+          submission.
+        </SheetDescription>
+      </SheetHeader>
 
-      <div className="max-h-[min(52vh,420px)] space-y-5 overflow-y-auto px-6 py-5">
-        <div className="space-y-3">
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
-            onClick={handleAddMaster}
-          >
-            <Plus size={14} strokeWidth={2.25} />
-            Add Master Link
-          </button>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
+          <div className="space-y-4">
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
+              onClick={handleAddMaster}
+            >
+              <Plus size={14} strokeWidth={2.25} />
+              Add Master Link
+            </button>
 
-          {masters.map((item, index) => (
-            <div key={item.id} className={EDIT_POST_LINK_FIELD_STACK_CLASS}>
-              <label
-                htmlFor={`${baseId}-master-${item.id}`}
-                className="text-xs font-medium text-gray-700"
-              >
-                Master {index + 1}
-              </label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id={`${baseId}-master-${item.id}`}
-                  value={item.url}
-                  onChange={(e) => handleMasterChange(item.id, e.target.value)}
+            <div className={EDIT_POST_LINK_LIST_CLASS}>
+              {masters.map((item, index) => (
+                <EditPostLinkFieldRow
+                  key={item.id}
+                  label={`Master ${index + 1}`}
+                  statusLink={getEditRowStatusLink(item.snapshot, item.url, "Master")}
+                  source={getDisplaySource(item)}
+                  inputId={`${baseId}-master-${item.id}`}
+                  url={item.url}
+                  onUrlChange={(value) => handleMasterChange(item.id, value)}
                   onBlur={() =>
                     setMasterErrors((prev) => ({
                       ...prev,
                       [item.id]: item.url.trim() ? validateMasterUrl(item.url) : undefined,
                     }))
                   }
-                  aria-invalid={Boolean(masterErrors[item.id])}
-                  className={cn(
-                    EDIT_POST_LINK_INPUT_CLASS,
-                    "min-w-0 flex-1",
-                    masterErrors[item.id] &&
-                      "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
-                  )}
+                  error={masterErrors[item.id]}
+                  onRemove={() => handleRemoveMaster(item.id, index)}
+                  figmaCapture={figmaCapture}
                 />
-                <button
-                  type="button"
-                  className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50"
-                  aria-label="Remove master link"
-                  onClick={() => handleRemoveMaster(item.id, index)}
-                >
-                  <Trash2 size={15} strokeWidth={2} />
-                </button>
-              </div>
-              {masterErrors[item.id] ? (
-                <p className="text-[12px] leading-snug text-red-600">{masterErrors[item.id]}</p>
-              ) : null}
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
 
-        <div className="space-y-3">
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
-            onClick={handleAddMirrored}
-          >
-            <Plus size={14} strokeWidth={2.25} />
-            Add Mirrored Link
-          </button>
-
-          {mirrored.map((item, index) => (
-            <div key={item.id} className={EDIT_POST_LINK_FIELD_STACK_CLASS}>
-              <label
-                htmlFor={`${baseId}-mirrored-${item.id}`}
-                className="text-xs font-medium text-gray-700"
+          {hasMasterLink ? (
+            <div className="space-y-4">
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
+                onClick={handleAddMirrored}
               >
-                Mirrored {index + 1}
-              </label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id={`${baseId}-mirrored-${item.id}`}
-                  value={item.url}
-                  onChange={(e) => handleMirroredChange(item.id, e.target.value)}
-                  placeholder={MIRRORED_PLACEHOLDER}
-                  className={cn(EDIT_POST_LINK_INPUT_CLASS, "min-w-0 flex-1")}
-                />
-                <button
-                  type="button"
-                  className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50"
-                  aria-label="Remove mirrored link"
-                  onClick={() => handleRemoveMirrored(item.id)}
-                >
-                  <Trash2 size={15} strokeWidth={2} />
-                </button>
+                <Plus size={14} strokeWidth={2.25} />
+                Add Mirrored Link
+              </button>
+
+              <div className={EDIT_POST_LINK_LIST_CLASS}>
+                {mirrored.map((item, index) => (
+                  <EditPostLinkFieldRow
+                    key={item.id}
+                    label={`Mirrored ${index + 1}`}
+                    statusLink={getEditRowStatusLink(item.snapshot, item.url, "Mirrored")}
+                    source={getDisplaySource(item)}
+                    inputId={`${baseId}-mirrored-${item.id}`}
+                    url={item.url}
+                    onUrlChange={(value) => handleMirroredChange(item.id, value)}
+                    placeholder={MIRRORED_PLACEHOLDER}
+                    onRemove={() => handleRemoveMirrored(item.id)}
+                    figmaCapture={figmaCapture}
+                  />
+                ))}
               </div>
             </div>
-          ))}
+          ) : null}
         </div>
-      </div>
 
-      <div className="flex items-center justify-end gap-2 border-t border-gray-100 bg-gray-50/50 px-6 py-4">
-        <Button
-          type="button"
-          variant="outline"
-          className="h-9 px-4 text-[13px]"
-          onClick={() => onOpenChange(false)}
-        >
-          Cancel
-        </Button>
-        <Button
-          type="button"
-          variant="brand"
-          className="h-9 px-4 text-[13px]"
-          disabled={!canSubmit}
-          onClick={handleSubmit}
-        >
-          Submit
-        </Button>
+        <SheetFooter className="shrink-0 flex-row justify-end gap-2 border-t border-gray-100 bg-gray-50/50 px-6 py-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 px-4 text-[13px]"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="brand"
+            className="h-9 px-4 text-[13px]"
+            disabled={!canSubmit}
+            onClick={handleSubmit}
+          >
+            Submit
+          </Button>
+        </SheetFooter>
       </div>
-    </DialogContent>
+    </SheetContent>
   );
 }

@@ -17,11 +17,13 @@ export default function CampaignDetailView({
   figmaOpenFilters,
   figmaOpenReview,
   figmaPostingHoverRowId,
+  figmaPostingHoverRowIds,
   figmaPostingActionsOpen,
   figmaOpenEditPostLink,
   figmaEditPostLinkRowId,
   figmaOpenUploadInsightReport,
   figmaUploadInsightRowId,
+  figmaOpenImportPostLinks,
   figmaPostingMirroredTooltipRowId,
   figmaPostingValidationTooltips,
   figmaReviewTab,
@@ -35,11 +37,13 @@ export default function CampaignDetailView({
   figmaOpenFilters?: boolean;
   figmaOpenReview?: "script" | "visual" | "caption";
   figmaPostingHoverRowId?: string;
+  figmaPostingHoverRowIds?: string[];
   figmaPostingActionsOpen?: boolean;
   figmaOpenEditPostLink?: boolean;
   figmaEditPostLinkRowId?: string;
   figmaOpenUploadInsightReport?: boolean;
   figmaUploadInsightRowId?: string;
+  figmaOpenImportPostLinks?: boolean;
   figmaPostingMirroredTooltipRowId?: string;
   figmaPostingValidationTooltips?: boolean;
   figmaReviewTab?: "comments" | "brief";
@@ -80,11 +84,13 @@ export default function CampaignDetailView({
             figmaOpenFilters={hubMountKey === 0 ? figmaOpenFilters : undefined}
             figmaOpenReview={hubMountKey === 0 ? figmaOpenReview : undefined}
             figmaPostingHoverRowId={hubMountKey === 0 ? figmaPostingHoverRowId : undefined}
+            figmaPostingHoverRowIds={hubMountKey === 0 ? figmaPostingHoverRowIds : undefined}
             figmaPostingActionsOpen={hubMountKey === 0 ? figmaPostingActionsOpen : undefined}
             figmaOpenEditPostLink={hubMountKey === 0 ? figmaOpenEditPostLink : undefined}
             figmaEditPostLinkRowId={hubMountKey === 0 ? figmaEditPostLinkRowId : undefined}
             figmaOpenUploadInsightReport={hubMountKey === 0 ? figmaOpenUploadInsightReport : undefined}
             figmaUploadInsightRowId={hubMountKey === 0 ? figmaUploadInsightRowId : undefined}
+            figmaOpenImportPostLinks={hubMountKey === 0 ? figmaOpenImportPostLinks : undefined}
             figmaPostingMirroredTooltipRowId={hubMountKey === 0 ? figmaPostingMirroredTooltipRowId : undefined}
             figmaPostingValidationTooltips={hubMountKey === 0 ? figmaPostingValidationTooltips : undefined}
             figmaReviewTab={hubMountKey === 0 ? figmaReviewTab : undefined}

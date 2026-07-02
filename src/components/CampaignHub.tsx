@@ -151,11 +151,13 @@ export default function CampaignHub({
   figmaOpenFilters,
   figmaOpenReview,
   figmaPostingHoverRowId,
+  figmaPostingHoverRowIds,
   figmaPostingActionsOpen,
   figmaOpenEditPostLink,
   figmaEditPostLinkRowId,
   figmaOpenUploadInsightReport,
   figmaUploadInsightRowId,
+  figmaOpenImportPostLinks,
   figmaPostingMirroredTooltipRowId,
   figmaPostingValidationTooltips,
   figmaReviewTab,
@@ -169,11 +171,13 @@ export default function CampaignHub({
   figmaOpenFilters?: boolean;
   figmaOpenReview?: "script" | "visual" | "caption";
   figmaPostingHoverRowId?: string;
+  figmaPostingHoverRowIds?: string[];
   figmaPostingActionsOpen?: boolean;
   figmaOpenEditPostLink?: boolean;
   figmaEditPostLinkRowId?: string;
   figmaOpenUploadInsightReport?: boolean;
   figmaUploadInsightRowId?: string;
+  figmaOpenImportPostLinks?: boolean;
   figmaPostingMirroredTooltipRowId?: string;
   figmaPostingValidationTooltips?: boolean;
   figmaReviewTab?: "comments" | "brief";
@@ -253,11 +257,13 @@ export default function CampaignHub({
         onBack={() => setActiveSection(null)}
         figmaCapture={figmaCapture}
         figmaPostingHoverRowId={figmaPostingHoverRowId}
+        figmaPostingHoverRowIds={figmaPostingHoverRowIds}
         figmaPostingActionsOpen={figmaPostingActionsOpen}
         figmaOpenEditPostLink={figmaOpenEditPostLink}
         figmaEditPostLinkRowId={figmaEditPostLinkRowId}
         figmaOpenUploadInsightReport={figmaOpenUploadInsightReport}
         figmaUploadInsightRowId={figmaUploadInsightRowId}
+        figmaOpenImportPostLinks={figmaOpenImportPostLinks}
         figmaPostingMirroredTooltipRowId={figmaPostingMirroredTooltipRowId}
         figmaPostingValidationTooltips={figmaPostingValidationTooltips}
       />

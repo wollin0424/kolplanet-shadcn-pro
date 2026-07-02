@@ -61,6 +61,184 @@ function resolveLinkHealth(url: string): H5PostLinkHealth {
   return "verified";
 }
 
+export type H5FigmaPostingStateKey =
+  | "empty"
+  | "links-draft"
+  | "links-verified"
+  | "links-errors"
+  | "insight-pending"
+  | "insight-submitted";
+
+const FIGMA_INSIGHT_PREVIEW = "/script-empty-workspace.png";
+
+function parseFigmaPostingStateKey(
+  value: string | undefined
+): H5FigmaPostingStateKey {
+  const key = value?.trim().toLowerCase();
+  if (
+    key === "empty" ||
+    key === "links-draft" ||
+    key === "links-verified" ||
+    key === "links-errors" ||
+    key === "insight-pending" ||
+    key === "insight-submitted"
+  ) {
+    return key;
+  }
+  return "empty";
+}
+
+export function getFigmaCaptureH5PostingState(
+  _kolId: string,
+  stateKey?: string
+): H5PostingState {
+  const state = parseFigmaPostingStateKey(stateKey);
+
+  if (state === "empty") {
+    return {
+      masters: [{ id: "figma-master-0", url: "", health: "empty", submitted: false }],
+      mirrored: [{ id: "figma-mirrored-0", url: "", health: "empty", submitted: false }],
+      insightDraftFiles: [],
+      insightSubmitted: false,
+    };
+  }
+
+  if (state === "links-draft") {
+    return {
+      masters: [
+        {
+          id: "figma-master-0",
+          url: "https://www.instagram.com/p/draft-not-submitted/",
+          health: "empty",
+          submitted: false,
+        },
+      ],
+      mirrored: [{ id: "figma-mirrored-0", url: "", health: "empty", submitted: false }],
+      insightDraftFiles: [],
+      insightSubmitted: false,
+    };
+  }
+
+  if (state === "links-verified") {
+    return {
+      masters: [
+        {
+          id: "figma-master-0",
+          url: "https://www.instagram.com/p/figma-verified/",
+          health: "verified",
+          submitted: true,
+        },
+      ],
+      mirrored: [{ id: "figma-mirrored-0", url: "", health: "empty", submitted: false }],
+      insightDraftFiles: [],
+      insightSubmitted: false,
+    };
+  }
+
+  if (state === "links-errors") {
+    return {
+      masters: [
+        {
+          id: "figma-master-private",
+          url: "https://www.instagram.com/p/3-private",
+          health: "private",
+          submitted: true,
+        },
+        {
+          id: "figma-master-issue",
+          url: "https://www.instagram.com/p/invalid-error-404",
+          health: "issue",
+          submitted: true,
+        },
+      ],
+      mirrored: [
+        {
+          id: "figma-mirrored-issue",
+          url: "https://www.tiktok.com/invalid-error",
+          health: "issue",
+          submitted: true,
+        },
+      ],
+      insightDraftFiles: [],
+      insightSubmitted: false,
+    };
+  }
+
+  if (state === "insight-pending") {
+    return {
+      masters: [
+        {
+          id: "figma-master-0",
+          url: "https://www.instagram.com/p/figma-verified/",
+          health: "verified",
+          submitted: true,
+        },
+      ],
+      mirrored: [{ id: "figma-mirrored-0", url: "", health: "empty", submitted: false }],
+      insightDraftFiles: [
+        {
+          id: "figma-insight-draft-1",
+          name: "insight-week-1.png",
+          previewUrl: FIGMA_INSIGHT_PREVIEW,
+          sizeLabel: "1.1 MB",
+          locked: false,
+        },
+        {
+          id: "figma-insight-draft-2",
+          name: "insight-week-2.png",
+          previewUrl: FIGMA_INSIGHT_PREVIEW,
+          sizeLabel: "860 KB",
+          locked: false,
+        },
+      ],
+      insightSubmitted: false,
+    };
+  }
+
+  return {
+    masters: [
+      {
+        id: "figma-master-0",
+        url: "https://www.instagram.com/p/figma-verified/",
+        health: "verified",
+        submitted: true,
+      },
+    ],
+    mirrored: [
+      {
+        id: "figma-mirrored-0",
+        url: "https://www.tiktok.com/@creator/video/figma-mirrored",
+        health: "verified",
+        submitted: true,
+      },
+    ],
+    insightDraftFiles: [
+      {
+        id: "figma-insight-submitted-1",
+        name: "insight-jun-01.png",
+        previewUrl: FIGMA_INSIGHT_PREVIEW,
+        sizeLabel: "420 KB",
+        locked: true,
+      },
+      {
+        id: "figma-insight-submitted-2",
+        name: "insight-jun-08.png",
+        previewUrl: FIGMA_INSIGHT_PREVIEW,
+        sizeLabel: "380 KB",
+        locked: true,
+      },
+      {
+        id: "figma-insight-draft-1",
+        name: "insight-new-upload.png",
+        previewUrl: FIGMA_INSIGHT_PREVIEW,
+        sizeLabel: "1.1 MB",
+        locked: false,
+      },
+    ],
+    insightSubmitted: true,
+  };
+}
+
 export function getDefaultH5PostingState(kolId: string): H5PostingState {
   if (kolId === "1") {
     return {

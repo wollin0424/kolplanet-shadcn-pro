@@ -48,6 +48,7 @@ import {
   MessageSquare as LucideMessageSquare,
   MoreHorizontal as LucideMoreHorizontal,
   MoreVertical as LucideMoreVertical,
+  Monitor as LucideMonitor,
   Paperclip as LucidePaperclip,
   Pencil as LucidePencil,
   Plus as LucidePlus,
@@ -63,6 +64,7 @@ import {
   Settings as LucideSettings,
   ShieldCheck as LucideShieldCheck,
   SlidersHorizontal as LucideSlidersHorizontal,
+  Smartphone as LucideSmartphone,
   Sparkles as LucideSparkles,
   Stamp as LucideStamp,
   Tag as LucideTag,
@@ -124,6 +126,7 @@ export const List = createIcon(LucideList, "List");
 export const Lock = createIcon(LucideLock, "Lock");
 export const Mail = createIcon(LucideMail, "Mail");
 export const MessageSquare = createIcon(LucideMessageSquare, "MessageSquare");
+export const Monitor = createIcon(LucideMonitor, "Monitor");
 export const MoreHorizontal = createIcon(LucideMoreHorizontal, "MoreHorizontal");
 export const MoreVertical = createIcon(LucideMoreVertical, "MoreVertical");
 export const Paperclip = createIcon(LucidePaperclip, "Paperclip");
@@ -141,6 +144,7 @@ export const Star = createIcon(LucideStar, "Star");
 export const Settings = createIcon(LucideSettings, "Settings");
 export const ShieldCheck = createIcon(LucideShieldCheck, "ShieldCheck");
 export const SlidersHorizontal = createIcon(LucideSlidersHorizontal, "SlidersHorizontal");
+export const Smartphone = createIcon(LucideSmartphone, "Smartphone");
 export const Sparkles = createIcon(LucideSparkles, "Sparkles");
 export const Stamp = createIcon(LucideStamp, "Stamp");
 export const Tag = createIcon(LucideTag, "Tag");

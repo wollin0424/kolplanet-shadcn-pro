@@ -34,11 +34,13 @@ export function parseCampaignDetailSearchParams(searchParams: {
   figmaOpenReview?: string;
   figmaPostingHover?: string;
   figmaPostingHoverRow?: string;
+  figmaPostingHoverRows?: string;
   figmaPostingActionsOpen?: string;
   figmaOpenEditPostLink?: string;
   figmaEditPostLinkRow?: string;
   figmaOpenUploadInsightReport?: string;
   figmaUploadInsightRow?: string;
+  figmaOpenImportPostLinks?: string;
   figmaPostingMirroredTooltip?: string;
   figmaPostingMirroredTooltipRow?: string;
   figmaPostingValidationTooltips?: string;
@@ -52,11 +54,13 @@ export function parseCampaignDetailSearchParams(searchParams: {
   figmaOpenFilters?: boolean;
   figmaOpenReview?: "script" | "visual" | "caption";
   figmaPostingHoverRowId?: string;
+  figmaPostingHoverRowIds?: string[];
   figmaPostingActionsOpen?: boolean;
   figmaOpenEditPostLink?: boolean;
   figmaEditPostLinkRowId?: string;
   figmaOpenUploadInsightReport?: boolean;
   figmaUploadInsightRowId?: string;
+  figmaOpenImportPostLinks?: boolean;
   figmaPostingMirroredTooltipRowId?: string;
   figmaPostingValidationTooltips?: boolean;
   figmaReviewTab?: "comments" | "brief";
@@ -73,8 +77,15 @@ export function parseCampaignDetailSearchParams(searchParams: {
   const figmaCapture = searchParams.figmaCapture === "1";
   const figmaOpenFilters = searchParams.figmaOpenFilters === "1";
   const figmaPostingHover = searchParams.figmaPostingHover === "1";
+  const figmaPostingHoverRowIds = figmaPostingHover
+    ? (searchParams.figmaPostingHoverRows?.split(",") ?? [])
+        .map((id) => id.trim())
+        .filter(Boolean)
+    : undefined;
   const figmaPostingHoverRowId = figmaPostingHover
-    ? searchParams.figmaPostingHoverRow?.trim() || "p1"
+    ? figmaPostingHoverRowIds?.length
+      ? figmaPostingHoverRowIds[0]
+      : searchParams.figmaPostingHoverRow?.trim() || "p1"
     : undefined;
   const figmaPostingActionsOpen = searchParams.figmaPostingActionsOpen === "1";
   const figmaOpenEditPostLink = searchParams.figmaOpenEditPostLink === "1";
@@ -85,6 +96,7 @@ export function parseCampaignDetailSearchParams(searchParams: {
   const figmaUploadInsightRowId = figmaOpenUploadInsightReport
     ? searchParams.figmaUploadInsightRow?.trim() || "p3"
     : undefined;
+  const figmaOpenImportPostLinks = searchParams.figmaOpenImportPostLinks === "1";
   const figmaPostingMirroredTooltip = searchParams.figmaPostingMirroredTooltip === "1";
   const figmaPostingMirroredTooltipRowId = figmaPostingMirroredTooltip
     ? searchParams.figmaPostingMirroredTooltipRow?.trim() || "p1"
@@ -103,11 +115,18 @@ export function parseCampaignDetailSearchParams(searchParams: {
       ? CONTENT_REVIEW_TRACK_BY_QUERY[reviewTrackKey]
       : undefined,
     figmaPostingHoverRowId,
+    figmaPostingHoverRowIds:
+      figmaPostingHoverRowIds && figmaPostingHoverRowIds.length > 0
+        ? figmaPostingHoverRowIds
+        : figmaPostingHoverRowId
+          ? [figmaPostingHoverRowId]
+          : undefined,
     figmaPostingActionsOpen,
     figmaOpenEditPostLink,
     figmaEditPostLinkRowId,
     figmaOpenUploadInsightReport,
     figmaUploadInsightRowId,
+    figmaOpenImportPostLinks,
     figmaPostingMirroredTooltipRowId,
     figmaPostingValidationTooltips,
     figmaReviewTab:

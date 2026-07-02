@@ -15,11 +15,13 @@ export default async function CampaignDetailPage({
     figmaOpenReview?: string;
     figmaPostingHover?: string;
     figmaPostingHoverRow?: string;
+    figmaPostingHoverRows?: string;
     figmaPostingActionsOpen?: string;
     figmaOpenEditPostLink?: string;
     figmaEditPostLinkRow?: string;
     figmaOpenUploadInsightReport?: string;
     figmaUploadInsightRow?: string;
+    figmaOpenImportPostLinks?: string;
     figmaPostingMirroredTooltip?: string;
     figmaPostingMirroredTooltipRow?: string;
     figmaPostingValidationTooltips?: string;
@@ -37,11 +39,13 @@ export default async function CampaignDetailPage({
     figmaOpenFilters,
     figmaOpenReview,
     figmaPostingHoverRowId,
+    figmaPostingHoverRowIds,
     figmaPostingActionsOpen,
     figmaOpenEditPostLink,
     figmaEditPostLinkRowId,
     figmaOpenUploadInsightReport,
     figmaUploadInsightRowId,
+    figmaOpenImportPostLinks,
     figmaPostingMirroredTooltipRowId,
     figmaPostingValidationTooltips,
     figmaReviewTab,
@@ -58,11 +62,13 @@ export default async function CampaignDetailPage({
       figmaOpenFilters={figmaOpenFilters}
       figmaOpenReview={figmaOpenReview}
       figmaPostingHoverRowId={figmaPostingHoverRowId}
+      figmaPostingHoverRowIds={figmaPostingHoverRowIds}
       figmaPostingActionsOpen={figmaPostingActionsOpen}
       figmaOpenEditPostLink={figmaOpenEditPostLink}
       figmaEditPostLinkRowId={figmaEditPostLinkRowId}
       figmaOpenUploadInsightReport={figmaOpenUploadInsightReport}
       figmaUploadInsightRowId={figmaUploadInsightRowId}
+      figmaOpenImportPostLinks={figmaOpenImportPostLinks}
       figmaPostingMirroredTooltipRowId={figmaPostingMirroredTooltipRowId}
       figmaPostingValidationTooltips={figmaPostingValidationTooltips}
       figmaReviewTab={figmaReviewTab}

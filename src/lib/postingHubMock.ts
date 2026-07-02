@@ -41,9 +41,13 @@ export function getContentValidationTooltipDescription(
 
 export type PostLinkType = "Master" | "Mirrored";
 
+export type PostLinkSource = "H5" | "Web";
+
 export type PostLink = {
   type: PostLinkType;
   url: string;
+  /** Where this link was submitted from. */
+  source?: PostLinkSource;
   issues?: string[];
   /** Per-link actual posting date shown in Posting Date breakdown. */
   postedDate?: string;
@@ -72,6 +76,7 @@ export type PostingHubRow = {
   postingStatus: PostingHubStatus;
   postLinks?: PostLink[];
   insightReports?: string[];
+  insightReportShareUrl?: string;
   planDate: string;
   planTimezone?: string;
   actualDate?: string;
@@ -88,9 +93,9 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     postLinks: [
       {
         type: "Master",
-        url: "https://www.instagram.com/p/6-missing-mention",
+        url: "https://www.instagram.com/p/DKx9AmeliaStone/",
+        source: "H5",
         postedDate: "01 Jun, 2026",
-        issues: ["Missing @mention"],
         validation: {
           caption: "Verified",
           cover: "Mismatched",
@@ -100,22 +105,25 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
       {
         type: "Mirrored",
         url: "https://www.instagram.com/p/DKx9AmeliaStone-mirror/",
+        source: "H5",
         postedDate: "08 Jun, 2026",
-        issues: ["Caption mismatch"],
       },
       {
         type: "Mirrored",
         url: "https://www.tiktok.com/@amelia-mirror/video/7123456789",
+        source: "H5",
         postedDate: "15 Jun, 2026",
       },
       {
         type: "Mirrored",
         url: "https://www.tiktok.com/@amelia-mirror/video/7123456790",
+        source: "Web",
         postedDate: "16 Jun, 2026",
         issues: ["Missing hashtag"],
       },
     ],
     insightReports: ["Amelia_Insight_Deck.pdf"],
+    insightReportShareUrl: "https://share.kolplanet.com/insights/p1",
     planDate: "Jun 30, 2026",
     actualDate: "Jun 25, 2026",
   },
@@ -129,26 +137,9 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     postLinks: [
       {
         type: "Master",
-        url: "https://www.instagram.com/p/DKx9AvaCollins-1/",
-        validation: {
-          caption: "Verified",
-          cover: "Mismatched",
-          video: "No Draft",
-        },
-      },
-      {
-        type: "Master",
-        url: "https://www.instagram.com/p/DKx9AvaCollins-2/",
-        issues: ["Missing hashtag"],
-        validation: {
-          caption: "Cannot Verify",
-          cover: "Mismatched",
-          video: "Verified",
-        },
-      },
-      {
-        type: "Mirrored",
-        url: "https://www.tiktok.com/@ava-mirror/video/1",
+        url: "https://www.instagram.com/p/DKx9AvaCollins/",
+        source: "Web",
+        postedDate: "02 Jun, 2026",
         issues: ["Caption mismatch"],
       },
     ],
@@ -166,24 +157,20 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
       {
         type: "Master",
         url: "https://www.instagram.com/p/DKx9ChloeReed/",
-        issues: ["Data fetch failed"],
-        validation: {
-          caption: "Mismatched",
-          cover: "Verified",
-          video: "No Draft",
-        },
+        source: "H5",
+        postedDate: "03 Jun, 2026",
+        issues: ["Missing @mention"],
       },
       {
         type: "Mirrored",
         url: "https://www.instagram.com/p/1-mirror-1",
-        issues: ["Data fetch failed"],
-      },
-      {
-        type: "Mirrored",
-        url: "https://www.instagram.com/p/1-mirror-2",
+        source: "H5",
+        postedDate: "10 Jun, 2026",
+        issues: ["Missing hashtag"],
       },
     ],
     insightReports: ["Chloe_Insight_Deck.pdf", "Chloe_UGC_Stats.xlsx"],
+    insightReportShareUrl: "https://share.kolplanet.com/insights/p3",
     planDate: "Jun 30, 2026",
     actualDate: "Jun 27, 2026",
   },
@@ -193,8 +180,17 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     handle: "@instagram.ins",
     platform: "Instagram",
     h5Path: "/h5/kol-info/s4",
-    postingStatus: "Pending",
+    postingStatus: "Posted",
+    postLinks: [
+      {
+        type: "Master",
+        url: "https://www.instagram.com/p/DKx9EllaBrooks/",
+        source: "Web",
+        postedDate: "04 Jun, 2026",
+      },
+    ],
     planDate: "Jul 2, 2026",
+    actualDate: "Jun 28, 2026",
   },
   {
     id: "p5",
@@ -224,34 +220,15 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     postLinks: [
       {
         type: "Master",
-        url: "https://www.instagram.com/p/DKx9IvyMorgan-1/",
-        validation: {
-          caption: "Verified",
-          cover: "Verified",
-          video: "Verified",
-        },
-      },
-      {
-        type: "Master",
-        url: "https://www.instagram.com/p/DKx9IvyMorgan-2/",
-        validation: {
-          caption: "Mismatched",
-          cover: "Mismatched",
-          video: "Cannot Verify",
-        },
-      },
-      {
-        type: "Master",
-        url: "https://www.instagram.com/p/DKx9IvyMorgan-3/",
-        validation: {
-          caption: "No Draft",
-          cover: "Verified",
-          video: "Mismatched",
-        },
+        url: "https://www.instagram.com/p/DKx9IvyMorgan/",
+        source: "H5",
+        postedDate: "05 Jun, 2026",
       },
     ],
     insightReports: ["Ivy_Performance_Report.pdf"],
+    insightReportShareUrl: "https://share.kolplanet.com/insights/p7",
     planDate: "Jul 5, 2026",
+    actualDate: "Jun 28, 2026",
   },
   {
     id: "p8",
@@ -264,6 +241,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
       {
         type: "Master",
         url: "https://www.instagram.com/p/DKx9JadeWilson/",
+        source: "Web",
         issues: ["Private account"],
       },
     ],
@@ -319,16 +297,25 @@ function getIssuesHealthStatus(issues: string[]): PostLinkHealthStatus {
 export function getPostLinkStatus(link: PostLink): PostLinkHealthStatus {
   if (!link.url.trim()) return "warning";
   if (link.issues?.length) return getIssuesHealthStatus(link.issues);
-  if (link.type === "Master" && link.validation) {
-    const statuses = [link.validation.caption, link.validation.cover, link.validation.video];
-    if (statuses.some((status) => status === "Mismatched")) return "error";
-    if (
-      statuses.some((status) => status === "Cannot Verify" || status === "No Draft")
-    ) {
-      return "warning";
-    }
-  }
   return "success";
+}
+
+/** Content validation only applies after the post link itself is healthy (green check). */
+export function canShowMasterContentValidation(link: PostLink) {
+  return link.type === "Master" && link.url.trim() && getPostLinkStatus(link) === "success";
+}
+
+export function getEffectiveMasterValidation(link: PostLink): ContentValidation | null {
+  if (!canShowMasterContentValidation(link)) return null;
+  return link.validation ?? null;
+}
+
+export function buildInsightReportShareUrl(rowId: string) {
+  return `https://share.kolplanet.com/insights/${rowId}`;
+}
+
+export function buildInsightReportFilePreviewUrl(rowId: string, fileName: string) {
+  return `${buildInsightReportShareUrl(rowId)}/${encodeURIComponent(fileName)}`;
 }
 
 const POST_LINK_TOOLTIP_TAG_CLASS = {
@@ -344,6 +331,10 @@ const POST_LINK_ISSUE_DESCRIPTIONS: Record<string, string> = {
   "Data fetch failed": "Unable to retrieve media or content from the provided post link.",
   "Private account": "This link is not publicly accessible.",
 };
+
+export function getPostLinkSourceLabel(source: PostLinkSource) {
+  return source === "H5" ? "Submitted via H5" : "Added on Web";
+}
 
 export type PostLinkTooltipCopy = {
   tag: string;
@@ -396,6 +387,52 @@ export function getPostLinkTooltipCopy(link: PostLink): PostLinkTooltipCopy {
     description: "Content matches draft (AI-checked).",
     tagClassName: POST_LINK_TOOLTIP_TAG_CLASS.success,
   };
+}
+
+export function getFigmaCaptureEditPostLinkLinks(): PostLink[] {
+  return [
+    {
+      type: "Master",
+      url: "https://www.instagram.com/p/figma-master-mismatch/",
+      source: "H5",
+      postedDate: "01 Jun, 2026",
+      validation: { caption: "Mismatched", cover: "Verified", video: "Verified" },
+    },
+    {
+      type: "Master",
+      url: "https://www.instagram.com/p/figma-master-mention/",
+      source: "Web",
+      postedDate: "02 Jun, 2026",
+      issues: ["Missing @mention"],
+    },
+    {
+      type: "Master",
+      url: "https://www.instagram.com/p/figma-master-verified/",
+      source: "H5",
+      postedDate: "03 Jun, 2026",
+      validation: { caption: "Verified", cover: "Verified", video: "Verified" },
+    },
+    {
+      type: "Mirrored",
+      url: "https://www.tiktok.com/@creator/video/figma-mirror-mismatch/",
+      source: "Web",
+      postedDate: "04 Jun, 2026",
+      issues: ["Mismatched"],
+    },
+    {
+      type: "Mirrored",
+      url: "https://www.tiktok.com/@creator/video/figma-mirror-hashtag/",
+      source: "H5",
+      postedDate: "05 Jun, 2026",
+      issues: ["Missing hashtag"],
+    },
+    {
+      type: "Mirrored",
+      url: "https://www.tiktok.com/@creator/video/figma-mirror-verified/",
+      source: "Web",
+      postedDate: "06 Jun, 2026",
+    },
+  ];
 }
 
 export function getPostLinksByType(links: PostLink[] | undefined, type: PostLinkType) {
@@ -487,19 +524,17 @@ export function matchesContentValidationFilter(
   const masters = getMasterPostLinks(row.postLinks).filter((link) => link.url.trim());
 
   if (filter === "Has No Draft") {
-    return (
-      masters.length > 0 &&
-      masters.some((link) => {
-        if (!link.validation) return true;
-        return [link.validation.caption, link.validation.cover, link.validation.video].some(
-          (status) => status === "No Draft"
-        );
-      })
-    );
+    return masters.some((link) => {
+      const validation = getEffectiveMasterValidation(link);
+      if (!validation) return false;
+      return [validation.caption, validation.cover, validation.video].some(
+        (status) => status === "No Draft"
+      );
+    });
   }
 
   const validations = masters
-    .map((link) => link.validation)
+    .map((link) => getEffectiveMasterValidation(link))
     .filter((validation): validation is ContentValidation => Boolean(validation));
 
   if (!validations.length) return false;
@@ -512,8 +547,9 @@ export function matchesContentValidationFilter(
 
   if (filter === "All Verified") {
     return masters.every((link) => {
-      if (!link.validation) return false;
-      return [link.validation.caption, link.validation.cover, link.validation.video].every(
+      const validation = getEffectiveMasterValidation(link);
+      if (!validation) return false;
+      return [validation.caption, validation.cover, validation.video].every(
         (status) => status === "Verified"
       );
     });

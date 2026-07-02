@@ -1,17 +1,19 @@
 "use client";
 
-import { forwardRef, useMemo, useState, type ComponentPropsWithoutRef, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   CampaignHubDetailHeader,
   CampaignHubDetailToolbar,
   CampaignHubToolbarActionButton,
 } from "@/components/CampaignHubDetailToolbar";
 import { CampaignHubH5LinkCell } from "@/components/CampaignHubH5LinkCell";
+import { PostLinkPill, POST_LINK_TYPE_CLASS } from "@/components/PostLinkPill";
 import { CampaignHubFilterSelect } from "@/components/CampaignHubFilterSelect";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import PostingHubStatusSelect from "@/components/pipeline/PostingHubStatusSelect";
 import { SetPostingDateDialog } from "@/components/SetPostingDateDialog";
 import { EditPostLinkDialog } from "@/components/EditPostLinkDialog";
+import { ImportPostLinksDialog } from "@/components/ImportPostLinksDialog";
 import { UploadInsightReportDialog } from "@/components/UploadInsightReportDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -35,6 +37,8 @@ import {
   POST_LINK_STATUS_FILTER_OPTIONS,
   CONTENT_VALIDATION_FILTER_OPTIONS,
   applyMockValidationToMasterLink,
+  applyMockValidationToPostLinks,
+  buildInsightReportShareUrl,
   buildMockFetchedPostLinks,
   formatPostingPlanDate,
   getContentValidationTooltipDescription,
@@ -46,6 +50,8 @@ import {
   getVisibleMirroredLinks,
   getPostLinkStatus,
   getPostLinkTooltipCopy,
+  getEffectiveMasterValidation,
+  canShowMasterContentValidation,
   matchesContentValidationFilter,
   matchesPostLinkStatusFilter,
   type ContentValidationField,
@@ -113,32 +119,6 @@ const VALIDATION_STATUS_CONFIG: Record<
   },
 };
 
-const POST_LINK_STATUS_CONFIG: Record<
-  PostLinkHealthStatus,
-  { iconClassName: string; Icon: typeof CheckCircle2; title: string }
-> = {
-  success: {
-    iconClassName: STATUS_ICON_CLASS.success,
-    Icon: CheckCircle2,
-    title: "Verified",
-  },
-  warning: {
-    iconClassName: STATUS_ICON_CLASS.warning,
-    Icon: AlertCircle,
-    title: "Needs attention",
-  },
-  error: {
-    iconClassName: STATUS_ICON_CLASS.error,
-    Icon: X,
-    title: "Issue found",
-  },
-};
-
-const POST_LINK_TYPE_CLASS: Record<PostLinkType, string> = {
-  Master: "border-brand/25 bg-brand-50 text-brand",
-  Mirrored: "border-gray-200 bg-gray-50 text-gray-500",
-};
-
 const POSTING_DATE_TAG_PILL_WIDTH = "w-[76px] justify-center whitespace-nowrap";
 
 function PostLinkTypeLabelPill({ label, linkType }: { label: string; linkType: PostLinkType }) {
@@ -180,50 +160,6 @@ function initials(name: string) {
     .slice(0, 2)
     .toUpperCase();
 }
-
-const PostLinkPill = forwardRef<
-  HTMLSpanElement,
-  {
-    label: string;
-    linkType: PostLinkType;
-    status: PostLinkHealthStatus;
-    showStatusIcon?: boolean;
-    /** Aggregated count badge inside the pill (e.g. Mirrored group). */
-    inlineCount?: number;
-    className?: string;
-  } & ComponentPropsWithoutRef<"span">
->(function PostLinkPill(
-  { label, linkType, status, showStatusIcon = true, inlineCount, className, ...props },
-  ref
-) {
-  const config = POST_LINK_STATUS_CONFIG[status];
-  const Icon = config.Icon;
-
-  return (
-    <span
-      ref={ref}
-      className={cn(
-        "inline-flex h-[22px] items-center gap-1 rounded-full border px-1.5 text-[11px] font-semibold leading-none",
-        POST_LINK_TYPE_CLASS[linkType],
-        className
-      )}
-      {...props}
-    >
-      {showStatusIcon ? (
-        <Icon size={13} strokeWidth={2.2} className={cn("shrink-0", config.iconClassName)} />
-      ) : null}
-      {label}
-      {inlineCount != null && inlineCount > 1 ? (
-        <span
-          aria-hidden
-          className="inline-grid size-[15px] shrink-0 place-items-center rounded-full border border-gray-200 bg-white text-[9px] font-semibold leading-none tabular-nums text-gray-500"
-        >
-          {inlineCount}
-        </span>
-      ) : null}
-    </span>
-  );
-});
 
 const POST_LINK_ROW_CLASS = "flex h-7 min-w-0 items-center gap-1.5";
 
@@ -786,9 +722,9 @@ function ContentValidationMasterRow({
   link: PostLink;
   onAutoValidate: () => void;
 }) {
-  const validation = link.validation;
   const hasUrl = Boolean(link.url.trim());
-  const canAutoValidate = hasUrl && !validation;
+  const validation = getEffectiveMasterValidation(link);
+  const canAutoValidate = canShowMasterContentValidation(link) && !link.validation;
 
   return (
     <div className={cn(POST_LINK_ROW_CLASS, "group/validation-row w-fit max-w-full")}>
@@ -971,6 +907,7 @@ function PostingDateCell({ row }: { row: PostingHubRow }) {
 function PostingHubTable({
   figmaCapture = false,
   figmaPostingHoverRowId,
+  figmaPostingHoverRowIds,
   figmaPostingActionsOpen = false,
   figmaPostingMirroredTooltipRowId,
   rows,
@@ -987,6 +924,7 @@ function PostingHubTable({
 }: {
   figmaCapture?: boolean;
   figmaPostingHoverRowId?: string;
+  figmaPostingHoverRowIds?: string[];
   figmaPostingActionsOpen?: boolean;
   figmaPostingMirroredTooltipRowId?: string;
   rows: PostingHubRow[];
@@ -1046,8 +984,13 @@ function PostingHubTable({
         </TableHeader>
         <TableBody>
           {rows.map((row) => {
+            const hoveredRowIds = figmaPostingHoverRowIds?.length
+              ? figmaPostingHoverRowIds
+              : figmaPostingHoverRowId
+                ? [figmaPostingHoverRowId]
+                : [];
             const isFigmaHoveredRow = Boolean(
-              (figmaPostingHoverRowId && row.id === figmaPostingHoverRowId) ||
+              hoveredRowIds.includes(row.id) ||
                 (figmaPostingMirroredTooltipRowId && row.id === figmaPostingMirroredTooltipRowId)
             );
             const isFigmaMirroredTooltipOpen = Boolean(
@@ -1162,6 +1105,7 @@ export default function CampaignHubPostingView({
   onBack,
   figmaCapture = false,
   figmaPostingHoverRowId,
+  figmaPostingHoverRowIds,
   figmaPostingActionsOpen = false,
   figmaPostingMirroredTooltipRowId,
   figmaPostingValidationTooltips = false,
@@ -1169,11 +1113,13 @@ export default function CampaignHubPostingView({
   figmaEditPostLinkRowId,
   figmaOpenUploadInsightReport = false,
   figmaUploadInsightRowId,
+  figmaOpenImportPostLinks = false,
 }: {
   campaignId: string;
   onBack: () => void;
   figmaCapture?: boolean;
   figmaPostingHoverRowId?: string;
+  figmaPostingHoverRowIds?: string[];
   figmaPostingActionsOpen?: boolean;
   figmaPostingMirroredTooltipRowId?: string;
   figmaPostingValidationTooltips?: boolean;
@@ -1181,6 +1127,7 @@ export default function CampaignHubPostingView({
   figmaEditPostLinkRowId?: string;
   figmaOpenUploadInsightReport?: boolean;
   figmaUploadInsightRowId?: string;
+  figmaOpenImportPostLinks?: boolean;
 }) {
   const [rows, setRows] = useState(POSTING_HUB_MOCK_ROWS);
   const [query, setQuery] = useState("");
@@ -1209,6 +1156,9 @@ export default function CampaignHubPostingView({
     figmaCapture && figmaOpenUploadInsightReport
       ? { open: true, rowId: figmaUploadInsightRowId ?? "p3" }
       : { open: false, rowId: null }
+  );
+  const [importPostLinksDialogOpen, setImportPostLinksDialogOpen] = useState(
+    () => figmaCapture && figmaOpenImportPostLinks
   );
 
   const uploadInsightReportRow = useMemo(
@@ -1255,9 +1205,17 @@ export default function CampaignHubPostingView({
 
   const handleUploadInsightReportSubmit = (files: string[]) => {
     if (!uploadInsightReportDialog.rowId) return;
+    const rowId = uploadInsightReportDialog.rowId;
     setRows((prev) =>
       prev.map((row) =>
-        row.id === uploadInsightReportDialog.rowId ? { ...row, insightReports: files } : row
+        row.id === rowId
+          ? {
+              ...row,
+              insightReports: files,
+              insightReportShareUrl:
+                files.length > 0 ? buildInsightReportShareUrl(rowId) : undefined,
+            }
+          : row
       )
     );
   };
@@ -1400,7 +1358,7 @@ export default function CampaignHubPostingView({
             </>
           }
           actions={
-            <CampaignHubToolbarActionButton>
+            <CampaignHubToolbarActionButton onClick={() => setImportPostLinksDialogOpen(true)}>
               <Upload size={13} />
               Import
             </CampaignHubToolbarActionButton>
@@ -1455,6 +1413,7 @@ export default function CampaignHubPostingView({
         <PostingHubTable
           figmaCapture={figmaCapture}
           figmaPostingHoverRowId={figmaPostingHoverRowId}
+          figmaPostingHoverRowIds={figmaPostingHoverRowIds}
           figmaPostingActionsOpen={figmaPostingActionsOpen}
           figmaPostingMirroredTooltipRowId={figmaPostingMirroredTooltipRowId}
           rows={filtered}
@@ -1492,8 +1451,16 @@ export default function CampaignHubPostingView({
         open={uploadInsightReportDialog.open}
         onOpenChange={(open) => setUploadInsightReportDialog((prev) => ({ ...prev, open }))}
         initialFiles={uploadInsightReportRow?.insightReports}
+        submissionLink={uploadInsightReportRow?.insightReportShareUrl}
+        rowId={uploadInsightReportDialog.rowId ?? undefined}
         onSubmit={handleUploadInsightReportSubmit}
         figmaCapture={figmaCapture && figmaOpenUploadInsightReport}
+      />
+
+      <ImportPostLinksDialog
+        open={importPostLinksDialogOpen}
+        onOpenChange={setImportPostLinksDialogOpen}
+        figmaCapture={figmaCapture && figmaOpenImportPostLinks}
       />
     </div>
     </TooltipProvider>

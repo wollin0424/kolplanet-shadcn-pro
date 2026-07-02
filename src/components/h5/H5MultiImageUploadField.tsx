@@ -13,7 +13,116 @@ export type H5UploadedImage = {
   locked?: boolean;
 };
 
-export function H5MultiImageUploadField({
+type H5InsightImageCardProps = {
+  file: H5UploadedImage;
+  variant: "submitted" | "draft";
+  disabled?: boolean;
+  onRemoveFile?: (fileId: string) => void;
+};
+
+function H5InsightImageCard({ file, variant, disabled, onRemoveFile }: H5InsightImageCardProps) {
+  const isSubmitted = variant === "submitted";
+
+  return (
+    <div
+      className={cn(
+        "group/file overflow-hidden border",
+        FORM_FIELD_RADIUS,
+        isSubmitted
+          ? "border-emerald-200/90 bg-gray-50/70 ring-1 ring-emerald-100"
+          : "border-brand/30 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+      )}
+    >
+      <div className="relative aspect-[4/3] w-full overflow-hidden">
+        <img
+          src={file.previewUrl}
+          alt={file.name}
+          className={cn("size-full object-cover", isSubmitted && "opacity-95 saturate-[0.92]")}
+        />
+        {isSubmitted ? (
+          <span className="pointer-events-none absolute left-1.5 top-1.5 z-10 inline-flex items-center gap-1 rounded-full border border-emerald-300/50 bg-emerald-600 px-2 py-1 text-[10px] font-semibold leading-none text-white shadow-sm">
+            <CheckCircle2 size={11} strokeWidth={2.4} />
+            Submitted
+          </span>
+        ) : (
+          <span className="pointer-events-none absolute left-1.5 top-1.5 z-10 rounded-full bg-brand px-2 py-1 text-[10px] font-semibold leading-none text-white shadow-sm">
+            Draft
+          </span>
+        )}
+        <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 transition-colors group-hover/file:bg-black/35">
+          <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover/file:opacity-100">
+            <button
+              type="button"
+              onClick={() => window.open(file.previewUrl, "_blank", "noopener,noreferrer")}
+              className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+              aria-label={`Preview ${file.name}`}
+            >
+              <Eye size={16} strokeWidth={2} />
+            </button>
+            {!isSubmitted && !disabled && onRemoveFile ? (
+              <button
+                type="button"
+                onClick={() => onRemoveFile(file.id)}
+                className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+                aria-label={`Remove ${file.name}`}
+              >
+                <Trash2 size={16} strokeWidth={2} />
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+      <div className="px-2 py-1.5">
+        <p className="truncate text-[11px] font-medium text-gray-800">{file.name}</p>
+        <p className="text-[10px] text-gray-400">{file.sizeLabel}</p>
+      </div>
+    </div>
+  );
+}
+
+function H5InsightImageGrid({
+  files,
+  variant,
+  disabled,
+  onRemoveFile,
+}: {
+  files: H5UploadedImage[];
+  variant: "submitted" | "draft";
+  disabled?: boolean;
+  onRemoveFile?: (fileId: string) => void;
+}) {
+  if (!files.length) return null;
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {files.map((file) => (
+        <H5InsightImageCard
+          key={file.id}
+          file={file}
+          variant={variant}
+          disabled={disabled}
+          onRemoveFile={onRemoveFile}
+        />
+      ))}
+    </div>
+  );
+}
+
+export function H5SubmittedImagesPanel({ files }: { files: H5UploadedImage[] }) {
+  if (!files.length) return null;
+
+  return (
+    <section className="space-y-2.5">
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-[12px] font-semibold text-gray-700">Submitted</h3>
+        <span className="text-[11px] font-medium tabular-nums text-gray-400">{files.length}</span>
+      </div>
+      <H5InsightImageGrid files={files} variant="submitted" />
+    </section>
+  );
+}
+
+export function H5PendingImagesUploadField({
   files,
   onAddFiles,
   onRemoveFile,
@@ -85,9 +194,9 @@ export function H5MultiImageUploadField({
           disabled={disabled}
           onClick={() => inputRef.current?.click()}
           className={cn(
-            "flex w-full flex-col items-center justify-center gap-2 border border-dashed border-gray-200 bg-gray-50/70 px-4 py-8 text-center transition-colors",
+            "flex w-full flex-col items-center justify-center gap-2 border border-dashed border-brand/30 bg-white px-4 py-7 text-center transition-colors",
             FORM_FIELD_RADIUS,
-            !disabled && "hover:border-brand/35 hover:bg-brand-50/40"
+            !disabled && "hover:border-brand/45 hover:bg-brand-50/50"
           )}
         >
           <Upload size={18} strokeWidth={2} className={disabled ? "text-gray-300" : "text-brand"} />
@@ -98,62 +207,12 @@ export function H5MultiImageUploadField({
         </button>
       ) : null}
 
-      {files.length ? (
-        <div className="grid grid-cols-2 gap-2">
-          {files.map((file) => (
-            <div
-              key={file.id}
-              className={cn(
-                "group/file overflow-hidden border bg-white",
-                file.locked ? "border-emerald-200/90 ring-1 ring-emerald-100" : "border-gray-200",
-                FORM_FIELD_RADIUS
-              )}
-            >
-              <div className="relative aspect-[4/3] w-full overflow-hidden">
-                <img
-                  src={file.previewUrl}
-                  alt={file.name}
-                  className="size-full object-cover"
-                />
-                {file.locked ? (
-                  <span className="pointer-events-none absolute left-1.5 top-1.5 z-10 inline-flex items-center gap-1 rounded-full border border-emerald-300/50 bg-emerald-600 px-2 py-1 text-[10px] font-semibold leading-none text-white shadow-md backdrop-blur-sm">
-                    <CheckCircle2 size={11} strokeWidth={2.4} />
-                    Submitted
-                  </span>
-                ) : null}
-                <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 transition-colors group-hover/file:bg-black/35">
-                  <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover/file:opacity-100">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        window.open(file.previewUrl, "_blank", "noopener,noreferrer")
-                      }
-                      className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
-                      aria-label={`Preview ${file.name}`}
-                    >
-                      <Eye size={16} strokeWidth={2} />
-                    </button>
-                    {!disabled && !file.locked ? (
-                      <button
-                        type="button"
-                        onClick={() => onRemoveFile(file.id)}
-                        className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
-                        aria-label={`Remove ${file.name}`}
-                      >
-                        <Trash2 size={16} strokeWidth={2} />
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-              <div className="px-2 py-1.5">
-                <p className="truncate text-[11px] font-medium text-gray-800">{file.name}</p>
-                <p className="text-[10px] text-gray-400">{file.sizeLabel}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : null}
+      <H5InsightImageGrid
+        files={files}
+        variant="draft"
+        disabled={disabled}
+        onRemoveFile={onRemoveFile}
+      />
     </div>
   );
 }

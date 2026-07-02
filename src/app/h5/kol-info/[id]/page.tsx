@@ -5,11 +5,20 @@ export default async function KolInfoH5Page({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ view?: string; figmaCapture?: string; figmaWidth?: string; figmaPostingState?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
-  return <ScriptBriefH5View kolId={id} view={resolveH5View(query.view)} />;
+  const figmaCapture = query.figmaCapture === "1";
+  const figmaPostingState = query.figmaPostingState?.trim() || undefined;
+  return (
+    <ScriptBriefH5View
+      kolId={id}
+      view={resolveH5View(query.view)}
+      figmaCapture={figmaCapture}
+      figmaPostingState={figmaPostingState}
+    />
+  );
 }
 
 function resolveH5View(

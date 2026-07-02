@@ -48,6 +48,7 @@ function validateFile(
 export function FileUploadZone({
   title,
   hint,
+  subHint,
   accept,
   acceptedExtensions = [],
   maxBytes = 10 * 1024 * 1024,
@@ -62,6 +63,7 @@ export function FileUploadZone({
 }: {
   title: string;
   hint: string;
+  subHint?: string;
   accept?: string;
   acceptedExtensions?: string[];
   maxBytes?: number;
@@ -105,7 +107,10 @@ export function FileUploadZone({
         accept={accept}
         disabled={disabled}
         className="sr-only"
-        onChange={(e) => applyFile(e.target.files?.[0] ?? null)}
+        onChange={(e) => {
+          applyFile(e.target.files?.[0] ?? null);
+          e.target.value = "";
+        }}
       />
       <button
         type="button"
@@ -136,14 +141,17 @@ export function FileUploadZone({
           >
             <Upload size={18} strokeWidth={2} />
           </span>
-          <div className="min-w-0">
+            <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className={cn("text-[13px] font-semibold", styles.title)}>
+              <span className={cn("text-[13px] font-semibold", styles.title, file && "min-w-0 truncate")}>
                 {file?.name ?? title}
               </span>
               {badge}
             </div>
             <p className="mt-1 text-[11px] leading-relaxed text-gray-500">{hint}</p>
+            {subHint ? (
+              <p className="mt-1 text-[11px] leading-relaxed text-gray-400">{subHint}</p>
+            ) : null}
           </div>
         </div>
       </button>
