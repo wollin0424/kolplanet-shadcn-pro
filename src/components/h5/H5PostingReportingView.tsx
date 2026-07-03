@@ -6,7 +6,7 @@ import {
   H5PendingImagesUploadField,
   H5SubmittedImagesPanel,
 } from "@/components/h5/H5MultiImageUploadField";
-import { H5SectionHeading } from "@/components/h5/H5SectionHeading";
+import { H5SectionHeading, H5SectionNote } from "@/components/h5/H5SectionHeading";
 import { H5InfluencerCard } from "@/components/h5/H5InfluencerCard";
 import {
   H5_DASHED_ADD_BUTTON_CLASS,
@@ -48,6 +48,7 @@ import { cn } from "@/lib/utils";
 import {
   AlertCircle,
   ArrowLeftRight,
+  CheckCircle2,
   Image,
   Plus,
   RefreshCcw,
@@ -71,6 +72,15 @@ function H5PostLinkStatusBadge({
           aria-hidden
         />
         Verifying
+      </span>
+    );
+  }
+
+  if (health === "verified" && submitted) {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold leading-none text-emerald-700">
+        <CheckCircle2 size={11} strokeWidth={2.2} />
+        Verified
       </span>
     );
   }
@@ -331,12 +341,6 @@ function H5InsightUploadSection({
             hoverCardId={hoverCardId}
           />
 
-          {!hasSubmittedFiles ? (
-            <p className="text-[11px] leading-relaxed text-gray-400">
-              Upload completes the draft only. Click Submit to finalize the report.
-            </p>
-          ) : null}
-
           <Button
             type="button"
             variant="brand"
@@ -496,10 +500,7 @@ export function H5PostingReportingView({
               <p>
                 Submit platform insight screenshots for final review and payment release.
               </p>
-              <p>
-                <span className="font-semibold text-gray-600">Note:</span> Best captured 7 days after
-                posting.
-              </p>
+              <H5SectionNote>Note: Best captured 7 days after posting.</H5SectionNote>
             </>
           }
         />

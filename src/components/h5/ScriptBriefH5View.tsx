@@ -5,7 +5,7 @@ import Link from "next/link";
 import { H5InfluencerCard } from "@/components/h5/H5InfluencerCard";
 import { H5PageShell } from "@/components/h5/H5PageShell";
 import { H5PostingReportingView } from "@/components/h5/H5PostingReportingView";
-import { H5SectionHeading } from "@/components/h5/H5SectionHeading";
+import { H5SectionHeading, H5SectionNote } from "@/components/h5/H5SectionHeading";
 import { ContentGuidelinesDisplayBlock, ContentGuidelinesTranslationNote, CONTENT_GUIDELINES_CARD_CLASS } from "@/components/ContentGuidelinesDisplayBlock";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ import {
 } from "@/lib/captionCoverSubmissions";
 import { ensureContentScriptReviewDemoData } from "@/lib/contentScriptReviewDemo";
 import {
+  getFigmaCaptureH5OverviewState,
   getScriptBriefH5Data,
   getScriptBriefH5Defaults,
   subscribeScriptBriefH5DataChanges,
@@ -434,15 +435,28 @@ function hasApprovedDraftSubmission(submissions: ScriptDraftSubmission[]) {
   return submissions.some((submission) => submission.status === "Approved");
 }
 
-function ScriptBriefH5Overview({ kolId }: { kolId: string }) {
+function ScriptBriefH5Overview({
+  kolId,
+  figmaCapture = false,
+}: {
+  kolId: string;
+  figmaCapture?: boolean;
+}) {
   const videoKolId = `${kolId}-video`;
   const captionKolId = `${kolId}-caption`;
-  const [data, setData] = useState(() => getScriptBriefH5Defaults(kolId));
+  const figmaOverviewState = figmaCapture ? getFigmaCaptureH5OverviewState() : null;
+  const [data, setData] = useState(() =>
+    figmaCapture
+      ? { ...getScriptBriefH5Defaults(kolId), ...figmaOverviewState }
+      : getScriptBriefH5Defaults(kolId)
+  );
   const [scriptSubmissions, setScriptSubmissions] = useState<ScriptDraftSubmission[]>([]);
   const [videoSubmissions, setVideoSubmissions] = useState<ScriptDraftSubmission[]>([]);
   const [captionSubmissions, setCaptionSubmissions] = useState<CaptionCoverSubmission[]>([]);
 
   useEffect(() => {
+    if (figmaCapture) return;
+
     ensureContentScriptReviewDemoData(kolId);
     ensureContentScriptReviewDemoData(videoKolId);
 
@@ -466,11 +480,17 @@ function ScriptBriefH5Overview({ kolId }: { kolId: string }) {
       unsubDrafts();
       unsubCaption();
     };
-  }, [kolId, videoKolId, captionKolId]);
+  }, [kolId, videoKolId, captionKolId, figmaCapture]);
 
-  const scriptCompleted = hasApprovedDraftSubmission(scriptSubmissions);
-  const videoCompleted = hasApprovedDraftSubmission(videoSubmissions);
-  const captionCompleted = captionSubmissions.some((submission) => submission.status === "Approved");
+  const scriptCompleted = figmaOverviewState
+    ? figmaOverviewState.scriptCompleted
+    : hasApprovedDraftSubmission(scriptSubmissions);
+  const videoCompleted = figmaOverviewState
+    ? figmaOverviewState.videoCompleted
+    : hasApprovedDraftSubmission(videoSubmissions);
+  const captionCompleted = figmaOverviewState
+    ? figmaOverviewState.captionCompleted
+    : captionSubmissions.some((submission) => submission.status === "Approved");
 
   const baseHref = `/h5/kol-info/${encodeURIComponent(kolId)}`;
   const contractHref = `${baseHref}?view=contract`;
@@ -902,10 +922,9 @@ function ScriptBriefH5CaptionCover({ kolId }: { kolId: string }) {
           description={
             <>
               <p>Please provide the final caption and cover image for publishing.</p>
-              <p>
-                <span className="font-semibold text-gray-600">Note:</span> The feedback section is
-                for client use only.
-              </p>
+              <H5SectionNote>
+                Note: The feedback section is for client use only.
+              </H5SectionNote>
             </>
           }
         />
@@ -1039,10 +1058,9 @@ function ScriptBriefH5VideoDraft({ kolId }: { kolId: string }) {
                 <span className="font-semibold text-gray-600">&apos;Anyone with the link&apos;</span>
                 .
               </p>
-              <p>
-                <span className="font-semibold text-gray-600">Note:</span> The feedback section is
-                for client use only.
-              </p>
+              <H5SectionNote>
+                Note: The feedback section is for client use only.
+              </H5SectionNote>
             </>
           }
         />
@@ -1140,7 +1158,7 @@ function ScriptBriefH5ViewInner({
   };
 
   if (view === "overview") {
-    return <ScriptBriefH5Overview kolId={kolId} />;
+    return <ScriptBriefH5Overview kolId={kolId} figmaCapture={figmaCapture} />;
   }
 
   if (view === "guidelines") {

@@ -388,20 +388,14 @@ function ReferenceScriptIdeaCard({
 }) {
   const [editingOriginal, setEditingOriginal] = useState(false);
   const [originalDraft, setOriginalDraft] = useState(() => formatIdeaBody(idea));
-  const [translationDraft, setTranslationDraft] = useState(() =>
-    idea.translation ? formatIdeaBody(idea.translation) : ""
-  );
-  const [translationFocused, setTranslationFocused] = useState(false);
+  const translationFromIdea = idea.translation ? formatIdeaBody(idea.translation) : "";
+  const [translationEditDraft, setTranslationEditDraft] = useState<string | null>(null);
+  const translationDraft = translationEditDraft ?? translationFromIdea;
+  const translationFocused = translationEditDraft !== null;
   const [contentView, setContentView] = useState<"original" | "translation">("original");
 
   const hasTranslation = Boolean(idea.translation);
   const showingTranslation = contentView === "translation" && hasTranslation && Boolean(idea.translation);
-
-  useEffect(() => {
-    if (idea.translation && !translationFocused) {
-      setTranslationDraft(formatIdeaBody(idea.translation));
-    }
-  }, [idea.translation, translationFocused]);
 
   const startEditingOriginal = () => {
     setOriginalDraft(formatIdeaBody(idea));
@@ -420,8 +414,8 @@ function ReferenceScriptIdeaCard({
   };
 
   const saveTranslationDraft = () => {
-    if (!idea.translation) return;
-    onEditTranslation(parseIdeaBody(translationDraft, idea.translation));
+    if (!idea.translation || translationEditDraft === null) return;
+    onEditTranslation(parseIdeaBody(translationEditDraft, idea.translation));
   };
 
   return (
@@ -455,12 +449,7 @@ function ReferenceScriptIdeaCard({
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (idea.translation) {
-                setTranslationDraft(formatIdeaBody(idea.translation));
-              }
-              setContentView("translation");
-            }}
+            onClick={() => setContentView("translation")}
             className={referenceScriptTabClass(contentView === "translation")}
           >
             Translation
@@ -483,11 +472,11 @@ function ReferenceScriptIdeaCard({
           <label className="block cursor-text">
             <Textarea
               value={translationDraft}
-              onChange={(e) => setTranslationDraft(e.target.value)}
-              onFocus={() => setTranslationFocused(true)}
+              onChange={(e) => setTranslationEditDraft(e.target.value)}
+              onFocus={() => setTranslationEditDraft(translationFromIdea)}
               onBlur={() => {
-                setTranslationFocused(false);
                 saveTranslationDraft();
+                setTranslationEditDraft(null);
               }}
               className={cn(
                 "min-h-[220px] resize-y text-[13px] leading-relaxed text-gray-700 transition-all duration-200",
@@ -669,8 +658,12 @@ function ReferenceScriptsGeneratePanel({
   const [phase, setPhase] = useState<GenerateIdeasPhase>(
     figmaCapture ? "results" : "idle"
   );
-  const [ideas, setIdeas] = useState<ScriptIdea[]>(captureIdeas);
-  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
+  const [ideas, setIdeas] = useState<ScriptIdea[]>(() => captureIdeas);
+  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(() =>
+    figmaCapture && captureIdeas.length > 0
+      ? new Set(captureIdeas.map((_, index) => index))
+      : new Set()
+  );
   const [generationRuns, setGenerationRuns] = useState(figmaCapture ? 1 : 0);
   const [translatorOpen, setTranslatorOpen] = useState(false);
   const [translatorOriginIndex, setTranslatorOriginIndex] = useState(0);
@@ -755,11 +748,6 @@ function ReferenceScriptsGeneratePanel({
   useEffect(() => {
     publishSelectedIdeas(ideas, selectedIndices);
   }, [ideas, selectedIndices, publishSelectedIdeas]);
-
-  useEffect(() => {
-    if (!figmaCapture || captureIdeas.length === 0) return;
-    syncIdeas(captureIdeas, new Set(captureIdeas.map((_, index) => index)));
-  }, [captureIdeas, figmaCapture]);
 
   const showPanelChrome = phase !== "loading";
 

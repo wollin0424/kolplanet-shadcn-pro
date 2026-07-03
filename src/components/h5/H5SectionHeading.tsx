@@ -4,6 +4,12 @@ import { cn } from "@/lib/utils";
 
 export const H5_SECTION_HELPER_CLASS = "text-[12px] leading-relaxed text-gray-500";
 
+export const H5_SECTION_NOTE_CLASS = "font-semibold text-gray-600";
+
+export function H5SectionNote({ children }: { children: ReactNode }) {
+  return <p className={H5_SECTION_NOTE_CLASS}>{children}</p>;
+}
+
 export function H5SectionHeading({
   icon: Icon,
   title,

@@ -59,6 +59,22 @@ Core flow: Straight opinion, clean talking-head delivery. Connect it to this bri
 Execution notes: Keep the language natural for ID audience, preserve Amelia Stone's familiar cadence, and apply this direction: Keep the creator's established tone.`,
 };
 
+export type FigmaCaptureH5OverviewState = {
+  contractPaymentComplete: boolean;
+  scriptCompleted: boolean;
+  videoCompleted: boolean;
+  captionCompleted: boolean;
+};
+
+export function getFigmaCaptureH5OverviewState(): FigmaCaptureH5OverviewState {
+  return {
+    contractPaymentComplete: false,
+    scriptCompleted: true,
+    videoCompleted: true,
+    captionCompleted: false,
+  };
+}
+
 export function getScriptBriefH5Defaults(kolId: string): ScriptBriefH5Data {
   return {
     campaignTitle: "Budweiser 2024 Sales Drive",
