@@ -393,6 +393,60 @@ function PostingValidationTooltipsFigmaCapture() {
   );
 }
 
+const POST_LINK_TOOLTIP_POPUP_CLASS =
+  "inline-flex w-[min(300px,calc(100vw-2rem))] max-w-none flex-col gap-0 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-[12px] text-gray-900 shadow-[0_4px_16px_rgba(0,0,0,0.08)]";
+
+type FigmaPostLinkTooltipSample = {
+  id: string;
+  links: PostLink[];
+  multi?: boolean;
+};
+
+function getFigmaPostLinkTooltipSamples(): FigmaPostLinkTooltipSample[] {
+  const p1 = POSTING_HUB_MOCK_ROWS.find((row) => row.id === "p1");
+  const p2 = POSTING_HUB_MOCK_ROWS.find((row) => row.id === "p2");
+  const p3 = POSTING_HUB_MOCK_ROWS.find((row) => row.id === "p3");
+  const p8 = POSTING_HUB_MOCK_ROWS.find((row) => row.id === "p8");
+  if (!p1?.postLinks || !p2?.postLinks?.[0] || !p3?.postLinks?.[0] || !p8?.postLinks?.[0]) return [];
+
+  return [
+    { id: "verified", links: [p1.postLinks[0]] },
+    {
+      id: "mirrored",
+      links: p1.postLinks.filter((link) => link.type === "Mirrored"),
+      multi: true,
+    },
+    { id: "data-fetch-failed", links: [p2.postLinks[0]] },
+    { id: "missing-info", links: [p3.postLinks[0]] },
+    { id: "private-account", links: [p8.postLinks[0]] },
+  ];
+}
+
+function PostingPostLinkTooltipsFigmaCapture() {
+  return (
+    <div
+      className="fixed left-0 top-0 z-[300] flex flex-col gap-5 p-20"
+      data-figma-capture="posting-post-link-tooltips-panel"
+    >
+      {getFigmaPostLinkTooltipSamples().map((sample) => (
+        <div
+          key={sample.id}
+          className="flex flex-col items-start"
+          data-figma-capture={`posting-post-link-tooltip-${sample.id}`}
+        >
+          <div className={POST_LINK_TOOLTIP_POPUP_CLASS}>
+            {sample.multi ? (
+              <PostLinkMirroredTooltipContent links={sample.links} />
+            ) : (
+              <PostLinkTooltipContent link={sample.links[0]} />
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function PostLinkTooltipContent({ link }: { link: PostLink }) {
   const { tag, description, tagClassName } = getPostLinkTooltipCopy(link);
 
@@ -427,7 +481,9 @@ function PostLinkTooltipContent({ link }: { link: PostLink }) {
       >
         {tag}
       </span>
-      <p className="text-[11px] leading-relaxed text-gray-500">{description}</p>
+      {description ? (
+        <p className="text-[11px] leading-relaxed text-gray-500">{description}</p>
+      ) : null}
     </div>
   );
 }
@@ -1141,6 +1197,8 @@ export default function CampaignHubPostingView({
   figmaPostingActionsOpen = false,
   figmaPostingMirroredTooltipRowId,
   figmaPostingValidationTooltips = false,
+  figmaOpenSetPostingDate = false,
+  figmaPostingPostLinkTooltips = false,
   figmaOpenEditPostLink = false,
   figmaEditPostLinkRowId,
   figmaOpenUploadInsightReport = false,
@@ -1156,6 +1214,8 @@ export default function CampaignHubPostingView({
   figmaPostingActionsOpen?: boolean;
   figmaPostingMirroredTooltipRowId?: string;
   figmaPostingValidationTooltips?: boolean;
+  figmaOpenSetPostingDate?: boolean;
+  figmaPostingPostLinkTooltips?: boolean;
   figmaOpenEditPostLink?: boolean;
   figmaEditPostLinkRowId?: string;
   figmaOpenUploadInsightReport?: boolean;
@@ -1176,7 +1236,11 @@ export default function CampaignHubPostingView({
     open: boolean;
     targetIds: string[];
     label: string;
-  }>({ open: false, targetIds: [], label: "" });
+  }>(() =>
+    figmaCapture && figmaOpenSetPostingDate
+      ? { open: true, targetIds: ["p1"], label: "Lucas Turner" }
+      : { open: false, targetIds: [], label: "" }
+  );
   const [editPostLinkDialog, setEditPostLinkDialog] = useState<{
     open: boolean;
     rowId: string | null;
@@ -1384,10 +1448,12 @@ export default function CampaignHubPostingView({
         className={cn(
           "flex min-h-0 flex-1 flex-col gap-3 overflow-hidden",
           figmaCapture && "figma-capture-posting-root",
-          figmaCapture && figmaPostingValidationTooltips && "figma-capture-posting-validation-tooltips"
+          figmaCapture && figmaPostingValidationTooltips && "figma-capture-posting-validation-tooltips",
+          figmaCapture && figmaPostingPostLinkTooltips && "figma-capture-posting-post-link-tooltips"
         )}
       >
       {figmaCapture && figmaPostingValidationTooltips ? <PostingValidationTooltipsFigmaCapture /> : null}
+      {figmaCapture && figmaPostingPostLinkTooltips ? <PostingPostLinkTooltipsFigmaCapture /> : null}
       <CampaignHubDetailHeader title="Posting" onBack={onBack} />
       <div
         className={cn(
@@ -1503,6 +1569,7 @@ export default function CampaignHubPostingView({
         onOpenChange={(open) => setPostingDateDialog((prev) => ({ ...prev, open }))}
         influencerLabel={postingDateDialog.label}
         onConfirm={handlePostingDateConfirm}
+        figmaCapture={figmaCapture && figmaOpenSetPostingDate}
       />
 
       <EditPostLinkDialog

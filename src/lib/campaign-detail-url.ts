@@ -46,6 +46,8 @@ export function parseCampaignDetailSearchParams(searchParams: {
   figmaPostingMirroredTooltip?: string;
   figmaPostingMirroredTooltipRow?: string;
   figmaPostingValidationTooltips?: string;
+  figmaOpenSetPostingDate?: string;
+  figmaPostingPostLinkTooltips?: string;
   figmaReviewTab?: string;
   figmaReviewKol?: string;
 }): {
@@ -67,6 +69,8 @@ export function parseCampaignDetailSearchParams(searchParams: {
   figmaOpenExecutionGuide?: boolean;
   figmaPostingMirroredTooltipRowId?: string;
   figmaPostingValidationTooltips?: boolean;
+  figmaOpenSetPostingDate?: boolean;
+  figmaPostingPostLinkTooltips?: boolean;
   figmaReviewTab?: "comments" | "brief";
   figmaReviewKol?: string;
 } {
@@ -107,6 +111,8 @@ export function parseCampaignDetailSearchParams(searchParams: {
     ? searchParams.figmaPostingMirroredTooltipRow?.trim() || "p1"
     : undefined;
   const figmaPostingValidationTooltips = searchParams.figmaPostingValidationTooltips === "1";
+  const figmaOpenSetPostingDate = searchParams.figmaOpenSetPostingDate === "1";
+  const figmaPostingPostLinkTooltips = searchParams.figmaPostingPostLinkTooltips === "1";
   const reviewTrackKey = searchParams.figmaOpenReview?.toLowerCase().replace(/_/g, "-");
   const reviewTabKey = searchParams.figmaReviewTab?.toLowerCase().replace(/_/g, "-");
 
@@ -136,6 +142,8 @@ export function parseCampaignDetailSearchParams(searchParams: {
     figmaOpenExecutionGuide,
     figmaPostingMirroredTooltipRowId,
     figmaPostingValidationTooltips,
+    figmaOpenSetPostingDate,
+    figmaPostingPostLinkTooltips,
     figmaReviewTab:
       reviewTabKey === "brief" || reviewTabKey === "brief-settings"
         ? "brief"

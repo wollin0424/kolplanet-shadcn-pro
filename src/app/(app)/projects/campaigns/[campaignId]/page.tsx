@@ -27,6 +27,8 @@ export default async function CampaignDetailPage({
     figmaPostingMirroredTooltip?: string;
     figmaPostingMirroredTooltipRow?: string;
     figmaPostingValidationTooltips?: string;
+    figmaOpenSetPostingDate?: string;
+    figmaPostingPostLinkTooltips?: string;
     figmaReviewTab?: string;
     figmaReviewKol?: string;
   }>;
@@ -52,6 +54,8 @@ export default async function CampaignDetailPage({
     figmaOpenExecutionGuide,
     figmaPostingMirroredTooltipRowId,
     figmaPostingValidationTooltips,
+    figmaOpenSetPostingDate,
+    figmaPostingPostLinkTooltips,
     figmaReviewTab,
     figmaReviewKol,
   } = parseCampaignDetailSearchParams(query);
@@ -77,6 +81,8 @@ export default async function CampaignDetailPage({
       figmaOpenExecutionGuide={figmaOpenExecutionGuide}
       figmaPostingMirroredTooltipRowId={figmaPostingMirroredTooltipRowId}
       figmaPostingValidationTooltips={figmaPostingValidationTooltips}
+      figmaOpenSetPostingDate={figmaOpenSetPostingDate}
+      figmaPostingPostLinkTooltips={figmaPostingPostLinkTooltips}
       figmaReviewTab={figmaReviewTab}
       figmaReviewKol={figmaReviewKol}
     />

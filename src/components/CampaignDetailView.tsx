@@ -28,6 +28,8 @@ export default function CampaignDetailView({
   figmaOpenExecutionGuide,
   figmaPostingMirroredTooltipRowId,
   figmaPostingValidationTooltips,
+  figmaOpenSetPostingDate,
+  figmaPostingPostLinkTooltips,
   figmaReviewTab,
   figmaReviewKol,
 }: {
@@ -50,6 +52,8 @@ export default function CampaignDetailView({
   figmaOpenExecutionGuide?: boolean;
   figmaPostingMirroredTooltipRowId?: string;
   figmaPostingValidationTooltips?: boolean;
+  figmaOpenSetPostingDate?: boolean;
+  figmaPostingPostLinkTooltips?: boolean;
   figmaReviewTab?: "comments" | "brief";
   figmaReviewKol?: string;
 }) {
@@ -104,6 +108,8 @@ export default function CampaignDetailView({
             figmaOpenImportPostLinks={hubMountKey === 0 ? figmaOpenImportPostLinks : undefined}
             figmaPostingMirroredTooltipRowId={hubMountKey === 0 ? figmaPostingMirroredTooltipRowId : undefined}
             figmaPostingValidationTooltips={hubMountKey === 0 ? figmaPostingValidationTooltips : undefined}
+            figmaOpenSetPostingDate={hubMountKey === 0 ? figmaOpenSetPostingDate : undefined}
+            figmaPostingPostLinkTooltips={hubMountKey === 0 ? figmaPostingPostLinkTooltips : undefined}
             figmaReviewTab={hubMountKey === 0 ? figmaReviewTab : undefined}
             figmaReviewKol={hubMountKey === 0 ? figmaReviewKol : undefined}
           />

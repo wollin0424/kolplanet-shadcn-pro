@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/select";
 import { POSTING_TIMEZONE_OPTIONS } from "@/lib/postingHubMock";
 import { cn } from "@/lib/utils";
-import { Calendar } from "@/lib/icons";
 
 export type PostingDateDraft = {
   date: string;
@@ -31,6 +30,7 @@ export function SetPostingDateDialog({
   initialDate = "",
   initialTimezone = "",
   onConfirm,
+  figmaCapture = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -38,6 +38,7 @@ export function SetPostingDateDialog({
   initialDate?: string;
   initialTimezone?: string;
   onConfirm: (draft: PostingDateDraft) => void;
+  figmaCapture?: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -49,6 +50,7 @@ export function SetPostingDateDialog({
           initialTimezone={initialTimezone}
           onConfirm={onConfirm}
           onOpenChange={onOpenChange}
+          figmaCapture={figmaCapture}
         />
       ) : null}
     </Dialog>
@@ -61,15 +63,19 @@ function SetPostingDateDialogPanel({
   initialDate,
   initialTimezone,
   onConfirm,
+  figmaCapture = false,
 }: {
   onOpenChange: (open: boolean) => void;
   influencerLabel: string;
   initialDate: string;
   initialTimezone: string;
   onConfirm: (draft: PostingDateDraft) => void;
+  figmaCapture?: boolean;
 }) {
-  const [date, setDate] = useState(initialDate);
-  const [timezone, setTimezone] = useState(initialTimezone);
+  const captureDate = figmaCapture && !initialDate ? "2026-06-30" : initialDate;
+  const captureTimezone = figmaCapture && !initialTimezone ? "UTC+08:00" : initialTimezone;
+  const [date, setDate] = useState(captureDate);
+  const [timezone, setTimezone] = useState(captureTimezone);
 
   const canConfirm = Boolean(date && timezone);
 
@@ -83,20 +89,16 @@ function SetPostingDateDialogPanel({
     <DialogContent
         className="gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[420px]"
         showCloseButton
+        data-figma-capture={figmaCapture ? "set-posting-date-dialog" : undefined}
       >
         <div className="border-b border-gray-100 bg-gradient-to-b from-gray-50/80 to-white px-6 pt-6 pb-5">
-          <div className="flex items-start gap-3 pr-6">
-            <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand ring-1 ring-brand/10">
-              <Calendar size={18} strokeWidth={2} />
-            </span>
-            <div className="min-w-0 pt-0.5">
-              <DialogTitle className="text-base font-semibold text-gray-900">
-                Set Posting Date
-              </DialogTitle>
-              <DialogDescription className="mt-1 text-sm text-gray-500">
-                Set the posting date and time zone for {influencerLabel}.
-              </DialogDescription>
-            </div>
+          <div className="pr-6">
+            <DialogTitle className="text-base font-semibold text-gray-900">
+              Set Posting Date
+            </DialogTitle>
+            <DialogDescription className="mt-1 text-sm text-gray-500">
+              Set the posting date and time zone for {influencerLabel}.
+            </DialogDescription>
           </div>
         </div>
 
@@ -145,7 +147,7 @@ function SetPostingDateDialogPanel({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-gray-100 bg-gray-50/50 px-6 py-4">
+        <div className="flex items-center justify-center gap-2 border-t border-gray-100 bg-gray-50/50 px-6 py-4">
           <Button
             type="button"
             variant="outline"

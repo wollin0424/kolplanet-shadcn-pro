@@ -161,6 +161,8 @@ export default function CampaignHub({
   figmaOpenImportPostLinks,
   figmaPostingMirroredTooltipRowId,
   figmaPostingValidationTooltips,
+  figmaOpenSetPostingDate,
+  figmaPostingPostLinkTooltips,
   figmaReviewTab,
   figmaReviewKol,
 }: {
@@ -182,6 +184,8 @@ export default function CampaignHub({
   figmaOpenImportPostLinks?: boolean;
   figmaPostingMirroredTooltipRowId?: string;
   figmaPostingValidationTooltips?: boolean;
+  figmaOpenSetPostingDate?: boolean;
+  figmaPostingPostLinkTooltips?: boolean;
   figmaReviewTab?: "comments" | "brief";
   figmaReviewKol?: string;
 }) {
@@ -269,6 +273,8 @@ export default function CampaignHub({
         figmaOpenImportPostLinks={figmaOpenImportPostLinks}
         figmaPostingMirroredTooltipRowId={figmaPostingMirroredTooltipRowId}
         figmaPostingValidationTooltips={figmaPostingValidationTooltips}
+        figmaOpenSetPostingDate={figmaOpenSetPostingDate}
+        figmaPostingPostLinkTooltips={figmaPostingPostLinkTooltips}
       />
     );
   }

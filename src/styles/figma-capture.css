@@ -305,6 +305,44 @@ html.figma-capture [data-figma-capture="posting-validation-tooltips-panel"] {
   max-height: none !important;
 }
 
+/* Set Posting Date dialog — isolate centered modal for element capture */
+html.figma-capture [data-figma-capture="set-posting-date-dialog"] {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  max-height: none !important;
+  width: 420px !important;
+  max-width: 420px !important;
+}
+
+/* Posting — post link pill tooltips panel for Figma capture */
+html.figma-capture .figma-capture-posting-post-link-tooltips .figma-capture-posting-card {
+  visibility: hidden !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+html.figma-capture .figma-capture-posting-post-link-tooltips > :not([data-figma-capture="posting-post-link-tooltips-panel"]) {
+  display: none !important;
+}
+
+html.figma-capture [data-figma-capture="posting-post-link-tooltips-panel"] {
+  position: fixed !important;
+  top: 80px !important;
+  left: 80px !important;
+  transform: none !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  max-height: none !important;
+}
+
 /* H5 Posting & Reporting — full-page capture at 480px */
 html.figma-capture [data-figma-capture="h5-shell"] {
   width: 480px !important;

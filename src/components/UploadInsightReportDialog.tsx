@@ -389,10 +389,10 @@ function UploadInsightReportSheetPanel({
     >
       <SheetHeader className="shrink-0 gap-1.5 border-b border-gray-100 bg-white px-6 py-5 text-left">
         <SheetTitle className="text-[18px] font-semibold text-gray-900">
-          Insight Reports Panel
+          Insight Reports
         </SheetTitle>
         <SheetDescription className="text-[13px] leading-relaxed text-gray-500">
-          Upload insight screenshots to append to the current report set.
+          Upload screenshots of your social media posts for this report.
         </SheetDescription>
       </SheetHeader>
 
@@ -402,7 +402,7 @@ function UploadInsightReportSheetPanel({
             {existingFiles.length ? (
               <div className="min-w-0 space-y-2">
                 <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-                  <p className="shrink-0 text-[13px] font-semibold text-gray-800">Existing files</p>
+                  <p className="shrink-0 text-[13px] font-semibold text-gray-800">Submitted Reports</p>
                   {headerShareLink ? <InsightReportShareLink url={headerShareLink} /> : null}
                 </div>
                 <InsightReportImageGrid
@@ -433,7 +433,7 @@ function UploadInsightReportSheetPanel({
 
             {pendingFile ? (
               <div className="space-y-2">
-                <p className="text-[13px] font-semibold text-gray-800">Pending uploads</p>
+                <p className="text-[13px] font-semibold text-gray-800">Drafts</p>
                 <InsightReportImageGrid
                   files={[pendingFile]}
                   variant="draft"

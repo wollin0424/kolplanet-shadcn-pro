@@ -85,7 +85,7 @@ export type PostingHubRow = {
 export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
   {
     id: "p1",
-    name: "Amelia Stone",
+    name: "Lucas Turner",
     handle: "@instagram.ins",
     platform: "Instagram",
     h5Path: "/h5/kol-info/s1",
@@ -140,7 +140,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
         url: "https://www.instagram.com/p/DKx9AvaCollins/",
         source: "Web",
         postedDate: "02 Jun, 2026",
-        issues: ["Caption mismatch"],
+        issues: ["Data fetch failed"],
       },
     ],
     planDate: "Jun 30, 2026",
@@ -282,10 +282,58 @@ export function postLinkNeedsAttention(link: PostLink) {
 
 export type PostLinkHealthStatus = "success" | "warning" | "error";
 
+export type PostLinkAvailabilityStatus =
+  | "Verified"
+  | "Data fetch failed"
+  | "Private account"
+  | "Missing Info";
+
+const POST_LINK_TOOLTIP_TAG_CLASS = {
+  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  warning: "border-amber-200 bg-amber-50 text-amber-700",
+  error: "border-red-200 bg-red-50 text-red-700",
+} as const;
+
 const POST_LINK_WARNING_ISSUES = new Set([
   "Missing hashtag",
   "Missing @mention",
+  "Private account",
 ]);
+
+const POST_LINK_AVAILABILITY_COPY: Record<
+  PostLinkAvailabilityStatus,
+  { tag: string; description: string; tone: keyof typeof POST_LINK_TOOLTIP_TAG_CLASS }
+> = {
+  Verified: {
+    tag: "Verified",
+    description: "",
+    tone: "success",
+  },
+  "Data fetch failed": {
+    tag: "Data fetch failed",
+    description: "System cannot retrieve data from the link. Please verify if the post is live.",
+    tone: "error",
+  },
+  "Private account": {
+    tag: "Private account",
+    description: "Account is private. Please set the account to public for verification.",
+    tone: "warning",
+  },
+  "Missing Info": {
+    tag: "Missing Info",
+    description: "Hashtag or mention is missing. Please check the post and refresh.",
+    tone: "warning",
+  },
+};
+
+function resolvePostLinkAvailabilityStatus(link: PostLink): PostLinkAvailabilityStatus {
+  const issue = link.issues?.[0];
+  if (!issue) return "Verified";
+  if (issue === "Data fetch failed") return "Data fetch failed";
+  if (issue === "Private account") return "Private account";
+  if (issue === "Missing hashtag" || issue === "Missing @mention") return "Missing Info";
+  return "Data fetch failed";
+}
 
 function getIssuesHealthStatus(issues: string[]): PostLinkHealthStatus {
   if (issues.some((issue) => !POST_LINK_WARNING_ISSUES.has(issue))) {
@@ -399,20 +447,6 @@ export function getFigmaCaptureInsightReportState(
   };
 }
 
-const POST_LINK_TOOLTIP_TAG_CLASS = {
-  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  warning: "border-amber-200 bg-amber-50 text-amber-700",
-  error: "border-red-200 bg-red-50 text-red-700",
-} as const;
-
-const POST_LINK_ISSUE_DESCRIPTIONS: Record<string, string> = {
-  "Missing hashtag": "Cannot verify because no approved baseline exists for reference.",
-  "Missing @mention": "Cannot verify because no approved baseline exists for reference.",
-  "Caption mismatch": "Caption text does not match the approved version.",
-  "Data fetch failed": "Unable to retrieve media or content from the provided post link.",
-  "Private account": "This link is not publicly accessible.",
-};
-
 export function getPostLinkSourceLabel(source: PostLinkSource) {
   return source === "H5" ? "Submitted via H5" : "Added on Web";
 }
@@ -424,49 +458,12 @@ export type PostLinkTooltipCopy = {
 };
 
 export function getPostLinkTooltipCopy(link: PostLink): PostLinkTooltipCopy {
-  if (link.issues?.[0]) {
-    const tag = link.issues[0];
-    const issueStatus = getIssuesHealthStatus(link.issues);
-    return {
-      tag,
-      description: POST_LINK_ISSUE_DESCRIPTIONS[tag] ?? "This link requires manual review.",
-      tagClassName: POST_LINK_TOOLTIP_TAG_CLASS[issueStatus === "error" ? "error" : "warning"],
-    };
-  }
-
-  if (link.type === "Master" && link.validation) {
-    const { caption, cover, video } = link.validation;
-    if (caption === "Mismatched" || cover === "Mismatched" || video === "Mismatched") {
-      const field =
-        caption === "Mismatched" ? "Caption" : cover === "Mismatched" ? "Cover" : "Video";
-      return {
-        tag: "Mismatched",
-        description: `${field} does not match the approved version.`,
-        tagClassName: POST_LINK_TOOLTIP_TAG_CLASS.error,
-      };
-    }
-    if (caption === "Cannot Verify" || cover === "Cannot Verify" || video === "Cannot Verify") {
-      return {
-        tag: "Fetch Failed",
-        description: "Cannot verify because no approved baseline exists for reference.",
-        tagClassName: POST_LINK_TOOLTIP_TAG_CLASS.warning,
-      };
-    }
-    if (caption === "No Draft" || cover === "No Draft" || video === "No Draft") {
-      const field =
-        caption === "No Draft" ? "Caption" : cover === "No Draft" ? "Cover" : "Video";
-      return {
-        tag: "No Draft",
-        description: `No approved baseline draft exists yet, so ${field.toLowerCase()} validation cannot be completed.`,
-        tagClassName: "border-gray-200 bg-gray-50 text-gray-600",
-      };
-    }
-  }
-
+  const status = resolvePostLinkAvailabilityStatus(link);
+  const copy = POST_LINK_AVAILABILITY_COPY[status];
   return {
-    tag: "Verified",
-    description: "Content matches draft (AI-checked).",
-    tagClassName: POST_LINK_TOOLTIP_TAG_CLASS.success,
+    tag: copy.tag,
+    description: copy.description,
+    tagClassName: POST_LINK_TOOLTIP_TAG_CLASS[copy.tone],
   };
 }
 
@@ -498,7 +495,7 @@ export function getFigmaCaptureEditPostLinkLinks(): PostLink[] {
       url: "https://www.tiktok.com/@creator/video/figma-mirror-mismatch/",
       source: "Web",
       postedDate: "04 Jun, 2026",
-      issues: ["Mismatched"],
+      issues: ["Data fetch failed"],
     },
     {
       type: "Mirrored",
