@@ -20,7 +20,13 @@ type H5InsightImageCardProps = {
   onRemoveFile?: (fileId: string) => void;
 };
 
-function H5InsightImageCard({ file, variant, disabled, onRemoveFile }: H5InsightImageCardProps) {
+function H5InsightImageCard({
+  file,
+  variant,
+  disabled,
+  onRemoveFile,
+  forceHover = false,
+}: H5InsightImageCardProps & { forceHover?: boolean }) {
   const isSubmitted = variant === "submitted";
   const showRemove = !isSubmitted && !disabled && Boolean(onRemoveFile);
 
@@ -29,7 +35,8 @@ function H5InsightImageCard({ file, variant, disabled, onRemoveFile }: H5Insight
       className={cn(
         "group/file overflow-hidden border border-gray-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
         FORM_FIELD_RADIUS,
-        !isSubmitted && "border-brand/30"
+        !isSubmitted && "border-brand/30",
+        forceHover && "figma-capture-insight-card-hovered"
       )}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden">
@@ -38,8 +45,8 @@ function H5InsightImageCard({ file, variant, disabled, onRemoveFile }: H5Insight
           alt={file.name}
           className="size-full object-cover"
         />
-        <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 transition-colors group-hover/file:bg-black/35">
-          <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover/file:opacity-100">
+        <div className="insight-card-preview-overlay absolute inset-0 flex items-center justify-center gap-2 bg-black/0 transition-colors group-hover/file:bg-black/35">
+          <div className="insight-card-preview-actions flex items-center gap-2 opacity-0 transition-opacity group-hover/file:opacity-100">
             <button
               type="button"
               onClick={() => window.open(file.previewUrl, "_blank", "noopener,noreferrer")}
@@ -74,11 +81,13 @@ function H5InsightImageGrid({
   variant,
   disabled,
   onRemoveFile,
+  hoverCardId,
 }: {
   files: H5UploadedImage[];
   variant: "submitted" | "draft";
   disabled?: boolean;
   onRemoveFile?: (fileId: string) => void;
+  hoverCardId?: string;
 }) {
   if (!files.length) return null;
 
@@ -91,13 +100,20 @@ function H5InsightImageGrid({
           variant={variant}
           disabled={disabled}
           onRemoveFile={onRemoveFile}
+          forceHover={hoverCardId === file.id}
         />
       ))}
     </div>
   );
 }
 
-export function H5SubmittedImagesPanel({ files }: { files: H5UploadedImage[] }) {
+export function H5SubmittedImagesPanel({
+  files,
+  hoverCardId,
+}: {
+  files: H5UploadedImage[];
+  hoverCardId?: string;
+}) {
   if (!files.length) return null;
 
   return (
@@ -106,7 +122,7 @@ export function H5SubmittedImagesPanel({ files }: { files: H5UploadedImage[] }) 
         <h3 className="text-[12px] font-semibold text-gray-700">Submitted</h3>
         <span className="text-[11px] font-medium tabular-nums text-gray-400">{files.length}</span>
       </div>
-      <H5InsightImageGrid files={files} variant="submitted" />
+      <H5InsightImageGrid files={files} variant="submitted" hoverCardId={hoverCardId} />
     </section>
   );
 }
@@ -117,8 +133,9 @@ export function H5PendingImagesUploadField({
   onRemoveFile,
   disabled = false,
   showDropzone = true,
-  dropLabel = "Drop screenshots here",
-  hint,
+  dropLabel = "Upload image here.",
+  hint = "Only PNG or JPG supported.",
+  hoverCardId,
 }: {
   files: H5UploadedImage[];
   onAddFiles: (files: H5UploadedImage[]) => void;
@@ -127,6 +144,7 @@ export function H5PendingImagesUploadField({
   showDropzone?: boolean;
   dropLabel?: string;
   hint?: string;
+  hoverCardId?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -183,16 +201,35 @@ export function H5PendingImagesUploadField({
           disabled={disabled}
           onClick={() => inputRef.current?.click()}
           className={cn(
-            "flex w-full flex-col items-center justify-center gap-2 border border-dashed border-brand/30 bg-white px-4 py-7 text-center transition-colors",
+            "w-full border-2 border-dashed border-brand/25 bg-brand-50/35 px-4 py-4 text-left transition-colors",
             FORM_FIELD_RADIUS,
-            !disabled && "hover:border-brand/45 hover:bg-brand-50/50"
+            disabled && "cursor-not-allowed opacity-60",
+            !disabled && "hover:border-brand/35 hover:bg-brand-50/55"
           )}
         >
-          <Upload size={18} strokeWidth={2} className={disabled ? "text-gray-300" : "text-brand"} />
-          <span className={cn("text-[12px] font-medium", disabled ? "text-gray-400" : "text-brand")}>
-            {dropLabel}
-          </span>
-          {hint ? <span className="text-[10px] text-gray-400">{hint}</span> : null}
+          <div className="flex items-start gap-3">
+            <span
+              className={cn(
+                "flex size-10 shrink-0 items-center justify-center rounded-lg border border-brand-100 bg-white",
+                disabled ? "text-gray-300" : "text-brand"
+              )}
+            >
+              <Upload size={18} strokeWidth={2} />
+            </span>
+            <div className="min-w-0">
+              <p
+                className={cn(
+                  "text-[13px] font-semibold",
+                  disabled ? "text-gray-400" : "text-brand"
+                )}
+              >
+                {dropLabel}
+              </p>
+              {hint ? (
+                <p className="mt-1 text-[11px] leading-relaxed text-gray-500">{hint}</p>
+              ) : null}
+            </div>
+          </div>
         </button>
       ) : null}
 
@@ -201,6 +238,7 @@ export function H5PendingImagesUploadField({
         variant="draft"
         disabled={disabled}
         onRemoveFile={onRemoveFile}
+        hoverCardId={hoverCardId}
       />
     </div>
   );

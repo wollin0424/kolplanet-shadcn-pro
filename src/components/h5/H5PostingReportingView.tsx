@@ -26,7 +26,9 @@ import {
   addMirroredPost,
   getDefaultH5PostingState,
   getFigmaCaptureH5PostingState,
+  getFigmaCaptureH5InsightHoverCardId,
   getH5PostingState,
+  hasSubmittedMasterPost,
   hasVerifiedMasterPost,
   refreshMasterLink,
   refreshMirroredLink,
@@ -282,12 +284,14 @@ function H5InsightUploadSection({
   onAddFiles,
   onRemoveFile,
   onSubmit,
+  hoverCardId,
 }: {
   files: H5InsightFile[];
   locked: boolean;
   onAddFiles: (files: H5InsightFile[]) => void;
   onRemoveFile: (fileId: string) => void;
   onSubmit: () => void;
+  hoverCardId?: string;
 }) {
   const submittedFiles = files.filter((file) => file.locked);
   const pendingFiles = files.filter((file) => !file.locked);
@@ -302,7 +306,9 @@ function H5InsightUploadSection({
         </p>
       ) : null}
 
-      {hasSubmittedFiles ? <H5SubmittedImagesPanel files={submittedFiles} /> : null}
+      {hasSubmittedFiles ? (
+        <H5SubmittedImagesPanel files={submittedFiles} hoverCardId={hoverCardId} />
+      ) : null}
 
       {!locked ? (
         <section
@@ -322,8 +328,7 @@ function H5InsightUploadSection({
             onRemoveFile={onRemoveFile}
             disabled={locked}
             showDropzone
-            dropLabel="Drop screenshots here"
-            hint="PNG / JPG screenshots"
+            hoverCardId={hoverCardId}
           />
 
           {!hasSubmittedFiles ? (
@@ -389,6 +394,10 @@ export function H5PostingReportingView({
   }, [figmaCapture, kolId]);
 
   const insightUnlocked = hasVerifiedMasterPost(posting);
+  const showMirroredSection = hasSubmittedMasterPost(posting);
+  const insightHoverCardId = figmaCapture
+    ? getFigmaCaptureH5InsightHoverCardId(figmaPostingState)
+    : undefined;
 
   return (
     <div
@@ -439,42 +448,44 @@ export function H5PostingReportingView({
         </button>
       </section>
 
-      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-        <div className="mb-4 flex items-start gap-2">
-          <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
-            <ArrowLeftRight size={15} strokeWidth={2} />
-          </span>
-          <div>
-            <h2 className="text-[15px] font-semibold text-gray-900">Cross-Platform Reposts (Optional)</h2>
-            <p className="mt-1.5 text-[12px] leading-relaxed text-gray-500">
-              If you mirrored the content to other social platform, submit link here. If not, please
-              skip.
-            </p>
+      {showMirroredSection ? (
+        <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+          <div className="mb-4 flex items-start gap-2">
+            <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
+              <ArrowLeftRight size={15} strokeWidth={2} />
+            </span>
+            <div>
+              <h2 className="text-[15px] font-semibold text-gray-900">Cross-Platform Reposts (Optional)</h2>
+              <p className="mt-1.5 text-[12px] leading-relaxed text-gray-500">
+                If you mirrored the content to other social platform, submit link here. If not, please
+                skip.
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-4">
-          {posting.mirrored.map((entry, index) => (
-            <H5MirroredPostRow
-              key={entry.id}
-              entry={entry}
-              label={getMirroredLabel(index, posting.mirrored.length)}
-              onUrlChange={(url) => updateMirroredDraftUrl(kolId, entry.id, url)}
-              onRefresh={() => refreshMirroredLink(kolId, entry.id)}
-              onSubmit={() => submitMirroredLink(kolId, entry.id)}
-            />
-          ))}
-        </div>
+          <div className="space-y-4">
+            {posting.mirrored.map((entry, index) => (
+              <H5MirroredPostRow
+                key={entry.id}
+                entry={entry}
+                label={getMirroredLabel(index, posting.mirrored.length)}
+                onUrlChange={(url) => updateMirroredDraftUrl(kolId, entry.id, url)}
+                onRefresh={() => refreshMirroredLink(kolId, entry.id)}
+                onSubmit={() => submitMirroredLink(kolId, entry.id)}
+              />
+            ))}
+          </div>
 
-        <button
-          type="button"
-          onClick={() => addMirroredPost(kolId)}
-          className={cn(H5_DASHED_ADD_BUTTON_CLASS, "mt-3")}
-        >
-          <Plus size={14} strokeWidth={2.2} />
-          Add another repost
-        </button>
-      </section>
+          <button
+            type="button"
+            onClick={() => addMirroredPost(kolId)}
+            className={cn(H5_DASHED_ADD_BUTTON_CLASS, "mt-3")}
+          >
+            <Plus size={14} strokeWidth={2.2} />
+            Add another repost
+          </button>
+        </section>
+      ) : null}
 
       <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
         <H5SectionHeading
@@ -499,6 +510,7 @@ export function H5PostingReportingView({
           onAddFiles={(files) => addInsightDraftFiles(kolId, files)}
           onRemoveFile={(fileId) => removeInsightDraftFile(kolId, fileId)}
           onSubmit={() => submitInsightReport(kolId)}
+          hoverCardId={insightHoverCardId}
         />
       </section>
     </H5PageShell>

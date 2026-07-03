@@ -1144,6 +1144,7 @@ export default function CampaignHubPostingView({
   figmaOpenEditPostLink = false,
   figmaEditPostLinkRowId,
   figmaOpenUploadInsightReport = false,
+  figmaInsightReportState,
   figmaUploadInsightRowId,
   figmaOpenImportPostLinks = false,
 }: {
@@ -1158,6 +1159,7 @@ export default function CampaignHubPostingView({
   figmaOpenEditPostLink?: boolean;
   figmaEditPostLinkRowId?: string;
   figmaOpenUploadInsightReport?: boolean;
+  figmaInsightReportState?: string;
   figmaUploadInsightRowId?: string;
   figmaOpenImportPostLinks?: boolean;
 }) {
@@ -1520,6 +1522,7 @@ export default function CampaignHubPostingView({
         h5KolId={parseKolIdFromH5Path(uploadInsightReportRow?.h5Path ?? "")}
         onSubmit={handleUploadInsightReportSubmit}
         figmaCapture={figmaCapture && figmaOpenUploadInsightReport}
+        figmaInsightReportState={figmaInsightReportState}
       />
 
       <ImportPostLinksDialog

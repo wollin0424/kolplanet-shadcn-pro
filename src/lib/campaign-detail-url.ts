@@ -39,6 +39,7 @@ export function parseCampaignDetailSearchParams(searchParams: {
   figmaOpenEditPostLink?: string;
   figmaEditPostLinkRow?: string;
   figmaOpenUploadInsightReport?: string;
+  figmaInsightReportState?: string;
   figmaUploadInsightRow?: string;
   figmaOpenImportPostLinks?: string;
   figmaOpenExecutionGuide?: string;
@@ -60,6 +61,7 @@ export function parseCampaignDetailSearchParams(searchParams: {
   figmaOpenEditPostLink?: boolean;
   figmaEditPostLinkRowId?: string;
   figmaOpenUploadInsightReport?: boolean;
+  figmaInsightReportState?: string;
   figmaUploadInsightRowId?: string;
   figmaOpenImportPostLinks?: boolean;
   figmaOpenExecutionGuide?: boolean;
@@ -128,6 +130,7 @@ export function parseCampaignDetailSearchParams(searchParams: {
     figmaOpenEditPostLink,
     figmaEditPostLinkRowId,
     figmaOpenUploadInsightReport,
+    figmaInsightReportState: searchParams.figmaInsightReportState?.trim() || undefined,
     figmaUploadInsightRowId,
     figmaOpenImportPostLinks,
     figmaOpenExecutionGuide,

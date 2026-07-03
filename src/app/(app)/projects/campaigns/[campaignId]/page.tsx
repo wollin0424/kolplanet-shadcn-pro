@@ -20,6 +20,7 @@ export default async function CampaignDetailPage({
     figmaOpenEditPostLink?: string;
     figmaEditPostLinkRow?: string;
     figmaOpenUploadInsightReport?: string;
+    figmaInsightReportState?: string;
     figmaUploadInsightRow?: string;
     figmaOpenImportPostLinks?: string;
     figmaOpenExecutionGuide?: string;
@@ -45,6 +46,7 @@ export default async function CampaignDetailPage({
     figmaOpenEditPostLink,
     figmaEditPostLinkRowId,
     figmaOpenUploadInsightReport,
+    figmaInsightReportState,
     figmaUploadInsightRowId,
     figmaOpenImportPostLinks,
     figmaOpenExecutionGuide,
@@ -69,6 +71,7 @@ export default async function CampaignDetailPage({
       figmaOpenEditPostLink={figmaOpenEditPostLink}
       figmaEditPostLinkRowId={figmaEditPostLinkRowId}
       figmaOpenUploadInsightReport={figmaOpenUploadInsightReport}
+      figmaInsightReportState={figmaInsightReportState}
       figmaUploadInsightRowId={figmaUploadInsightRowId}
       figmaOpenImportPostLinks={figmaOpenImportPostLinks}
       figmaOpenExecutionGuide={figmaOpenExecutionGuide}

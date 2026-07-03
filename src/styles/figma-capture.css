@@ -306,6 +306,14 @@ html.figma-capture [data-figma-capture="posting-validation-tooltips-panel"] {
 }
 
 /* H5 Posting & Reporting — full-page capture at 480px */
+html.figma-capture [data-figma-capture="h5-shell"] {
+  width: 480px !important;
+  max-width: 480px !important;
+  min-height: 100vh !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
 html.figma-capture .figma-capture-h5-posting-page,
 html.figma-capture [data-figma-capture="h5-posting-page"] {
   min-height: 100vh !important;

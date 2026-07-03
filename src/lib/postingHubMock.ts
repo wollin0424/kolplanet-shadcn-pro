@@ -340,31 +340,59 @@ const FIGMA_INSIGHT_TELEGRAM_PREVIEW = figmaInsightPreviewDataUrl(
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240"><rect width="320" height="240" fill="#ffffff"/><circle cx="160" cy="112" r="56" fill="#2AABEE"/><path fill="#fff" d="M118 154l6-58c1-8 6-7 10-5l72 42c4 2 3 5-1 6l-74 28c-7 3-7 1-5-5l12-36 46-41c2-2 0-3-3-1l-56 35z"/></svg>`
 );
 
-export type FigmaCaptureInsightReportState = {
-  existingFiles: { name: string; previewUrl: string; sizeLabel: string }[];
-  pendingFile: { name: string; previewUrl: string; sizeLabel: string };
-  shareUrl: string;
-  hoverCardId: string;
+export type FigmaCaptureInsightReportFile = {
+  name: string;
+  previewUrl: string;
+  sizeLabel: string;
+  source: "H5" | "Web";
 };
 
-export function getFigmaCaptureInsightReportState(): FigmaCaptureInsightReportState {
+export type FigmaCaptureInsightReportState = {
+  existingFiles: FigmaCaptureInsightReportFile[];
+  pendingFile: FigmaCaptureInsightReportFile | null;
+  shareUrl?: string;
+  hoverCardId?: string;
+};
+
+const FIGMA_INSIGHT_JIMENG_PREVIEW = figmaInsightPreviewDataUrl(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f8fafc"/><stop offset="100%" stop-color="#e2e8f0"/></linearGradient></defs><rect width="320" height="240" fill="url(#g)"/><rect x="24" y="36" width="120" height="120" rx="12" fill="#fff" stroke="#cbd5e1"/><rect x="176" y="36" width="120" height="120" rx="12" fill="#fff" stroke="#cbd5e1"/><text x="84" y="108" text-anchor="middle" fill="#64748b" font-family="Arial,sans-serif" font-size="14">平面 IP</text><text x="236" y="108" text-anchor="middle" fill="#64748b" font-family="Arial,sans-serif" font-size="14">立体 IP</text><text x="160" y="196" text-anchor="middle" fill="#94a3b8" font-family="Arial,sans-serif" font-size="11">jimeng preview</text></svg>`
+);
+
+export function getFigmaCaptureInsightReportState(
+  stateKey?: string
+): FigmaCaptureInsightReportState {
+  if (stateKey === "empty") {
+    return { existingFiles: [], pendingFile: null };
+  }
+
+  const jimengName = "jimeng-2026-01-21-8555-图一是平面的ip，图二是我想要.png";
+
   return {
     existingFiles: [
+      {
+        name: jimengName,
+        previewUrl: FIGMA_INSIGHT_JIMENG_PREVIEW,
+        sizeLabel: "1.2 MB",
+        source: "H5",
+      },
       {
         name: "Pinterest.png",
         previewUrl: FIGMA_INSIGHT_PINTEREST_PREVIEW,
         sizeLabel: "3.9 KB",
+        source: "Web",
       },
       {
         name: "Line.png",
         previewUrl: FIGMA_INSIGHT_LINE_PREVIEW,
         sizeLabel: "3.2 KB",
+        source: "Web",
       },
     ],
     pendingFile: {
       name: "Telegram.png",
       previewUrl: FIGMA_INSIGHT_TELEGRAM_PREVIEW,
       sizeLabel: "3.2 KB",
+      source: "Web",
     },
     shareUrl: "https://share.kolplanet.com/insights/p1",
     hoverCardId: "Line.png",

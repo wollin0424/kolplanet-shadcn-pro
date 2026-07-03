@@ -99,13 +99,28 @@ function resolveLinkHealth(url: string): H5PostLinkHealth {
 
 export type H5FigmaPostingStateKey =
   | "empty"
+  | "multi-master"
   | "links-draft"
   | "links-verified"
   | "links-errors"
   | "insight-pending"
   | "insight-submitted";
 
-const FIGMA_INSIGHT_PREVIEW = "/script-empty-workspace.png";
+function figmaInsightPreviewDataUrl(svg: string) {
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+const FIGMA_H5_INSIGHT_PREVIEW_A = figmaInsightPreviewDataUrl(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240"><rect width="320" height="240" fill="#ffffff"/><circle cx="160" cy="112" r="56" fill="#E60023"/><path fill="#fff" d="M160 72c-10 0-18 7-18 16 0 6 4 12 9 14-1-3-2-7 0-10 1-2 5-20 5-20s-1 0-4-1c-4-2-3-6-1-8 2-2 7-2 7-2 6 1 7 7 6 11-1 5-4 9-4 9s2 0 4 1c10 7 6 21 6 21 0 0 2 0 4-1 7-4 12-12 12-22 0-14-10-24-22-24z"/></svg>`
+);
+
+const FIGMA_H5_INSIGHT_PREVIEW_B = figmaInsightPreviewDataUrl(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240"><rect width="320" height="240" fill="#ffffff"/><rect x="72" y="72" width="176" height="96" rx="20" fill="#06C755"/><text x="160" y="132" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="42" font-weight="700">LINE</text></svg>`
+);
+
+const FIGMA_H5_INSIGHT_PREVIEW_C = figmaInsightPreviewDataUrl(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240"><rect width="320" height="240" fill="#ffffff"/><circle cx="160" cy="112" r="56" fill="#2AABEE"/><path fill="#fff" d="M118 154l6-58c1-8 6-7 10-5l72 42c4 2 3 5-1 6l-74 28c-7 3-7 1-5-5l12-36 46-41c2-2 0-3-3-1l-56 35z"/></svg>`
+);
 
 function parseFigmaPostingStateKey(
   value: string | undefined
@@ -113,6 +128,7 @@ function parseFigmaPostingStateKey(
   const key = value?.trim().toLowerCase();
   if (
     key === "empty" ||
+    key === "multi-master" ||
     key === "links-draft" ||
     key === "links-verified" ||
     key === "links-errors" ||
@@ -124,6 +140,15 @@ function parseFigmaPostingStateKey(
   return "empty";
 }
 
+export function getFigmaCaptureH5InsightHoverCardId(
+  stateKey?: string
+): string | undefined {
+  const state = parseFigmaPostingStateKey(stateKey);
+  if (state === "insight-pending") return "figma-insight-draft-2";
+  if (state === "insight-submitted") return "figma-insight-draft-1";
+  return undefined;
+}
+
 export function getFigmaCaptureH5PostingState(
   _kolId: string,
   stateKey?: string
@@ -133,6 +158,20 @@ export function getFigmaCaptureH5PostingState(
   if (state === "empty") {
     return {
       masters: [{ id: "figma-master-0", url: "", health: "empty", submitted: false }],
+      mirrored: [{ id: "figma-mirrored-0", url: "", health: "empty", submitted: false }],
+      insightDraftFiles: [],
+      insightSubmitted: false,
+    };
+  }
+
+  if (state === "multi-master") {
+    return {
+      masters: Array.from({ length: 6 }, (_, index) => ({
+        id: `figma-master-${index}`,
+        url: "",
+        health: "empty" as const,
+        submitted: false,
+      })),
       mirrored: [{ id: "figma-mirrored-0", url: "", health: "empty", submitted: false }],
       insightDraftFiles: [],
       insightSubmitted: false,
@@ -214,16 +253,16 @@ export function getFigmaCaptureH5PostingState(
       insightDraftFiles: [
         {
           id: "figma-insight-draft-1",
-          name: "insight-week-1.png",
-          previewUrl: FIGMA_INSIGHT_PREVIEW,
-          sizeLabel: "1.1 MB",
+          name: "Pinterest.png",
+          previewUrl: FIGMA_H5_INSIGHT_PREVIEW_A,
+          sizeLabel: "3.9 KB",
           locked: false,
         },
         {
           id: "figma-insight-draft-2",
-          name: "insight-week-2.png",
-          previewUrl: FIGMA_INSIGHT_PREVIEW,
-          sizeLabel: "860 KB",
+          name: "Line.png",
+          previewUrl: FIGMA_H5_INSIGHT_PREVIEW_B,
+          sizeLabel: "3.2 KB",
           locked: false,
         },
       ],
@@ -251,23 +290,23 @@ export function getFigmaCaptureH5PostingState(
     insightDraftFiles: [
       {
         id: "figma-insight-submitted-1",
-        name: "insight-jun-01.png",
-        previewUrl: FIGMA_INSIGHT_PREVIEW,
-        sizeLabel: "420 KB",
+        name: "Pinterest.png",
+        previewUrl: FIGMA_H5_INSIGHT_PREVIEW_A,
+        sizeLabel: "3.9 KB",
         locked: true,
       },
       {
         id: "figma-insight-submitted-2",
-        name: "insight-jun-08.png",
-        previewUrl: FIGMA_INSIGHT_PREVIEW,
-        sizeLabel: "380 KB",
+        name: "Line.png",
+        previewUrl: FIGMA_H5_INSIGHT_PREVIEW_B,
+        sizeLabel: "3.2 KB",
         locked: true,
       },
       {
         id: "figma-insight-draft-1",
-        name: "insight-new-upload.png",
-        previewUrl: FIGMA_INSIGHT_PREVIEW,
-        sizeLabel: "1.1 MB",
+        name: "Telegram.png",
+        previewUrl: FIGMA_H5_INSIGHT_PREVIEW_C,
+        sizeLabel: "3.2 KB",
         locked: false,
       },
     ],
@@ -342,6 +381,10 @@ function updateState(kolId: string, updater: (state: H5PostingState) => H5Postin
 
 export function hasVerifiedMasterPost(state: H5PostingState) {
   return state.masters.some((entry) => entry.submitted && entry.health === "verified");
+}
+
+export function hasSubmittedMasterPost(state: H5PostingState) {
+  return state.masters.some((entry) => entry.submitted && entry.url.trim().length > 0);
 }
 
 export function updateMasterUrl(kolId: string, entryId: string, url: string) {

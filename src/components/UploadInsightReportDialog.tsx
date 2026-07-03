@@ -107,7 +107,7 @@ function InsightReportImageCard({
             Submitted by KOL
           </span>
         ) : null}
-        <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 transition-colors group-hover/file:bg-black/35">
+        <div className="insight-card-preview-overlay absolute inset-0 flex items-center justify-center gap-2 bg-black/0 transition-colors group-hover/file:bg-black/35">
           <div className="insight-card-preview-actions flex items-center gap-2 opacity-0 transition-opacity group-hover/file:opacity-100">
             <button
               type="button"
@@ -181,6 +181,7 @@ export function UploadInsightReportDialog({
   h5KolId,
   onSubmit,
   figmaCapture = false,
+  figmaInsightReportState,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -190,6 +191,7 @@ export function UploadInsightReportDialog({
   h5KolId?: string;
   onSubmit: (files: string[]) => void;
   figmaCapture?: boolean;
+  figmaInsightReportState?: string;
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -203,6 +205,7 @@ export function UploadInsightReportDialog({
           onSubmit={onSubmit}
           onOpenChange={onOpenChange}
           figmaCapture={figmaCapture}
+          figmaInsightReportState={figmaInsightReportState}
         />
       ) : null}
     </Sheet>
@@ -217,6 +220,7 @@ function UploadInsightReportSheetPanel({
   h5KolId,
   onSubmit,
   figmaCapture = false,
+  figmaInsightReportState,
 }: {
   onOpenChange: (open: boolean) => void;
   initialFiles?: string[];
@@ -225,8 +229,11 @@ function UploadInsightReportSheetPanel({
   h5KolId?: string;
   onSubmit: (files: string[]) => void;
   figmaCapture?: boolean;
+  figmaInsightReportState?: string;
 }) {
-  const captureState = figmaCapture ? getFigmaCaptureInsightReportState() : null;
+  const captureState = figmaCapture
+    ? getFigmaCaptureInsightReportState(figmaInsightReportState)
+    : null;
 
   const [webInsightFiles, setWebInsightFiles] = useState<WebInsightFileRecord[]>(() => {
     if (captureState) {
@@ -243,13 +250,13 @@ function UploadInsightReportSheetPanel({
     h5KolId && !figmaCapture ? getH5PostingState(h5KolId).insightDraftFiles : []
   );
   const [pendingFile, setPendingFile] = useState<InsightReportImage | null>(() =>
-    captureState
+    captureState?.pendingFile
       ? {
           id: `pending-${captureState.pendingFile.name}`,
           name: captureState.pendingFile.name,
           previewUrl: captureState.pendingFile.previewUrl,
           sizeLabel: captureState.pendingFile.sizeLabel,
-          source: "Web",
+          source: captureState.pendingFile.source,
         }
       : null
   );
@@ -274,7 +281,7 @@ function UploadInsightReportSheetPanel({
         name: file.name,
         previewUrl: file.previewUrl,
         sizeLabel: file.sizeLabel,
-        source: "Web" as const,
+        source: file.source,
       }));
     }
 
