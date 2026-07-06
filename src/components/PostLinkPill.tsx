@@ -38,7 +38,7 @@ const POST_LINK_TYPE_CLASS: Record<PostLinkType, string> = {
 };
 
 /** Fixed width so Master / Mirrored pills align in the Post Link column. */
-const POST_LINK_PILL_WIDTH_CLASS = "w-[84px] justify-center whitespace-nowrap";
+const POST_LINK_PILL_WIDTH_CLASS = "w-[80px] justify-center whitespace-nowrap";
 
 export const PostLinkPill = forwardRef<
   HTMLSpanElement,

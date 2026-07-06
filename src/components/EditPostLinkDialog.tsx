@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -29,6 +29,10 @@ import {
 import { formInputClass } from "@/lib/formControls";
 import { cn } from "@/lib/utils";
 import { Monitor, Plus, Smartphone, Trash2 } from "@/lib/icons";
+import {
+  InstagramPostsTabIcon,
+  InstagramRepostIcon,
+} from "@/components/icons/InstagramUiIcons";
 
 const MIRRORED_PLACEHOLDER = "https://www.tiktok.com/@username/video/...";
 
@@ -38,7 +42,7 @@ const EDIT_POST_LINK_INPUT_CLASS = formInputClass(
 
 const EDIT_POST_LINK_FIELD_STACK_CLASS = "space-y-2";
 
-const EDIT_POST_LINK_LIST_CLASS = "flex flex-col gap-5";
+const EDIT_POST_LINK_LIST_CLASS = "flex flex-col gap-4";
 
 type LinkDraft = {
   id: string;
@@ -154,20 +158,67 @@ function EditPostLinkSourceIcon({
   );
 }
 
+function EditPostLinkSectionHeader({
+  variant,
+  title,
+}: {
+  variant: "master" | "mirrored";
+  title: string;
+}) {
+  const Icon = variant === "master" ? InstagramPostsTabIcon : InstagramRepostIcon;
+
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className={cn(
+          "inline-flex size-7 shrink-0 items-center justify-center",
+          variant === "master"
+            ? "rounded-full bg-brand-50 text-brand"
+            : "rounded-lg bg-gray-50 text-gray-400"
+        )}
+      >
+        <Icon size={15} strokeWidth={2} />
+      </span>
+      <div>
+        <h3
+          className={cn(
+            "font-semibold leading-tight",
+            variant === "master" ? "text-[15px] text-gray-900" : "text-[13px] text-gray-700"
+          )}
+        >
+          {title}
+          {variant === "master" ? <span className="ml-0.5 text-red-500">*</span> : null}
+        </h3>
+        {variant === "mirrored" ? (
+          <p className="mt-0.5 text-[11px] font-normal text-gray-400">Optional</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function EditPostLinkFieldLabel({
   label,
   inputId,
   statusLink,
+  variant = "master",
 }: {
   label: string;
   inputId: string;
   statusLink: PostLink | null;
+  variant?: "master" | "mirrored";
 }) {
   const status = statusLink ? getPostLinkTooltipCopy(statusLink) : null;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <label htmlFor={inputId} className="text-xs font-medium text-gray-700">
+      <label
+        htmlFor={inputId}
+        className={cn(
+          "text-xs font-medium",
+          variant === "master" ? "font-semibold text-gray-900" : "text-gray-600"
+        )}
+      >
         {label}
       </label>
       {status ? (
@@ -195,6 +246,7 @@ function EditPostLinkFieldRow({
   error,
   placeholder,
   onRemove,
+  variant,
   figmaCapture = false,
 }: {
   label: string;
@@ -207,11 +259,12 @@ function EditPostLinkFieldRow({
   error?: string;
   placeholder?: string;
   onRemove: () => void;
+  variant: "master" | "mirrored";
   figmaCapture?: boolean;
 }) {
   return (
     <div className={EDIT_POST_LINK_FIELD_STACK_CLASS}>
-      <EditPostLinkFieldLabel label={label} inputId={inputId} statusLink={statusLink} />
+      <EditPostLinkFieldLabel label={label} inputId={inputId} statusLink={statusLink} variant={variant} />
       <div className="flex items-center gap-2">
         <div className="relative min-w-0 flex-1">
           {source ? <EditPostLinkSourceIcon source={source} figmaCapture={figmaCapture} /> : null}
@@ -226,6 +279,7 @@ function EditPostLinkFieldRow({
               EDIT_POST_LINK_INPUT_CLASS,
               source && "pl-9",
               figmaCapture && source && "relative z-0",
+              variant === "master" && !error && "border-brand/25 focus-visible:border-brand/45",
               error && "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
             )}
           />
@@ -244,13 +298,39 @@ function EditPostLinkFieldRow({
   );
 }
 
+function EditPostLinkAddButton({
+  label,
+  onClick,
+  variant = "master",
+}: {
+  label: string;
+  onClick: () => void;
+  variant?: "master" | "mirrored";
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed px-3 text-[13px] font-medium transition-colors",
+        variant === "master"
+          ? "border-brand/35 bg-white text-brand hover:border-brand/50 hover:bg-brand-50/35"
+          : "border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50"
+      )}
+    >
+      <Plus size={14} strokeWidth={2.25} />
+      {label}
+    </button>
+  );
+}
+
 function validateMasterUrl(url: string) {
   const trimmed = url.trim();
   if (!trimmed) return "Master link is required.";
   try {
     new URL(trimmed);
   } catch {
-    return "Enter a valid URL.";
+    return "Invalid URL format.";
   }
   if (trimmed.includes("private")) {
     return "Master Link is not publicly accessible.";
@@ -271,7 +351,7 @@ function buildDraftFromLinks(links?: PostLink[], figmaCapture = false) {
     masters:
       masters.length > 0
         ? masters.map((link, index) => toLinkDraft(link, `master-${index}`))
-        : [{ id: "figma-master-0", url: "" }],
+        : [{ id: "master-0", url: "" }],
     mirrored:
       mirrored.length > 0
         ? mirrored.map((link, index) => toLinkDraft(link, `mirrored-${index}`))
@@ -373,6 +453,14 @@ function EditPostLinkSheetPanel({
     return errors;
   });
   const [mirrored, setMirrored] = useState<LinkDraft[]>(draft.mirrored);
+  const mirroredSeededRef = useRef(draft.mirrored.length > 0);
+  const hasMasterLink = masters.some((item) => item.url.trim());
+
+  useEffect(() => {
+    if (!hasMasterLink || mirrored.length > 0 || mirroredSeededRef.current) return;
+    mirroredSeededRef.current = true;
+    setMirrored([{ id: "mirrored-0", url: "" }]);
+  }, [hasMasterLink, mirrored.length]);
 
   const handleMasterChange = (id: string, value: string) => {
     setMasters((prev) => prev.map((item) => (item.id === id ? { ...item, url: value } : item)));
@@ -451,7 +539,6 @@ function EditPostLinkSheetPanel({
   const hasMasterValidationError = Object.values(masterErrors).some(Boolean);
   const canSubmit =
     masters.some((item) => item.url.trim()) && !hasMasterValidationError;
-  const hasMasterLink = masters.some((item) => item.url.trim());
 
   return (
     <SheetContent
@@ -465,28 +552,20 @@ function EditPostLinkSheetPanel({
       <SheetHeader className="shrink-0 gap-1.5 border-b border-gray-100 bg-white px-6 py-5 text-left">
         <SheetTitle className="text-[18px] font-semibold text-gray-900">Edit Post Link</SheetTitle>
         <SheetDescription className="text-[13px] leading-relaxed text-gray-500">
-          The system failed to fetch the post link automatically. Please manually enter the
-          published URL below. The system will initiate content validation immediately after
-          submission.
+          Update the primary post link and mirrored links for the current influencer.
         </SheetDescription>
       </SheetHeader>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
-          <div className="space-y-4">
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
-              onClick={handleAddMaster}
-            >
-              <Plus size={14} strokeWidth={2.25} />
-              Add Master Link
-            </button>
+          <div className="space-y-4 rounded-xl border border-brand/35 bg-brand-50/10 p-4">
+            <EditPostLinkSectionHeader variant="master" title="Master Post Link" />
 
             <div className={EDIT_POST_LINK_LIST_CLASS}>
               {masters.map((item, index) => (
                 <EditPostLinkFieldRow
                   key={item.id}
+                  variant="master"
                   label={`Master ${index + 1}`}
                   statusLink={getEditRowStatusLink(item.snapshot, item.url, "Master")}
                   source={getDisplaySource(item)}
@@ -504,24 +583,19 @@ function EditPostLinkSheetPanel({
                   figmaCapture={figmaCapture}
                 />
               ))}
+              <EditPostLinkAddButton label="Add Master Link" onClick={handleAddMaster} variant="master" />
             </div>
           </div>
 
           {hasMasterLink ? (
-            <div className="space-y-4">
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
-                onClick={handleAddMirrored}
-              >
-                <Plus size={14} strokeWidth={2.25} />
-                Add Mirrored Link
-              </button>
+            <div className="space-y-3 border-t border-gray-100 pt-5">
+              <EditPostLinkSectionHeader variant="mirrored" title="Mirrored Post Link" />
 
               <div className={EDIT_POST_LINK_LIST_CLASS}>
                 {mirrored.map((item, index) => (
                   <EditPostLinkFieldRow
                     key={item.id}
+                    variant="mirrored"
                     label={`Mirrored ${index + 1}`}
                     statusLink={getEditRowStatusLink(item.snapshot, item.url, "Mirrored")}
                     source={getDisplaySource(item)}
@@ -533,6 +607,11 @@ function EditPostLinkSheetPanel({
                     figmaCapture={figmaCapture}
                   />
                 ))}
+                <EditPostLinkAddButton
+                  label="Add Mirrored Link"
+                  onClick={handleAddMirrored}
+                  variant="mirrored"
+                />
               </div>
             </div>
           ) : null}

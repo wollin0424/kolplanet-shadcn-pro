@@ -9,6 +9,10 @@ import {
 import { H5SectionHeading, H5SectionNote } from "@/components/h5/H5SectionHeading";
 import { H5InfluencerCard } from "@/components/h5/H5InfluencerCard";
 import {
+  InstagramPostsTabIcon,
+  InstagramRepostIcon,
+} from "@/components/icons/InstagramUiIcons";
+import {
   H5_DASHED_ADD_BUTTON_CLASS,
   H5_INPUT_CLASS,
   H5_PRIMARY_BUTTON_CLASS,
@@ -51,11 +55,20 @@ import {
   Images,
   Plus,
   RefreshCcw,
-  Repeat2,
-  Share2,
 } from "@/lib/icons";
 
 const H5_LINK_INPUT_CLASS = H5_INPUT_CLASS;
+
+function validateH5PostUrl(url: string) {
+  const trimmed = url.trim();
+  if (!trimmed) return undefined;
+  try {
+    new URL(trimmed);
+    return undefined;
+  } catch {
+    return "Invalid URL format";
+  }
+}
 
 function H5PostLinkStatusBadge({
   health,
@@ -196,6 +209,17 @@ function H5MasterPostRow({
   const readOnly = entry.submitted;
   const showRefresh = entry.submitted;
   const isVerifying = entry.health === "verifying";
+  const [urlError, setUrlError] = useState<string | undefined>();
+
+  const handleSubmit = () => {
+    const error = validateH5PostUrl(entry.url);
+    if (error) {
+      setUrlError(error);
+      return;
+    }
+    setUrlError(undefined);
+    onSubmit();
+  };
 
   return (
     <div className="space-y-2">
@@ -207,10 +231,23 @@ function H5MasterPostRow({
         <Input
           type="url"
           value={entry.url}
-          onChange={(e) => onUrlChange(e.target.value)}
+          onChange={(e) => {
+            onUrlChange(e.target.value);
+            setUrlError(
+              e.target.value.trim() ? validateH5PostUrl(e.target.value) : undefined
+            );
+          }}
+          onBlur={() =>
+            setUrlError(entry.url.trim() ? validateH5PostUrl(entry.url) : undefined)
+          }
           readOnly={readOnly}
           placeholder="Paste original post link here..."
-          className={cn(H5_LINK_INPUT_CLASS, readOnly && "bg-gray-50 text-gray-700")}
+          aria-invalid={Boolean(urlError)}
+          className={cn(
+            H5_LINK_INPUT_CLASS,
+            readOnly && "bg-gray-50 text-gray-700",
+            urlError && "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
+          )}
         />
         {showRefresh ? (
           <H5PostLinkRefreshButton
@@ -222,10 +259,13 @@ function H5MasterPostRow({
       </div>
       {!entry.submitted ? (
         <>
-          <H5PostLinkSubmitButton disabled={!entry.url.trim()} onClick={onSubmit} />
-          <p className="text-[11px] leading-relaxed text-gray-400">
-            Ensure all links are set to public.
-          </p>
+          <H5PostLinkSubmitButton
+            disabled={!entry.url.trim() || Boolean(urlError)}
+            onClick={handleSubmit}
+          />
+          {urlError ? (
+            <p className="text-[11px] leading-relaxed text-red-600">{urlError}</p>
+          ) : null}
         </>
       ) : isVerifying ? null : (
         <H5PostLinkHealthNote health={entry.health} submitted={entry.submitted} />
@@ -250,6 +290,17 @@ function H5MirroredPostRow({
   const readOnly = entry.submitted;
   const showRefresh = entry.submitted;
   const isVerifying = entry.health === "verifying";
+  const [urlError, setUrlError] = useState<string | undefined>();
+
+  const handleSubmit = () => {
+    const error = validateH5PostUrl(entry.url);
+    if (error) {
+      setUrlError(error);
+      return;
+    }
+    setUrlError(undefined);
+    onSubmit();
+  };
 
   return (
     <div className="space-y-2">
@@ -261,10 +312,23 @@ function H5MirroredPostRow({
         <Input
           type="url"
           value={entry.url}
-          onChange={(e) => onUrlChange(e.target.value)}
+          onChange={(e) => {
+            onUrlChange(e.target.value);
+            setUrlError(
+              e.target.value.trim() ? validateH5PostUrl(e.target.value) : undefined
+            );
+          }}
+          onBlur={() =>
+            setUrlError(entry.url.trim() ? validateH5PostUrl(entry.url) : undefined)
+          }
           readOnly={readOnly}
           placeholder="Paste repost link here..."
-          className={cn(H5_LINK_INPUT_CLASS, readOnly && "bg-gray-50 text-gray-700")}
+          aria-invalid={Boolean(urlError)}
+          className={cn(
+            H5_LINK_INPUT_CLASS,
+            readOnly && "bg-gray-50 text-gray-700",
+            urlError && "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
+          )}
         />
         {showRefresh ? (
           <H5PostLinkRefreshButton
@@ -276,10 +340,13 @@ function H5MirroredPostRow({
       </div>
       {!entry.submitted ? (
         <>
-          <H5PostLinkSubmitButton disabled={!entry.url.trim()} onClick={onSubmit} />
-          <p className="text-[11px] leading-relaxed text-gray-400">
-            Ensure all links are set to public.
-          </p>
+          <H5PostLinkSubmitButton
+            disabled={!entry.url.trim() || Boolean(urlError)}
+            onClick={handleSubmit}
+          />
+          {urlError ? (
+            <p className="text-[11px] leading-relaxed text-red-600">{urlError}</p>
+          ) : null}
         </>
       ) : isVerifying ? null : (
         <H5PostLinkHealthNote health={entry.health} submitted={entry.submitted} />
@@ -345,12 +412,12 @@ function H5InsightUploadSection({
   );
 }
 
-function getMasterLabel(index: number, total: number) {
-  return total === 1 ? "Master 1" : `Master ${index + 1}`;
+function getMasterLabel(index: number) {
+  return `Master ${index + 1}`;
 }
 
-function getMirroredLabel(index: number, total: number) {
-  return total === 1 ? "Mirrored 1" : `Mirrored ${index + 1}`;
+function getMirroredLabel(index: number) {
+  return `Mirrored ${index + 1}`;
 }
 
 type H5PostingReportingViewProps = {
@@ -416,10 +483,10 @@ export function H5PostingReportingView({
         />
       </section>
 
-      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+      <section className="rounded-2xl border border-brand/35 bg-brand-50/10 p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
         <div className="mb-4 flex items-start gap-2">
           <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
-            <Share2 size={15} strokeWidth={2} />
+            <InstagramPostsTabIcon size={15} strokeWidth={2} />
           </span>
           <div>
             <h2 className="text-[15px] font-semibold text-gray-900">
@@ -437,7 +504,7 @@ export function H5PostingReportingView({
             <H5MasterPostRow
               key={entry.id}
               entry={entry}
-              label={getMasterLabel(index, posting.masters.length)}
+              label={getMasterLabel(index)}
               onUrlChange={(url) => updateMasterUrl(kolId, entry.id, url)}
               onRefresh={() => refreshMasterLink(kolId, entry.id)}
               onSubmit={() => submitMasterLink(kolId, entry.id)}
@@ -453,20 +520,23 @@ export function H5PostingReportingView({
           <Plus size={14} strokeWidth={2.2} />
           Add another post
         </button>
+        <p className="mt-3 text-[11px] leading-relaxed text-gray-400">
+          Ensure all links are set to public.
+        </p>
       </section>
 
-      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+      <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
         <div className="mb-4 flex items-start gap-2">
           <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
-            <Repeat2 size={15} strokeWidth={2} />
+            <InstagramRepostIcon size={15} strokeWidth={2} />
           </span>
           <div>
             <h2 className="text-[15px] font-semibold text-gray-900">
               Mirrored Link (Cross-platform Reposts)
             </h2>
             <p className="mt-1.5 text-[12px] leading-relaxed text-gray-500">
-              If you mirrored the content to other social platform, submit Link here. If not, please
-              skip.
+              If you mirrored the content to other social platform, submit Link here.{" "}
+              <span className="font-semibold text-gray-600">If not, please skip.</span>
             </p>
           </div>
         </div>
@@ -476,7 +546,7 @@ export function H5PostingReportingView({
             <H5MirroredPostRow
               key={entry.id}
               entry={entry}
-              label={getMirroredLabel(index, posting.mirrored.length)}
+              label={getMirroredLabel(index)}
               onUrlChange={(url) => updateMirroredDraftUrl(kolId, entry.id, url)}
               onRefresh={() => refreshMirroredLink(kolId, entry.id)}
               onSubmit={() => submitMirroredLink(kolId, entry.id)}
@@ -492,6 +562,9 @@ export function H5PostingReportingView({
           <Plus size={14} strokeWidth={2.2} />
           Add another repost
         </button>
+        <p className="mt-3 text-[11px] leading-relaxed text-gray-400">
+          Ensure all links are set to public.
+        </p>
       </section>
 
       {showInsightSection ? (

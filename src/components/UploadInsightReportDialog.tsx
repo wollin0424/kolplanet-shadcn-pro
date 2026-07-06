@@ -53,7 +53,7 @@ function InsightReportShareLink({ url }: { url: string }) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="min-w-0 flex-1 truncate text-[12px] font-medium text-brand underline-offset-[3px] transition-colors hover:underline hover:decoration-brand/40"
+      className="min-w-0 flex-1 truncate text-[12px] font-medium text-brand underline decoration-brand/40 underline-offset-[3px] transition-colors hover:decoration-brand/60"
       title={url}
     >
       {url}
@@ -388,9 +388,12 @@ function UploadInsightReportSheetPanel({
       data-figma-capture={figmaCapture ? "upload-insight-report-dialog" : undefined}
     >
       <SheetHeader className="shrink-0 gap-1.5 border-b border-gray-100 bg-white px-6 py-5 text-left">
-        <SheetTitle className="text-[18px] font-semibold text-gray-900">
-          Insight Reports
-        </SheetTitle>
+        <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+          <SheetTitle className="shrink-0 text-[18px] font-semibold text-gray-900">
+            Insight Reports
+          </SheetTitle>
+          {headerShareLink ? <InsightReportShareLink url={headerShareLink} /> : null}
+        </div>
         <SheetDescription className="text-[13px] leading-relaxed text-gray-500">
           Upload screenshots of your social media posts for this report.
         </SheetDescription>
@@ -401,10 +404,7 @@ function UploadInsightReportSheetPanel({
           <div className="min-w-0 space-y-6">
             {existingFiles.length ? (
               <div className="min-w-0 space-y-2">
-                <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-                  <p className="shrink-0 text-[13px] font-semibold text-gray-800">Submitted Reports</p>
-                  {headerShareLink ? <InsightReportShareLink url={headerShareLink} /> : null}
-                </div>
+                <p className="text-[13px] font-semibold text-gray-800">Submitted Reports</p>
                 <InsightReportImageGrid
                   files={existingFiles}
                   variant="submitted"

@@ -605,12 +605,12 @@ export function getMasterPostLink(links?: PostLink[]) {
   return getMasterPostLinks(links)[0] ?? null;
 }
 
-export function getMasterLabel(index: number, total: number) {
-  return total === 1 ? "Master" : `Master ${index + 1}`;
+export function getMasterLabel(index: number, _total?: number) {
+  return `Master ${index + 1}`;
 }
 
-export function getMirroredLabel(index: number, total: number) {
-  return total === 1 ? "Mirrored" : `Mirrored ${index + 1}`;
+export function getMirroredLabel(index: number, _total?: number) {
+  return `Mirrored ${index + 1}`;
 }
 
 export function hasFetchedPostLinks(links?: PostLink[]) {

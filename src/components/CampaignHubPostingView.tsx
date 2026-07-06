@@ -616,11 +616,11 @@ function PostLinkMirroredPillWithTooltip({
             aria-label={count === 1 ? "Mirrored link" : `${count} mirrored links`}
           >
             <PostLinkPill
-              label="Mirrored"
+              label={count === 1 ? "Mirrored 1" : "Mirrored"}
               linkType="Mirrored"
               status="success"
               showStatusIcon={false}
-              inlineCount={count}
+              inlineCount={count > 1 ? count : undefined}
               className="pointer-events-none"
             />
           </span>
