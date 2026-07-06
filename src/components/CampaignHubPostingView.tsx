@@ -7,7 +7,11 @@ import {
   CampaignHubToolbarActionButton,
 } from "@/components/CampaignHubDetailToolbar";
 import { CampaignHubH5LinkCell } from "@/components/CampaignHubH5LinkCell";
-import { PostLinkPill, POST_LINK_TYPE_CLASS } from "@/components/PostLinkPill";
+import {
+  PostLinkPill,
+  POST_LINK_PILL_WIDTH_CLASS,
+  POST_LINK_TYPE_CLASS,
+} from "@/components/PostLinkPill";
 import { CampaignHubFilterSelect } from "@/components/CampaignHubFilterSelect";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import PostingHubStatusSelect from "@/components/pipeline/PostingHubStatusSelect";
@@ -505,7 +509,7 @@ function PostLinkPillWithTooltip({
             label={label}
             linkType={linkType}
             status={getPostLinkStatus(link)}
-            className="w-fit cursor-default"
+            className="cursor-default"
           />
         }
       />
@@ -543,7 +547,12 @@ function PostLinkMasterRow({
       {hasUrl ? (
         <PostLinkPillWithTooltip link={link} label={label} linkType="Master" />
       ) : (
-        <span className="inline-flex h-[22px] items-center rounded-full border border-dashed border-gray-200 bg-gray-50 px-1.5 text-[11px] font-semibold leading-none text-gray-400">
+        <span
+          className={cn(
+            "inline-flex h-[22px] items-center rounded-full border border-dashed border-gray-200 bg-gray-50 px-1.5 text-[11px] font-semibold leading-none text-gray-400",
+            POST_LINK_PILL_WIDTH_CLASS
+          )}
+        >
           {label}
         </span>
       )}
@@ -603,7 +612,7 @@ function PostLinkMirroredPillWithTooltip({
       <TooltipTrigger
         render={
           <span
-            className="inline-flex w-fit cursor-default items-center"
+            className="inline-flex cursor-default items-center"
             aria-label={count === 1 ? "Mirrored link" : `${count} mirrored links`}
           >
             <PostLinkPill
@@ -612,7 +621,7 @@ function PostLinkMirroredPillWithTooltip({
               status="success"
               showStatusIcon={false}
               inlineCount={count}
-              className="pointer-events-none w-fit"
+              className="pointer-events-none"
             />
           </span>
         }

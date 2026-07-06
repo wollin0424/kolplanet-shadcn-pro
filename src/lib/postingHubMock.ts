@@ -15,6 +15,24 @@ export type ContentValidation = {
   video: ContentValidationStatus;
 };
 
+export const MOCK_NO_DRAFT_VALIDATION: ContentValidation = {
+  caption: "No Draft",
+  cover: "No Draft",
+  video: "No Draft",
+};
+
+export const MOCK_MIXED_NO_DRAFT_VALIDATION: ContentValidation = {
+  caption: "No Draft",
+  cover: "Verified",
+  video: "No Draft",
+};
+
+export const MOCK_MIXED_VALIDATION_STATES: ContentValidation = {
+  caption: "Verified",
+  cover: "No Draft",
+  video: "Cannot Verify",
+};
+
 export type ContentValidationField = "Caption" | "Cover" | "Video";
 
 const CONTENT_VALIDATION_MISMATCH_DESCRIPTIONS: Record<ContentValidationField, string> = {
@@ -83,6 +101,7 @@ export type PostingHubRow = {
 };
 
 export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
+  // Row 1 — composite: verified Master, Mirrored x3, mixed validation, insights
   {
     id: "p1",
     name: "Lucas Turner",
@@ -99,7 +118,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
         validation: {
           caption: "Verified",
           cover: "Mismatched",
-          video: "Cannot Verify",
+          video: "No Draft",
         },
       },
       {
@@ -127,6 +146,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     planDate: "Jun 30, 2026",
     actualDate: "Jun 25, 2026",
   },
+  // Row 2 — post link: Data fetch failed (red Master)
   {
     id: "p2",
     name: "Ava Collins",
@@ -146,6 +166,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     planDate: "Jun 30, 2026",
     actualDate: "Jun 26, 2026",
   },
+  // Row 3 — post link: Missing Info (amber Master) + Mirrored warning; Post Approved
   {
     id: "p3",
     name: "Chloe Reed",
@@ -174,6 +195,33 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     planDate: "Jun 30, 2026",
     actualDate: "Jun 27, 2026",
   },
+  // Row 4 — content validation: Cannot Verify (amber/yellow Video)
+  {
+    id: "p10",
+    name: "Luna Price",
+    handle: "@instagram.ins",
+    platform: "Instagram",
+    h5Path: "/h5/kol-info/s10",
+    postingStatus: "Posted",
+    postLinks: [
+      {
+        type: "Master",
+        url: "https://www.instagram.com/p/DKx9LunaPrice/",
+        source: "Web",
+        postedDate: "07 Jun, 2026",
+        validation: MOCK_MIXED_VALIDATION_STATES,
+      },
+      {
+        type: "Mirrored",
+        url: "https://www.tiktok.com/@luna-price/video/7123456799",
+        source: "H5",
+        postedDate: "14 Jun, 2026",
+      },
+    ],
+    planDate: "Jul 8, 2026",
+    actualDate: "Jun 30, 2026",
+  },
+  // Row 5 — content validation: all No Draft (grey)
   {
     id: "p4",
     name: "Ella Brooks",
@@ -187,29 +235,33 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
         url: "https://www.instagram.com/p/DKx9EllaBrooks/",
         source: "Web",
         postedDate: "04 Jun, 2026",
+        validation: MOCK_NO_DRAFT_VALIDATION,
       },
     ],
     planDate: "Jul 2, 2026",
     actualDate: "Jun 28, 2026",
   },
+  // Row 6 — post link: Private account (amber Master)
   {
-    id: "p5",
-    name: "Grace Turner",
+    id: "p8",
+    name: "Jade Wilson",
     handle: "@instagram.ins",
     platform: "Instagram",
-    h5Path: "/h5/kol-info/s5",
-    postingStatus: "Pending",
-    planDate: "Jul 3, 2026",
+    h5Path: "/h5/kol-info/s8",
+    postingStatus: "Posted",
+    postLinks: [
+      {
+        type: "Master",
+        url: "https://www.instagram.com/p/DKx9JadeWilson/",
+        source: "Web",
+        postedDate: "06 Jun, 2026",
+        issues: ["Private account"],
+      },
+    ],
+    planDate: "Jul 6, 2026",
+    actualDate: "Jun 29, 2026",
   },
-  {
-    id: "p6",
-    name: "Harper Lane",
-    handle: "@instagram.ins",
-    platform: "Instagram",
-    h5Path: "/h5/kol-info/s6",
-    postingStatus: "Pending",
-    planDate: "Jul 4, 2026",
-  },
+  // Row 7 — content validation: not yet run (placeholder pills + Auto Validate)
   {
     id: "p7",
     name: "Ivy Morgan",
@@ -230,22 +282,45 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     planDate: "Jul 5, 2026",
     actualDate: "Jun 28, 2026",
   },
+  // Row 8 — content validation: mixed No Draft
   {
-    id: "p8",
-    name: "Jade Wilson",
+    id: "p9",
+    name: "Keira Hayes",
     handle: "@instagram.ins",
     platform: "Instagram",
-    h5Path: "/h5/kol-info/s8",
-    postingStatus: "Pending",
+    h5Path: "/h5/kol-info/s9",
+    postingStatus: "Posted",
     postLinks: [
       {
         type: "Master",
-        url: "https://www.instagram.com/p/DKx9JadeWilson/",
-        source: "Web",
-        issues: ["Private account"],
+        url: "https://www.instagram.com/p/DKx9KeiraHayes/",
+        source: "H5",
+        postedDate: "06 Jun, 2026",
+        validation: MOCK_MIXED_NO_DRAFT_VALIDATION,
       },
     ],
-    planDate: "Jul 6, 2026",
+    planDate: "Jul 7, 2026",
+    actualDate: "Jun 29, 2026",
+  },
+  // Row 9 — not fetched yet
+  {
+    id: "p5",
+    name: "Grace Turner",
+    handle: "@instagram.ins",
+    platform: "Instagram",
+    h5Path: "/h5/kol-info/s5",
+    postingStatus: "Pending",
+    planDate: "Jul 3, 2026",
+  },
+  // Row 10 — filler Pending
+  {
+    id: "p6",
+    name: "Harper Lane",
+    handle: "@instagram.ins",
+    platform: "Instagram",
+    h5Path: "/h5/kol-info/s6",
+    postingStatus: "Pending",
+    planDate: "Jul 4, 2026",
   },
 ];
 

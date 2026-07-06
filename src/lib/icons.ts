@@ -55,6 +55,7 @@ import {
   Play as LucidePlay,
   Receipt as LucideReceipt,
   RefreshCcw as LucideRefreshCcw,
+  Repeat2 as LucideRepeat2,
   RotateCcw as LucideRotateCcw,
   ScrollText as LucideScrollText,
   Search as LucideSearch,
@@ -73,6 +74,7 @@ import {
   Truck as LucideTruck,
   Upload as LucideUpload,
   Image as LucideImage,
+  Images as LucideImages,
   UserPlus as LucideUserPlus,
   UserRound as LucideUserRound,
   Users as LucideUsers,
@@ -135,6 +137,7 @@ export const Plus = createIcon(LucidePlus, "Plus");
 export const Play = createIcon(LucidePlay, "Play");
 export const Receipt = createIcon(LucideReceipt, "Receipt");
 export const RefreshCcw = createIcon(LucideRefreshCcw, "RefreshCcw");
+export const Repeat2 = createIcon(LucideRepeat2, "Repeat2");
 export const RotateCcw = createIcon(LucideRotateCcw, "RotateCcw");
 export const ScrollText = createIcon(LucideScrollText, "ScrollText");
 export const Search = createIcon(LucideSearch, "Search");
@@ -153,6 +156,7 @@ export const TrendingUp = createIcon(LucideTrendingUp, "TrendingUp");
 export const Truck = createIcon(LucideTruck, "Truck");
 export const Upload = createIcon(LucideUpload, "Upload");
 export const Image = createIcon(LucideImage, "Image");
+export const Images = createIcon(LucideImages, "Images");
 export const UserPlus = createIcon(LucideUserPlus, "UserPlus");
 export const UserRound = createIcon(LucideUserRound, "UserRound");
 export const Users = createIcon(LucideUsers, "Users");

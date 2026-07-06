@@ -37,6 +37,9 @@ const POST_LINK_TYPE_CLASS: Record<PostLinkType, string> = {
   Mirrored: "border-gray-200 bg-gray-50 text-gray-500",
 };
 
+/** Fixed width so Master / Mirrored pills align in the Post Link column. */
+const POST_LINK_PILL_WIDTH_CLASS = "w-[84px] justify-center whitespace-nowrap";
+
 export const PostLinkPill = forwardRef<
   HTMLSpanElement,
   {
@@ -59,6 +62,7 @@ export const PostLinkPill = forwardRef<
       ref={ref}
       className={cn(
         "inline-flex h-[22px] items-center gap-1 rounded-full border px-1.5 text-[11px] font-semibold leading-none",
+        POST_LINK_PILL_WIDTH_CLASS,
         POST_LINK_TYPE_CLASS[linkType],
         className
       )}
@@ -81,4 +85,4 @@ export const PostLinkPill = forwardRef<
   );
 });
 
-export { POST_LINK_TYPE_CLASS, POST_LINK_STATUS_CONFIG };
+export { POST_LINK_TYPE_CLASS, POST_LINK_STATUS_CONFIG, POST_LINK_PILL_WIDTH_CLASS };

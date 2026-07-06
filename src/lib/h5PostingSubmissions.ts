@@ -317,14 +317,7 @@ export function getFigmaCaptureH5PostingState(
 export function getDefaultH5PostingState(kolId: string): H5PostingState {
   if (kolId === "1") {
     return {
-      masters: [
-        {
-          id: createId(),
-          url: "https://www.instagram.com/p/3-private",
-          health: "private",
-          submitted: true,
-        },
-      ],
+      masters: [{ id: createId(), url: "", health: "empty", submitted: false }],
       mirrored: [{ id: createId(), url: "", health: "empty", submitted: false }],
       insightDraftFiles: [],
       insightSubmitted: false,
