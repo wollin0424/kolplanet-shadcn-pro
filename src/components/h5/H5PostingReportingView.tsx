@@ -8,10 +8,7 @@ import {
 } from "@/components/h5/H5MultiImageUploadField";
 import { H5SectionHeading, H5SectionNote } from "@/components/h5/H5SectionHeading";
 import { H5InfluencerCard } from "@/components/h5/H5InfluencerCard";
-import {
-  InstagramPostsTabIcon,
-  InstagramRepostIcon,
-} from "@/components/icons/InstagramUiIcons";
+import { InstagramRepostIcon } from "@/components/icons/InstagramUiIcons";
 import {
   H5_DASHED_ADD_BUTTON_CLASS,
   H5_INPUT_CLASS,
@@ -55,6 +52,7 @@ import {
   Images,
   Plus,
   RefreshCcw,
+  Send,
 } from "@/lib/icons";
 
 const H5_LINK_INPUT_CLASS = H5_INPUT_CLASS;
@@ -483,10 +481,10 @@ export function H5PostingReportingView({
         />
       </section>
 
-      <section className="rounded-2xl border border-brand/35 bg-brand-50/10 p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
         <div className="mb-4 flex items-start gap-2">
           <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
-            <InstagramPostsTabIcon size={15} strokeWidth={2} />
+            <Send size={15} strokeWidth={2} />
           </span>
           <div>
             <h2 className="text-[15px] font-semibold text-gray-900">
@@ -525,7 +523,7 @@ export function H5PostingReportingView({
         </p>
       </section>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
         <div className="mb-4 flex items-start gap-2">
           <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
             <InstagramRepostIcon size={15} strokeWidth={2} />

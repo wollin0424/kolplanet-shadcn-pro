@@ -28,11 +28,8 @@ import {
 } from "@/lib/postingHubMock";
 import { formInputClass } from "@/lib/formControls";
 import { cn } from "@/lib/utils";
-import { Monitor, Plus, Smartphone, Trash2 } from "@/lib/icons";
-import {
-  InstagramPostsTabIcon,
-  InstagramRepostIcon,
-} from "@/components/icons/InstagramUiIcons";
+import { Monitor, Plus, Send, Smartphone, Trash2 } from "@/lib/icons";
+import { InstagramRepostIcon } from "@/components/icons/InstagramUiIcons";
 
 const MIRRORED_PLACEHOLDER = "https://www.tiktok.com/@username/video/...";
 
@@ -165,7 +162,7 @@ function EditPostLinkSectionHeader({
   variant: "master" | "mirrored";
   title: string;
 }) {
-  const Icon = variant === "master" ? InstagramPostsTabIcon : InstagramRepostIcon;
+  const Icon = variant === "master" ? Send : InstagramRepostIcon;
 
   return (
     <div className="flex items-center gap-2">
@@ -173,7 +170,7 @@ function EditPostLinkSectionHeader({
         className={cn(
           "inline-flex size-7 shrink-0 items-center justify-center",
           variant === "master"
-            ? "rounded-full bg-brand-50 text-brand"
+            ? "rounded-lg bg-brand-50 text-brand"
             : "rounded-lg bg-gray-50 text-gray-400"
         )}
       >
@@ -188,10 +185,7 @@ function EditPostLinkSectionHeader({
         >
           {title}
           {variant === "master" ? <span className="ml-0.5 text-red-500">*</span> : null}
-        </h3>
-        {variant === "mirrored" ? (
-          <p className="mt-0.5 text-[11px] font-normal text-gray-400">Optional</p>
-        ) : null}
+      </h3>
       </div>
     </div>
   );
@@ -559,7 +553,7 @@ function EditPostLinkSheetPanel({
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
           <div className="space-y-4 rounded-xl border border-brand/35 bg-brand-50/10 p-4">
-            <EditPostLinkSectionHeader variant="master" title="Master Post Link" />
+            <EditPostLinkSectionHeader variant="master" title="Master Link (Original Posts)" />
 
             <div className={EDIT_POST_LINK_LIST_CLASS}>
               {masters.map((item, index) => (
