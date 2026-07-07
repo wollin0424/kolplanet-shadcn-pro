@@ -20,7 +20,7 @@ import {
   type CaptionCoverSubmission,
 } from "@/lib/captionCoverSubmissions";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronUp, Eye } from "@/lib/icons";
+import { ChevronDown, ChevronUp } from "@/lib/icons";
 
 function VerticalCoverPreview({
   cover,
@@ -29,24 +29,25 @@ function VerticalCoverPreview({
   cover: CaptionCoverFile;
   className?: string;
 }) {
+  const openPreview = () => {
+    window.open(cover.previewUrl, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div
       className={cn(
-        "group/cover relative aspect-[9/16] w-full max-w-[132px] shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100",
+        "relative aspect-[9/16] w-full max-w-[132px] shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100",
         className
       )}
     >
-      <img src={cover.previewUrl} alt={cover.name} className="size-full object-cover" />
-      <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover/cover:bg-black/35">
-        <button
-          type="button"
-          onClick={() => window.open(cover.previewUrl, "_blank", "noopener,noreferrer")}
-          className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover/cover:opacity-100 hover:bg-black/70"
-          aria-label="Preview cover image"
-        >
-          <Eye size={16} strokeWidth={2} />
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={openPreview}
+        className="block size-full"
+        aria-label={`Preview ${cover.name}`}
+      >
+        <img src={cover.previewUrl} alt="" className="size-full object-cover" />
+      </button>
     </div>
   );
 }

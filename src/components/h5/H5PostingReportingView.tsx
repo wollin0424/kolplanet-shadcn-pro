@@ -160,7 +160,7 @@ function H5PostLinkRefreshButton({
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      className="inline-grid size-10 shrink-0 place-items-center rounded-full border border-brand/25 bg-brand-50 p-0 text-brand transition-colors hover:border-brand/40 hover:bg-brand-100/80 disabled:cursor-not-allowed disabled:opacity-40"
+      className="inline-grid size-10 shrink-0 place-items-center rounded-full border border-brand/25 bg-brand-50 p-0 text-brand transition-colors hover:border-brand/40 hover:bg-brand-100/80 active:border-brand/45 active:bg-brand-100 disabled:cursor-not-allowed disabled:opacity-40"
     >
       <RefreshCcw size={14} strokeWidth={2.2} />
     </button>

@@ -38,6 +38,7 @@ export function parseCampaignDetailSearchParams(searchParams: {
   figmaPostingActionsOpen?: string;
   figmaOpenEditPostLink?: string;
   figmaEditPostLinkRow?: string;
+  figmaEditPostLinkState?: string;
   figmaOpenUploadInsightReport?: string;
   figmaInsightReportState?: string;
   figmaUploadInsightRow?: string;
@@ -62,6 +63,7 @@ export function parseCampaignDetailSearchParams(searchParams: {
   figmaPostingActionsOpen?: boolean;
   figmaOpenEditPostLink?: boolean;
   figmaEditPostLinkRowId?: string;
+  figmaEditPostLinkState?: "empty" | "partial" | "full";
   figmaOpenUploadInsightReport?: boolean;
   figmaInsightReportState?: string;
   figmaUploadInsightRowId?: string;
@@ -100,6 +102,15 @@ export function parseCampaignDetailSearchParams(searchParams: {
   const figmaEditPostLinkRowId = figmaOpenEditPostLink
     ? searchParams.figmaEditPostLinkRow?.trim() || "p4"
     : undefined;
+  const figmaEditPostLinkStateRaw = searchParams.figmaEditPostLinkState?.trim().toLowerCase();
+  const figmaEditPostLinkState =
+    figmaEditPostLinkStateRaw === "empty" ||
+    figmaEditPostLinkStateRaw === "partial" ||
+    figmaEditPostLinkStateRaw === "full"
+      ? figmaEditPostLinkStateRaw
+      : figmaOpenEditPostLink
+        ? "full"
+        : undefined;
   const figmaOpenUploadInsightReport = searchParams.figmaOpenUploadInsightReport === "1";
   const figmaUploadInsightRowId = figmaOpenUploadInsightReport
     ? searchParams.figmaUploadInsightRow?.trim() || "p3"
@@ -135,6 +146,7 @@ export function parseCampaignDetailSearchParams(searchParams: {
     figmaPostingActionsOpen,
     figmaOpenEditPostLink,
     figmaEditPostLinkRowId,
+    figmaEditPostLinkState,
     figmaOpenUploadInsightReport,
     figmaInsightReportState: searchParams.figmaInsightReportState?.trim() || undefined,
     figmaUploadInsightRowId,

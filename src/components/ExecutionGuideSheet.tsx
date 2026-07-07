@@ -22,7 +22,7 @@ import {
   saveCampaignExecutionGuide,
 } from "@/lib/campaignExecutionGuide";
 import { cn } from "@/lib/utils";
-import { ChevronDown, FileText, Languages, Link as LinkIcon, Plus, Sparkles, Trash2, X } from "@/lib/icons";
+import { ChevronDown, FileText, Languages, Link as LinkIcon, Plus, Sparkles, X } from "@/lib/icons";
 
 function SettingsInput({ className, ...props }: ComponentProps<typeof Input>) {
   return <Input className={formInputClass(className)} {...props} />;
@@ -209,21 +209,19 @@ function BrandLogoUploadField({
       {value ? (
         <div
           className={cn(
-            "group/logo relative overflow-hidden rounded-xl border border-gray-200 bg-gray-100",
+            "relative overflow-hidden rounded-xl border border-gray-200 bg-gray-100",
             BRAND_LOGO_BOX_CLASS
           )}
         >
           <img src={value.previewUrl} alt={value.name} className="size-full object-cover" />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover/logo:bg-black/45">
-            <button
-              type="button"
-              onClick={() => onChange(null)}
-              className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover/logo:opacity-100 hover:bg-black/70"
-              aria-label="Remove brand logo"
-            >
-              <Trash2 size={16} strokeWidth={2} />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => onChange(null)}
+            className="absolute right-1.5 top-1.5 inline-flex size-7 items-center justify-center rounded-full bg-black/60 text-white shadow-sm backdrop-blur-sm transition-colors active:bg-black/75"
+            aria-label="Remove brand logo"
+          >
+            <X size={14} strokeWidth={2.5} />
+          </button>
         </div>
       ) : (
         <button

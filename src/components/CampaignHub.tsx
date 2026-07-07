@@ -155,6 +155,7 @@ export default function CampaignHub({
   figmaPostingActionsOpen,
   figmaOpenEditPostLink,
   figmaEditPostLinkRowId,
+  figmaEditPostLinkState,
   figmaOpenUploadInsightReport,
   figmaInsightReportState,
   figmaUploadInsightRowId,
@@ -178,6 +179,7 @@ export default function CampaignHub({
   figmaPostingActionsOpen?: boolean;
   figmaOpenEditPostLink?: boolean;
   figmaEditPostLinkRowId?: string;
+  figmaEditPostLinkState?: "empty" | "partial" | "full";
   figmaOpenUploadInsightReport?: boolean;
   figmaInsightReportState?: string;
   figmaUploadInsightRowId?: string;
@@ -267,6 +269,7 @@ export default function CampaignHub({
         figmaPostingActionsOpen={figmaPostingActionsOpen}
         figmaOpenEditPostLink={figmaOpenEditPostLink}
         figmaEditPostLinkRowId={figmaEditPostLinkRowId}
+        figmaEditPostLinkState={figmaEditPostLinkState}
         figmaOpenUploadInsightReport={figmaOpenUploadInsightReport}
         figmaInsightReportState={figmaInsightReportState}
         figmaUploadInsightRowId={figmaUploadInsightRowId}

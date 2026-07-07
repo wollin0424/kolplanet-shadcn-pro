@@ -22,6 +22,7 @@ import {
   getPostLinksByType,
   getPostLinkSourceLabel,
   getPostLinkTooltipCopy,
+  type FigmaCaptureEditPostLinkState,
   type PostLink,
   type PostLinkSource,
   type PostLinkType,
@@ -162,8 +163,6 @@ function EditPostLinkSectionHeader({
   variant: "master" | "mirrored";
   title: string;
 }) {
-  const Icon = variant === "master" ? Send : InstagramRepostIcon;
-
   return (
     <div className="flex items-center gap-2">
       <span
@@ -174,7 +173,11 @@ function EditPostLinkSectionHeader({
             : "rounded-lg bg-gray-50 text-gray-400"
         )}
       >
-        <Icon size={15} strokeWidth={2} />
+        {variant === "master" ? (
+          <Send size={15} strokeWidth={2} />
+        ) : (
+          <InstagramRepostIcon size={15} strokeWidth={2} />
+        )}
       </span>
       <div>
         <h3
@@ -185,7 +188,7 @@ function EditPostLinkSectionHeader({
         >
           {title}
           {variant === "master" ? <span className="ml-0.5 text-red-500">*</span> : null}
-      </h3>
+        </h3>
       </div>
     </div>
   );
@@ -336,21 +339,31 @@ function getLastMasterRequiredMessage(index: number) {
   return `Master Link ${index + 1} is required.`;
 }
 
-function buildDraftFromLinks(links?: PostLink[], figmaCapture = false) {
-  const captureLinks = figmaCapture ? getFigmaCaptureEditPostLinkLinks() : links;
+function buildDraftFromLinks(
+  links?: PostLink[],
+  figmaCapture = false,
+  figmaState: FigmaCaptureEditPostLinkState = "full"
+) {
+  const captureLinks = figmaCapture ? getFigmaCaptureEditPostLinkLinks(figmaState) : links;
   const masters = getMasterPostLinks(captureLinks);
   const mirrored = getPostLinksByType(captureLinks, "Mirrored");
 
+  const masterDrafts =
+    masters.length > 0
+      ? masters.map((link, index) => toLinkDraft(link, `master-${index}`))
+      : [{ id: "master-0", url: "" }];
+
+  if (figmaCapture && figmaState === "partial" && masterDrafts.some((item) => item.url.trim())) {
+    masterDrafts.push({ id: `master-${masterDrafts.length}`, url: "" });
+  }
+
   return {
-    masters:
-      masters.length > 0
-        ? masters.map((link, index) => toLinkDraft(link, `master-${index}`))
-        : [{ id: "master-0", url: "" }],
+    masters: masterDrafts,
     mirrored:
       mirrored.length > 0
         ? mirrored.map((link, index) => toLinkDraft(link, `mirrored-${index}`))
-        : figmaCapture
-          ? [{ id: "figma-mirrored-0", url: "" }]
+        : figmaCapture && figmaState === "partial"
+          ? [{ id: "mirrored-0", url: "" }]
           : [],
   };
 }
@@ -401,22 +414,25 @@ export function EditPostLinkDialog({
   initialLinks,
   onSubmit,
   figmaCapture = false,
+  figmaEditPostLinkState = "full",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialLinks?: PostLink[];
   onSubmit: (links: PostLink[]) => void;
   figmaCapture?: boolean;
+  figmaEditPostLinkState?: FigmaCaptureEditPostLinkState;
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       {open ? (
         <EditPostLinkSheetPanel
-          key={JSON.stringify(initialLinks ?? [])}
+          key={`${figmaCapture ? figmaEditPostLinkState : ""}:${JSON.stringify(initialLinks ?? [])}`}
           initialLinks={initialLinks}
           onSubmit={onSubmit}
           onOpenChange={onOpenChange}
           figmaCapture={figmaCapture}
+          figmaEditPostLinkState={figmaEditPostLinkState}
         />
       ) : null}
     </Sheet>
@@ -428,14 +444,16 @@ function EditPostLinkSheetPanel({
   initialLinks,
   onSubmit,
   figmaCapture = false,
+  figmaEditPostLinkState = "full",
 }: {
   onOpenChange: (open: boolean) => void;
   initialLinks?: PostLink[];
   onSubmit: (links: PostLink[]) => void;
   figmaCapture?: boolean;
+  figmaEditPostLinkState?: FigmaCaptureEditPostLinkState;
 }) {
   const baseId = useId();
-  const draft = buildDraftFromLinks(initialLinks, figmaCapture);
+  const draft = buildDraftFromLinks(initialLinks, figmaCapture, figmaEditPostLinkState);
   const [masters, setMasters] = useState<LinkDraft[]>(draft.masters);
   const [masterErrors, setMasterErrors] = useState<Record<string, string | undefined>>(() => {
     const errors: Record<string, string | undefined> = {};

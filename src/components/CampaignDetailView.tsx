@@ -21,6 +21,7 @@ export default function CampaignDetailView({
   figmaPostingActionsOpen,
   figmaOpenEditPostLink,
   figmaEditPostLinkRowId,
+  figmaEditPostLinkState,
   figmaOpenUploadInsightReport,
   figmaInsightReportState,
   figmaUploadInsightRowId,
@@ -45,6 +46,7 @@ export default function CampaignDetailView({
   figmaPostingActionsOpen?: boolean;
   figmaOpenEditPostLink?: boolean;
   figmaEditPostLinkRowId?: string;
+  figmaEditPostLinkState?: "empty" | "partial" | "full";
   figmaOpenUploadInsightReport?: boolean;
   figmaInsightReportState?: string;
   figmaUploadInsightRowId?: string;
@@ -102,6 +104,7 @@ export default function CampaignDetailView({
             figmaPostingActionsOpen={hubMountKey === 0 ? figmaPostingActionsOpen : undefined}
             figmaOpenEditPostLink={hubMountKey === 0 ? figmaOpenEditPostLink : undefined}
             figmaEditPostLinkRowId={hubMountKey === 0 ? figmaEditPostLinkRowId : undefined}
+            figmaEditPostLinkState={hubMountKey === 0 ? figmaEditPostLinkState : undefined}
             figmaOpenUploadInsightReport={hubMountKey === 0 ? figmaOpenUploadInsightReport : undefined}
             figmaInsightReportState={hubMountKey === 0 ? figmaInsightReportState : undefined}
             figmaUploadInsightRowId={hubMountKey === 0 ? figmaUploadInsightRowId : undefined}

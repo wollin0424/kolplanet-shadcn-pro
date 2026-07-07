@@ -142,7 +142,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
       },
     ],
     insightReports: ["Amelia_Insight_01.png"],
-    insightReportShareUrl: "https://share.kolplanet.com/insights/p1",
+    insightReportShareUrl: "/share/insights/p1",
     planDate: "Jun 30, 2026",
     actualDate: "Jun 25, 2026",
   },
@@ -191,7 +191,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
       },
     ],
     insightReports: ["Chloe_Insight_01.png", "Chloe_Insight_02.png"],
-    insightReportShareUrl: "https://share.kolplanet.com/insights/p3",
+    insightReportShareUrl: "/share/insights/p3",
     planDate: "Jun 30, 2026",
     actualDate: "Jun 27, 2026",
   },
@@ -278,7 +278,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
       },
     ],
     insightReports: ["Ivy_Performance_01.png"],
-    insightReportShareUrl: "https://share.kolplanet.com/insights/p7",
+    insightReportShareUrl: "/share/insights/p7",
     planDate: "Jul 5, 2026",
     actualDate: "Jun 28, 2026",
   },
@@ -433,8 +433,35 @@ export function getEffectiveMasterValidation(link: PostLink): ContentValidation 
   return link.validation ?? null;
 }
 
+export function buildInsightReportSharePath(rowId: string) {
+  return `/share/insights/${rowId}`;
+}
+
 export function buildInsightReportShareUrl(rowId: string) {
-  return `https://share.kolplanet.com/insights/${rowId}`;
+  return buildInsightReportSharePath(rowId);
+}
+
+export function resolveInsightReportShareHref(url: string) {
+  if (url.startsWith("http")) {
+    try {
+      return new URL(url).pathname;
+    } catch {
+      return url;
+    }
+  }
+  return url.startsWith("/") ? url : `/${url}`;
+}
+
+export function getInsightReportSharePageUrl(url: string) {
+  const path = resolveInsightReportShareHref(url);
+  if (path.startsWith("http")) return path;
+  if (typeof window !== "undefined") return `${window.location.origin}${path}`;
+  return path;
+}
+
+export function openInsightReportSharePage(url: string) {
+  if (typeof window === "undefined") return;
+  window.open(getInsightReportSharePageUrl(url), "_blank", "noopener,noreferrer");
 }
 
 export function buildInsightReportFilePreviewUrl(rowId: string, fileName: string) {
@@ -517,7 +544,7 @@ export function getFigmaCaptureInsightReportState(
       sizeLabel: "3.2 KB",
       source: "Web",
     },
-    shareUrl: "https://share.kolplanet.com/insights/p1",
+    shareUrl: "/share/insights/p1",
     hoverCardId: "Line.png",
   };
 }
@@ -542,7 +569,25 @@ export function getPostLinkTooltipCopy(link: PostLink): PostLinkTooltipCopy {
   };
 }
 
-export function getFigmaCaptureEditPostLinkLinks(): PostLink[] {
+export type FigmaCaptureEditPostLinkState = "empty" | "partial" | "full";
+
+export function getFigmaCaptureEditPostLinkLinks(
+  state: FigmaCaptureEditPostLinkState = "full"
+): PostLink[] {
+  if (state === "empty") return [];
+
+  if (state === "partial") {
+    return [
+      {
+        type: "Master",
+        url: "https://www.instagram.com/p/DKx9AmeliaStone/",
+        source: "H5",
+        postedDate: "01 Jun, 2026",
+        validation: { caption: "Verified", cover: "Verified", video: "Verified" },
+      },
+    ];
+  }
+
   return [
     {
       type: "Master",

@@ -38,8 +38,8 @@ export function buildH5InsightImages(files: H5InsightFile[]): InsightReportImage
 }
 
 export function buildWebInsightImages(fileNames: string[], rowId?: string): InsightReportImage[] {
-  return fileNames.map((name) => ({
-    id: `web-${name}`,
+  return fileNames.map((name, index) => ({
+    id: `web-${index}-${name}`,
     name,
     previewUrl: getInsightReportPreviewUrl(rowId ?? "", name),
     sizeLabel: "2.1 KB",
@@ -50,8 +50,8 @@ export function buildWebInsightImages(fileNames: string[], rowId?: string): Insi
 export function buildWebInsightImagesFromRecords(
   files: WebInsightFileRecord[]
 ): InsightReportImage[] {
-  return files.map((file) => ({
-    id: `web-${file.name}`,
+  return files.map((file, index) => ({
+    id: `web-${index}-${file.name}`,
     name: file.name,
     previewUrl: file.previewUrl,
     sizeLabel: file.sizeLabel,

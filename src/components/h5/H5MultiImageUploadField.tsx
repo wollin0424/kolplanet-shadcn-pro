@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { Eye, Trash2, Upload } from "@/lib/icons";
+import { Upload, X } from "@/lib/icons";
 import { FORM_FIELD_RADIUS } from "@/lib/formControls";
 import { cn } from "@/lib/utils";
 
@@ -30,43 +30,38 @@ function H5InsightImageCard({
   const isSubmitted = variant === "submitted";
   const showRemove = !isSubmitted && !disabled && Boolean(onRemoveFile);
 
+  const openPreview = () => {
+    window.open(file.previewUrl, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div
       className={cn(
-        "group/file overflow-hidden border border-gray-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
+        "overflow-hidden border border-gray-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
         FORM_FIELD_RADIUS,
         !isSubmitted && "border-brand/30",
-        forceHover && "figma-capture-insight-card-hovered"
+        forceHover && "ring-2 ring-brand/35"
       )}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden">
-        <img
-          src={file.previewUrl}
-          alt={file.name}
-          className="size-full object-cover"
-        />
-        <div className="insight-card-preview-overlay absolute inset-0 flex items-center justify-center gap-2 bg-black/0 transition-colors group-hover/file:bg-black/35">
-          <div className="insight-card-preview-actions flex items-center gap-2 opacity-0 transition-opacity group-hover/file:opacity-100">
-            <button
-              type="button"
-              onClick={() => window.open(file.previewUrl, "_blank", "noopener,noreferrer")}
-              className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
-              aria-label={`Preview ${file.name}`}
-            >
-              <Eye size={16} strokeWidth={2} />
-            </button>
-            {showRemove ? (
-              <button
-                type="button"
-                onClick={() => onRemoveFile?.(file.id)}
-                className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
-                aria-label={`Remove ${file.name}`}
-              >
-                <Trash2 size={16} strokeWidth={2} />
-              </button>
-            ) : null}
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={openPreview}
+          className="block size-full"
+          aria-label={`Preview ${file.name}`}
+        >
+          <img src={file.previewUrl} alt="" className="size-full object-cover" />
+        </button>
+        {showRemove ? (
+          <button
+            type="button"
+            onClick={() => onRemoveFile?.(file.id)}
+            className="absolute right-1.5 top-1.5 inline-flex size-7 items-center justify-center rounded-full bg-black/60 text-white shadow-sm backdrop-blur-sm transition-colors active:bg-black/75"
+            aria-label={`Remove ${file.name}`}
+          >
+            <X size={14} strokeWidth={2.5} />
+          </button>
+        ) : null}
       </div>
       <div className="px-2 py-1.5">
         <p className="truncate text-[11px] font-medium text-gray-800">{file.name}</p>
@@ -100,7 +95,7 @@ function H5InsightImageGrid({
           variant={variant}
           disabled={disabled}
           onRemoveFile={onRemoveFile}
-          forceHover={hoverCardId === file.id}
+          forceHover={hoverCardId === file.id || hoverCardId === file.name}
         />
       ))}
     </div>
@@ -204,7 +199,7 @@ export function H5PendingImagesUploadField({
             "w-full border-2 border-dashed border-brand/25 bg-brand-50/35 px-4 py-4 text-left transition-colors",
             FORM_FIELD_RADIUS,
             disabled && "cursor-not-allowed opacity-60",
-            !disabled && "hover:border-brand/35 hover:bg-brand-50/55"
+            !disabled && "hover:border-brand/35 hover:bg-brand-50/55 active:border-brand/40 active:bg-brand-50/65"
           )}
         >
           <div className="flex items-start gap-3">

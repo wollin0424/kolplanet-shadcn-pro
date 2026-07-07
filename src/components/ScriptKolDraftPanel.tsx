@@ -127,12 +127,19 @@ export function H5FeedbackThread({
             {message.images?.length ? (
               <div className="flex flex-wrap gap-2 pt-0.5">
                 {message.images.map((src, imageIndex) => (
-                  <img
+                  <button
                     key={`${message.id}-img-${imageIndex}`}
-                    src={src}
-                    alt={`Attachment ${imageIndex + 1}`}
-                    className="size-14 rounded-md border border-gray-200 object-cover"
-                  />
+                    type="button"
+                    onClick={() => window.open(src, "_blank", "noopener,noreferrer")}
+                    className="block shrink-0"
+                    aria-label={`Preview attachment ${imageIndex + 1}`}
+                  >
+                    <img
+                      src={src}
+                      alt=""
+                      className="size-14 rounded-md border border-gray-200 object-cover"
+                    />
+                  </button>
                 ))}
               </div>
             ) : null}
@@ -293,11 +300,18 @@ export function DiscussionComposer({
         <div className="mb-2 flex flex-wrap gap-1.5">
           {pendingImages.map((src, index) => (
             <div key={`pending-${index}`} className="relative">
-              <img
-                src={src}
-                alt={`Pending attachment ${index + 1}`}
-                className="size-9 rounded-md border border-gray-200 object-cover"
-              />
+              <button
+                type="button"
+                onClick={() => window.open(src, "_blank", "noopener,noreferrer")}
+                className="block"
+                aria-label={`Preview pending attachment ${index + 1}`}
+              >
+                <img
+                  src={src}
+                  alt=""
+                  className="size-9 rounded-md border border-gray-200 object-cover"
+                />
+              </button>
               <button
                 type="button"
                 onClick={() =>

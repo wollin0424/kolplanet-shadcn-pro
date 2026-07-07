@@ -19,15 +19,14 @@ import {
   ChevronUp,
   Copy,
   CreditCard,
-  Eye,
   FileText,
   Lightbulb,
   Link as LinkIcon,
   Lock,
   MessageSquare,
   Share2,
-  Trash2,
   Upload,
+  X,
 } from "@/lib/icons";
 import {
   addCaptionCoverSubmission,
@@ -743,33 +742,24 @@ function CoverImageUploadField({
       />
       {value ? (
         <div className="flex items-start gap-3">
-          <div className="group/cover relative aspect-[9/16] w-full max-w-[132px] shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
-            <img
-              src={value.previewUrl}
-              alt={value.name}
-              className="size-full object-cover"
-            />
+          <div className="relative aspect-[9/16] w-full max-w-[132px] shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
+            <button
+              type="button"
+              onClick={() => window.open(value.previewUrl, "_blank", "noopener,noreferrer")}
+              className="block size-full"
+              aria-label={`Preview ${value.name}`}
+            >
+              <img src={value.previewUrl} alt="" className="size-full object-cover" />
+            </button>
             {!disabled ? (
-              <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 transition-colors group-hover/cover:bg-black/35">
-                <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover/cover:opacity-100">
-                  <button
-                    type="button"
-                    onClick={() => window.open(value.previewUrl, "_blank", "noopener,noreferrer")}
-                    className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
-                    aria-label="Preview cover image"
-                  >
-                    <Eye size={16} strokeWidth={2} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onChange(null)}
-                    className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
-                    aria-label="Remove cover image"
-                  >
-                    <Trash2 size={16} strokeWidth={2} />
-                  </button>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => onChange(null)}
+                className="absolute right-1.5 top-1.5 inline-flex size-7 items-center justify-center rounded-full bg-black/60 text-white shadow-sm backdrop-blur-sm transition-colors active:bg-black/75"
+                aria-label={`Remove ${value.name}`}
+              >
+                <X size={14} strokeWidth={2.5} />
+              </button>
             ) : null}
           </div>
           <div className="min-w-0 pt-1">
@@ -784,7 +774,7 @@ function CoverImageUploadField({
           onClick={() => inputRef.current?.click()}
           className={cn(
             "flex aspect-[9/16] w-full max-w-[132px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-200 bg-gray-50/70 px-3 py-4 text-center transition-colors",
-            !disabled && "hover:border-brand/35 hover:bg-brand-50/40"
+            !disabled && "hover:border-brand/35 hover:bg-brand-50/40 active:border-brand/40 active:bg-brand-50/55"
           )}
         >
           <Upload size={18} strokeWidth={2} className="text-brand" />

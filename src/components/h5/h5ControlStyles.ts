@@ -8,4 +8,4 @@ export const H5_INPUT_CLASS = `${H5_CONTROL_HEIGHT} flex-1 ${H5_CONTROL_RADIUS} 
 
 export const H5_PRIMARY_BUTTON_CLASS = `${H5_CONTROL_HEIGHT} w-full ${H5_CONTROL_RADIUS} text-[13px] font-semibold transition-colors`;
 
-export const H5_DASHED_ADD_BUTTON_CLASS = `${H5_CONTROL_HEIGHT} inline-flex w-full items-center justify-center gap-1.5 ${H5_CONTROL_RADIUS} border border-dashed border-brand/30 bg-white px-3 text-[13px] font-medium text-brand transition-colors hover:border-brand/45 hover:bg-brand-50/30`;
+export const H5_DASHED_ADD_BUTTON_CLASS = `${H5_CONTROL_HEIGHT} inline-flex w-full items-center justify-center gap-1.5 ${H5_CONTROL_RADIUS} border border-dashed border-brand/30 bg-white px-3 text-[13px] font-medium text-brand transition-colors hover:border-brand/45 hover:bg-brand-50/30 active:border-brand/50 active:bg-brand-50/45`;

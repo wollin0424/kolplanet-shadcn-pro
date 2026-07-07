@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sheet";
 import { FORM_FIELD_RADIUS } from "@/lib/formControls";
 import { getH5PostingState, removeH5InsightFile, subscribeH5PostingChanges, type H5InsightFile } from "@/lib/h5PostingSubmissions";
-import { Eye, Trash2 } from "@/lib/icons";
+import { X } from "@/lib/icons";
 import {
   mergeInsightReportFileNames,
   mergeInsightReportImagesFromRecords,
@@ -25,6 +25,8 @@ import {
   buildInsightReportShareUrl,
   getFigmaCaptureInsightReportState,
   getInsightReportPreviewUrl,
+  openInsightReportSharePage,
+  resolveInsightReportShareHref,
 } from "@/lib/postingHubMock";
 import { cn } from "@/lib/utils";
 
@@ -48,16 +50,17 @@ function resolveShareLink(
 }
 
 function InsightReportShareLink({ url }: { url: string }) {
+  const displayUrl = resolveInsightReportShareHref(url);
+
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="min-w-0 flex-1 truncate text-[12px] font-medium text-brand underline decoration-brand/40 underline-offset-[3px] transition-colors hover:decoration-brand/60"
-      title={url}
+    <button
+      type="button"
+      onClick={() => openInsightReportSharePage(url)}
+      className="min-w-0 flex-1 truncate text-left text-[12px] font-medium text-brand underline decoration-brand/40 underline-offset-[3px] transition-colors hover:decoration-brand/60"
+      title={displayUrl}
     >
-      {url}
-    </a>
+      {displayUrl}
+    </button>
   );
 }
 
@@ -85,56 +88,45 @@ function InsightReportImageCard({
   forceHover?: boolean;
 }) {
   const isSubmitted = variant === "submitted";
-  const showRemove = Boolean(onRemove);
+  const showRemove = !isSubmitted && Boolean(onRemove);
+
+  const openPreview = () => {
+    window.open(file.previewUrl, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <div
       className={cn(
-        "group/file overflow-hidden border border-gray-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
+        "overflow-hidden border border-gray-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
         FORM_FIELD_RADIUS,
         !isSubmitted && "border-brand/30",
-        forceHover && "figma-capture-insight-card-hovered"
+        forceHover && "ring-2 ring-brand/35"
       )}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden">
-        <img
-          src={file.previewUrl}
-          alt={file.name}
-          className="size-full object-cover"
-        />
+        <button
+          type="button"
+          onClick={openPreview}
+          className="block size-full"
+          aria-label={`Preview ${file.name}`}
+        >
+          <img src={file.previewUrl} alt="" className="size-full object-cover" />
+        </button>
         {file.source === "H5" ? (
           <span className="pointer-events-none absolute left-1.5 top-1.5 z-10 max-w-[calc(100%-0.75rem)] rounded-md bg-sky-600 px-1.5 py-0.5 text-[9px] font-semibold leading-tight text-white shadow-sm">
             Submitted by KOL
           </span>
         ) : null}
-        <div className="insight-card-preview-overlay absolute inset-0 flex items-center justify-center gap-2 bg-black/0 transition-colors group-hover/file:bg-black/35">
-          <div className="insight-card-preview-actions flex items-center gap-2 opacity-0 transition-opacity group-hover/file:opacity-100">
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                window.open(file.previewUrl, "_blank", "noopener,noreferrer");
-              }}
-              className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
-              aria-label={`Preview ${file.name}`}
-            >
-              <Eye size={16} strokeWidth={2} />
-            </button>
-            {showRemove ? (
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onRemove?.();
-                }}
-                className="inline-flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
-                aria-label={`Remove ${file.name}`}
-              >
-                <Trash2 size={16} strokeWidth={2} />
-              </button>
-            ) : null}
-          </div>
-        </div>
+        {showRemove ? (
+          <button
+            type="button"
+            onClick={() => onRemove?.()}
+            className="absolute right-1.5 top-1.5 inline-flex size-7 items-center justify-center rounded-full bg-black/60 text-white shadow-sm backdrop-blur-sm transition-colors active:bg-black/75"
+            aria-label={`Remove ${file.name}`}
+          >
+            <X size={14} strokeWidth={2.5} />
+          </button>
+        ) : null}
       </div>
       <div className="px-2 py-1.5">
         <p className="truncate text-[11px] font-medium text-gray-800">{file.name}</p>
@@ -165,7 +157,7 @@ function InsightReportImageGrid({
           file={file}
           variant={variant}
           onRemove={onRemoveFile ? () => onRemoveFile(file.id) : undefined}
-          forceHover={hoverCardId === file.id}
+          forceHover={hoverCardId === file.id || hoverCardId === file.name}
         />
       ))}
     </div>
@@ -276,8 +268,8 @@ function UploadInsightReportSheetPanel({
 
   const existingFiles = useMemo(() => {
     if (captureState) {
-      return captureState.existingFiles.map((file) => ({
-        id: file.name,
+      return captureState.existingFiles.map((file, index) => ({
+        id: `capture-${index}-${file.name}`,
         name: file.name,
         previewUrl: file.previewUrl,
         sizeLabel: file.sizeLabel,
@@ -388,12 +380,7 @@ function UploadInsightReportSheetPanel({
       data-figma-capture={figmaCapture ? "upload-insight-report-dialog" : undefined}
     >
       <SheetHeader className="shrink-0 gap-1.5 border-b border-gray-100 bg-white px-6 py-5 text-left">
-        <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-          <SheetTitle className="shrink-0 text-[18px] font-semibold text-gray-900">
-            Insight Reports
-          </SheetTitle>
-          {headerShareLink ? <InsightReportShareLink url={headerShareLink} /> : null}
-        </div>
+        <SheetTitle className="text-[18px] font-semibold text-gray-900">Insight Reports</SheetTitle>
         <SheetDescription className="text-[13px] leading-relaxed text-gray-500">
           Upload screenshots of your social media posts for this report.
         </SheetDescription>
@@ -404,7 +391,10 @@ function UploadInsightReportSheetPanel({
           <div className="min-w-0 space-y-6">
             {existingFiles.length ? (
               <div className="min-w-0 space-y-2">
-                <p className="text-[13px] font-semibold text-gray-800">Submitted Reports</p>
+                <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+                  <p className="shrink-0 text-[13px] font-semibold text-gray-800">Submitted Reports</p>
+                  {headerShareLink ? <InsightReportShareLink url={headerShareLink} /> : null}
+                </div>
                 <InsightReportImageGrid
                   files={existingFiles}
                   variant="submitted"
@@ -415,9 +405,7 @@ function UploadInsightReportSheetPanel({
             ) : null}
 
             <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand/80">
-                + Add more images
-              </p>
+              <p className="text-[13px] font-semibold text-gray-800">More Images</p>
               <FileUploadZone
                 title="Upload image here."
                 hint="Only PNG or JPG supported."

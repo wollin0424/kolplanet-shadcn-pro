@@ -18,11 +18,15 @@ html.figma-capture .flex.h-screen.overflow-hidden {
 }
 
 /* Campaign detail — keep absolute fill; give main a real height so content isn't clipped */
-html.figma-capture main.relative.flex.min-h-0.flex-1 {
+html.figma-capture main.relative.flex.min-h-0.flex-1,
+html.figma-capture main.flex.min-h-0.flex-1 {
   flex: 1 1 auto !important;
   overflow: visible !important;
   min-height: calc(100vh - 3.5rem) !important;
   height: auto !important;
+  /* App layout p-5 creates 20px gutters — demo is flush edge-to-edge in Figma */
+  padding: 0 !important;
+  gap: 0 !important;
 }
 
 html.figma-capture main .absolute.inset-0.flex.min-h-0.flex-col {
@@ -50,6 +54,8 @@ html.figma-capture .overflow-y-auto.min-h-0.flex-1 {
   height: auto !important;
   max-height: none !important;
   overflow: visible !important;
+  /* Keep hub inset below tabs / beside sidebar — only strip outer main p-5 */
+  padding: 1rem 1.25rem 1.25rem 1.25rem !important;
 }
 
 html.figma-capture .flex.h-full.min-h-0.flex-col.overflow-hidden {
@@ -259,13 +265,9 @@ html.figma-capture [data-figma-capture="upload-insight-report-dialog"] .min-h-0.
   max-height: none !important;
 }
 
-/* Insight report image card — pin hover overlay for Figma capture */
-html.figma-capture .figma-capture-insight-card-hovered .insight-card-preview-overlay {
-  background-color: rgb(0 0 0 / 0.35) !important;
-}
-
-html.figma-capture .figma-capture-insight-card-hovered .insight-card-preview-actions {
-  opacity: 1 !important;
+/* Insight report image card — pin highlight ring for Figma capture */
+html.figma-capture .ring-2.ring-brand\/35 {
+  --tw-ring-opacity: 1 !important;
 }
 
 /* Posting — Mirrored link tooltip pinned for Figma capture */

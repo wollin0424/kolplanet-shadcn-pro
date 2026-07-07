@@ -43,6 +43,7 @@ import {
   applyMockValidationToMasterLink,
   applyMockValidationToPostLinks,
   buildInsightReportShareUrl,
+  getInsightReportSharePageUrl,
   buildMockFetchedPostLinks,
   formatPostingPlanDate,
   getContentValidationTooltipDescription,
@@ -900,41 +901,103 @@ function ContentValidationCell({
   );
 }
 
-function InsightReportCell({ files }: { files?: string[] }) {
+function InsightReportTooltipContent({
+  shareUrl,
+  files,
+}: {
+  shareUrl?: string;
+  files: string[];
+}) {
+  const fullShareUrl = shareUrl ? getInsightReportSharePageUrl(shareUrl) : undefined;
+
+  const handleCopyLink = async () => {
+    if (!fullShareUrl) return;
+    try {
+      await navigator.clipboard.writeText(fullShareUrl);
+    } catch {
+      // Clipboard may be unavailable outside secure context.
+    }
+  };
+
+  return (
+    <div className="flex min-w-[240px] flex-col gap-2.5">
+      {fullShareUrl ? (
+        <div className="flex min-w-0 items-center gap-2 border-b border-gray-100 pb-2.5">
+          <a
+            href={fullShareUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="min-w-0 flex-1 truncate text-[12px] font-medium text-brand underline decoration-brand/40 underline-offset-[3px] transition-colors hover:decoration-brand/60"
+            title={fullShareUrl}
+          >
+            {fullShareUrl}
+          </a>
+          <button
+            type="button"
+            onClick={handleCopyLink}
+            className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-brand transition-colors hover:bg-brand-50"
+            aria-label="Copy share link"
+          >
+            <Copy size={14} strokeWidth={2} />
+          </button>
+        </div>
+      ) : null}
+      <ul className="flex flex-col gap-2">
+        {files.map((fileName, index) => (
+          <li key={`${fileName}-${index}`} className="flex min-w-0 items-center gap-2">
+            <Paperclip size={14} strokeWidth={2} className="shrink-0 text-gray-400" />
+            <span className="min-w-0 truncate text-[12px] font-medium leading-snug text-gray-800">
+              {fileName}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function InsightReportCell({
+  files,
+  shareUrl,
+  onClick,
+}: {
+  files?: string[];
+  shareUrl?: string;
+  onClick: () => void;
+}) {
   const reportFiles = files ?? [];
   const count = reportFiles.length;
 
-  if (count === 0) {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-[12px] text-gray-400">
-        <FileText size={14} className="shrink-0" strokeWidth={2} />
-        0
-      </span>
-    );
-  }
+  const badge = (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick();
+      }}
+      className={
+        count > 0
+          ? "inline-flex cursor-pointer items-center gap-1 rounded-full border border-brand/25 bg-brand-50 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-brand transition-colors hover:border-brand/40 hover:bg-brand-100/70"
+          : "inline-flex cursor-pointer items-center gap-1.5 text-[12px] text-gray-400 transition-colors hover:text-gray-600"
+      }
+      aria-label={
+        count > 0
+          ? `${count} insight ${count === 1 ? "report" : "reports"}`
+          : "Upload insight report"
+      }
+    >
+      <FileText size={count > 0 ? 12 : 14} className="shrink-0" strokeWidth={2} />
+      {count}
+    </button>
+  );
+
+  if (count === 0) return badge;
 
   return (
     <Tooltip>
-      <TooltipTrigger
-        render={
-          <span
-            className="inline-flex cursor-default items-center gap-1 rounded-full border border-brand/25 bg-brand-50 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-brand"
-            aria-label={`${count} insight ${count === 1 ? "report" : "reports"}`}
-          >
-            <FileText size={12} strokeWidth={2} className="shrink-0" />
-            {count}
-          </span>
-        }
-      />
-      <TooltipContent variant="light" side="top" align="start" className="min-w-[220px] px-3 py-2.5">
-        <ul className="flex flex-col gap-2">
-          {reportFiles.map((fileName) => (
-            <li key={fileName} className="flex min-w-0 items-center gap-2">
-              <Paperclip size={14} strokeWidth={2} className="shrink-0 text-gray-400" />
-              <span className="min-w-0 text-[12px] font-medium leading-snug text-gray-800">{fileName}</span>
-            </li>
-          ))}
-        </ul>
+      <TooltipTrigger render={badge} />
+      <TooltipContent variant="light" side="top" align="start" className="px-3 py-2.5">
+        <InsightReportTooltipContent shareUrl={shareUrl} files={reportFiles} />
       </TooltipContent>
     </Tooltip>
   );
@@ -1147,7 +1210,14 @@ function PostingHubTable({
                 <ContentValidationCell row={row} onAutoValidate={onAutoValidate} />
               </TableCell>
               <TableCell>
-                <InsightReportCell files={row.insightReports} />
+                <InsightReportCell
+                  files={row.insightReports}
+                  shareUrl={
+                    row.insightReportShareUrl ??
+                    (row.insightReports?.length ? buildInsightReportShareUrl(row.id) : undefined)
+                  }
+                  onClick={() => onUploadInsightReport(row)}
+                />
               </TableCell>
               <TableCell>
                 <PostingDateCell row={row} />
@@ -1210,6 +1280,7 @@ export default function CampaignHubPostingView({
   figmaPostingPostLinkTooltips = false,
   figmaOpenEditPostLink = false,
   figmaEditPostLinkRowId,
+  figmaEditPostLinkState = "full",
   figmaOpenUploadInsightReport = false,
   figmaInsightReportState,
   figmaUploadInsightRowId,
@@ -1227,6 +1298,7 @@ export default function CampaignHubPostingView({
   figmaPostingPostLinkTooltips?: boolean;
   figmaOpenEditPostLink?: boolean;
   figmaEditPostLinkRowId?: string;
+  figmaEditPostLinkState?: "empty" | "partial" | "full";
   figmaOpenUploadInsightReport?: boolean;
   figmaInsightReportState?: string;
   figmaUploadInsightRowId?: string;
@@ -1587,6 +1659,7 @@ export default function CampaignHubPostingView({
         initialLinks={editPostLinkRow?.postLinks}
         onSubmit={handleEditPostLinkSubmit}
         figmaCapture={figmaCapture && figmaOpenEditPostLink}
+        figmaEditPostLinkState={figmaEditPostLinkState}
       />
 
       <UploadInsightReportDialog
