@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { FileText, RefreshCcw, Upload, X } from "@/lib/icons";
+import { useCallback, useEffect, useRef, useState, type DragEvent, type ReactNode } from "react";
+import { FileText, RefreshCcw, Sparkles, Upload, X } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 export type FileUploadZoneVariant = "amber" | "brand";
@@ -43,6 +43,10 @@ const variantStyles: Record<
   },
 };
 
+/** AI auto-fill affordances — amber across the product (Sparkles, AI Fast Fill). */
+const compactAiIconClass = "border-amber-100/80 bg-amber-50/90 text-amber-600";
+const compactAiShellActiveClass = "border-amber-200/80 bg-amber-50/40";
+
 function validateFile(
   file: File,
   acceptedExtensions: string[],
@@ -75,51 +79,104 @@ function CompactUploadedFileCard({
   disabled,
   onReplace,
   onRemove,
+  dense = false,
+  variant = "amber",
 }: {
   file: File;
   previewUrl: string | null;
   disabled?: boolean;
   onReplace: () => void;
   onRemove: () => void;
+  dense?: boolean;
+  variant?: FileUploadZoneVariant;
 }) {
   return (
-    <div className="flex items-center gap-2.5 rounded-lg border border-dashed border-gray-200 bg-white px-3 py-2.5">
+    <div
+      className={cn(
+        "flex items-center gap-2.5 rounded-lg border border-gray-100 bg-white",
+        dense ? "px-2.5 py-2" : "gap-2.5 px-3 py-2.5 shadow-sm"
+      )}
+    >
       {previewUrl ? (
         <img
           src={previewUrl}
           alt={file.name}
-          className="size-10 shrink-0 rounded-md border border-gray-100 object-cover"
+          className={cn(
+            "shrink-0 rounded-md border border-gray-100 object-cover",
+            dense ? "size-8" : "size-10"
+          )}
         />
       ) : (
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-md border border-gray-100 bg-gray-50 text-gray-500">
-          <FileText size={16} strokeWidth={2} />
+        <span
+          className={cn(
+            "flex shrink-0 items-center justify-center rounded-md border",
+            dense ? "size-8" : "size-10",
+            dense ? compactAiIconClass : variantStyles[variant].iconBox
+          )}
+        >
+          <FileText size={dense ? 14 : 16} strokeWidth={2} />
         </span>
       )}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] text-gray-800">{file.name}</p>
-        <p className="mt-0.5 text-[11px] text-gray-400">{formatFileSize(file.size)}</p>
+        <p className={cn("truncate font-medium text-gray-800", dense ? "text-[12px]" : "text-[13px]")}>
+          {file.name}
+        </p>
+        <p className={cn("text-gray-400", dense ? "text-[10px]" : "mt-0.5 text-[11px]")}>
+          {formatFileSize(file.size)}
+        </p>
       </div>
       <div className="flex shrink-0 items-center gap-0.5">
         <button
           type="button"
           disabled={disabled}
           onClick={onReplace}
-          className="inline-flex size-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+          className={cn(
+            "inline-flex items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600 disabled:opacity-50",
+            dense ? "size-7" : "size-8"
+          )}
           aria-label="Replace file"
         >
-          <RefreshCcw size={14} strokeWidth={2} />
+          <RefreshCcw size={dense ? 12 : 14} strokeWidth={2} />
         </button>
         <button
           type="button"
           disabled={disabled}
           onClick={onRemove}
-          className="inline-flex size-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+          className={cn(
+            "inline-flex items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600 disabled:opacity-50",
+            dense ? "size-7" : "size-8"
+          )}
           aria-label="Remove file"
         >
-          <X size={14} strokeWidth={2} />
+          <X size={dense ? 12 : 14} strokeWidth={2} />
         </button>
       </div>
     </div>
+  );
+}
+
+function CompactUploadHeaderAction({
+  title,
+  disabled,
+  hasFile,
+  onOpen,
+}: {
+  title: string;
+  disabled?: boolean;
+  hasFile?: boolean;
+  onOpen: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onOpen}
+      aria-label={hasFile ? `Replace ${title}` : `Upload ${title}`}
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-amber-200/80 bg-amber-50/60 px-2.5 py-1.5 text-[11px] font-medium text-amber-800 transition-colors hover:bg-amber-50 disabled:opacity-50"
+    >
+      <Sparkles size={12} strokeWidth={2} />
+      {hasFile ? "Replace" : "Upload"}
+    </button>
   );
 }
 
@@ -141,7 +198,7 @@ export function FileUploadZone({
   optional = false,
   optionalHint = "Upload to auto-fill the fields below, or enter them manually.",
   compact = false,
-  compactEmphasis = "deemphasized",
+  compactPart = "assist-bar",
   className,
   disabled = false,
 }: {
@@ -162,7 +219,7 @@ export function FileUploadZone({
   optional?: boolean;
   optionalHint?: string;
   compact?: boolean;
-  compactEmphasis?: "deemphasized" | "selected";
+  compactPart?: "assist-bar" | "header-action" | "preview";
   className?: string;
   disabled?: boolean;
 }) {
@@ -246,91 +303,123 @@ export function FileUploadZone({
     ]
   );
 
+  const fileInput = (
+    <input
+      ref={inputRef}
+      type="file"
+      accept={accept}
+      multiple={multiple}
+      disabled={disabled}
+      className="sr-only"
+      onChange={(e) => {
+        applyFiles(e.target.files);
+        e.target.value = "";
+      }}
+    />
+  );
+
+  if (optional && compact && compactPart === "header-action") {
+    return (
+      <>
+        {fileInput}
+        <CompactUploadHeaderAction
+          title={title}
+          disabled={disabled}
+          hasFile={Boolean(resolvedFile)}
+          onOpen={() => inputRef.current?.click()}
+        />
+      </>
+    );
+  }
+
+  if (optional && compact && compactPart === "preview") {
+    if (!resolvedFile) return null;
+    return (
+      <div className={cn("mb-4 space-y-1", className)}>
+        {fileInput}
+        <CompactUploadedFileCard
+          dense
+          variant={variant}
+          file={resolvedFile}
+          previewUrl={previewUrl}
+          disabled={disabled}
+          onReplace={() => inputRef.current?.click()}
+          onRemove={() => {
+            setResolvedFile(null);
+            onErrorChange?.(null);
+          }}
+        />
+        {error ? <p className="text-[12px] text-red-600">{error}</p> : null}
+      </div>
+    );
+  }
+
   return (
-    <div className={cn("space-y-1.5", className)}>
+    <div className={cn(compact && optional ? "space-y-1" : "space-y-1.5", className)}>
       {optional && compact ? (
         <>
-          <input
-            ref={inputRef}
-            type="file"
-            accept={accept}
-            multiple={multiple}
-            disabled={disabled}
-            className="sr-only"
-            onChange={(e) => {
-              applyFiles(e.target.files);
-              e.target.value = "";
-            }}
-          />
-          <div
-            className={cn(
-              "rounded-lg border border-dashed px-3 py-3",
-              compactEmphasis === "selected"
-                ? "border-brand/25 bg-brand-50/30"
-                : "border-gray-200/90 bg-gray-50/40"
-            )}
-          >
-            {compactEmphasis === "deemphasized" ? (
-              <span className="inline-flex rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                Optional shortcut
-              </span>
-            ) : (
-              <span className="inline-flex rounded-md bg-brand/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand">
-                Auto-fill
-              </span>
-            )}
-            <p className="mt-2 text-[12px] leading-relaxed text-gray-600">
-              {compactEmphasis === "selected" ? (
-                <>
-                  Upload your document and we&apos;ll auto-fill the fields below.{" "}
-                  <span className="font-medium text-gray-700">Review and complete any missing info.</span>
-                </>
-              ) : (
-                <>
-                  Upload a document to auto-fill fields below.{" "}
-                  <span className="font-medium text-gray-700">You can skip this and type manually.</span>
-                </>
+          {fileInput}
+          {resolvedFile ? (
+            <CompactUploadedFileCard
+              dense
+              variant={variant}
+              file={resolvedFile}
+              previewUrl={previewUrl}
+              disabled={disabled}
+              onReplace={() => inputRef.current?.click()}
+              onRemove={() => {
+                setResolvedFile(null);
+                onErrorChange?.(null);
+              }}
+            />
+          ) : (
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (!disabled) setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                if (!disabled) applyFiles(e.dataTransfer.files);
+              }}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-lg border px-3 py-2.5",
+                dragOver
+                  ? compactAiShellActiveClass
+                  : "border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50/80"
               )}
-            </p>
-            {resolvedFile ? (
-              <div className="mt-3">
-                <CompactUploadedFileCard
-                  file={resolvedFile}
-                  previewUrl={previewUrl}
-                  disabled={disabled}
-                  onReplace={() => inputRef.current?.click()}
-                  onRemove={() => {
-                    setResolvedFile(null);
-                    onErrorChange?.(null);
-                  }}
-                />
-              </div>
-            ) : (
-              <button
-                type="button"
-                disabled={disabled}
-                onClick={() => inputRef.current?.click()}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  if (!disabled) setDragOver(true);
-                }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDragOver(false);
-                  if (!disabled) applyFiles(e.dataTransfer.files);
-                }}
+            >
+              <span
                 className={cn(
-                  "mt-3 inline-flex max-w-full items-center gap-1.5 rounded-md text-[13px] font-medium text-brand transition-colors hover:text-brand/80 disabled:opacity-50",
-                  dragOver && "underline"
+                  "flex size-9 shrink-0 items-center justify-center rounded-lg border",
+                  compactAiIconClass
                 )}
               >
-                <Upload size={14} strokeWidth={2} />
-                <span className="truncate">Upload {title}</span>
-              </button>
-            )}
-            <p className="mt-1.5 text-[11px] text-gray-400">{hint}</p>
-          </div>
+                <Sparkles size={16} strokeWidth={2} />
+              </span>
+              <div className="min-w-0 flex-1 leading-tight">
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <span className="truncate text-[12px] font-medium text-gray-800">
+                    Upload {title}
+                  </span>
+                  <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-gray-600">
+                    Optional
+                  </span>
+                </div>
+                <p className="mt-1 truncate text-[11px] leading-snug text-gray-400">
+                  {hint} · auto-fills below
+                </p>
+              </div>
+              <CompactUploadHeaderAction
+                title={title}
+                disabled={disabled}
+                hasFile={false}
+                onOpen={() => inputRef.current?.click()}
+              />
+            </div>
+          )}
           {error ? <p className="text-[12px] text-red-600">{error}</p> : null}
         </>
       ) : (

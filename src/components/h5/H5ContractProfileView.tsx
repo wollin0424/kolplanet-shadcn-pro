@@ -3,10 +3,6 @@
 import { useState } from "react";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import { InfluencerAvatar } from "@/components/InfluencerAvatar";
-import {
-  EntryModeSwitch,
-  type EntryMode,
-} from "@/components/OptionalUploadLayout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -82,16 +78,23 @@ function H5FieldGroup({
 function H5SectionCard({
   title,
   description,
+  headerAction,
   children,
 }: {
   title: string;
   description?: string;
+  headerAction?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)] sm:p-5">
       <header className="border-b border-gray-100 pb-4">
-        <h2 className="text-[16px] font-semibold leading-snug text-gray-900">{title}</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="min-w-0 flex-1 text-[16px] font-semibold leading-snug text-gray-900">
+            {title}
+          </h2>
+          {headerAction ? <div className="shrink-0">{headerAction}</div> : null}
+        </div>
         {description ? (
           <p className="mt-1.5 text-[12px] leading-relaxed text-gray-500">{description}</p>
         ) : null}
@@ -225,8 +228,6 @@ export function H5ContractProfileView({ kolId }: { kolId: string }) {
   const [shipStreet, setShipStreet] = useState("");
   const [idPassportFile, setIdPassportFile] = useState<File | null>(null);
   const [bankRecordFile, setBankRecordFile] = useState<File | null>(null);
-  const [identityEntryMode, setIdentityEntryMode] = useState<EntryMode>("manual");
-  const [paymentEntryMode, setPaymentEntryMode] = useState<EntryMode>("manual");
 
   const handleIdPassportUpload = (file: File | null) => {
     setIdPassportFile(file);
@@ -270,8 +271,7 @@ export function H5ContractProfileView({ kolId }: { kolId: string }) {
                 platform="Instagram"
                 size="lg"
                 fallback={data.influencer.handle.slice(1, 3).toUpperCase()}
-                avatarClassName="border-white/50"
-                className="ring-2 ring-white/25"
+                avatarClassName="border-0 after:hidden ring-2 ring-white/25"
               />
               <div className="min-w-0 flex-1">
                 <p
@@ -304,18 +304,14 @@ export function H5ContractProfileView({ kolId }: { kolId: string }) {
 
         <H5StepIndicator />
 
-        <H5SectionCard title="Section 1: Identity & Contact">
-          <H5IdentityTypeField value={identityType} onChange={setIdentityType} />
-          <EntryModeSwitch
-            mode={identityEntryMode}
-            onModeChange={setIdentityEntryMode}
-            uploadLabel="Upload ID/Passport"
-          />
-          {identityEntryMode === "upload" ? (
+        <H5SectionCard
+          title="Section 1: Identity & Contact"
+          description="Optionally upload an ID or passport (PDF, PNG, JPG) — AI can auto-fill the fields below to save time."
+          headerAction={
             <FileUploadZone
               optional
               compact
-              compactEmphasis="selected"
+              compactPart="header-action"
               title="ID/Passport"
               hint="PDF, PNG, JPG"
               accept={documentAccept}
@@ -324,7 +320,21 @@ export function H5ContractProfileView({ kolId }: { kolId: string }) {
               onFileChange={handleIdPassportUpload}
               variant="brand"
             />
-          ) : null}
+          }
+        >
+          <FileUploadZone
+            optional
+            compact
+            compactPart="preview"
+            title="ID/Passport"
+            hint="PDF, PNG, JPG"
+            accept={documentAccept}
+            acceptedExtensions={documentExtensions}
+            file={idPassportFile}
+            onFileChange={handleIdPassportUpload}
+            variant="brand"
+          />
+          <H5IdentityTypeField value={identityType} onChange={setIdentityType} />
           <H5FieldGroup>
             <H5RequiredLabel>Contracting Entity (Legal Name)</H5RequiredLabel>
             <Input
@@ -413,19 +423,13 @@ export function H5ContractProfileView({ kolId }: { kolId: string }) {
 
         <H5SectionCard
           title="Section 2: Payment Details"
-          description="These fields are used for your payment profile and contract payout instructions."
-        >
-          <EntryModeSwitch
-            mode={paymentEntryMode}
-            onModeChange={setPaymentEntryMode}
-            uploadLabel="Upload bank document"
-          />
-          {paymentEntryMode === "upload" ? (
+          description="These fields are used for your payment profile and contract payout instructions. Optionally upload a bank record (PDF, PNG, JPG) — AI can auto-fill the fields below to save time."
+          headerAction={
             <FileUploadZone
               optional
               compact
-              compactEmphasis="selected"
-              title="Bank Statement / Passbook"
+              compactPart="header-action"
+              title="Bank Record"
               hint="PDF, PNG, JPG"
               accept={documentAccept}
               acceptedExtensions={documentExtensions}
@@ -433,7 +437,20 @@ export function H5ContractProfileView({ kolId }: { kolId: string }) {
               onFileChange={handleBankRecordUpload}
               variant="amber"
             />
-          ) : null}
+          }
+        >
+          <FileUploadZone
+            optional
+            compact
+            compactPart="preview"
+            title="Bank Record"
+            hint="PDF, PNG, JPG"
+            accept={documentAccept}
+            acceptedExtensions={documentExtensions}
+            file={bankRecordFile}
+            onFileChange={handleBankRecordUpload}
+            variant="amber"
+          />
           <H5FieldGroup>
             <H5RequiredLabel>Beneficiary Name</H5RequiredLabel>
             <Input

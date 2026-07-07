@@ -18,10 +18,6 @@ import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { formInputClass, formTextareaClass } from "@/lib/formControls";
 import { cn } from "@/lib/utils";
 import { FileUploadZone } from "@/components/FileUploadZone";
-import {
-  EntryModeSwitch,
-  type EntryMode,
-} from "@/components/OptionalUploadLayout";
 import { Copy, ExternalLink, Info, X } from "@/lib/icons";
 
 type Tab = "Collaboration Details" | "KOL Information" | "Todo";
@@ -90,20 +86,27 @@ function ContractH5LinkBar({ h5KolId }: { h5KolId: string }) {
 
 function SectionTitle({
   title,
+  description,
   right,
   accent = false,
 }: {
   title: string;
+  description?: string;
   right?: React.ReactNode;
   accent?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-3">
-      <div className="flex min-w-0 items-center gap-3">
-        {accent ? <span className="h-9 w-1.5 shrink-0 rounded-full bg-brand" aria-hidden /> : null}
-        <h3 className="text-[14px] font-semibold tracking-tight text-gray-900">{title}</h3>
+    <div className="border-b border-gray-100 pb-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          {accent ? <span className="h-9 w-1.5 shrink-0 rounded-full bg-brand" aria-hidden /> : null}
+          <h3 className="text-[14px] font-semibold tracking-tight text-gray-900">{title}</h3>
+        </div>
+        {right ? <div className="shrink-0">{right}</div> : null}
       </div>
-      {right}
+      {description ? (
+        <p className="mt-1.5 text-[12px] leading-relaxed text-gray-500">{description}</p>
+      ) : null}
     </div>
   );
 }
@@ -286,8 +289,8 @@ export default function ContractInfoSheet({
   const [phoneCountryCode, setPhoneCountryCode] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [sameAsRecipientPhone, setSameAsRecipientPhone] = useState(false);
-  const [identityEntryMode, setIdentityEntryMode] = useState<EntryMode>("manual");
-  const [paymentEntryMode, setPaymentEntryMode] = useState<EntryMode>("manual");
+  const [idPassportFile, setIdPassportFile] = useState<File | null>(null);
+  const [bankRecordFile, setBankRecordFile] = useState<File | null>(null);
 
   const [beneficiaryName, setBeneficiaryName] = useState("");
   const [beneficiaryBank, setBeneficiaryBank] = useState("");
@@ -303,8 +306,6 @@ export default function ContractInfoSheet({
   const [shipCity, setShipCity] = useState("");
   const [shipZip, setShipZip] = useState("");
   const [shipStreet, setShipStreet] = useState("");
-
-  const aiFastFillEnabled = true;
 
   const headerHandle = useMemo(() => influencerHandle, [influencerHandle]);
 
@@ -576,16 +577,36 @@ export default function ContractInfoSheet({
                 <SectionTitle
                   accent
                   title="Section 1: Identity & Contact"
+                  description="Optionally upload an ID or passport (PDF, PNG, JPG) — AI can auto-fill the fields below to save time."
                   right={
-                    aiFastFillEnabled ? (
-                      <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 border border-amber-200">
-                        ⚡ AI Fast Fill Enabled
-                      </span>
-                    ) : null
+                    <FileUploadZone
+                      optional
+                      compact
+                      compactPart="header-action"
+                      title="ID/Passport"
+                      hint="PDF, PNG, JPG"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      acceptedExtensions={[".pdf", ".png", ".jpg", ".jpeg"]}
+                      file={idPassportFile}
+                      onFileChange={setIdPassportFile}
+                      variant="brand"
+                    />
                   }
                 />
 
                 <div className="space-y-0">
+                  <FileUploadZone
+                    optional
+                    compact
+                    compactPart="preview"
+                    title="ID/Passport"
+                    hint="PDF, PNG, JPG"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    acceptedExtensions={[".pdf", ".png", ".jpg", ".jpeg"]}
+                    file={idPassportFile}
+                    onFileChange={setIdPassportFile}
+                    variant="brand"
+                  />
                   <FormFieldGroup>
                     <FieldLabel required>Identity Type</FieldLabel>
                     <Select value={identityType} onValueChange={(v) => setIdentityType(v ?? "A (Individual)")}>
@@ -599,26 +620,6 @@ export default function ContractInfoSheet({
                       </SelectContent>
                     </Select>
                   </FormFieldGroup>
-
-                  <div className="border-b border-gray-100 py-6">
-                    <EntryModeSwitch
-                      mode={identityEntryMode}
-                      onModeChange={setIdentityEntryMode}
-                      uploadLabel="Upload ID/Passport"
-                    />
-                    {identityEntryMode === "upload" ? (
-                      <div className="mt-4">
-                        <FileUploadZone
-                          optional
-                          compact
-                          compactEmphasis="selected"
-                          title="ID/Passport"
-                          hint="PDF, PNG, JPG"
-                          variant="brand"
-                        />
-                      </div>
-                    ) : null}
-                  </div>
 
                   <FormFieldGroup>
                     <FieldLabel required>Contract Entity (Legal Name)</FieldLabel>
@@ -720,36 +721,36 @@ export default function ContractInfoSheet({
                 <SectionTitle
                   accent
                   title="Section 2: Payment Details"
+                  description="These fields are used for your payment profile and contract payout instructions. Optionally upload a bank record (PDF, PNG, JPG) — AI can auto-fill the fields below to save time."
                   right={
-                    aiFastFillEnabled ? (
-                      <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 border border-amber-200">
-                        ⚡ AI Fast Fill Enabled
-                      </span>
-                    ) : null
+                    <FileUploadZone
+                      optional
+                      compact
+                      compactPart="header-action"
+                      title="Bank Record"
+                      hint="PDF, PNG, JPG"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      acceptedExtensions={[".pdf", ".png", ".jpg", ".jpeg"]}
+                      file={bankRecordFile}
+                      onFileChange={setBankRecordFile}
+                      variant="amber"
+                    />
                   }
                 />
 
                 <div className="space-y-0">
-                  <div className="border-b border-gray-100 py-6">
-                    <EntryModeSwitch
-                      mode={paymentEntryMode}
-                      onModeChange={setPaymentEntryMode}
-                      uploadLabel="Upload bank document"
-                    />
-                    {paymentEntryMode === "upload" ? (
-                      <div className="mt-4">
-                        <FileUploadZone
-                          optional
-                          compact
-                          compactEmphasis="selected"
-                          title="Bank Statement / Passbook"
-                          hint="PDF, PNG, JPG"
-                          variant="amber"
-                        />
-                      </div>
-                    ) : null}
-                  </div>
-
+                  <FileUploadZone
+                    optional
+                    compact
+                    compactPart="preview"
+                    title="Bank Record"
+                    hint="PDF, PNG, JPG"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    acceptedExtensions={[".pdf", ".png", ".jpg", ".jpeg"]}
+                    file={bankRecordFile}
+                    onFileChange={setBankRecordFile}
+                    variant="amber"
+                  />
                   <FormFieldGroup>
                     <FieldLabel required>Beneficiary Name</FieldLabel>
                     <Input
