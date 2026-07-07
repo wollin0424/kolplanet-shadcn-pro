@@ -34,6 +34,7 @@ import ShippingDetailsSheet, {
   type ShippingAddress,
   type ShippingFulfillment,
 } from "@/components/ShippingDetailsSheet";
+import ContractInfoSheet from "@/components/ContractInfoSheet";
 
 type ContractCardStatus =
   | "Awaiting Info"
@@ -46,6 +47,7 @@ type ContractCard = {
   id: string;
   name: string;
   handle: string;
+  h5KolId: string;
   status: ContractCardStatus;
   manager: string;
   relationship: KolRelationship;
@@ -88,6 +90,7 @@ const MOCK_CARDS: ContractCard[] = [
     id: "c1",
     name: "Amelia Stone",
     handle: "@instagram.ins",
+    h5KolId: "1",
     status: "Awaiting Info",
     manager: "Wollin",
     relationship: "Direct",
@@ -100,6 +103,7 @@ const MOCK_CARDS: ContractCard[] = [
     id: "c2",
     name: "Ethan Carter",
     handle: "@foodie.my",
+    h5KolId: "2",
     status: "Pending Draft",
     manager: "Wollin",
     relationship: "Manager",
@@ -119,6 +123,7 @@ const MOCK_CARDS: ContractCard[] = [
     id: "c3",
     name: "Maya Lin",
     handle: "@lifestyle.id",
+    h5KolId: "3",
     status: "Awaiting Sending",
     manager: "Wollin",
     relationship: "MCN",
@@ -137,6 +142,7 @@ const MOCK_CARDS: ContractCard[] = [
     id: "c4",
     name: "Noah Brooks",
     handle: "@creator.ph",
+    h5KolId: "4",
     status: "Signing",
     manager: "Wollin",
     relationship: "Direct",
@@ -156,6 +162,7 @@ const MOCK_CARDS: ContractCard[] = [
     id: "c5",
     name: "Sofia Reyes",
     handle: "@runner.in",
+    h5KolId: "5",
     status: "Countersigned",
     manager: "Wollin",
     relationship: "Manager",
@@ -175,6 +182,7 @@ const MOCK_CARDS: ContractCard[] = [
     id: "c6",
     name: "Liam Park",
     handle: "@daily.vlog",
+    h5KolId: "6",
     status: "Signing",
     manager: "Wollin",
     relationship: "MCN",
@@ -200,9 +208,11 @@ function contractFiles(card: ContractCard): string[] {
 function ContractInfluencerCard({
   card,
   onEditShipping,
+  onOpenContractInfo,
 }: {
   card: ContractCard;
   onEditShipping: () => void;
+  onOpenContractInfo: () => void;
 }) {
   const statusBadgeClass = STATUS_BADGE[card.status];
   const initials = card.name
@@ -297,6 +307,7 @@ function ContractInfluencerCard({
       <div className="mt-4 flex items-stretch gap-2">
         <button
           type="button"
+          onClick={onOpenContractInfo}
           className="flex h-10 min-w-0 flex-1 items-center justify-center rounded-lg border border-brand bg-white px-3 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
         >
           {card.actionLabel}
@@ -331,9 +342,11 @@ export default function CampaignHubContractView({
   const [identityFilter, setIdentityFilter] = useState("All");
   const [query, setQuery] = useState("");
   const [shippingCardId, setShippingCardId] = useState<string | null>(null);
+  const [contractInfoCardId, setContractInfoCardId] = useState<string | null>(null);
   const [cards, setCards] = useState(MOCK_CARDS);
 
   const shippingCard = cards.find((card) => card.id === shippingCardId) ?? null;
+  const contractInfoCard = cards.find((card) => card.id === contractInfoCardId) ?? null;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -394,6 +407,7 @@ export default function CampaignHubContractView({
                 key={card.id}
                 card={card}
                 onEditShipping={() => setShippingCardId(card.id)}
+                onOpenContractInfo={() => setContractInfoCardId(card.id)}
               />
             ))}
           </div>
@@ -419,6 +433,16 @@ export default function CampaignHubContractView({
           }}
         />
       ) : null}
+
+      <ContractInfoSheet
+        open={contractInfoCardId !== null}
+        onOpenChange={(open) => {
+          if (!open) setContractInfoCardId(null);
+        }}
+        influencerHandle={contractInfoCard?.handle}
+        influencerName={contractInfoCard?.name}
+        h5KolId={contractInfoCard?.h5KolId}
+      />
     </TooltipProvider>
   );
 }

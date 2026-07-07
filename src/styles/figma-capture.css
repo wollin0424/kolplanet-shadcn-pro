@@ -265,9 +265,13 @@ html.figma-capture [data-figma-capture="upload-insight-report-dialog"] .min-h-0.
   max-height: none !important;
 }
 
-/* Insight report image card — pin highlight ring for Figma capture */
-html.figma-capture .ring-2.ring-brand\/35 {
-  --tw-ring-opacity: 1 !important;
+/* Insight report image card — pin hover overlay for Figma capture */
+html.figma-capture .figma-capture-insight-card-hovered .insight-card-preview-overlay {
+  background-color: rgb(0 0 0 / 0.35) !important;
+}
+
+html.figma-capture .figma-capture-insight-card-hovered .insight-card-preview-actions {
+  opacity: 1 !important;
 }
 
 /* Posting — Mirrored link tooltip pinned for Figma capture */

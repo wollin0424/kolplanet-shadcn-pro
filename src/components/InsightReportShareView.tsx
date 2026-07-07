@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { InsightReportThumbnail } from "@/components/InsightReportThumbnail";
 import { Images, X } from "@/lib/icons";
 import { FORM_FIELD_RADIUS } from "@/lib/formControls";
 import {
@@ -25,17 +26,17 @@ function InsightReportShareImageCard({
         FORM_FIELD_RADIUS
       )}
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
+      <div className="relative">
         <button
           type="button"
           onClick={() => onPreview(file)}
-          className="block size-full cursor-zoom-in"
+          className="block w-full cursor-zoom-in"
           aria-label={`Preview ${file.name}`}
         >
-          <img src={file.previewUrl} alt="" className="size-full object-cover" />
+          <InsightReportThumbnail src={file.previewUrl} alt={file.name} />
         </button>
         {file.source === "H5" ? (
-          <span className="pointer-events-none absolute left-2 top-2 rounded-md bg-sky-600 px-1.5 py-0.5 text-[10px] font-semibold leading-tight text-white shadow-sm">
+          <span className="pointer-events-none absolute left-2 top-2 z-10 rounded-md bg-sky-600 px-1.5 py-0.5 text-[10px] font-semibold leading-tight text-white shadow-sm">
             Submitted by KOL
           </span>
         ) : null}
@@ -173,7 +174,7 @@ export function InsightReportShareView({ rowId }: { rowId: string }) {
                     {files.length}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4">
                   {files.map((file) => (
                     <InsightReportShareImageCard
                       key={file.id}

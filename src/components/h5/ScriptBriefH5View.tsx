@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { H5InfluencerCard } from "@/components/h5/H5InfluencerCard";
+import { H5ContractProfileView } from "@/components/h5/H5ContractProfileView";
 import { H5PageShell } from "@/components/h5/H5PageShell";
 import { H5PostingReportingView } from "@/components/h5/H5PostingReportingView";
 import { H5SectionHeading, H5SectionNote } from "@/components/h5/H5SectionHeading";
@@ -598,58 +599,7 @@ function ScriptBriefH5Overview({
 }
 
 function ScriptBriefH5Contract({ kolId }: { kolId: string }) {
-  const overviewHref = `/h5/kol-info/${encodeURIComponent(kolId)}`;
-
-  return (
-    <H5PageShell backHref={overviewHref} pageTitle="Contract & Payment">
-      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-        <H5SectionHeading
-          icon={CreditCard}
-          title="Contract & Payment Details"
-          description="Complete your agreement and payout information so payment can be processed after delivery."
-          className="mb-0"
-        />
-      </section>
-
-      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-        <h3 className="text-[14px] font-semibold text-gray-900">Collaboration details</h3>
-        <p className="mt-2 text-[12px] leading-relaxed text-gray-500">
-          Commercial terms are provided by the brand team. Review the agreement amount and deliverables
-          before confirming.
-        </p>
-        <div className="mt-4 space-y-3">
-          <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
-            <p className="text-[11px] font-medium text-gray-500">Total amount</p>
-            <p className="mt-1 text-[14px] font-semibold tabular-nums text-gray-900">USD 2,500</p>
-          </div>
-          <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
-            <p className="text-[11px] font-medium text-gray-500">Deliverables</p>
-            <p className="mt-1 text-[13px] leading-relaxed text-gray-800">
-              1 × Instagram Reel + 1 × Story mention
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-        <h3 className="text-[14px] font-semibold text-gray-900">Payment details</h3>
-        <p className="mt-2 text-[12px] leading-relaxed text-gray-500">
-          Add the bank or wallet details used for payout. Fields below are placeholders for the H5 form.
-        </p>
-        <div className="mt-4 space-y-3">
-          {["Account holder name", "Bank name", "Account number"].map((label) => (
-            <div key={label} className="space-y-1.5">
-              <label className="text-[12px] font-medium text-gray-700">{label}</label>
-              <div className="h-10 rounded-lg border border-dashed border-gray-200 bg-gray-50/80" />
-            </div>
-          ))}
-        </div>
-        <Button type="button" className="mt-5 h-10 w-full text-[13px] font-semibold">
-          Submit details
-        </Button>
-      </section>
-    </H5PageShell>
-  );
+  return <H5ContractProfileView kolId={kolId} />;
 }
 
 function ScriptBriefH5Guidelines({ kolId }: { kolId: string }) {

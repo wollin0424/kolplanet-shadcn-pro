@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { FileUploadZone } from "@/components/FileUploadZone";
+import { InsightReportThumbnail } from "@/components/InsightReportThumbnail";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -13,7 +14,7 @@ import {
 } from "@/components/ui/sheet";
 import { FORM_FIELD_RADIUS } from "@/lib/formControls";
 import { getH5PostingState, removeH5InsightFile, subscribeH5PostingChanges, type H5InsightFile } from "@/lib/h5PostingSubmissions";
-import { X } from "@/lib/icons";
+import { Eye, Trash2 } from "@/lib/icons";
 import {
   mergeInsightReportFileNames,
   mergeInsightReportImagesFromRecords,
@@ -28,6 +29,10 @@ import {
   openInsightReportSharePage,
   resolveInsightReportShareHref,
 } from "@/lib/postingHubMock";
+import {
+  getWebInsightFiles,
+  setWebInsightFiles as persistWebInsightFiles,
+} from "@/lib/webInsightSubmissions";
 import { cn } from "@/lib/utils";
 
 const ACCEPT_INPUT = "image/png,image/jpeg,image/jpg,image/webp";
@@ -69,6 +74,14 @@ function buildInitialWebInsightFiles(
   h5Files: H5InsightFile[],
   rowId?: string
 ): WebInsightFileRecord[] {
+  const stored = rowId ? getWebInsightFiles(rowId) : [];
+  if (stored.length > 0) {
+    const h5Names = new Set(
+      h5Files.filter((file) => file.locked !== false).map((file) => file.name)
+    );
+    return stored.filter((file) => !h5Names.has(file.name));
+  }
+
   return splitInitialWebInsightFileNames(initialFiles, h5Files).map((name) => ({
     name,
     previewUrl: getInsightReportPreviewUrl(rowId ?? "", name),
@@ -88,7 +101,7 @@ function InsightReportImageCard({
   forceHover?: boolean;
 }) {
   const isSubmitted = variant === "submitted";
-  const showRemove = !isSubmitted && Boolean(onRemove);
+  const showRemove = Boolean(onRemove);
 
   const openPreview = () => {
     window.open(file.previewUrl, "_blank", "noopener,noreferrer");
@@ -97,40 +110,51 @@ function InsightReportImageCard({
   return (
     <div
       className={cn(
-        "overflow-hidden border border-gray-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
+        "group/file overflow-hidden border border-gray-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
         FORM_FIELD_RADIUS,
         !isSubmitted && "border-brand/30",
-        forceHover && "ring-2 ring-brand/35"
+        forceHover && "figma-capture-insight-card-hovered"
       )}
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden">
-        <button
-          type="button"
-          onClick={openPreview}
-          className="block size-full"
-          aria-label={`Preview ${file.name}`}
-        >
-          <img src={file.previewUrl} alt="" className="size-full object-cover" />
-        </button>
+      <div className="relative">
+        <InsightReportThumbnail src={file.previewUrl} alt={file.name} />
         {file.source === "H5" ? (
-          <span className="pointer-events-none absolute left-1.5 top-1.5 z-10 max-w-[calc(100%-0.75rem)] rounded-md bg-sky-600 px-1.5 py-0.5 text-[9px] font-semibold leading-tight text-white shadow-sm">
+          <span className="pointer-events-none absolute left-1 top-1 z-10 max-w-[calc(100%-0.5rem)] rounded bg-sky-600 px-1 py-px text-[8px] font-semibold leading-tight text-white shadow-sm">
             Submitted by KOL
           </span>
         ) : null}
-        {showRemove ? (
-          <button
-            type="button"
-            onClick={() => onRemove?.()}
-            className="absolute right-1.5 top-1.5 inline-flex size-7 items-center justify-center rounded-full bg-black/60 text-white shadow-sm backdrop-blur-sm transition-colors active:bg-black/75"
-            aria-label={`Remove ${file.name}`}
-          >
-            <X size={14} strokeWidth={2.5} />
-          </button>
-        ) : null}
+        <div className="insight-card-preview-overlay absolute inset-0 z-10 flex items-center justify-center gap-1.5 bg-black/0 transition-colors group-hover/file:bg-black/35">
+          <div className="insight-card-preview-actions flex items-center gap-1.5 opacity-0 transition-opacity group-hover/file:opacity-100">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                openPreview();
+              }}
+              className="inline-flex size-8 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+              aria-label={`Preview ${file.name}`}
+            >
+              <Eye size={14} strokeWidth={2} />
+            </button>
+            {showRemove ? (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onRemove?.();
+                }}
+                className="inline-flex size-8 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+                aria-label={`Remove ${file.name}`}
+              >
+                <Trash2 size={14} strokeWidth={2} />
+              </button>
+            ) : null}
+          </div>
+        </div>
       </div>
-      <div className="px-2 py-1.5">
-        <p className="truncate text-[11px] font-medium text-gray-800">{file.name}</p>
-        <p className="text-[10px] text-gray-400">{file.sizeLabel}</p>
+      <div className="px-2 py-1">
+        <p className="truncate text-[10px] font-medium text-gray-800">{file.name}</p>
+        <p className="text-[9px] text-gray-400">{file.sizeLabel}</p>
       </div>
     </div>
   );
@@ -241,16 +265,18 @@ function UploadInsightReportSheetPanel({
   const [h5InsightFiles, setH5InsightFiles] = useState(() =>
     h5KolId && !figmaCapture ? getH5PostingState(h5KolId).insightDraftFiles : []
   );
-  const [pendingFile, setPendingFile] = useState<InsightReportImage | null>(() =>
+  const [pendingFiles, setPendingFiles] = useState<InsightReportImage[]>(() =>
     captureState?.pendingFile
-      ? {
-          id: `pending-${captureState.pendingFile.name}`,
-          name: captureState.pendingFile.name,
-          previewUrl: captureState.pendingFile.previewUrl,
-          sizeLabel: captureState.pendingFile.sizeLabel,
-          source: captureState.pendingFile.source,
-        }
-      : null
+      ? [
+          {
+            id: `pending-${captureState.pendingFile.name}`,
+            name: captureState.pendingFile.name,
+            previewUrl: captureState.pendingFile.previewUrl,
+            sizeLabel: captureState.pendingFile.sizeLabel,
+            source: captureState.pendingFile.source,
+          },
+        ]
+      : []
   );
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | undefined>(
@@ -316,6 +342,9 @@ function UploadInsightReportSheetPanel({
 
     const nextWebInsightFiles = webInsightFiles.filter((file) => file.name !== target.name);
     setWebInsightFiles(nextWebInsightFiles);
+    if (rowId) {
+      persistWebInsightFiles(rowId, nextWebInsightFiles);
+    }
     const nextNames = mergeInsightReportFileNames(
       nextWebInsightFiles.map((file) => file.name),
       h5InsightFiles
@@ -324,42 +353,84 @@ function UploadInsightReportSheetPanel({
     onSubmit(nextNames);
   };
 
-  const handleStageFile = (file: File | null) => {
-    if (!file) return;
+  const handleStageFiles = (files: File[]) => {
+    if (!files.length) return;
 
-    if (existingFileNames.includes(file.name) || pendingFile?.name === file.name) {
-      setUploadError("This image is already in the list.");
+    const pendingNames = new Set(pendingFiles.map((file) => file.name));
+    const validFiles = files.filter(
+      (file) => !existingFileNames.includes(file.name) && !pendingNames.has(file.name)
+    );
+    const skippedCount = files.length - validFiles.length;
+
+    if (!validFiles.length) {
+      setUploadError(
+        skippedCount === 1
+          ? "This image is already in the list."
+          : "These images are already in the list."
+      );
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result !== "string") return;
-      setPendingFile({
-        id: `pending-${file.name}`,
-        name: file.name,
-        previewUrl: reader.result,
-        sizeLabel: formatBytes(file.size),
-        source: "Web",
+    const readers = validFiles.map(
+      (file) =>
+        new Promise<InsightReportImage>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (typeof reader.result !== "string") {
+              reject(new Error("Failed to read file."));
+              return;
+            }
+            resolve({
+              id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+              name: file.name,
+              previewUrl: reader.result,
+              sizeLabel: formatBytes(file.size),
+              source: "Web",
+            });
+          };
+          reader.onerror = () => reject(new Error("Failed to read file."));
+          reader.readAsDataURL(file);
+        })
+    );
+
+    void Promise.all(readers)
+      .then((nextPendingFiles) => {
+        setPendingFiles((current) => [...current, ...nextPendingFiles]);
+        if (skippedCount > 0) {
+          setUploadError(
+            skippedCount === 1
+              ? "1 duplicate image was skipped."
+              : `${skippedCount} duplicate images were skipped.`
+          );
+          return;
+        }
+        setUploadError(null);
+      })
+      .catch(() => {
+        setUploadError("Failed to read one or more images. Please try again.");
       });
-      setUploadError(null);
-    };
-    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePending = (fileId: string) => {
+    setPendingFiles((current) => current.filter((file) => file.id !== fileId));
   };
 
   const handleSave = () => {
-    if (!pendingFile) return;
+    if (!pendingFiles.length) return;
 
     const nextWebInsightFiles = [
       ...webInsightFiles,
-      {
-        name: pendingFile.name,
-        previewUrl: pendingFile.previewUrl,
-        sizeLabel: pendingFile.sizeLabel,
-      },
+      ...pendingFiles.map(({ name, previewUrl, sizeLabel }) => ({
+        name,
+        previewUrl,
+        sizeLabel,
+      })),
     ];
     setWebInsightFiles(nextWebInsightFiles);
-    setPendingFile(null);
+    if (rowId) {
+      persistWebInsightFiles(rowId, nextWebInsightFiles);
+    }
+    setPendingFiles([]);
     const nextNames = mergeInsightReportFileNames(
       nextWebInsightFiles.map((file) => file.name),
       h5InsightFiles
@@ -407,25 +478,31 @@ function UploadInsightReportSheetPanel({
             <div className="space-y-2">
               <p className="text-[13px] font-semibold text-gray-800">More Images</p>
               <FileUploadZone
-                title="Upload image here."
-                hint="Only PNG or JPG supported."
+                title="Upload images here."
+                hint="PNG or JPG. Select or drop multiple files at once."
                 accept={ACCEPT_INPUT}
                 acceptedExtensions={ACCEPTED_EXTENSIONS}
                 maxBytes={20 * 1024 * 1024}
-                onFileChange={handleStageFile}
+                multiple
+                onFilesChange={handleStageFiles}
                 error={uploadError}
                 onErrorChange={setUploadError}
                 variant="brand"
               />
             </div>
 
-            {pendingFile ? (
+            {pendingFiles.length ? (
               <div className="space-y-2">
-                <p className="text-[13px] font-semibold text-gray-800">Drafts</p>
+                <p className="text-[13px] font-semibold text-gray-800">
+                  Drafts
+                  <span className="ml-1.5 text-[12px] font-medium tabular-nums text-gray-400">
+                    ({pendingFiles.length})
+                  </span>
+                </p>
                 <InsightReportImageGrid
-                  files={[pendingFile]}
+                  files={pendingFiles}
                   variant="draft"
-                  onRemoveFile={() => setPendingFile(null)}
+                  onRemoveFile={handleRemovePending}
                 />
               </div>
             ) : null}
@@ -445,10 +522,12 @@ function UploadInsightReportSheetPanel({
             type="button"
             variant="brand"
             className="h-9 min-w-[88px] text-[13px]"
-            disabled={!pendingFile && !figmaCapture}
+            disabled={!pendingFiles.length && !figmaCapture}
             onClick={handleSave}
           >
-            Save &amp; Upload
+            {pendingFiles.length > 1
+              ? `Save & Upload (${pendingFiles.length})`
+              : "Save & Upload"}
           </Button>
         </SheetFooter>
       </div>

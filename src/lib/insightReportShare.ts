@@ -1,10 +1,19 @@
 import {
-  mergeInsightReportImages,
+  mergeInsightReportImagesFromRecords,
   parseKolIdFromH5Path,
+  splitInitialWebInsightFileNames,
   type InsightReportImage,
 } from "@/lib/insightReportSync";
 import { getH5PostingState, subscribeH5InsightSync } from "@/lib/h5PostingSubmissions";
-import { POSTING_HUB_MOCK_ROWS, type PostingHubRow } from "@/lib/postingHubMock";
+import {
+  POSTING_HUB_MOCK_ROWS,
+  getInsightReportPreviewUrl,
+  type PostingHubRow,
+} from "@/lib/postingHubMock";
+import {
+  getWebInsightFiles,
+  subscribeWebInsightChanges,
+} from "@/lib/webInsightSubmissions";
 
 export type InsightReportSharePayload = {
   rowId: string;
@@ -24,13 +33,22 @@ export function getInsightReportSharePayload(rowId: string): InsightReportShareP
 
   const kolId = row.h5Path ? parseKolIdFromH5Path(row.h5Path) : undefined;
   const h5Files = kolId ? getH5PostingState(kolId).insightDraftFiles : [];
+  const storedWebFiles = getWebInsightFiles(rowId);
+  const webFiles =
+    storedWebFiles.length > 0
+      ? storedWebFiles
+      : splitInitialWebInsightFileNames(row.insightReports, h5Files).map((name) => ({
+          name,
+          previewUrl: getInsightReportPreviewUrl(row.id, name),
+          sizeLabel: "2.1 KB",
+        }));
 
   return {
     rowId: row.id,
     influencerName: row.name,
     influencerHandle: row.handle,
     platform: row.platform,
-    files: mergeInsightReportImages(row.insightReports ?? [], h5Files, row.id),
+    files: mergeInsightReportImagesFromRecords(webFiles, h5Files),
   };
 }
 
@@ -40,9 +58,19 @@ export function subscribeInsightReportShareChanges(
 ): () => void {
   const row = getPostingHubRowById(rowId);
   const kolId = row?.h5Path ? parseKolIdFromH5Path(row.h5Path) : undefined;
-  if (!kolId) return () => undefined;
 
-  return subscribeH5InsightSync((changedKolId) => {
+  const unsubWeb = subscribeWebInsightChanges((changedRowId) => {
+    if (changedRowId === rowId) onChange();
+  });
+
+  if (!kolId) return unsubWeb;
+
+  const unsubH5 = subscribeH5InsightSync((changedKolId) => {
     if (changedKolId === kolId) onChange();
   });
+
+  return () => {
+    unsubWeb();
+    unsubH5();
+  };
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useEffect, useMemo, useState } from "react";
+import { Sheet, SheetClose, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,11 +18,15 @@ import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { formInputClass, formTextareaClass } from "@/lib/formControls";
 import { cn } from "@/lib/utils";
 import { FileUploadZone } from "@/components/FileUploadZone";
-import { Copy } from "@/lib/icons";
+import {
+  EntryModeSwitch,
+  type EntryMode,
+} from "@/components/OptionalUploadLayout";
+import { Copy, ExternalLink, Info, X } from "@/lib/icons";
 
-type Tab = "Collaboration Details" | "KOL Information";
+type Tab = "Collaboration Details" | "KOL Information" | "Todo";
 
-function TabButton({
+function ContractInfoTabButton({
   active,
   children,
   onClick,
@@ -36,10 +40,10 @@ function TabButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors",
+        "inline-flex h-9 shrink-0 items-center border-b-2 px-2.5 text-[12px] font-medium leading-none transition-colors",
         active
-          ? "bg-brand text-white"
-          : "text-gray-600 hover:bg-gray-50 border border-transparent hover:border-gray-100"
+          ? "border-brand text-gray-900"
+          : "border-transparent text-gray-500 hover:text-gray-800"
       )}
     >
       {children}
@@ -47,45 +51,39 @@ function TabButton({
   );
 }
 
-function OptionPills({
-  value,
-  onChange,
-  options,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-}) {
+function ContractH5LinkBar({ h5KolId }: { h5KolId: string }) {
+  const path = `/h5/kol-info/${encodeURIComponent(h5KolId)}?view=contract`;
+
+  const handleCopy = async () => {
+    const copyValue =
+      typeof window !== "undefined" ? `${window.location.origin}${path}` : path;
+    try {
+      await navigator.clipboard.writeText(copyValue);
+    } catch {
+      // Clipboard may be unavailable outside secure context.
+    }
+  };
+
   return (
-    <div className="flex flex-wrap gap-2.5">
-      {options.map((o) => {
-        const active = o.value === value;
-        return (
-          <button
-            key={o.value}
-            type="button"
-            onClick={() => onChange(o.value)}
-            className={cn(
-              "inline-flex items-center rounded-full pl-0 pr-3 py-1.5 text-[12px] font-medium transition-colors",
-              active
-                ? "bg-transparent text-brand"
-                : "bg-transparent text-gray-600 hover:bg-gray-50"
-            )}
-          >
-            <span
-              className={cn(
-                "mr-2 h-4 w-4 shrink-0 rounded-full border flex items-center justify-center",
-                active ? "border-brand bg-white" : "border-gray-300 bg-white"
-              )}
-            >
-              {active ? (
-                <span className="h-2 w-2 rounded-full bg-brand" />
-              ) : null}
-            </span>
-            {o.label}
-          </button>
-        );
-      })}
+    <div className="flex shrink-0 items-center gap-1.5">
+      <span className="text-[11px] text-gray-500">H5 Link:</span>
+      <a
+        href={path}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex size-7 items-center justify-center rounded-md text-brand transition-colors hover:bg-brand-50"
+        aria-label="Open H5 contract page"
+      >
+        <ExternalLink size={14} strokeWidth={2} />
+      </a>
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="inline-flex items-center gap-1 text-[11px] text-gray-500 transition-colors hover:text-gray-700"
+      >
+        <Copy size={12} />
+        Copy
+      </button>
     </div>
   );
 }
@@ -93,27 +91,111 @@ function OptionPills({
 function SectionTitle({
   title,
   right,
+  accent = false,
 }: {
   title: string;
   right?: React.ReactNode;
+  accent?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <h3 className="text-[12px] font-semibold text-gray-800">{title}</h3>
+    <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-3">
+      <div className="flex min-w-0 items-center gap-3">
+        {accent ? <span className="h-9 w-1.5 shrink-0 rounded-full bg-brand" aria-hidden /> : null}
+        <h3 className="text-[14px] font-semibold tracking-tight text-gray-900">{title}</h3>
+      </div>
       {right}
     </div>
   );
 }
 
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <div className="text-[12px] font-medium text-gray-700">{children}</div>;
+function FieldLabel({
+  children,
+  hint,
+  required = false,
+}: {
+  children: React.ReactNode;
+  hint?: string;
+  required?: boolean;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="text-[13px] font-medium leading-snug text-gray-800">
+        {children}
+        {required ? <span className="ml-0.5 text-red-500">*</span> : null}
+      </div>
+      {hint ? <p className="text-[11px] leading-relaxed text-gray-400">{hint}</p> : null}
+    </div>
+  );
 }
 
-function SubtleCard({ children }: { children: React.ReactNode }) {
+function ChoiceFieldGroup({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-gray-100 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)] p-4">
+    <div className="space-y-4 border-b border-gray-100 pb-6 pt-6 first:pt-0 last:border-b-0 last:pb-0">
       {children}
     </div>
+  );
+}
+
+function FormFieldGroup({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="space-y-4 border-b border-gray-100 pb-6 pt-6 first:pt-0 last:border-b-0 last:pb-0">
+      {children}
+    </div>
+  );
+}
+
+function RadioChipGroup({
+  options,
+  value,
+  onChange,
+}: {
+  options: string[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-x-8 gap-y-4 pt-1">
+      {options.map((option) => {
+        const selected = value === option;
+        return (
+          <label
+            key={option}
+            className="inline-flex min-h-[22px] cursor-pointer items-center gap-2.5"
+          >
+            <span
+              className={cn(
+                "inline-flex size-3.5 shrink-0 items-center justify-center rounded-full border",
+                selected ? "border-brand bg-brand" : "border-gray-300 bg-white"
+              )}
+            >
+              {selected ? <span className="size-1.5 rounded-full bg-white" /> : null}
+            </span>
+            <input
+              type="radio"
+              name={`contract-radio-${options.join("-")}`}
+              value={option}
+              checked={selected}
+              onChange={() => onChange(option)}
+              className="sr-only"
+            />
+            <span className="text-[13px] text-gray-700">{option}</span>
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
+function SubtleCard({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <section
+      className={cn(
+        "rounded-xl border border-gray-100 bg-white p-5 shadow-[0_1px_3px_rgba(15,23,42,0.04)]",
+        className
+      )}
+    >
+      {children}
+    </section>
   );
 }
 
@@ -122,13 +204,17 @@ export default function ContractInfoSheet({
   onOpenChange,
   influencerHandle = "@instagram ins",
   influencerName = "Amelia Stones",
+  h5KolId = "1",
+  initialTab = "Collaboration Details",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   influencerHandle?: string;
   influencerName?: string;
+  h5KolId?: string;
+  initialTab?: Tab;
 }) {
-  const [tab, setTab] = useState<Tab>("Collaboration Details");
+  const [tab, setTab] = useState<Tab>(initialTab);
 
   const countryOptions = useMemo(
     () => [
@@ -200,10 +286,13 @@ export default function ContractInfoSheet({
   const [phoneCountryCode, setPhoneCountryCode] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [sameAsRecipientPhone, setSameAsRecipientPhone] = useState(false);
+  const [identityEntryMode, setIdentityEntryMode] = useState<EntryMode>("manual");
+  const [paymentEntryMode, setPaymentEntryMode] = useState<EntryMode>("manual");
 
   const [beneficiaryName, setBeneficiaryName] = useState("");
   const [beneficiaryBank, setBeneficiaryBank] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
+  const [ifscCode, setIfscCode] = useState("");
   const [swiftCode, setSwiftCode] = useState("");
   const [bankAddress, setBankAddress] = useState("");
 
@@ -219,67 +308,80 @@ export default function ContractInfoSheet({
 
   const headerHandle = useMemo(() => influencerHandle, [influencerHandle]);
 
+  useEffect(() => {
+    if (!open) return;
+    setTab(initialTab);
+  }, [initialTab, open]);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="p-0 gap-0 data-[side=right]:w-[680px] data-[side=right]:max-w-[90vw] data-[side=right]:sm:max-w-[90vw]"
+        showCloseButton={false}
+        className="flex h-full w-full flex-col gap-0 border-l border-gray-100 bg-[#f8f9fb] p-0 data-[side=right]:max-w-[600px] data-[side=right]:sm:max-w-[600px]"
       >
-        {/* Header */}
-        <div className="px-7 py-5 border-b border-gray-100 bg-white">
-          <div className="text-[16px] font-semibold text-gray-900 tracking-tight">
-            Contract Info
-          </div>
-
-          <div className="mt-3 flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <InfluencerAvatar
-                alt={influencerName}
-                platform="Instagram"
-                size="md"
-                fallback={headerHandle.slice(1, 3).toUpperCase()}
-                fallbackClassName="bg-violet-100 text-violet-700"
+        <SheetHeader className="shrink-0 flex-row items-center justify-between gap-3 border-b border-gray-100 bg-white px-6 py-5 text-left">
+          <SheetTitle className="text-[18px] font-semibold text-gray-900">Contract Info</SheetTitle>
+          <SheetClose
+            render={
+              <button
+                type="button"
+                className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Close"
               />
-              <div className="min-w-0">
-                <div className="text-[13px] font-semibold text-gray-900 truncate">
-                  {headerHandle}
-                </div>
-                <div className="text-[11px] text-gray-500 truncate">
-                  {influencerName}
-                </div>
-              </div>
-            </div>
+            }
+          >
+            <X size={16} strokeWidth={2} />
+          </SheetClose>
+        </SheetHeader>
 
-            <div className="flex items-center gap-2" />
+        <div className="shrink-0 border-b border-gray-100 bg-white px-6 pb-0 pt-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <InfluencerAvatar
+              alt={influencerName}
+              platform="Instagram"
+              size="md"
+              fallback={headerHandle.slice(1, 3).toUpperCase()}
+              fallbackClassName="bg-violet-100 text-violet-700"
+            />
+            <div className="min-w-0">
+              <div className="text-[13px] font-semibold text-gray-900 truncate">{headerHandle}</div>
+              <div className="text-[11px] text-gray-500 truncate">{influencerName}</div>
+            </div>
           </div>
 
-          {/* Tabs */}
-          <div className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gray-50 border border-gray-100 p-1">
-            <TabButton
+          <div className="mt-4 flex items-center gap-4 border-b border-gray-100">
+            <ContractInfoTabButton
               active={tab === "Collaboration Details"}
               onClick={() => setTab("Collaboration Details")}
             >
               Collaboration Details
-            </TabButton>
-            <TabButton active={tab === "KOL Information"} onClick={() => setTab("KOL Information")}>
+            </ContractInfoTabButton>
+            <ContractInfoTabButton
+              active={tab === "KOL Information"}
+              onClick={() => setTab("KOL Information")}
+            >
               KOL Information
-            </TabButton>
+            </ContractInfoTabButton>
+            <ContractInfoTabButton active={tab === "Todo"} onClick={() => setTab("Todo")}>
+              Todo
+            </ContractInfoTabButton>
           </div>
         </div>
 
-        {/* Body */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-7 py-7 space-y-7 bg-gray-50/30">
+        <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
+          <div className="space-y-4 p-4">
           {tab === "Collaboration Details" ? (
             <>
-              <div className="text-[12px] text-gray-500">
+              <div className="text-[12px] leading-relaxed text-gray-500">
                 Commercial terms are final and displayed as read-only on the creator’s portal.
               </div>
 
-              <SubtleCard>
+              <SubtleCard className="space-y-6">
                 <SectionTitle title="Commercials" />
-                <div className="mt-5 space-y-5">
-                  <div className="space-y-2">
-                    <FieldLabel>Total Amount *</FieldLabel>
+                <div className="space-y-0">
+                  <ChoiceFieldGroup>
+                    <FieldLabel required>Total Amount</FieldLabel>
                     <div className="flex items-center gap-2">
                       <Select value={currency} onValueChange={(v) => setCurrency(v ?? "USD")}>
                         <SelectTrigger className="h-9 w-[110px] border-gray-200 bg-white text-[12px]">
@@ -295,53 +397,51 @@ export default function ContractInfoSheet({
                       <Input
                         value={totalAmount}
                         onChange={(e) => setTotalAmount(e.target.value)}
-                      className={formInputClass("h-9 text-[13px]")}
+                        className={formInputClass("h-9 flex-1 text-[13px]")}
                       />
                     </div>
-                  </div>
+                  </ChoiceFieldGroup>
 
-                  <div className="space-y-2">
-                    <FieldLabel>Payment Method *</FieldLabel>
-                    <div className="text-[11px] text-gray-500">
-                      Define the split between upfront payment and final balance.
-                    </div>
-                    <OptionPills
+                  <ChoiceFieldGroup>
+                    <FieldLabel
+                      required
+                      hint="Define the split between upfront payment and final balance."
+                    >
+                      Payment Method
+                    </FieldLabel>
+                    <RadioChipGroup
                       value={paymentMethod}
                       onChange={setPaymentMethod}
                       options={[
-                        { value: "100% Postpaid", label: "100% Postpaid" },
-                        { value: "30% Advance", label: "30% Advance" },
-                        { value: "50% Advance", label: "50% Advance" },
-                        { value: "70% Advance", label: "70% Advance" },
-                        { value: "100% Advance", label: "100% Advance" },
+                        "100% Postpaid",
+                        "30% Advance",
+                        "50% Advance",
+                        "70% Advance",
+                        "100% Advance",
                       ]}
                     />
-                  </div>
+                  </ChoiceFieldGroup>
 
-                  <div className="space-y-2">
-                    <FieldLabel>Payment Term *</FieldLabel>
-                    <div className="text-[11px] text-gray-500">
-                      Number of days to settle the final payment after content goes live.
-                    </div>
-                    <OptionPills
+                  <ChoiceFieldGroup>
+                    <FieldLabel
+                      required
+                      hint="Number of days to settle the final payment after content goes live."
+                    >
+                      Payment Term
+                    </FieldLabel>
+                    <RadioChipGroup
                       value={paymentTerm}
                       onChange={setPaymentTerm}
-                      options={[
-                        { value: "60 Days", label: "60 Days" },
-                        { value: "45 Days", label: "45 Days" },
-                        { value: "30 Days", label: "30 Days" },
-                        { value: "15 Days", label: "15 Days" },
-                        { value: "7 Days", label: "7 Days" },
-                      ]}
+                      options={["60 Days", "45 Days", "30 Days", "15 Days", "7 Days"]}
                     />
-                  </div>
+                  </ChoiceFieldGroup>
                 </div>
               </SubtleCard>
 
-              <SubtleCard>
+              <SubtleCard className="space-y-4">
                 <SectionTitle title="Deliverables" />
-                <div className="mt-4 space-y-2">
-                  <FieldLabel>Deliverables Details *</FieldLabel>
+                <div className="space-y-2">
+                  <FieldLabel required>Deliverables Details</FieldLabel>
                   <Textarea
                     value={deliverables}
                     onChange={(e) => setDeliverables(e.target.value)}
@@ -350,160 +450,131 @@ export default function ContractInfoSheet({
                 </div>
               </SubtleCard>
 
-              <SubtleCard>
+              <SubtleCard className="space-y-6">
                 <SectionTitle title="Add-ons & Rights" />
-                <div className="mt-5 space-y-5">
-                  <div className="space-y-2">
-                    <FieldLabel>Content Usage</FieldLabel>
-                    <div className="text-[11px] text-gray-500">
-                      Permissions to license and reuse the content on brand’s official channels (social media, website, ads).
-                    </div>
-                    <OptionPills
+                <div className="space-y-0">
+                  <ChoiceFieldGroup>
+                    <FieldLabel hint="Permissions to license and reuse the content on brand’s official channels (social media, website, ads).">
+                      Content Usage
+                    </FieldLabel>
+                    <RadioChipGroup
                       value={contentUsage}
                       onChange={setContentUsage}
                       options={[
-                        { value: "0 Days", label: "0 Days" },
-                        { value: "30 Days", label: "30 Days" },
-                        { value: "60 Days", label: "60 Days" },
-                        { value: "90 Days", label: "90 Days" },
-                        { value: "180 Days", label: "180 Days" },
-                        { value: "1 Year", label: "1 Year" },
-                        { value: "Permanent", label: "Permanent" },
+                        "0 Days",
+                        "30 Days",
+                        "60 Days",
+                        "90 Days",
+                        "180 Days",
+                        "1 Year",
+                        "Permanent",
                       ]}
                     />
-                  </div>
+                  </ChoiceFieldGroup>
 
-                  <div className="space-y-2">
+                  <ChoiceFieldGroup>
                     <FieldLabel>Post Retention</FieldLabel>
-                    <OptionPills
+                    <RadioChipGroup
                       value={postRetention}
                       onChange={setPostRetention}
-                      options={[
-                        { value: "30 Days", label: "30 Days" },
-                        { value: "90 Days", label: "90 Days" },
-                        { value: "180 Days", label: "180 Days" },
-                        { value: "Permanent", label: "Permanent" },
-                      ]}
+                      options={["30 Days", "90 Days", "180 Days", "Permanent"]}
                     />
-                  </div>
+                  </ChoiceFieldGroup>
 
-                  <div className="space-y-2">
-                    <FieldLabel>Post Boosting</FieldLabel>
-                    <div className="text-[11px] text-gray-500">
-                      Granting brand access to promote the post via platform ad tools.
-                    </div>
-                    <OptionPills
+                  <ChoiceFieldGroup>
+                    <FieldLabel hint="Granting brand access to promote the post via platform ad tools.">
+                      Post Boosting
+                    </FieldLabel>
+                    <RadioChipGroup
                       value={postBoosting}
                       onChange={setPostBoosting}
                       options={[
-                        { value: "0 Days", label: "0 Days" },
-                        { value: "30 Days", label: "30 Days" },
-                        { value: "60 Days", label: "60 Days" },
-                        { value: "90 Days", label: "90 Days" },
-                        { value: "180 Days", label: "180 Days" },
-                        { value: "1 Year", label: "1 Year" },
-                        { value: "Permanent", label: "Permanent" },
+                        "0 Days",
+                        "30 Days",
+                        "60 Days",
+                        "90 Days",
+                        "180 Days",
+                        "1 Year",
+                        "Permanent",
                       ]}
                     />
-                  </div>
+                  </ChoiceFieldGroup>
 
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
+                  <FormFieldGroup>
+                    <div className="flex items-start justify-between gap-4">
                       <FieldLabel>Competitor Exclusivity</FieldLabel>
-                      <div className="text-[11px] text-gray-500 mt-0.5">
-                        {competitorExcl ? "Enabled" : "Disabled"}
-                      </div>
+                      <Switch checked={competitorExcl} onCheckedChange={setCompetitorExcl} />
                     </div>
-                    <Switch checked={competitorExcl} onCheckedChange={setCompetitorExcl} />
-                  </div>
-                  {competitorExcl ? (
-                    <Textarea
-                      value={competitorExclList}
-                      onChange={(e) => setCompetitorExclList(e.target.value)}
-                      placeholder="Exclusion List"
-                      className={formTextareaClass("text-[13px]")}
-                    />
-                  ) : null}
+                    {competitorExcl ? (
+                      <Textarea
+                        value={competitorExclList}
+                        onChange={(e) => setCompetitorExclList(e.target.value)}
+                        placeholder="Enter exclusion list..."
+                        rows={3}
+                        className={formTextareaClass("min-h-[96px] resize-none text-[13px]")}
+                      />
+                    ) : null}
+                  </FormFieldGroup>
 
-                  <div className="space-y-2">
+                  <ChoiceFieldGroup>
                     <FieldLabel>Collab Post</FieldLabel>
-                    <OptionPills
+                    <RadioChipGroup
                       value={collabPost}
                       onChange={setCollabPost}
-                      options={[
-                        { value: "Required", label: "Required" },
-                        { value: "Not Required", label: "Not Required" },
-                      ]}
+                      options={["Required", "Not Required"]}
                     />
-                  </div>
+                  </ChoiceFieldGroup>
 
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
+                  <FormFieldGroup>
+                    <div className="flex items-start justify-between gap-4">
                       <FieldLabel>Onsite/Event</FieldLabel>
-                      <div className="text-[11px] text-gray-500 mt-0.5">
-                        {onsiteEvent ? "Enabled" : "Disabled"}
-                      </div>
+                      <Switch checked={onsiteEvent} onCheckedChange={setOnsiteEvent} />
                     </div>
-                    <Switch checked={onsiteEvent} onCheckedChange={setOnsiteEvent} />
-                  </div>
-                  {onsiteEvent ? (
-                    <Textarea
-                      value={onsiteEventDetails}
-                      onChange={(e) => setOnsiteEventDetails(e.target.value)}
-                      placeholder="Time, Location, And Duration"
-                      className={formTextareaClass("text-[13px]")}
-                    />
-                  ) : null}
+                    {onsiteEvent ? (
+                      <Textarea
+                        value={onsiteEventDetails}
+                        onChange={(e) => setOnsiteEventDetails(e.target.value)}
+                        placeholder="Time, Location, And Duration"
+                        rows={3}
+                        className={formTextareaClass("min-h-[96px] resize-none text-[13px]")}
+                      />
+                    ) : null}
+                  </FormFieldGroup>
 
-                  <div className="space-y-2">
+                  <ChoiceFieldGroup>
                     <FieldLabel>Cross Posting (Mirroring)</FieldLabel>
-                    <OptionPills
+                    <RadioChipGroup
                       value={crossPosting}
                       onChange={setCrossPosting}
-                      options={[
-                        { value: "Required", label: "Required" },
-                        { value: "Not Required", label: "Not Required" },
-                      ]}
+                      options={["Required", "Not Required"]}
                     />
-                  </div>
+                  </ChoiceFieldGroup>
 
-                  <div className="space-y-2">
+                  <ChoiceFieldGroup>
                     <FieldLabel>Link in Bio</FieldLabel>
-                    <OptionPills
+                    <RadioChipGroup
                       value={linkInBio}
                       onChange={setLinkInBio}
-                      options={[
-                        { value: "Required", label: "Required" },
-                        { value: "Not Required", label: "Not Required" },
-                      ]}
+                      options={["Required", "Not Required"]}
                     />
-                  </div>
+                  </ChoiceFieldGroup>
                 </div>
               </SubtleCard>
             </>
-          ) : (
+          ) : tab === "KOL Information" ? (
             <>
               {/* KOL Information tab */}
-              <div className="flex items-center justify-between gap-4">
-                <div className="text-[11px] text-gray-500">
-                  Creator-submitted data with master override enabled.
+              <div className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,0.04)] sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-2 text-[12px] leading-relaxed text-gray-500">
+                  <Info size={14} className="mt-0.5 shrink-0 text-gray-400" strokeWidth={2} />
+                  <span>Creator-submitted data with master override enabled.</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-gray-500">
-                    HS Link:{" "}
-                    <a className="text-brand underline underline-offset-2" href="#">
-                      /hs/kol-info-1
-                    </a>
-                  </span>
-                  <button className="text-[11px] text-gray-500 hover:text-gray-700 inline-flex items-center gap-1">
-                    <Copy size={12} />
-                    Copy
-                  </button>
-                </div>
+                <ContractH5LinkBar h5KolId={h5KolId} />
               </div>
 
-              <SubtleCard>
+              <SubtleCard className="space-y-4">
                 <SectionTitle
+                  accent
                   title="Section 1: Identity & Contact"
                   right={
                     aiFastFillEnabled ? (
@@ -514,9 +585,9 @@ export default function ContractInfoSheet({
                   }
                 />
 
-                <div className="mt-4 space-y-4">
-                  <div className="space-y-2">
-                    <FieldLabel>Identity Type *</FieldLabel>
+                <div className="space-y-0">
+                  <FormFieldGroup>
+                    <FieldLabel required>Identity Type</FieldLabel>
                     <Select value={identityType} onValueChange={(v) => setIdentityType(v ?? "A (Individual)")}>
                       <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[12px]">
                         <SelectValue placeholder="Select Identity Type" />
@@ -527,36 +598,50 @@ export default function ContractInfoSheet({
                         <SelectItem value="C (Company)">C (Company)</SelectItem>
                       </SelectContent>
                     </Select>
+                  </FormFieldGroup>
+
+                  <div className="border-b border-gray-100 py-6">
+                    <EntryModeSwitch
+                      mode={identityEntryMode}
+                      onModeChange={setIdentityEntryMode}
+                      uploadLabel="Upload ID/Passport"
+                    />
+                    {identityEntryMode === "upload" ? (
+                      <div className="mt-4">
+                        <FileUploadZone
+                          optional
+                          compact
+                          compactEmphasis="selected"
+                          title="ID/Passport"
+                          hint="PDF, PNG, JPG"
+                          variant="brand"
+                        />
+                      </div>
+                    ) : null}
                   </div>
 
-                  <FileUploadZone
-                    title="Upload ID/Passport"
-                    hint="PDF, PNG, JPG. Passport, National ID, Tax ID/VQ2, PAN, Aadhaar. AI will auto-fill: Legal Name, GOV ID Number, and Address."
-                    variant="brand"
-                  />
-
-                  <div className="space-y-2">
-                    <FieldLabel>Contract Entity (Legal Name) *</FieldLabel>
+                  <FormFieldGroup>
+                    <FieldLabel required>Contract Entity (Legal Name)</FieldLabel>
                     <Input
                       value={contractEntity}
                       onChange={(e) => setContractEntity(e.target.value)}
                       placeholder="Enter Legal Name"
                       className={formInputClass("h-9 text-[13px]")}
                     />
-                  </div>
+                  </FormFieldGroup>
 
-                  <div className="space-y-2">
-                    <FieldLabel>Gov ID Number *</FieldLabel>
+                  <FormFieldGroup>
+                    <FieldLabel required>Gov ID Number</FieldLabel>
                     <Input
                       value={govId}
                       onChange={(e) => setGovId(e.target.value)}
                       placeholder="Enter Gov ID Number"
                       className={formInputClass("h-9 text-[13px]")}
                     />
-                  </div>
+                  </FormFieldGroup>
 
-                  <div className="space-y-2">
-                    <FieldLabel>Residing Address *</FieldLabel>
+                  <FormFieldGroup>
+                    <FieldLabel required>Residing Address</FieldLabel>
                     <div className="space-y-3">
                       <Select value={resCountry} onValueChange={(v) => setResCountry(v ?? "")}>
                         <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[12px]">
@@ -574,13 +659,13 @@ export default function ContractInfoSheet({
                         value={resCity}
                         onChange={(e) => setResCity(e.target.value)}
                         placeholder="City"
-                      className={formInputClass("h-9 text-[13px]")}
+                        className={formInputClass("h-9 text-[13px]")}
                       />
                       <Input
                         value={resZip}
                         onChange={(e) => setResZip(e.target.value)}
                         placeholder="Zip / Postal Code"
-                      className={formInputClass("h-9 text-[13px]")}
+                        className={formInputClass("h-9 text-[13px]")}
                       />
                       <Textarea
                         value={resStreet}
@@ -596,10 +681,10 @@ export default function ContractInfoSheet({
                       />
                       Same as Shipping Address
                     </label>
-                  </div>
+                  </FormFieldGroup>
 
-                  <div className="space-y-2">
-                    <FieldLabel>Phone Number *</FieldLabel>
+                  <FormFieldGroup>
+                    <FieldLabel required>Phone Number</FieldLabel>
                     <div className="grid grid-cols-[160px_1fr] gap-3">
                       <Select value={phoneCountryCode} onValueChange={(v) => setPhoneCountryCode(v ?? "")}>
                         <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[12px]">
@@ -617,7 +702,7 @@ export default function ContractInfoSheet({
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         placeholder="Enter Phone Number"
-                      className={formInputClass("h-9 text-[13px]")}
+                        className={formInputClass("h-9 text-[13px]")}
                       />
                     </div>
                     <label className="flex items-center gap-2 text-[12px] text-gray-600">
@@ -627,12 +712,13 @@ export default function ContractInfoSheet({
                       />
                       Same As Recipient Phone For Sample Delivery
                     </label>
-                  </div>
+                  </FormFieldGroup>
                 </div>
               </SubtleCard>
 
-              <SubtleCard>
+              <SubtleCard className="space-y-4">
                 <SectionTitle
+                  accent
                   title="Section 2: Payment Details"
                   right={
                     aiFastFillEnabled ? (
@@ -643,54 +729,81 @@ export default function ContractInfoSheet({
                   }
                 />
 
-                <div className="mt-4 space-y-4">
-                  <FileUploadZone
-                    title="Upload Bank Record"
-                    hint="PDF, PNG, JPG. Bank passbook, statement, or cancelled cheque. AI will auto-fill: Beneficiary Name, Bank Name, Account Number, and IFSC/SWIFT Code."
-                    variant="amber"
-                  />
+                <div className="space-y-0">
+                  <div className="border-b border-gray-100 py-6">
+                    <EntryModeSwitch
+                      mode={paymentEntryMode}
+                      onModeChange={setPaymentEntryMode}
+                      uploadLabel="Upload bank document"
+                    />
+                    {paymentEntryMode === "upload" ? (
+                      <div className="mt-4">
+                        <FileUploadZone
+                          optional
+                          compact
+                          compactEmphasis="selected"
+                          title="Bank Statement / Passbook"
+                          hint="PDF, PNG, JPG"
+                          variant="amber"
+                        />
+                      </div>
+                    ) : null}
+                  </div>
 
-                  <div className="space-y-2">
-                    <FieldLabel>Beneficiary Name *</FieldLabel>
+                  <FormFieldGroup>
+                    <FieldLabel required>Beneficiary Name</FieldLabel>
                     <Input
                       value={beneficiaryName}
                       onChange={(e) => setBeneficiaryName(e.target.value)}
                       placeholder="Beneficiary Name"
                       className={formInputClass("h-9 text-[13px]")}
                     />
-                  </div>
+                  </FormFieldGroup>
 
-                  <div className="space-y-2">
-                    <FieldLabel>Beneficiary Bank *</FieldLabel>
+                  <FormFieldGroup>
+                    <FieldLabel required>Beneficiary Bank</FieldLabel>
                     <Input
                       value={beneficiaryBank}
                       onChange={(e) => setBeneficiaryBank(e.target.value)}
                       placeholder="Select Bank"
                       className={formInputClass("h-9 text-[13px]")}
                     />
-                  </div>
+                  </FormFieldGroup>
 
-                  <div className="space-y-2">
-                    <FieldLabel>Account Number *</FieldLabel>
+                  <FormFieldGroup>
+                    <FieldLabel required>Account Number</FieldLabel>
                     <Input
                       value={accountNumber}
                       onChange={(e) => setAccountNumber(e.target.value)}
                       placeholder="Enter Account Number"
                       className={formInputClass("h-9 text-[13px]")}
                     />
-                  </div>
+                  </FormFieldGroup>
 
-                  <div className="space-y-2">
-                    <FieldLabel>SWIFT Code *</FieldLabel>
-                    <Input
-                      value={swiftCode}
-                      onChange={(e) => setSwiftCode(e.target.value)}
-                      placeholder="Enter SWIFT Code"
-                      className={formInputClass("h-9 text-[13px]")}
-                    />
-                  </div>
+                  <FormFieldGroup>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <FieldLabel>IFSC Code</FieldLabel>
+                        <Input
+                          value={ifscCode}
+                          onChange={(e) => setIfscCode(e.target.value)}
+                          placeholder="Enter IFSC Code"
+                          className={formInputClass("h-9 text-[13px]")}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <FieldLabel required>SWIFT Code</FieldLabel>
+                        <Input
+                          value={swiftCode}
+                          onChange={(e) => setSwiftCode(e.target.value)}
+                          placeholder="Enter SWIFT Code"
+                          className={formInputClass("h-9 text-[13px]")}
+                        />
+                      </div>
+                    </div>
+                  </FormFieldGroup>
 
-                  <div className="space-y-2">
+                  <FormFieldGroup>
                     <FieldLabel>Bank Address</FieldLabel>
                     <Input
                       value={bankAddress}
@@ -698,25 +811,25 @@ export default function ContractInfoSheet({
                       placeholder="Enter Bank Address"
                       className={formInputClass("h-9 text-[13px]")}
                     />
-                  </div>
+                  </FormFieldGroup>
                 </div>
               </SubtleCard>
 
-              <SubtleCard>
-                <SectionTitle title="Section 3: Shipping Address" />
-                <div className="mt-4 space-y-4">
-                  <div className="space-y-2">
-                    <FieldLabel>Recipient Name *</FieldLabel>
+              <SubtleCard className="space-y-4">
+                <SectionTitle accent title="Section 3: Shipping Address" />
+                <div className="space-y-0">
+                  <FormFieldGroup>
+                    <FieldLabel required>Recipient Name</FieldLabel>
                     <Input
                       value={recipientName}
                       onChange={(e) => setRecipientName(e.target.value)}
                       placeholder="Recipient Name"
                       className={formInputClass("h-9 text-[13px]")}
                     />
-                  </div>
+                  </FormFieldGroup>
 
-                  <div className="space-y-2">
-                    <FieldLabel>Recipient Phone *</FieldLabel>
+                  <FormFieldGroup>
+                    <FieldLabel required>Recipient Phone</FieldLabel>
                     <div className="grid grid-cols-[160px_1fr] gap-3">
                       <Select value={recipientCountryCode} onValueChange={(v) => setRecipientCountryCode(v ?? "")}>
                         <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[12px]">
@@ -734,13 +847,13 @@ export default function ContractInfoSheet({
                         value={recipientPhone}
                         onChange={(e) => setRecipientPhone(e.target.value)}
                         placeholder="Recipient Phone"
-                      className={formInputClass("h-9 text-[13px]")}
+                        className={formInputClass("h-9 text-[13px]")}
                       />
                     </div>
-                  </div>
+                  </FormFieldGroup>
 
-                  <div className="space-y-2">
-                    <FieldLabel>Country/Region *</FieldLabel>
+                  <FormFieldGroup>
+                    <FieldLabel required>Country/Region</FieldLabel>
                     <Select value={shipCountry} onValueChange={(v) => setShipCountry(v ?? "")}>
                       <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[12px]">
                         <SelectValue placeholder="Select Country/Region" />
@@ -753,63 +866,72 @@ export default function ContractInfoSheet({
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
+                  </FormFieldGroup>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <FieldLabel>City *</FieldLabel>
-                      <Input
-                        value={shipCity}
-                        onChange={(e) => setShipCity(e.target.value)}
-                        placeholder="City"
-                      className={formInputClass("h-9 text-[13px]")}
-                      />
+                  <FormFieldGroup>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <FieldLabel required>City</FieldLabel>
+                        <Input
+                          value={shipCity}
+                          onChange={(e) => setShipCity(e.target.value)}
+                          placeholder="City"
+                          className={formInputClass("h-9 text-[13px]")}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <FieldLabel required>Zip / Postal Code</FieldLabel>
+                        <Input
+                          value={shipZip}
+                          onChange={(e) => setShipZip(e.target.value)}
+                          placeholder="Zip / Postal Code"
+                          className={formInputClass("h-9 text-[13px]")}
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <FieldLabel>Zip / Postal Code *</FieldLabel>
-                      <Input
-                        value={shipZip}
-                        onChange={(e) => setShipZip(e.target.value)}
-                        placeholder="Zip / Postal Code"
-                      className={formInputClass("h-9 text-[13px]")}
-                      />
-                    </div>
-                  </div>
+                  </FormFieldGroup>
 
-                  <div className="space-y-2">
-                    <FieldLabel>Street Address *</FieldLabel>
+                  <FormFieldGroup>
+                    <FieldLabel required>Street Address</FieldLabel>
                     <Textarea
                       value={shipStreet}
                       onChange={(e) => setShipStreet(e.target.value)}
                       placeholder="Street Address"
                       className={formTextareaClass("text-[13px]")}
                     />
-                  </div>
+                  </FormFieldGroup>
                 </div>
               </SubtleCard>
             </>
+          ) : (
+            <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-12 text-center">
+              <p className="text-[13px] font-medium text-gray-700">No pending tasks</p>
+              <p className="mt-1 text-[12px] leading-relaxed text-gray-500">
+                Contract-related todos for this creator will appear here.
+              </p>
+            </div>
           )}
-        </div>
-
-        {/* Footer */}
-        <div className="border-t border-gray-100 px-7 py-4 bg-white">
-          <div className="flex items-center justify-end gap-2">
-            <Button
-              variant="outline"
-              className="h-9 border-gray-200 text-gray-700"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="brand"
-              className="h-9"
-              onClick={() => onOpenChange(false)}
-            >
-              Save
-            </Button>
           </div>
         </div>
+
+        <SheetFooter className="shrink-0 flex-row justify-end gap-3 border-t border-gray-100 bg-white px-6 py-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 rounded-lg border-gray-200 px-4 text-[13px] text-gray-600"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="brand"
+            className="h-9 rounded-lg px-5 text-[13px]"
+            onClick={() => onOpenChange(false)}
+          >
+            Save
+          </Button>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   );

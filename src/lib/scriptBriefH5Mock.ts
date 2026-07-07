@@ -77,7 +77,7 @@ export function getFigmaCaptureH5OverviewState(): FigmaCaptureH5OverviewState {
 
 export function getScriptBriefH5Defaults(kolId: string): ScriptBriefH5Data {
   return {
-    campaignTitle: "Budweiser 2024 Sales Drive",
+    campaignTitle: kolId === "1" ? "Myth: Wu kong on Steam" : "Budweiser 2024 Sales Drive",
     campaignSubtitle: "Campaign Brief",
     intro:
       "Open each H5 step to review, submit, and continue the workflow.",

@@ -70,6 +70,7 @@ import {
   type PostingHubStatus,
 } from "@/lib/postingHubMock";
 import { getH5PostingState, subscribeH5InsightSync } from "@/lib/h5PostingSubmissions";
+import { getWebInsightFiles, subscribeWebInsightChanges } from "@/lib/webInsightSubmissions";
 import {
   mergeInsightReportFileNames,
   parseKolIdFromH5Path,
@@ -86,12 +87,12 @@ import { AlertCircle, Calendar, CheckCircle2, ChevronDown, Copy, FileText, FileX
 function mergePostingHubRowsInsightReports(rows: PostingHubRow[]): PostingHubRow[] {
   return rows.map((row) => {
     const kolId = parseKolIdFromH5Path(row.h5Path);
-    if (!kolId) return row;
+    const h5Files = kolId ? getH5PostingState(kolId).insightDraftFiles : [];
 
-    const merged = mergeInsightReportFileNames(
-      row.insightReports ?? [],
-      getH5PostingState(kolId).insightDraftFiles
-    );
+    const storedWebNames = getWebInsightFiles(row.id).map((file) => file.name);
+    const baseWebNames = storedWebNames.length > 0 ? storedWebNames : (row.insightReports ?? []);
+
+    const merged = mergeInsightReportFileNames(baseWebNames, h5Files);
     const current = row.insightReports ?? [];
 
     if (
@@ -904,19 +905,27 @@ function ContentValidationCell({
 function InsightReportTooltipContent({
   shareUrl,
   files,
+  onOpenDialog,
 }: {
   shareUrl?: string;
   files: string[];
+  onOpenDialog: () => void;
 }) {
   const fullShareUrl = shareUrl ? getInsightReportSharePageUrl(shareUrl) : undefined;
 
-  const handleCopyLink = async () => {
+  const handleCopyLink = async (event: React.MouseEvent) => {
+    event.stopPropagation();
     if (!fullShareUrl) return;
     try {
       await navigator.clipboard.writeText(fullShareUrl);
     } catch {
       // Clipboard may be unavailable outside secure context.
     }
+  };
+
+  const handleOpenDialog = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    onOpenDialog();
   };
 
   return (
@@ -927,6 +936,7 @@ function InsightReportTooltipContent({
             href={fullShareUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={(event) => event.stopPropagation()}
             className="min-w-0 flex-1 truncate text-[12px] font-medium text-brand underline decoration-brand/40 underline-offset-[3px] transition-colors hover:decoration-brand/60"
             title={fullShareUrl}
           >
@@ -944,11 +954,18 @@ function InsightReportTooltipContent({
       ) : null}
       <ul className="flex flex-col gap-2">
         {files.map((fileName, index) => (
-          <li key={`${fileName}-${index}`} className="flex min-w-0 items-center gap-2">
-            <Paperclip size={14} strokeWidth={2} className="shrink-0 text-gray-400" />
-            <span className="min-w-0 truncate text-[12px] font-medium leading-snug text-gray-800">
-              {fileName}
-            </span>
+          <li key={`${fileName}-${index}`}>
+            <button
+              type="button"
+              onClick={handleOpenDialog}
+              className="flex min-w-0 w-full cursor-pointer items-center gap-2 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-gray-50"
+              aria-label={`Open insight report for ${fileName}`}
+            >
+              <Paperclip size={14} strokeWidth={2} className="shrink-0 text-gray-400" />
+              <span className="min-w-0 truncate text-[12px] font-medium leading-snug text-gray-800">
+                {fileName}
+              </span>
+            </button>
           </li>
         ))}
       </ul>
@@ -997,7 +1014,11 @@ function InsightReportCell({
     <Tooltip>
       <TooltipTrigger render={badge} />
       <TooltipContent variant="light" side="top" align="start" className="px-3 py-2.5">
-        <InsightReportTooltipContent shareUrl={shareUrl} files={reportFiles} />
+        <InsightReportTooltipContent
+          shareUrl={shareUrl}
+          files={reportFiles}
+          onOpenDialog={onClick}
+        />
       </TooltipContent>
     </Tooltip>
   );
@@ -1352,7 +1373,12 @@ export default function CampaignHubPostingView({
       prev.map((row) => {
         if (parseKolIdFromH5Path(row.h5Path) !== kolId) return row;
 
-        const merged = mergeInsightReportFileNames(row.insightReports ?? [], getH5PostingState(kolId).insightDraftFiles);
+        const storedWebNames = getWebInsightFiles(row.id).map((file) => file.name);
+        const baseWebNames = storedWebNames.length > 0 ? storedWebNames : (row.insightReports ?? []);
+        const merged = mergeInsightReportFileNames(
+          baseWebNames,
+          getH5PostingState(kolId).insightDraftFiles
+        );
         const current = row.insightReports ?? [];
 
         if (
@@ -1374,7 +1400,42 @@ export default function CampaignHubPostingView({
 
   useEffect(() => {
     if (figmaCapture) return;
-    return subscribeH5InsightSync(syncRowInsightReportsFromH5);
+
+    const syncRowInsightReportsFromWeb = (rowId: string) => {
+      setRows((prev) =>
+        prev.map((row) => {
+          if (row.id !== rowId) return row;
+
+          const kolId = parseKolIdFromH5Path(row.h5Path);
+          const h5Files = kolId ? getH5PostingState(kolId).insightDraftFiles : [];
+          const storedWebNames = getWebInsightFiles(rowId).map((file) => file.name);
+          const baseWebNames = storedWebNames.length > 0 ? storedWebNames : (row.insightReports ?? []);
+          const merged = mergeInsightReportFileNames(baseWebNames, h5Files);
+          const current = row.insightReports ?? [];
+
+          if (
+            merged.length === current.length &&
+            merged.every((name, index) => name === current[index])
+          ) {
+            return row;
+          }
+
+          return {
+            ...row,
+            insightReports: merged,
+            insightReportShareUrl:
+              merged.length > 0 ? buildInsightReportShareUrl(row.id) : row.insightReportShareUrl,
+          };
+        })
+      );
+    };
+
+    const unsubH5 = subscribeH5InsightSync(syncRowInsightReportsFromH5);
+    const unsubWeb = subscribeWebInsightChanges(syncRowInsightReportsFromWeb);
+    return () => {
+      unsubH5();
+      unsubWeb();
+    };
   }, [figmaCapture]);
 
   const editPostLinkRow = useMemo(

@@ -48,6 +48,7 @@ export function InfluencerAvatar({
   platform,
   size = "md",
   className,
+  avatarClassName,
 }: {
   src?: string;
   alt?: string;
@@ -56,13 +57,14 @@ export function InfluencerAvatar({
   platform?: Platform | string;
   size?: InfluencerAvatarSize;
   className?: string;
+  avatarClassName?: string;
 }) {
   const styles = sizeStyles[size];
   const platformCode = resolvePlatform(platform);
 
   return (
     <div className={cn("relative shrink-0", className)}>
-      <Avatar className={cn(styles.avatar, "border border-gray-200/80")}>
+      <Avatar className={cn(styles.avatar, "border border-gray-200/80", avatarClassName)}>
         <AvatarImage src={src} alt={alt} />
         <AvatarFallback
           className={cn("font-semibold", styles.fallback, fallbackClassName)}
