@@ -160,22 +160,26 @@ function CompactUploadHeaderAction({
   disabled,
   hasFile,
   onOpen,
+  actionLabel = "Upload",
+  replaceLabel = "Replace",
 }: {
   title: string;
   disabled?: boolean;
   hasFile?: boolean;
   onOpen: () => void;
+  actionLabel?: string;
+  replaceLabel?: string;
 }) {
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onOpen}
-      aria-label={hasFile ? `Replace ${title}` : `Upload ${title}`}
+      aria-label={hasFile ? `${replaceLabel} ${title}` : `${actionLabel} ${title}`}
       className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-amber-200/80 bg-amber-50/60 px-2.5 py-1.5 text-[11px] font-medium text-amber-800 transition-colors hover:bg-amber-50 disabled:opacity-50"
     >
       <Sparkles size={12} strokeWidth={2} />
-      {hasFile ? "Replace" : "Upload"}
+      {hasFile ? replaceLabel : actionLabel}
     </button>
   );
 }
@@ -199,6 +203,8 @@ export function FileUploadZone({
   optionalHint = "Upload to auto-fill the fields below, or enter them manually.",
   compact = false,
   compactPart = "assist-bar",
+  headerActionLabel,
+  headerActionReplaceLabel,
   className,
   disabled = false,
 }: {
@@ -220,6 +226,8 @@ export function FileUploadZone({
   optionalHint?: string;
   compact?: boolean;
   compactPart?: "assist-bar" | "header-action" | "preview";
+  headerActionLabel?: string;
+  headerActionReplaceLabel?: string;
   className?: string;
   disabled?: boolean;
 }) {
@@ -327,6 +335,8 @@ export function FileUploadZone({
           disabled={disabled}
           hasFile={Boolean(resolvedFile)}
           onOpen={() => inputRef.current?.click()}
+          actionLabel={headerActionLabel}
+          replaceLabel={headerActionReplaceLabel}
         />
       </>
     );
@@ -335,7 +345,7 @@ export function FileUploadZone({
   if (optional && compact && compactPart === "preview") {
     if (!resolvedFile) return null;
     return (
-      <div className={cn("mb-4 space-y-1", className)}>
+      <div className={cn("mb-3 space-y-1", className)}>
         {fileInput}
         <CompactUploadedFileCard
           dense
@@ -417,6 +427,8 @@ export function FileUploadZone({
                 disabled={disabled}
                 hasFile={false}
                 onOpen={() => inputRef.current?.click()}
+                actionLabel={headerActionLabel}
+                replaceLabel={headerActionReplaceLabel}
               />
             </div>
           )}

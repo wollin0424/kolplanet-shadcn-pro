@@ -88,20 +88,15 @@ function SectionTitle({
   title,
   description,
   right,
-  accent = false,
 }: {
   title: string;
   description?: string;
   right?: React.ReactNode;
-  accent?: boolean;
 }) {
   return (
     <div className="border-b border-gray-100 pb-3">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          {accent ? <span className="h-9 w-1.5 shrink-0 rounded-full bg-brand" aria-hidden /> : null}
-          <h3 className="text-[14px] font-semibold tracking-tight text-gray-900">{title}</h3>
-        </div>
+        <h3 className="min-w-0 text-[14px] font-semibold tracking-tight text-gray-900">{title}</h3>
         {right ? <div className="shrink-0">{right}</div> : null}
       </div>
       {description ? (
@@ -131,20 +126,20 @@ function FieldLabel({
   );
 }
 
-function ChoiceFieldGroup({ children }: { children: React.ReactNode }) {
+function SectionFieldGroup({ children }: { children: React.ReactNode }) {
   return (
-    <div className="space-y-4 border-b border-gray-100 pb-6 pt-6 first:pt-0 last:border-b-0 last:pb-0">
+    <div className="space-y-4 border-b border-gray-100 py-6 first:pt-0 last:border-b-0 last:pb-0">
       {children}
     </div>
   );
 }
 
+function ChoiceFieldGroup({ children }: { children: React.ReactNode }) {
+  return <SectionFieldGroup>{children}</SectionFieldGroup>;
+}
+
 function FormFieldGroup({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="space-y-4 border-b border-gray-100 pb-6 pt-6 first:pt-0 last:border-b-0 last:pb-0">
-      {children}
-    </div>
-  );
+  return <div className="space-y-2">{children}</div>;
 }
 
 function RadioChipGroup({
@@ -378,9 +373,9 @@ export default function ContractInfoSheet({
                 Commercial terms are final and displayed as read-only on the creator’s portal.
               </div>
 
-              <SubtleCard className="space-y-6">
+              <SubtleCard>
                 <SectionTitle title="Commercials" />
-                <div className="space-y-0">
+                <div className="mt-5 space-y-0">
                   <ChoiceFieldGroup>
                     <FieldLabel required>Total Amount</FieldLabel>
                     <div className="flex items-center gap-2">
@@ -439,9 +434,9 @@ export default function ContractInfoSheet({
                 </div>
               </SubtleCard>
 
-              <SubtleCard className="space-y-4">
+              <SubtleCard>
                 <SectionTitle title="Deliverables" />
-                <div className="space-y-2">
+                <div className="mt-5 space-y-2">
                   <FieldLabel required>Deliverables Details</FieldLabel>
                   <Textarea
                     value={deliverables}
@@ -451,9 +446,9 @@ export default function ContractInfoSheet({
                 </div>
               </SubtleCard>
 
-              <SubtleCard className="space-y-6">
+              <SubtleCard>
                 <SectionTitle title="Add-ons & Rights" />
-                <div className="space-y-0">
+                <div className="mt-5 space-y-0">
                   <ChoiceFieldGroup>
                     <FieldLabel hint="Permissions to license and reuse the content on brand’s official channels (social media, website, ads).">
                       Content Usage
@@ -501,7 +496,7 @@ export default function ContractInfoSheet({
                     />
                   </ChoiceFieldGroup>
 
-                  <FormFieldGroup>
+                  <SectionFieldGroup>
                     <div className="flex items-start justify-between gap-4">
                       <FieldLabel>Competitor Exclusivity</FieldLabel>
                       <Switch checked={competitorExcl} onCheckedChange={setCompetitorExcl} />
@@ -515,7 +510,7 @@ export default function ContractInfoSheet({
                         className={formTextareaClass("min-h-[96px] resize-none text-[13px]")}
                       />
                     ) : null}
-                  </FormFieldGroup>
+                  </SectionFieldGroup>
 
                   <ChoiceFieldGroup>
                     <FieldLabel>Collab Post</FieldLabel>
@@ -526,7 +521,7 @@ export default function ContractInfoSheet({
                     />
                   </ChoiceFieldGroup>
 
-                  <FormFieldGroup>
+                  <SectionFieldGroup>
                     <div className="flex items-start justify-between gap-4">
                       <FieldLabel>Onsite/Event</FieldLabel>
                       <Switch checked={onsiteEvent} onCheckedChange={setOnsiteEvent} />
@@ -540,7 +535,7 @@ export default function ContractInfoSheet({
                         className={formTextareaClass("min-h-[96px] resize-none text-[13px]")}
                       />
                     ) : null}
-                  </FormFieldGroup>
+                  </SectionFieldGroup>
 
                   <ChoiceFieldGroup>
                     <FieldLabel>Cross Posting (Mirroring)</FieldLabel>
@@ -573,17 +568,17 @@ export default function ContractInfoSheet({
                 <ContractH5LinkBar h5KolId={h5KolId} />
               </div>
 
-              <SubtleCard className="space-y-4">
+              <SubtleCard>
                 <SectionTitle
-                  accent
                   title="Section 1: Identity & Contact"
-                  description="Optionally upload an ID or passport (PDF, PNG, JPG) — AI can auto-fill the fields below to save time."
+                  description="Provide your identity details for the contract. To save time, use the auto-fill feature to instantly extract this info from an official document (ID, passport, or business license)."
                   right={
                     <FileUploadZone
                       optional
                       compact
                       compactPart="header-action"
                       title="ID/Passport"
+                      headerActionLabel="Auto-fill"
                       hint="PDF, PNG, JPG"
                       accept=".pdf,.png,.jpg,.jpeg"
                       acceptedExtensions={[".pdf", ".png", ".jpg", ".jpeg"]}
@@ -594,7 +589,7 @@ export default function ContractInfoSheet({
                   }
                 />
 
-                <div className="space-y-0">
+                <div className="mt-5 space-y-5">
                   <FileUploadZone
                     optional
                     compact
@@ -717,17 +712,17 @@ export default function ContractInfoSheet({
                 </div>
               </SubtleCard>
 
-              <SubtleCard className="space-y-4">
+              <SubtleCard>
                 <SectionTitle
-                  accent
                   title="Section 2: Payment Details"
-                  description="These fields are used for your payment profile and contract payout instructions. Optionally upload a bank record (PDF, PNG, JPG) — AI can auto-fill the fields below to save time."
+                  description="Provide your payment details for contract payouts. To save time, use the auto-fill feature to instantly extract this info from a bank document (passbook, statement, or cancelled cheque)."
                   right={
                     <FileUploadZone
                       optional
                       compact
                       compactPart="header-action"
                       title="Bank Record"
+                      headerActionLabel="Auto-fill"
                       hint="PDF, PNG, JPG"
                       accept=".pdf,.png,.jpg,.jpeg"
                       acceptedExtensions={[".pdf", ".png", ".jpg", ".jpeg"]}
@@ -738,7 +733,7 @@ export default function ContractInfoSheet({
                   }
                 />
 
-                <div className="space-y-0">
+                <div className="mt-5 space-y-5">
                   <FileUploadZone
                     optional
                     compact
@@ -816,9 +811,9 @@ export default function ContractInfoSheet({
                 </div>
               </SubtleCard>
 
-              <SubtleCard className="space-y-4">
-                <SectionTitle accent title="Section 3: Shipping Address" />
-                <div className="space-y-0">
+              <SubtleCard>
+                <SectionTitle title="Section 3: Shipping Address" />
+                <div className="mt-5 space-y-5">
                   <FormFieldGroup>
                     <FieldLabel required>Recipient Name</FieldLabel>
                     <Input

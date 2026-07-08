@@ -306,13 +306,14 @@ export function H5ContractProfileView({ kolId }: { kolId: string }) {
 
         <H5SectionCard
           title="Section 1: Identity & Contact"
-          description="Optionally upload an ID or passport (PDF, PNG, JPG) — AI can auto-fill the fields below to save time."
+          description="Provide your identity details for the contract. To save time, use the auto-fill feature to instantly extract this info from an official document (ID, passport, or business license)."
           headerAction={
             <FileUploadZone
               optional
               compact
               compactPart="header-action"
               title="ID/Passport"
+              headerActionLabel="Auto-fill"
               hint="PDF, PNG, JPG"
               accept={documentAccept}
               acceptedExtensions={documentExtensions}
@@ -423,13 +424,14 @@ export function H5ContractProfileView({ kolId }: { kolId: string }) {
 
         <H5SectionCard
           title="Section 2: Payment Details"
-          description="These fields are used for your payment profile and contract payout instructions. Optionally upload a bank record (PDF, PNG, JPG) — AI can auto-fill the fields below to save time."
+          description="Provide your payment details for contract payouts. To save time, use the auto-fill feature to instantly extract this info from a bank document (passbook, statement, or cancelled cheque)."
           headerAction={
             <FileUploadZone
               optional
               compact
               compactPart="header-action"
               title="Bank Record"
+              headerActionLabel="Auto-fill"
               hint="PDF, PNG, JPG"
               accept={documentAccept}
               acceptedExtensions={documentExtensions}
