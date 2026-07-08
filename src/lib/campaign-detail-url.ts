@@ -1,5 +1,6 @@
 import type { CampaignTab } from "@/components/CampaignDetailHeader";
 import type { HubSection } from "@/components/CampaignHub";
+import type { ContractInfoTab } from "@/components/ContractInfoSheet";
 
 const TAB_BY_QUERY: Record<string, CampaignTab> = {
   pipeline: "Pipeline",
@@ -51,6 +52,8 @@ export function parseCampaignDetailSearchParams(searchParams: {
   figmaPostingPostLinkTooltips?: string;
   figmaReviewTab?: string;
   figmaReviewKol?: string;
+  figmaOpenContractInfo?: string;
+  figmaContractInfoTab?: string;
 }): {
   initialTab?: CampaignTab;
   initialHubSection?: HubSection;
@@ -75,6 +78,8 @@ export function parseCampaignDetailSearchParams(searchParams: {
   figmaPostingPostLinkTooltips?: boolean;
   figmaReviewTab?: "comments" | "brief";
   figmaReviewKol?: string;
+  figmaOpenContractInfo?: boolean;
+  figmaContractInfoTab?: ContractInfoTab;
 } {
   const tabKey = searchParams.tab?.toLowerCase().replace(/_/g, "-");
   const sectionKey = searchParams.section?.toLowerCase().replace(/_/g, "-");
@@ -126,6 +131,20 @@ export function parseCampaignDetailSearchParams(searchParams: {
   const figmaPostingPostLinkTooltips = searchParams.figmaPostingPostLinkTooltips === "1";
   const reviewTrackKey = searchParams.figmaOpenReview?.toLowerCase().replace(/_/g, "-");
   const reviewTabKey = searchParams.figmaReviewTab?.toLowerCase().replace(/_/g, "-");
+  const figmaOpenContractInfo = searchParams.figmaOpenContractInfo === "1";
+  const contractInfoTabKey = searchParams.figmaContractInfoTab?.toLowerCase().replace(/_/g, "-");
+  const figmaContractInfoTab: ContractInfoTab | undefined =
+    contractInfoTabKey === "kol-information" ||
+    contractInfoTabKey === "kol-info" ||
+    contractInfoTabKey === "kol"
+      ? "KOL Information"
+      : contractInfoTabKey === "collaboration" ||
+          contractInfoTabKey === "collaboration-details" ||
+          contractInfoTabKey === "commercial"
+        ? "Collaboration Details"
+        : figmaOpenContractInfo
+          ? "Collaboration Details"
+          : undefined;
 
   return {
     initialTab: tabKey ? TAB_BY_QUERY[tabKey] : undefined,
@@ -163,5 +182,7 @@ export function parseCampaignDetailSearchParams(searchParams: {
           ? "comments"
           : undefined,
     figmaReviewKol: searchParams.figmaReviewKol?.trim() || undefined,
+    figmaOpenContractInfo,
+    figmaContractInfoTab,
   };
 }

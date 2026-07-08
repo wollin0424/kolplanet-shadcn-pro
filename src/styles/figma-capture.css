@@ -48,7 +48,7 @@ html.figma-capture [class*="min-h-[680px]"] {
 }
 
 html.figma-capture .figma-capture-detail-content,
-html.figma-capture .overflow-y-auto.min-h-0.flex-1 {
+html.figma-capture .figma-capture-detail-content .overflow-y-auto.min-h-0.flex-1 {
   flex: none !important;
   min-height: auto !important;
   height: auto !important;
@@ -347,6 +347,45 @@ html.figma-capture [data-figma-capture="posting-post-link-tooltips-panel"] {
   opacity: 1 !important;
   overflow: visible !important;
   max-height: none !important;
+}
+
+/* Contract Info sheet — isolate right drawer for element capture */
+html.figma-capture [data-figma-capture="contract-info-sheet"],
+html.figma-capture .figma-capture-contract-info-sheet {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  width: 600px !important;
+  max-width: 600px !important;
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
+}
+
+html.figma-capture [data-figma-capture="contract-info-sheet"].h-full,
+html.figma-capture .figma-capture-contract-info-sheet.h-full {
+  height: auto !important;
+}
+
+html.figma-capture [data-figma-capture="contract-info-sheet"] .no-scrollbar {
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+  flex: none !important;
+  padding: 0 !important;
+}
+
+html.figma-capture [data-figma-capture="contract-info-sheet"] .min-h-0.flex-1 {
+  flex: none !important;
+  min-height: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  padding: 0 !important;
 }
 
 /* H5 Posting & Reporting — full-page capture at 480px */

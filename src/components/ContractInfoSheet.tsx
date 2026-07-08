@@ -20,7 +20,8 @@ import { cn } from "@/lib/utils";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import { Copy, ExternalLink, Info, X } from "@/lib/icons";
 
-type Tab = "Collaboration Details" | "KOL Information" | "Todo";
+export type ContractInfoTab = "Collaboration Details" | "KOL Information";
+type Tab = ContractInfoTab;
 
 function ContractInfoTabButton({
   active,
@@ -142,6 +143,31 @@ function FormFieldGroup({ children }: { children: React.ReactNode }) {
   return <div className="space-y-2">{children}</div>;
 }
 
+function ContractToggleField({
+  label,
+  checked,
+  onCheckedChange,
+  children,
+}: {
+  label: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  children?: React.ReactNode;
+}) {
+  return (
+    <SectionFieldGroup>
+      <FieldLabel>{label}</FieldLabel>
+      <div className="flex items-center gap-2.5">
+        <Switch checked={checked} onCheckedChange={onCheckedChange} />
+        <span className="text-[13px] leading-none text-gray-500">
+          {checked ? "Enabled" : "Disabled"}
+        </span>
+      </div>
+      {children}
+    </SectionFieldGroup>
+  );
+}
+
 function RadioChipGroup({
   options,
   value,
@@ -204,6 +230,7 @@ export default function ContractInfoSheet({
   influencerName = "Amelia Stones",
   h5KolId = "1",
   initialTab = "Collaboration Details",
+  figmaCapture = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -211,6 +238,7 @@ export default function ContractInfoSheet({
   influencerName?: string;
   h5KolId?: string;
   initialTab?: Tab;
+  figmaCapture?: boolean;
 }) {
   const [tab, setTab] = useState<Tab>(initialTab);
 
@@ -314,7 +342,11 @@ export default function ContractInfoSheet({
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="flex h-full w-full flex-col gap-0 border-l border-gray-100 bg-[#f8f9fb] p-0 data-[side=right]:max-w-[600px] data-[side=right]:sm:max-w-[600px]"
+        className={cn(
+          "flex h-full w-full flex-col gap-0 border-l border-gray-100 bg-[#f8f9fb] p-0 data-[side=right]:max-w-[600px] data-[side=right]:sm:max-w-[600px]",
+          figmaCapture && "figma-capture-contract-info-sheet"
+        )}
+        data-figma-capture={figmaCapture ? "contract-info-sheet" : undefined}
       >
         <SheetHeader className="shrink-0 flex-row items-center justify-between gap-3 border-b border-gray-100 bg-white px-6 py-5 text-left">
           <SheetTitle className="text-[18px] font-semibold text-gray-900">Contract Info</SheetTitle>
@@ -358,9 +390,6 @@ export default function ContractInfoSheet({
               onClick={() => setTab("KOL Information")}
             >
               KOL Information
-            </ContractInfoTabButton>
-            <ContractInfoTabButton active={tab === "Todo"} onClick={() => setTab("Todo")}>
-              Todo
             </ContractInfoTabButton>
           </div>
         </div>
@@ -496,11 +525,11 @@ export default function ContractInfoSheet({
                     />
                   </ChoiceFieldGroup>
 
-                  <SectionFieldGroup>
-                    <div className="flex items-start justify-between gap-4">
-                      <FieldLabel>Competitor Exclusivity</FieldLabel>
-                      <Switch checked={competitorExcl} onCheckedChange={setCompetitorExcl} />
-                    </div>
+                  <ContractToggleField
+                    label="Competitor Exclusivity"
+                    checked={competitorExcl}
+                    onCheckedChange={setCompetitorExcl}
+                  >
                     {competitorExcl ? (
                       <Textarea
                         value={competitorExclList}
@@ -510,7 +539,7 @@ export default function ContractInfoSheet({
                         className={formTextareaClass("min-h-[96px] resize-none text-[13px]")}
                       />
                     ) : null}
-                  </SectionFieldGroup>
+                  </ContractToggleField>
 
                   <ChoiceFieldGroup>
                     <FieldLabel>Collab Post</FieldLabel>
@@ -521,21 +550,21 @@ export default function ContractInfoSheet({
                     />
                   </ChoiceFieldGroup>
 
-                  <SectionFieldGroup>
-                    <div className="flex items-start justify-between gap-4">
-                      <FieldLabel>Onsite/Event</FieldLabel>
-                      <Switch checked={onsiteEvent} onCheckedChange={setOnsiteEvent} />
-                    </div>
+                  <ContractToggleField
+                    label="Onsite/Event"
+                    checked={onsiteEvent}
+                    onCheckedChange={setOnsiteEvent}
+                  >
                     {onsiteEvent ? (
                       <Textarea
                         value={onsiteEventDetails}
                         onChange={(e) => setOnsiteEventDetails(e.target.value)}
-                        placeholder="Time, Location, And Duration"
+                        placeholder="Enter onsite/event description..."
                         rows={3}
                         className={formTextareaClass("min-h-[96px] resize-none text-[13px]")}
                       />
                     ) : null}
-                  </SectionFieldGroup>
+                  </ContractToggleField>
 
                   <ChoiceFieldGroup>
                     <FieldLabel>Cross Posting (Mirroring)</FieldLabel>
@@ -557,7 +586,7 @@ export default function ContractInfoSheet({
                 </div>
               </SubtleCard>
             </>
-          ) : tab === "KOL Information" ? (
+          ) : (
             <>
               {/* KOL Information tab */}
               <div className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,0.04)] sm:flex-row sm:items-center sm:justify-between">
@@ -899,13 +928,6 @@ export default function ContractInfoSheet({
                 </div>
               </SubtleCard>
             </>
-          ) : (
-            <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-12 text-center">
-              <p className="text-[13px] font-medium text-gray-700">No pending tasks</p>
-              <p className="mt-1 text-[12px] leading-relaxed text-gray-500">
-                Contract-related todos for this creator will appear here.
-              </p>
-            </div>
           )}
           </div>
         </div>

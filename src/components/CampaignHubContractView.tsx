@@ -34,7 +34,7 @@ import ShippingDetailsSheet, {
   type ShippingAddress,
   type ShippingFulfillment,
 } from "@/components/ShippingDetailsSheet";
-import ContractInfoSheet from "@/components/ContractInfoSheet";
+import ContractInfoSheet, { type ContractInfoTab } from "@/components/ContractInfoSheet";
 
 type ContractCardStatus =
   | "Awaiting Info"
@@ -333,16 +333,24 @@ function ContractInfluencerCard({
 export default function CampaignHubContractView({
   campaignId,
   onBack,
+  figmaCapture = false,
+  figmaOpenContractInfo = false,
+  figmaContractInfoTab = "Collaboration Details",
 }: {
   campaignId: string;
   onBack: () => void;
+  figmaCapture?: boolean;
+  figmaOpenContractInfo?: boolean;
+  figmaContractInfoTab?: ContractInfoTab;
 }) {
   const [statusFilter, setStatusFilter] = useState("All");
   const [managerFilter, setManagerFilter] = useState("All");
   const [identityFilter, setIdentityFilter] = useState("All");
   const [query, setQuery] = useState("");
   const [shippingCardId, setShippingCardId] = useState<string | null>(null);
-  const [contractInfoCardId, setContractInfoCardId] = useState<string | null>(null);
+  const [contractInfoCardId, setContractInfoCardId] = useState<string | null>(() =>
+    figmaCapture && figmaOpenContractInfo ? "c1" : null
+  );
   const [cards, setCards] = useState(MOCK_CARDS);
 
   const shippingCard = cards.find((card) => card.id === shippingCardId) ?? null;
@@ -442,6 +450,8 @@ export default function CampaignHubContractView({
         influencerHandle={contractInfoCard?.handle}
         influencerName={contractInfoCard?.name}
         h5KolId={contractInfoCard?.h5KolId}
+        initialTab={figmaCapture && figmaOpenContractInfo ? figmaContractInfoTab : "Collaboration Details"}
+        figmaCapture={figmaCapture && figmaOpenContractInfo}
       />
     </TooltipProvider>
   );

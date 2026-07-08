@@ -3,6 +3,7 @@
 import { useState } from "react";
 import CampaignDetailHeader, { type CampaignTab } from "@/components/CampaignDetailHeader";
 import CampaignHub, { type HubSection } from "@/components/CampaignHub";
+import type { ContractInfoTab } from "@/components/ContractInfoSheet";
 import CampaignPipelineTable from "@/components/CampaignPipelineTable";
 import PagePlaceholder from "@/components/PagePlaceholder";
 import { FileText } from "@/lib/icons";
@@ -33,6 +34,8 @@ export default function CampaignDetailView({
   figmaPostingPostLinkTooltips,
   figmaReviewTab,
   figmaReviewKol,
+  figmaOpenContractInfo,
+  figmaContractInfoTab,
 }: {
   campaignId: string;
   initialTab?: CampaignTab;
@@ -58,6 +61,8 @@ export default function CampaignDetailView({
   figmaPostingPostLinkTooltips?: boolean;
   figmaReviewTab?: "comments" | "brief";
   figmaReviewKol?: string;
+  figmaOpenContractInfo?: boolean;
+  figmaContractInfoTab?: ContractInfoTab;
 }) {
   const [tab, setTab] = useState<CampaignTab>(initialTab ?? "Pipeline");
   const [hubMountKey, setHubMountKey] = useState(0);
@@ -115,6 +120,8 @@ export default function CampaignDetailView({
             figmaPostingPostLinkTooltips={hubMountKey === 0 ? figmaPostingPostLinkTooltips : undefined}
             figmaReviewTab={hubMountKey === 0 ? figmaReviewTab : undefined}
             figmaReviewKol={hubMountKey === 0 ? figmaReviewKol : undefined}
+            figmaOpenContractInfo={hubMountKey === 0 ? figmaOpenContractInfo : undefined}
+            figmaContractInfoTab={hubMountKey === 0 ? figmaContractInfoTab : undefined}
           />
         ) : (
           <PagePlaceholder

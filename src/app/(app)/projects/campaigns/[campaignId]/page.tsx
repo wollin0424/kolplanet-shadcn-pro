@@ -32,6 +32,8 @@ export default async function CampaignDetailPage({
     figmaPostingPostLinkTooltips?: string;
     figmaReviewTab?: string;
     figmaReviewKol?: string;
+    figmaOpenContractInfo?: string;
+    figmaContractInfoTab?: string;
   }>;
 }) {
   const { campaignId } = await params;
@@ -60,6 +62,8 @@ export default async function CampaignDetailPage({
     figmaPostingPostLinkTooltips,
     figmaReviewTab,
     figmaReviewKol,
+    figmaOpenContractInfo,
+    figmaContractInfoTab,
   } = parseCampaignDetailSearchParams(query);
 
   return (
@@ -88,6 +92,8 @@ export default async function CampaignDetailPage({
       figmaPostingPostLinkTooltips={figmaPostingPostLinkTooltips}
       figmaReviewTab={figmaReviewTab}
       figmaReviewKol={figmaReviewKol}
+      figmaOpenContractInfo={figmaOpenContractInfo}
+      figmaContractInfoTab={figmaContractInfoTab}
     />
   );
 }

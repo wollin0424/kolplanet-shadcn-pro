@@ -3,6 +3,7 @@
 import CampaignHubContentView from "@/components/CampaignHubContentView";
 import { ContentHubOverview } from "@/components/ContentHubOverview";
 import CampaignHubContractView from "@/components/CampaignHubContractView";
+import type { ContractInfoTab } from "@/components/ContractInfoSheet";
 import CampaignHubLogisticsView from "@/components/CampaignHubLogisticsView";
 import CampaignHubPostingView from "@/components/CampaignHubPostingView";
 import CampaignHubScriptView from "@/components/CampaignHubScriptView";
@@ -166,6 +167,8 @@ export default function CampaignHub({
   figmaPostingPostLinkTooltips,
   figmaReviewTab,
   figmaReviewKol,
+  figmaOpenContractInfo,
+  figmaContractInfoTab,
 }: {
   campaignId: string;
   onNavigate?: (tab: CampaignTab) => void;
@@ -190,6 +193,8 @@ export default function CampaignHub({
   figmaPostingPostLinkTooltips?: boolean;
   figmaReviewTab?: "comments" | "brief";
   figmaReviewKol?: string;
+  figmaOpenContractInfo?: boolean;
+  figmaContractInfoTab?: ContractInfoTab;
 }) {
   const [activeSection, setActiveSection] = useState<HubSection | null>(
     initialSection ?? null
@@ -206,6 +211,9 @@ export default function CampaignHub({
       <CampaignHubContractView
         campaignId={campaignId}
         onBack={() => setActiveSection(null)}
+        figmaCapture={figmaCapture}
+        figmaOpenContractInfo={figmaOpenContractInfo}
+        figmaContractInfoTab={figmaContractInfoTab}
       />
     );
   }
