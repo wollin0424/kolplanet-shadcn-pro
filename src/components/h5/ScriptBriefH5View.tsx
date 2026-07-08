@@ -13,13 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Check,
-  BookOpen,
   Calendar,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
   Copy,
-  CreditCard,
   FileText,
   Lightbulb,
   Link as LinkIcon,
@@ -220,50 +218,8 @@ function H5ReferenceWebsiteLink({ href }: { href: string }) {
   );
 }
 
-function H5OverviewLinkRow({
-  href,
-  icon: Icon,
-  iconTone = "brand",
-  title,
-  description,
-  actionLabel,
-}: {
-  href: string;
-  icon: typeof FileText;
-  iconTone?: "brand" | "amber" | "emerald";
-  title: string;
-  description: string;
-  actionLabel: string;
-}) {
-  const iconToneClass = {
-    brand: "bg-brand-50 text-brand",
-    amber: "bg-amber-50 text-amber-700",
-    emerald: "bg-emerald-50 text-emerald-700",
-  }[iconTone];
-
-  return (
-    <a
-      href={href}
-      className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-colors hover:border-brand/20 hover:bg-brand-50/25 active:bg-brand-50/35"
-    >
-      <span
-        className={cn(
-          "inline-flex size-9 shrink-0 items-center justify-center rounded-full",
-          iconToneClass
-        )}
-      >
-        <Icon size={16} strokeWidth={2} />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="text-[14px] font-semibold leading-snug text-gray-900">{title}</p>
-        <p className="mt-0.5 text-[12px] leading-relaxed text-gray-500">{description}</p>
-      </div>
-      <span className="inline-flex shrink-0 items-center gap-0.5 text-[13px] font-medium text-brand">
-        {actionLabel}
-        <ChevronRight size={14} strokeWidth={2} />
-      </span>
-    </a>
-  );
+function hasApprovedDraftSubmission(submissions: ScriptDraftSubmission[]) {
+  return submissions.some((submission) => submission.status === "Approved");
 }
 
 export default function ScriptBriefH5View({
@@ -431,10 +387,6 @@ function H5OverviewCard({
   );
 }
 
-function hasApprovedDraftSubmission(submissions: ScriptDraftSubmission[]) {
-  return submissions.some((submission) => submission.status === "Approved");
-}
-
 function ScriptBriefH5Overview({
   kolId,
   figmaCapture = false,
@@ -493,7 +445,6 @@ function ScriptBriefH5Overview({
     : captionSubmissions.some((submission) => submission.status === "Approved");
 
   const baseHref = `/h5/kol-info/${encodeURIComponent(kolId)}`;
-  const contractHref = `${baseHref}?view=contract`;
   const guidelinesHref = `${baseHref}?view=guidelines`;
   const scriptHref = `${baseHref}?view=script`;
   const videoHref = `${baseHref}?view=video`;
@@ -530,32 +481,22 @@ function ScriptBriefH5Overview({
           </section>
 
           <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-            <p className="mb-3 text-[12px] font-semibold uppercase tracking-wide text-gray-400">
-              Before you start
-            </p>
-            <div className="space-y-2">
-              <H5OverviewLinkRow
-                href={contractHref}
-                icon={CreditCard}
-                iconTone={data.contractPaymentComplete ? "emerald" : "amber"}
-                title="Contract & Payment Details"
-                description="Fill in agreement and payout information."
-                actionLabel={data.contractPaymentComplete ? "View" : "Fill"}
-              />
-              <H5OverviewLinkRow
-                href={guidelinesHref}
-                icon={BookOpen}
-                title="Content Guidelines"
-                description="Review the full brief and creation requirements."
-                actionLabel="View"
-              />
-            </div>
-          </section>
+            <H5SectionHeading
+              icon={FileText}
+              title="Content Guidelines"
+              trailing={
+                <a
+                  href={guidelinesHref}
+                  className="inline-flex shrink-0 items-center gap-0.5 text-[13px] font-medium text-brand transition-colors hover:text-brand/80"
+                >
+                  View
+                  <ChevronRight size={14} strokeWidth={2} />
+                </a>
+              }
+              description="Tap for full brief and creation requirements."
+            />
 
-          <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-          <h2 className="mb-4 text-[15px] font-semibold text-gray-900">Submission workflow</h2>
-
-          <div className="space-y-4">
+            <div className="space-y-4">
             <H5OverviewCard
               title="Script"
               description="Tap to submit your script and track client feedback."

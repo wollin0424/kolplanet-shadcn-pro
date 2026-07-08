@@ -37,7 +37,7 @@ function ContractInfoTabButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex h-9 shrink-0 items-center border-b-2 px-2.5 text-[12px] font-medium leading-none transition-colors",
+        "inline-flex h-10 shrink-0 items-center border-b-2 px-2.5 text-[13px] font-medium leading-none transition-colors",
         active
           ? "border-brand text-gray-900"
           : "border-transparent text-gray-500 hover:text-gray-800"
@@ -378,7 +378,7 @@ export default function ContractInfoSheet({
             </div>
           </div>
 
-          <div className="mt-4 flex items-center gap-4 border-b border-gray-100">
+          <div className="mt-6 flex items-center gap-4 border-b border-gray-100">
             <ContractInfoTabButton
               active={tab === "Collaboration Details"}
               onClick={() => setTab("Collaboration Details")}
