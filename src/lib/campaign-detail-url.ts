@@ -1,6 +1,7 @@
 import type { CampaignTab } from "@/components/CampaignDetailHeader";
 import type { HubSection } from "@/components/CampaignHub";
 import type { ContractInfoTab } from "@/components/ContractInfoSheet";
+import type { ReportSection } from "@/lib/campaignReportMock";
 
 const TAB_BY_QUERY: Record<string, CampaignTab> = {
   pipeline: "Pipeline",
@@ -54,9 +55,11 @@ export function parseCampaignDetailSearchParams(searchParams: {
   figmaReviewKol?: string;
   figmaOpenContractInfo?: string;
   figmaContractInfoTab?: string;
+  reportSection?: string;
 }): {
   initialTab?: CampaignTab;
   initialHubSection?: HubSection;
+  initialReportSection?: ReportSection;
   initialScriptKolId?: string;
   figmaCapture?: boolean;
   figmaOpenFilters?: boolean;
@@ -83,6 +86,15 @@ export function parseCampaignDetailSearchParams(searchParams: {
 } {
   const tabKey = searchParams.tab?.toLowerCase().replace(/_/g, "-");
   const sectionKey = searchParams.section?.toLowerCase().replace(/_/g, "-");
+  const reportSectionKey = searchParams.reportSection?.toLowerCase().replace(/_/g, "-");
+  const initialReportSection: ReportSection | undefined =
+    reportSectionKey === "influencer"
+      ? "influencer"
+      : reportSectionKey === "content"
+        ? "content"
+        : reportSectionKey === "overview"
+          ? "overview"
+          : undefined;
 
   if (tabKey === "payment") {
     return { initialTab: "Campaign Hub", initialHubSection: "payment" };
@@ -149,6 +161,7 @@ export function parseCampaignDetailSearchParams(searchParams: {
   return {
     initialTab: tabKey ? TAB_BY_QUERY[tabKey] : undefined,
     initialHubSection: sectionKey ? HUB_SECTION_BY_QUERY[sectionKey] : undefined,
+    initialReportSection,
     initialScriptKolId,
     figmaCapture,
     figmaOpenFilters,

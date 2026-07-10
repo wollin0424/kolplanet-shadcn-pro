@@ -3,10 +3,10 @@
 import { useState } from "react";
 import CampaignDetailHeader, { type CampaignTab } from "@/components/CampaignDetailHeader";
 import CampaignHub, { type HubSection } from "@/components/CampaignHub";
+import CampaignReportView from "@/components/CampaignReportView";
 import type { ContractInfoTab } from "@/components/ContractInfoSheet";
 import CampaignPipelineTable from "@/components/CampaignPipelineTable";
-import PagePlaceholder from "@/components/PagePlaceholder";
-import { FileText } from "@/lib/icons";
+import type { ReportSection } from "@/lib/campaignReportMock";
 import { cn } from "@/lib/utils";
 
 export default function CampaignDetailView({
@@ -36,10 +36,12 @@ export default function CampaignDetailView({
   figmaReviewKol,
   figmaOpenContractInfo,
   figmaContractInfoTab,
+  initialReportSection,
 }: {
   campaignId: string;
   initialTab?: CampaignTab;
   initialHubSection?: HubSection;
+  initialReportSection?: ReportSection;
   initialScriptKolId?: string;
   figmaCapture?: boolean;
   figmaOpenFilters?: boolean;
@@ -124,11 +126,7 @@ export default function CampaignDetailView({
             figmaContractInfoTab={hubMountKey === 0 ? figmaContractInfoTab : undefined}
           />
         ) : (
-          <PagePlaceholder
-            title="Report"
-            description="Report module placeholder for the campaign detail view."
-            icon={<FileText size={14} strokeWidth={2} />}
-          />
+          <CampaignReportView initialSection={initialReportSection} />
         )}
       </div>
     </div>

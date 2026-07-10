@@ -106,9 +106,6 @@ export default function CampaignDetailHeader({
               >
                 <span className="inline-flex items-center gap-1.5">
                   {t}
-                  {t === "Report" && (
-                    <ExternalLink size={12} className="text-gray-300" />
-                  )}
                 </span>
                 {isActive && (
                   <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-brand rounded-full" />

@@ -34,6 +34,7 @@ export default async function CampaignDetailPage({
     figmaReviewKol?: string;
     figmaOpenContractInfo?: string;
     figmaContractInfoTab?: string;
+    reportSection?: string;
   }>;
 }) {
   const { campaignId } = await params;
@@ -64,6 +65,7 @@ export default async function CampaignDetailPage({
     figmaReviewKol,
     figmaOpenContractInfo,
     figmaContractInfoTab,
+    initialReportSection,
   } = parseCampaignDetailSearchParams(query);
 
   return (
@@ -94,6 +96,7 @@ export default async function CampaignDetailPage({
       figmaReviewKol={figmaReviewKol}
       figmaOpenContractInfo={figmaOpenContractInfo}
       figmaContractInfoTab={figmaContractInfoTab}
+      initialReportSection={initialReportSection}
     />
   );
 }
