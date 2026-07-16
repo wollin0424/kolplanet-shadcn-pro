@@ -73,6 +73,8 @@ export type PostLink = {
   validation?: ContentValidation;
   /** Mirrored links only — which master (0-based) this repost belongs to. */
   masterIndex?: number;
+  /** Insight report files associated with this master task. */
+  insightReports?: string[];
 };
 
 export const POSTING_HUB_STATUS_OPTIONS: PostingHubStatus[] = [
@@ -328,7 +330,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
     platform: "Instagram",
     h5Path: "/h5/kol-info/s5",
     postingStatus: "Pending",
-    planDate: "Jul 3, 2026",
+    planDate: "",
   },
   // Row 10 — filler Pending
   {
@@ -449,6 +451,25 @@ export function canShowMasterContentValidation(link: PostLink) {
 export function getEffectiveMasterValidation(link: PostLink): ContentValidation | null {
   if (!canShowMasterContentValidation(link)) return null;
   return link.validation ?? null;
+}
+
+export function getInsightReportsForMaster(
+  row: PostingHubRow,
+  masterIndex: number,
+  webInsightFileNames: string[] = []
+): string[] {
+  const master = getMasterPostLinks(row.postLinks)[masterIndex];
+  if (!master) return [];
+
+  if (master.insightReports?.length) {
+    return master.insightReports;
+  }
+
+  if (masterIndex === 0) {
+    return webInsightFileNames.length > 0 ? webInsightFileNames : (row.insightReports ?? []);
+  }
+
+  return [];
 }
 
 export function buildInsightReportSharePath(rowId: string) {

@@ -62,6 +62,7 @@ import {
   getPostLinkStatus,
   getPostLinkTooltipCopy,
   getEffectiveMasterValidation,
+  getInsightReportsForMaster,
   canShowMasterContentValidation,
   matchesContentValidationFilter,
   matchesPostLinkStatusFilter,
@@ -88,7 +89,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { AlertCircle, CheckCircle2, ChevronDown, Copy, CornerDownRight, FileText, FileX, Paperclip, Pencil, Plus, RefreshCcw, Sparkles, Upload, X } from "@/lib/icons";
+import { AlertCircle, CheckCircle2, ChevronDown, Copy, FileText, FileX, Paperclip, Pencil, Plus, RefreshCcw, Send, Sparkles, Upload, X } from "@/lib/icons";
 
 function mergePostingHubRowsInsightReports(rows: PostingHubRow[]): PostingHubRow[] {
   return rows.map((row) => {
@@ -603,7 +604,7 @@ function PostLinkMasterPillWithTooltip({
                   |
                 </span>
                 <span className={POST_LINK_MIRRORED_INLINE_CLASS}>
-                  <CornerDownRight size={11} strokeWidth={2.2} className="shrink-0" />
+                  <Send size={11} strokeWidth={2.2} className="shrink-0" />
                   <span className="tabular-nums">{mirroredCount}</span>
                 </span>
               </>
@@ -942,34 +943,19 @@ function ContentValidationCell({
   );
 }
 
-function InsightReportTooltipContent({
-  files,
-  onOpenDialog,
-}: {
-  files: string[];
-  onOpenDialog: () => void;
-}) {
-  const handleOpenDialog = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    onOpenDialog();
-  };
-
+function InsightReportTooltipContent({ files }: { files: string[] }) {
   return (
     <div className="flex min-w-[240px] flex-col gap-2.5">
       <ul className="flex flex-col gap-2">
         {files.map((fileName, index) => (
-          <li key={`${fileName}-${index}`}>
-            <button
-              type="button"
-              onClick={handleOpenDialog}
-              className="flex min-w-0 w-full cursor-pointer items-center gap-2 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-gray-50"
-              aria-label={`Open insight report for ${fileName}`}
-            >
-              <Paperclip size={14} strokeWidth={2} className="shrink-0 text-gray-400" />
-              <span className="min-w-0 truncate text-[12px] font-medium leading-snug text-gray-800">
-                {fileName}
-              </span>
-            </button>
+          <li
+            key={`${fileName}-${index}`}
+            className="flex min-w-0 items-center gap-2 px-1 py-0.5"
+          >
+            <Paperclip size={14} strokeWidth={2} className="shrink-0 text-gray-400" />
+            <span className="min-w-0 truncate text-[12px] font-medium leading-snug text-gray-800">
+              {fileName}
+            </span>
           </li>
         ))}
       </ul>
@@ -979,35 +965,37 @@ function InsightReportTooltipContent({
 
 function InsightReportCell({
   files,
-  onClick,
+  hasMasterLink,
 }: {
   files?: string[];
-  onClick: () => void;
+  hasMasterLink: boolean;
 }) {
   const reportFiles = files ?? [];
   const count = reportFiles.length;
+  const toneClass = !hasMasterLink
+    ? "text-gray-400"
+    : count > 0
+      ? "text-gray-600"
+      : "text-gray-500";
 
   const badge = (
-    <button
-      type="button"
-      onClick={(event) => {
-        event.stopPropagation();
-        onClick();
-      }}
-      className={
-        count > 0
-          ? "inline-flex cursor-pointer items-center gap-1 rounded-full border border-brand/25 bg-brand-50 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-brand transition-colors hover:border-brand/40 hover:bg-brand-100/70"
-          : "inline-flex cursor-pointer items-center gap-1.5 text-[12px] text-gray-400 transition-colors hover:text-gray-600"
-      }
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold tabular-nums transition-colors",
+        hasMasterLink
+          ? "border-gray-200 bg-gray-50 text-gray-600"
+          : "border-gray-100 bg-gray-50/50 text-gray-400",
+        count > 0 && hasMasterLink && "cursor-default hover:border-gray-300 hover:bg-gray-100/80"
+      )}
       aria-label={
         count > 0
           ? `${count} insight ${count === 1 ? "report" : "reports"}`
-          : "Upload insight report"
+          : "No insight reports"
       }
     >
-      <FileText size={count > 0 ? 12 : 14} className="shrink-0" strokeWidth={2} />
+      <FileText size={12} className={cn("shrink-0", toneClass)} strokeWidth={2} />
       {count}
-    </button>
+    </span>
   );
 
   if (count === 0) return badge;
@@ -1016,7 +1004,7 @@ function InsightReportCell({
     <Tooltip>
       <TooltipTrigger render={badge} />
       <TooltipContent variant="light" side="top" align="start" className="px-3 py-2.5">
-        <InsightReportTooltipContent files={reportFiles} onOpenDialog={onClick} />
+        <InsightReportTooltipContent files={reportFiles} />
       </TooltipContent>
     </Tooltip>
   );
@@ -1053,6 +1041,36 @@ function PostingDateCountBadge({
   );
 }
 
+function InsightReportsColumnCell({ row }: { row: PostingHubRow }) {
+  const masters = getMasterPostLinks(row.postLinks);
+  const mirrored = getVisibleMirroredLinks(row.postLinks);
+  const webInsightFileNames = getWebInsightFiles(row.id).map((file) => file.name);
+  const isEmpty =
+    !hasFetchedPostLinks(row.postLinks) && masters.length === 0 && mirrored.length === 0;
+
+  if (isEmpty || masters.length === 0) {
+    return (
+      <div className={POST_LINK_ROW_CLASS}>
+        <InsightReportCell files={[]} hasMasterLink={false} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-w-0 flex-col gap-1 py-0.5">
+      {masters.map((link, index) => (
+        <div key={`${link.url || "empty"}-${index}`} className={POST_LINK_ROW_CLASS}>
+          <InsightReportCell
+            files={getInsightReportsForMaster(row, index, webInsightFileNames)}
+            hasMasterLink={Boolean(link.url.trim())}
+          />
+        </div>
+      ))}
+      <div className={POST_LINK_ADD_TASK_ROW_CLASS} aria-hidden />
+    </div>
+  );
+}
+
 function PostingDateCell({
   row,
   onSetPostingDate,
@@ -1067,11 +1085,23 @@ function PostingDateCell({
     linkType: entry.linkType,
   }));
 
+  const planDate = row.planDate?.trim();
+  const actualDate = row.actualDate?.trim();
+  const hasPlanDate = Boolean(planDate);
+  const hasActualDate = Boolean(actualDate);
+
   return (
     <div className="space-y-0.5 leading-snug">
       <div className="flex min-w-0 items-center gap-0.5">
         <p className="text-[11px] text-gray-400">
-          <span>Plan:</span> <span className="font-medium text-gray-500">{row.planDate}</span>
+          <span className="font-semibold text-gray-900">Plan:</span>{" "}
+          <span
+            className={cn(
+              hasPlanDate ? "font-medium text-gray-500" : "font-normal text-gray-300"
+            )}
+          >
+            {planDate || "--"}
+          </span>
         </p>
         <RowHoverAction>
           <button
@@ -1084,17 +1114,18 @@ function PostingDateCell({
           </button>
         </RowHoverAction>
       </div>
-      {row.actualDate ? (
-        <p className="flex items-center gap-1 text-[12px] font-semibold text-gray-900">
-          <span>Actual:</span>
-          <span>{row.actualDate}</span>
+      {hasActualDate ? (
+        <p className="flex items-center gap-1 text-[12px] text-gray-900">
+          <span className="font-semibold">Actual:</span>
+          <span className="font-medium">{actualDate}</span>
           {breakdownRows.length > 1 ? (
             <PostingDateCountBadge count={breakdownRows.length} rows={breakdownRows} />
           ) : null}
         </p>
       ) : (
         <p className="text-[11px] text-gray-400">
-          <span>Actual:</span> <span>--</span>
+          <span className="font-semibold text-gray-900">Actual:</span>{" "}
+          <span className="font-normal text-gray-300">--</span>
         </p>
       )}
     </div>
@@ -1113,7 +1144,6 @@ function PostingHubTable({
   onStatusChange,
   onSetPostingDate,
   onEditTask,
-  onUploadInsightReport,
   onFetchPostLinks,
   onFetchMasterLink,
   onAddTask,
@@ -1130,7 +1160,6 @@ function PostingHubTable({
   onStatusChange: (id: string, status: PostingHubStatus) => void;
   onSetPostingDate: (row: PostingHubRow) => void;
   onEditTask: (row: PostingHubRow, masterIndex: number) => void;
-  onUploadInsightReport: (row: PostingHubRow) => void;
   onFetchPostLinks: (row: PostingHubRow) => void;
   onFetchMasterLink: (row: PostingHubRow, masterIndex: number) => void;
   onAddTask: (row: PostingHubRow) => void;
@@ -1247,10 +1276,7 @@ function PostingHubTable({
                 <ContentValidationCell row={row} onAutoValidate={onAutoValidate} />
               </TableCell>
               <TableCell>
-                <InsightReportCell
-                  files={row.insightReports}
-                  onClick={() => onUploadInsightReport(row)}
-                />
+                <InsightReportsColumnCell row={row} />
               </TableCell>
               <TableCell>
                 <PostingDateCell row={row} onSetPostingDate={() => onSetPostingDate(row)} />
@@ -1526,10 +1552,6 @@ export default function CampaignHubPostingView({
     openPostLinkManagement(row, { masterIndex, initialTab: "links" });
   };
 
-  const handleOpenInsightReport = (row: PostingHubRow) => {
-    openPostLinkManagement(row, { initialTab: "insight" });
-  };
-
   const handlePostLinkTaskSubmit = (postLinks: PostLink[]) => {
     if (!postLinkTaskDialog.rowId) return;
     setRows((prev) =>
@@ -1722,7 +1744,6 @@ export default function CampaignHubPostingView({
           onStatusChange={updateStatus}
           onSetPostingDate={(row) => openPostingDateDialog([row.id], row.name)}
           onEditTask={handleEditTask}
-          onUploadInsightReport={handleOpenInsightReport}
           onFetchPostLinks={handleFetchPostLinks}
           onFetchMasterLink={handleFetchMasterLink}
           onAddTask={handleAddTask}

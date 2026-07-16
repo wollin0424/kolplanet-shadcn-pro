@@ -170,11 +170,7 @@ function TaskFieldLabel({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {variant === "master" ? (
-        <span className="inline-flex h-5 items-center rounded-md border border-brand/25 bg-brand-50 px-1.5 text-[10px] font-bold uppercase tracking-wide text-brand">
-          Primary
-        </span>
-      ) : mirroredIndex !== undefined ? (
+      {variant === "mirrored" && mirroredIndex !== undefined ? (
         <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-[10px] font-bold text-gray-500">
           {mirroredIndex}
         </span>
@@ -795,7 +791,7 @@ function PostLinkManagementSheetPanel({
         <SheetHeader className="gap-2 px-6 pt-5 pb-3 text-left">
           <div className="flex items-center gap-2 pr-8">
             <SheetTitle className="text-[18px] font-semibold text-gray-900">
-              Post Link Management
+              Task Management
             </SheetTitle>
             <span className="inline-flex h-[22px] items-center rounded-full border border-brand/25 bg-brand-50 px-2.5 text-[11px] font-semibold text-brand">
               {headerBadge}
@@ -819,12 +815,12 @@ function PostLinkManagementSheetPanel({
                     <Send size={15} strokeWidth={2} />
                   </span>
                   <h3 className="text-[15px] font-semibold text-gray-900">
-                    Master Link (Original Posts)
+                    Post Link
                   </h3>
                 </div>
 
                 <TaskLinkFieldRow
-                  label="Master"
+                  label="Master Link (Original Posts)"
                   inputId={`${baseId}-master`}
                   url={master.url}
                   statusLink={masterStatusLink}
@@ -920,8 +916,8 @@ function PostLinkManagementSheetPanel({
                 </div>
 
                 <div className="space-y-2 rounded-lg border border-gray-100 bg-gray-50/50 px-3 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                    Validation Result
+                  <p className="text-[11px] font-semibold text-gray-400">
+                    Validation result
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {validation ? (
