@@ -338,7 +338,7 @@ function ConfirmTaskUpdateDialog({
           <DialogTitle className="text-center text-[17px] font-bold text-gray-900">
             Confirm Task Update
           </DialogTitle>
-          <DialogDescription className="mt-2 text-left text-[13px] font-normal text-gray-500">
+          <DialogDescription className="mt-4 text-left text-[13px] font-normal text-gray-500">
             You are updating this task.
           </DialogDescription>
         </div>
@@ -364,6 +364,79 @@ function ConfirmTaskUpdateDialog({
             To preserve your data, you must provide a valid{" "}
             <span className="font-bold text-gray-900">Master Link</span> before saving.
           </p>
+        </div>
+
+        <div className="flex justify-center gap-2 border-t border-gray-100 bg-gray-50/50 px-6 py-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 min-w-[88px] px-4 text-[13px]"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="brand"
+            className="h-9 min-w-[88px] px-4 text-[13px]"
+            onClick={() => {
+              onConfirm();
+              onOpenChange(false);
+            }}
+          >
+            Confirm
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ConfirmReportUpdateDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="z-[60] gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[480px]"
+        showCloseButton
+      >
+        <div className="px-6 pt-6 pb-4">
+          <DialogTitle className="text-center text-[17px] font-bold text-gray-900">
+            Confirm Report Update
+          </DialogTitle>
+          <DialogDescription className="mt-4 text-left text-[13px] font-normal text-gray-500">
+            You are about to save changes to the Insight Report.
+          </DialogDescription>
+        </div>
+
+        <div className="space-y-3 px-6 pb-6 text-left">
+          <p className="text-[13px] font-normal leading-relaxed text-gray-500">
+            <span className="font-bold text-gray-900">Note:</span> Please ensure the uploaded
+            insight report is complete, accurate, and corresponds to the current{" "}
+            <span className="font-bold text-gray-900">Master Link</span>.
+          </p>
+          <div className="flex items-start gap-2.5 rounded-lg border border-red-200/80 bg-red-50/70 px-3 py-3">
+            <TriangleAlert
+              size={16}
+              strokeWidth={2.2}
+              className="mt-0.5 shrink-0 text-red-600"
+            />
+            <p className="text-[12px] font-normal leading-relaxed text-gray-500">
+              <span className="font-bold text-gray-900">Warning:</span> If you remove or replace any
+              uploaded report images,{" "}
+              <span className="font-bold text-gray-900">
+                all previously generated data associated with them will be permanently deleted
+              </span>{" "}
+              and cannot be recovered.
+            </p>
+          </div>
         </div>
 
         <div className="flex justify-center gap-2 border-t border-gray-100 bg-gray-50/50 px-6 py-4">
@@ -470,6 +543,8 @@ function PostLinkManagementSheetPanel({
   const [pendingInsightFiles, setPendingInsightFiles] = useState<PendingInsightFile[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmInsightOpen, setConfirmInsightOpen] = useState(false);
+  const [removedSubmittedInsightIds, setRemovedSubmittedInsightIds] = useState<string[]>([]);
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -480,6 +555,8 @@ function PostLinkManagementSheetPanel({
     setPendingInsightFiles([]);
     setUploadError(null);
     setConfirmDeleteOpen(false);
+    setConfirmInsightOpen(false);
+    setRemovedSubmittedInsightIds([]);
   }, [draftKey, initialDraft.master, initialDraft.mirrored, initialTab, row.postLinks]);
 
   const existingMasters = getMasterPostLinks(row.postLinks);
@@ -520,14 +597,16 @@ function PostLinkManagementSheetPanel({
 
   const submittedInsightImages = useMemo<InsightReportImage[]>(
     () =>
-      submittedInsightFiles.map((file) => ({
-        id: file.name,
-        name: file.name,
-        previewUrl: file.previewUrl,
-        sizeLabel: file.sizeLabel ?? "2.1 KB",
-        source: "Web",
-      })),
-    [submittedInsightFiles]
+      submittedInsightFiles
+        .filter((file) => !removedSubmittedInsightIds.includes(file.name))
+        .map((file) => ({
+          id: file.name,
+          name: file.name,
+          previewUrl: file.previewUrl,
+          sizeLabel: file.sizeLabel ?? "2.1 KB",
+          source: "Web",
+        })),
+    [removedSubmittedInsightIds, submittedInsightFiles]
   );
 
   const pendingInsightImages = useMemo<InsightReportImage[]>(
@@ -552,7 +631,8 @@ function PostLinkManagementSheetPanel({
   const allMirroredFilled = mirrored.every((item) => item.url.trim());
   const canAddMirrored =
     hasMasterUrl && mirrored.length < MIRRORED_MAX && allMirroredFilled;
-  const canSaveInsight = pendingInsightFiles.length > 0;
+  const hasRemovedSubmittedInsight = removedSubmittedInsightIds.length > 0;
+  const canSaveInsight = pendingInsightFiles.length > 0 || hasRemovedSubmittedInsight;
 
   const handleAddMirrored = () => {
     if (!canAddMirrored) return;
@@ -584,6 +664,36 @@ function PostLinkManagementSheetPanel({
     onOpenChange(false);
   };
 
+  const persistInsightReports = () => {
+    if (!pendingInsightFiles.length && !hasRemovedSubmittedInsight) return;
+
+    const remainingSubmitted = submittedInsightFiles.filter(
+      (file) => !removedSubmittedInsightIds.includes(file.name)
+    );
+
+    const nextWebInsightFiles = [
+      ...remainingSubmitted.map(({ name, previewUrl, sizeLabel }) => ({
+        name,
+        previewUrl,
+        sizeLabel: sizeLabel ?? "2.1 KB",
+      })),
+      ...pendingInsightFiles.map(({ name, previewUrl, sizeLabel }) => ({
+        name,
+        previewUrl,
+        sizeLabel,
+      })),
+    ];
+    persistWebInsightFiles(row.id, nextWebInsightFiles);
+    const nextNames = mergeInsightReportFileNames(
+      nextWebInsightFiles.map((file) => file.name),
+      h5InsightFiles
+    );
+    onSubmitInsightReports(nextNames);
+    setPendingInsightFiles([]);
+    setRemovedSubmittedInsightIds([]);
+    setUploadError(null);
+  };
+
   const handleSaveAndUpdate = () => {
     if (activeTab === "links") {
       if (isDeletingTask) {
@@ -594,24 +704,12 @@ function PostLinkManagementSheetPanel({
       return;
     }
 
-    if (pendingInsightFiles.length) {
-      const nextWebInsightFiles = [
-        ...getWebInsightFiles(row.id),
-        ...pendingInsightFiles.map(({ name, previewUrl, sizeLabel }) => ({
-          name,
-          previewUrl,
-          sizeLabel,
-        })),
-      ];
-      persistWebInsightFiles(row.id, nextWebInsightFiles);
-      const nextNames = mergeInsightReportFileNames(
-        nextWebInsightFiles.map((file) => file.name),
-        h5InsightFiles
-      );
-      onSubmitInsightReports(nextNames);
-      setPendingInsightFiles([]);
-      setUploadError(null);
-    }
+    if (!canSaveInsight) return;
+    setConfirmInsightOpen(true);
+  };
+
+  const handleConfirmInsightSave = () => {
+    persistInsightReports();
   };
 
   const handleAiVerify = () => {
@@ -622,26 +720,9 @@ function PostLinkManagementSheetPanel({
   };
 
   const handleRemoveSubmittedInsight = (fileId: string) => {
-    const stored = getWebInsightFiles(row.id);
-    const nextWebInsightFiles = stored.filter((file) => file.name !== fileId);
-    if (stored.length > 0) {
-      persistWebInsightFiles(row.id, nextWebInsightFiles);
-    } else {
-      const nextNames = (row.insightReports ?? []).filter((name) => name !== fileId);
-      persistWebInsightFiles(
-        row.id,
-        nextNames.map((name) => ({
-          name,
-          previewUrl: getInsightReportPreviewUrl(row.id, name),
-          sizeLabel: "2.1 KB",
-        }))
-      );
-    }
-    const nextNames = mergeInsightReportFileNames(
-      getWebInsightFiles(row.id).map((file) => file.name),
-      h5InsightFiles
+    setRemovedSubmittedInsightIds((prev) =>
+      prev.includes(fileId) ? prev : [...prev, fileId]
     );
-    onSubmitInsightReports(nextNames);
   };
 
   const handleRemovePendingInsight = (fileId: string) => {
@@ -655,7 +736,7 @@ function PostLinkManagementSheetPanel({
     files.forEach((file) => {
       const name = file.name;
       const exists =
-        submittedInsightFiles.some((item) => item.name === name) ||
+        submittedInsightImages.some((item) => item.name === name) ||
         pendingInsightFiles.some((item) => item.name === name) ||
         nextPending.some((item) => item.name === name);
       if (exists) {
@@ -792,8 +873,7 @@ function PostLinkManagementSheetPanel({
                   <div className="min-w-0 space-y-0.5">
                     <h3 className="text-[14px] font-semibold text-gray-900">Content Validation</h3>
                     <p className="text-[12px] leading-relaxed text-gray-500">
-                      Run content validation for the current master link after it is saved and the
-                      master link is verified.
+                      Run content validation for the current verified master link.
                     </p>
                   </div>
                   <button
@@ -914,6 +994,12 @@ function PostLinkManagementSheetPanel({
       open={confirmDeleteOpen}
       onOpenChange={setConfirmDeleteOpen}
       onConfirm={handleConfirmDeleteTask}
+    />
+
+    <ConfirmReportUpdateDialog
+      open={confirmInsightOpen}
+      onOpenChange={setConfirmInsightOpen}
+      onConfirm={handleConfirmInsightSave}
     />
     </>
   );
