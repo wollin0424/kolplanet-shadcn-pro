@@ -158,21 +158,32 @@ function TaskFieldLabel({
   inputId,
   statusLink,
   variant = "master",
+  mirroredIndex,
 }: {
   label: string;
   inputId: string;
   statusLink: PostLink | null;
   variant?: "master" | "mirrored";
+  mirroredIndex?: number;
 }) {
   const status = statusLink ? getPostLinkTooltipCopy(statusLink) : null;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+      {variant === "master" ? (
+        <span className="inline-flex h-5 items-center rounded-md border border-brand/25 bg-brand-50 px-1.5 text-[10px] font-bold uppercase tracking-wide text-brand">
+          Primary
+        </span>
+      ) : mirroredIndex !== undefined ? (
+        <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-[10px] font-bold text-gray-500">
+          {mirroredIndex}
+        </span>
+      ) : null}
       <label
         htmlFor={inputId}
         className={cn(
           "text-xs font-medium",
-          variant === "master" ? "font-semibold text-gray-900" : "text-gray-600"
+          variant === "master" ? "text-[13px] font-semibold text-gray-900" : "text-[12px] text-gray-600"
         )}
       >
         {label}
@@ -241,6 +252,7 @@ function TaskLinkFieldRow({
   statusLink,
   source,
   variant,
+  mirroredIndex,
   error,
   onUrlChange,
   onBlur,
@@ -252,18 +264,27 @@ function TaskLinkFieldRow({
   statusLink: PostLink | null;
   source?: PostLinkSource;
   variant: "master" | "mirrored";
+  mirroredIndex?: number;
   error?: string;
   onUrlChange: (value: string) => void;
   onBlur?: () => void;
   onRemove: () => void;
 }) {
   return (
-    <div className="space-y-2">
+    <div
+      className={cn(
+        "space-y-2 rounded-lg p-3",
+        variant === "master"
+          ? "border-2 border-brand/30 bg-white shadow-[0_1px_2px_rgba(37,99,235,0.06)]"
+          : "border border-gray-200 bg-gray-50/80"
+      )}
+    >
       <TaskFieldLabel
         label={label}
         inputId={inputId}
         statusLink={statusLink}
         variant={variant}
+        mirroredIndex={mirroredIndex}
       />
       <div className="flex items-center gap-2">
         <div className="relative min-w-0 flex-1">
@@ -278,7 +299,8 @@ function TaskLinkFieldRow({
             className={cn(
               TASK_INPUT_CLASS,
               source && "pl-9",
-              variant === "master" && !error && "border-brand/25 focus-visible:border-brand/45",
+              variant === "master" && !error && "border-brand/25 bg-white focus-visible:border-brand/45",
+              variant === "mirrored" && !error && "border-gray-200 bg-white focus-visible:border-gray-300",
               error && "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
             )}
           />
@@ -788,12 +810,12 @@ function PostLinkManagementSheetPanel({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+        <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-6 py-4">
           {activeTab === "links" ? (
             <div className="space-y-4 pb-2">
-              <section className="space-y-4 rounded-xl border border-brand/35 bg-brand-50/10 p-4">
+              <section className="space-y-4 rounded-xl border border-brand/15 bg-brand-50/5 p-4">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
+                  <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50/70 text-brand/80">
                     <Send size={15} strokeWidth={2} />
                   </span>
                   <h3 className="text-[15px] font-semibold text-gray-900">
@@ -825,11 +847,16 @@ function PostLinkManagementSheetPanel({
                 />
 
                 {mirrored.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-3 border-t border-brand/10 pt-4">
+                    <p className="text-[12px] font-semibold text-gray-700">
+                      Mirrored Links{" "}
+                      <span className="font-normal text-gray-400">(Cross-platform Reposts)</span>
+                    </p>
                     {mirrored.map((item, index) => (
                       <TaskLinkFieldRow
                         key={item.id}
                         label={`Mirrored ${index + 1}`}
+                        mirroredIndex={index + 1}
                         inputId={`${baseId}-mirrored-${item.id}`}
                         url={item.url}
                         statusLink={getDraftStatusLink(item.snapshot, item.url, "Mirrored")}
