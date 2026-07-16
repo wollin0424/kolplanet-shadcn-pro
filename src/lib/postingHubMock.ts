@@ -71,6 +71,8 @@ export type PostLink = {
   postedDate?: string;
   /** Content validation applies to Master links only. */
   validation?: ContentValidation;
+  /** Mirrored links only — which master (0-based) this repost belongs to. */
+  masterIndex?: number;
 };
 
 export const POSTING_HUB_STATUS_OPTIONS: PostingHubStatus[] = [
@@ -122,16 +124,29 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
         },
       },
       {
+        type: "Master",
+        url: "https://www.instagram.com/p/DKx9AmeliaStone-master-2/",
+        source: "H5",
+        postedDate: "02 Jun, 2026",
+        validation: {
+          caption: "Verified",
+          cover: "Verified",
+          video: "Verified",
+        },
+      },
+      {
         type: "Mirrored",
         url: "https://www.instagram.com/p/DKx9AmeliaStone-mirror/",
         source: "H5",
         postedDate: "08 Jun, 2026",
+        masterIndex: 0,
       },
       {
         type: "Mirrored",
         url: "https://www.tiktok.com/@amelia-mirror/video/7123456789",
         source: "H5",
         postedDate: "15 Jun, 2026",
+        masterIndex: 0,
       },
       {
         type: "Mirrored",
@@ -139,6 +154,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
         source: "Web",
         postedDate: "16 Jun, 2026",
         issues: ["Missing hashtag"],
+        masterIndex: 1,
       },
     ],
     insightReports: ["Amelia_Insight_01.png"],
@@ -188,6 +204,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
         source: "H5",
         postedDate: "10 Jun, 2026",
         issues: ["Missing hashtag"],
+        masterIndex: 0,
       },
     ],
     insightReports: ["Chloe_Insight_01.png", "Chloe_Insight_02.png"],
@@ -216,6 +233,7 @@ export const POSTING_HUB_MOCK_ROWS: PostingHubRow[] = [
         url: "https://www.tiktok.com/@luna-price/video/7123456799",
         source: "H5",
         postedDate: "14 Jun, 2026",
+        masterIndex: 0,
       },
     ],
     planDate: "Jul 8, 2026",
@@ -616,6 +634,7 @@ export function getFigmaCaptureEditPostLinkLinks(
       source: "Web",
       postedDate: "04 Jun, 2026",
       issues: ["Data fetch failed"],
+      masterIndex: 0,
     },
     {
       type: "Mirrored",
@@ -623,12 +642,14 @@ export function getFigmaCaptureEditPostLinkLinks(
       source: "H5",
       postedDate: "05 Jun, 2026",
       issues: ["Missing hashtag"],
+      masterIndex: 1,
     },
     {
       type: "Mirrored",
       url: "https://www.tiktok.com/@creator/video/figma-mirror-verified/",
       source: "Web",
       postedDate: "06 Jun, 2026",
+      masterIndex: 1,
     },
   ];
 }
@@ -639,6 +660,85 @@ export function getPostLinksByType(links: PostLink[] | undefined, type: PostLink
 
 export function getVisibleMirroredLinks(links?: PostLink[]) {
   return getPostLinksByType(links, "Mirrored");
+}
+
+export function resolveMirroredMasterIndex(link: PostLink) {
+  return link.masterIndex ?? 0;
+}
+
+export function getMirroredLinksForMaster(links: PostLink[] | undefined, masterIndex: number) {
+  return getVisibleMirroredLinks(links).filter(
+    (link) => resolveMirroredMasterIndex(link) === masterIndex
+  );
+}
+
+export function getVisibleMirroredLinksForMaster(links: PostLink[] | undefined, masterIndex: number) {
+  return getMirroredLinksForMaster(links, masterIndex).filter((link) => link.url.trim());
+}
+
+export function mergePostLinkTaskDraft(
+  existingLinks: PostLink[] | undefined,
+  masterIndex: number,
+  masterUrl: string,
+  mirroredUrls: string[]
+): PostLink[] {
+  const links = [...(existingLinks ?? [])];
+  const masters = getMasterPostLinks(links);
+  const prevMaster = masters[masterIndex];
+  const prevMirrored = getMirroredLinksForMaster(links, masterIndex);
+  const trimmedMaster = masterUrl.trim();
+
+  const withoutTaskMirrored = links.filter(
+    (link) => link.type !== "Mirrored" || resolveMirroredMasterIndex(link) !== masterIndex
+  );
+
+  let masterCount = 0;
+  let masterReplaced = false;
+  const nextLinks = withoutTaskMirrored.flatMap((link) => {
+    if (link.type !== "Master") return [link];
+    const currentIndex = masterCount++;
+    if (currentIndex !== masterIndex) return [link];
+    masterReplaced = true;
+    if (!trimmedMaster) return [];
+    return [
+      {
+        ...link,
+        type: "Master" as const,
+        url: trimmedMaster,
+        source: prevMaster?.source ?? link.source ?? "Web",
+        validation: prevMaster?.validation ?? link.validation,
+        postedDate: prevMaster?.postedDate ?? link.postedDate,
+        issues: prevMaster?.issues ?? link.issues,
+      },
+    ];
+  });
+
+  if (!masterReplaced && trimmedMaster) {
+    nextLinks.push({
+      type: "Master",
+      url: trimmedMaster,
+      source: prevMaster?.source ?? "Web",
+      validation: prevMaster?.validation,
+      postedDate: prevMaster?.postedDate,
+      issues: prevMaster?.issues,
+    });
+  }
+
+  mirroredUrls
+    .map((url) => url.trim())
+    .filter(Boolean)
+    .forEach((url, index) => {
+      nextLinks.push({
+        type: "Mirrored",
+        url,
+        source: prevMirrored[index]?.source ?? "Web",
+        postedDate: prevMirrored[index]?.postedDate,
+        issues: prevMirrored[index]?.issues,
+        masterIndex,
+      });
+    });
+
+  return nextLinks;
 }
 
 export function getMasterPostLinks(links?: PostLink[]) {
@@ -779,6 +879,7 @@ export function buildMockFetchedPostLinks(row: PostingHubRow): PostLink[] {
       type: "Mirrored",
       url: `https://www.instagram.com/p/${row.id}-mirror-1/`,
       postedDate: row.actualDate ?? row.planDate,
+      masterIndex: 0,
     },
   ];
 }

@@ -26,6 +26,7 @@ import {
   Clock as LucideClock,
   Columns3 as LucideColumns3,
   Copy as LucideCopy,
+  CornerDownRight as LucideCornerDownRight,
   CreditCard as LucideCreditCard,
   Download as LucideDownload,
   ExternalLink as LucideExternalLink,
@@ -70,6 +71,7 @@ import {
   Stamp as LucideStamp,
   Tag as LucideTag,
   Trash2 as LucideTrash2,
+  TriangleAlert as LucideTriangleAlert,
   TrendingUp as LucideTrendingUp,
   Truck as LucideTruck,
   Upload as LucideUpload,
@@ -108,6 +110,7 @@ export const Clapperboard = createIcon(LucideClapperboard, "Clapperboard");
 export const Clock = createIcon(LucideClock, "Clock");
 export const Columns3 = createIcon(LucideColumns3, "Columns3");
 export const Copy = createIcon(LucideCopy, "Copy");
+export const CornerDownRight = createIcon(LucideCornerDownRight, "CornerDownRight");
 export const CreditCard = createIcon(LucideCreditCard, "CreditCard");
 export const Download = createIcon(LucideDownload, "Download");
 export const ExternalLink = createIcon(LucideExternalLink, "ExternalLink");
@@ -152,6 +155,7 @@ export const Sparkles = createIcon(LucideSparkles, "Sparkles");
 export const Stamp = createIcon(LucideStamp, "Stamp");
 export const Tag = createIcon(LucideTag, "Tag");
 export const Trash2 = createIcon(LucideTrash2, "Trash2");
+export const TriangleAlert = createIcon(LucideTriangleAlert, "TriangleAlert");
 export const TrendingUp = createIcon(LucideTrendingUp, "TrendingUp");
 export const Truck = createIcon(LucideTruck, "Truck");
 export const Upload = createIcon(LucideUpload, "Upload");

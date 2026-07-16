@@ -402,6 +402,7 @@ export function buildPostLinksFromDraft(
         source: prevMirrored[index]?.source ?? "Web",
         postedDate: prevMirrored[index]?.postedDate,
         issues: prevMirrored[index]?.issues,
+        masterIndex: prevMirrored[index]?.masterIndex ?? 0,
       });
     });
 

@@ -8,8 +8,11 @@ import {
 } from "@/components/CampaignHubDetailToolbar";
 import { CampaignHubH5LinkCell } from "@/components/CampaignHubH5LinkCell";
 import {
-  PostLinkPill,
+  POST_LINK_MASTER_WITH_MIRRORED_CLASS,
+  POST_LINK_MIRRORED_INLINE_CLASS,
+  POST_LINK_PILL_BASE_CLASS,
   POST_LINK_PILL_WIDTH_CLASS,
+  POST_LINK_STATUS_CONFIG,
   POST_LINK_TYPE_CLASS,
 } from "@/components/PostLinkPill";
 import { CampaignHubFilterSelect } from "@/components/CampaignHubFilterSelect";
@@ -17,6 +20,7 @@ import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import PostingHubStatusSelect from "@/components/pipeline/PostingHubStatusSelect";
 import { SetPostingDateDialog } from "@/components/SetPostingDateDialog";
 import { EditPostLinkDialog } from "@/components/EditPostLinkDialog";
+import { PostLinkManagementSheet } from "@/components/PostLinkManagementSheet";
 import { ImportPostLinksDialog } from "@/components/ImportPostLinksDialog";
 import { UploadInsightReportDialog } from "@/components/UploadInsightReportDialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -50,6 +54,7 @@ import {
   getMasterPostLinks,
   getMasterLabel,
   getMirroredLabel,
+  getVisibleMirroredLinksForMaster,
   hasFetchedPostLinks,
   getPostLinkDateEntries,
   getVisibleMirroredLinks,
@@ -82,7 +87,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { AlertCircle, Calendar, CheckCircle2, ChevronDown, Copy, FileText, FileX, MoreHorizontal, Paperclip, Pencil, RefreshCcw, Sparkles, Upload, X } from "@/lib/icons";
+import { AlertCircle, CheckCircle2, ChevronDown, Copy, CornerDownRight, FileText, FileX, Paperclip, Pencil, Plus, RefreshCcw, Sparkles, Upload, X } from "@/lib/icons";
 
 function mergePostingHubRowsInsightReports(rows: PostingHubRow[]): PostingHubRow[] {
   return rows.map((row) => {
@@ -200,6 +205,7 @@ function initials(name: string) {
 }
 
 const POST_LINK_ROW_CLASS = "flex h-7 min-w-0 items-center gap-1.5";
+const POST_LINK_ADD_TASK_ROW_CLASS = "h-6";
 
 const ROW_ACTION_BUTTON_CLASS =
   "inline-grid size-[22px] shrink-0 place-items-center rounded-full border p-0 leading-none";
@@ -419,7 +425,7 @@ function getFigmaPostLinkTooltipSamples(): FigmaPostLinkTooltipSample[] {
     { id: "verified", links: [p1.postLinks[0]] },
     {
       id: "mirrored",
-      links: p1.postLinks.filter((link) => link.type === "Mirrored"),
+      links: getVisibleMirroredLinksForMaster(p1.postLinks, 0),
       multi: true,
     },
     { id: "data-fetch-failed", links: [p2.postLinks[0]] },
@@ -494,50 +500,116 @@ function PostLinkTooltipContent({ link }: { link: PostLink }) {
   );
 }
 
-function PostLinkPillWithTooltip({
+function PostLinkMasterPillWithTooltip({
   link,
   label,
-  linkType,
+  mirroredLinks,
+  figmaMirroredTooltipOpen = false,
 }: {
   link: PostLink;
   label: string;
-  linkType: PostLinkType;
+  mirroredLinks: PostLink[];
+  figmaMirroredTooltipOpen?: boolean;
 }) {
+  const status = getPostLinkStatus(link);
+  const statusConfig = POST_LINK_STATUS_CONFIG[status];
+  const StatusIcon = statusConfig.Icon;
+  const mirroredCount = mirroredLinks.length;
+
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <PostLinkPill
-            label={label}
-            linkType={linkType}
-            status={getPostLinkStatus(link)}
-            className="cursor-default"
-          />
-        }
-      />
-      <TooltipContent
-        variant="light"
-        side="top"
-        align="start"
-        className="w-[min(300px,calc(100vw-2rem))] max-w-none gap-0 px-3 py-2.5"
-      >
-        <PostLinkTooltipContent link={link} />
-      </TooltipContent>
-    </Tooltip>
+    <span
+      className={cn(
+        POST_LINK_PILL_BASE_CLASS,
+        mirroredCount > 0 ? POST_LINK_MASTER_WITH_MIRRORED_CLASS : POST_LINK_PILL_WIDTH_CLASS,
+        POST_LINK_TYPE_CLASS.Master
+      )}
+      title={statusConfig.title}
+    >
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <span className="inline-flex cursor-default items-center gap-1">
+              <StatusIcon
+                size={13}
+                strokeWidth={2.2}
+                className={cn("shrink-0", statusConfig.iconClassName)}
+              />
+              {label}
+            </span>
+          }
+        />
+        <TooltipContent
+          variant="light"
+          side="top"
+          align="start"
+          className="w-[min(300px,calc(100vw-2rem))] max-w-none gap-0 px-3 py-2.5"
+        >
+          <PostLinkTooltipContent link={link} />
+        </TooltipContent>
+      </Tooltip>
+      {mirroredCount > 0 ? (
+        <>
+          <span className="text-brand/35" aria-hidden>
+            |
+          </span>
+          <Tooltip open={figmaMirroredTooltipOpen ? true : undefined}>
+            <TooltipTrigger
+              render={
+                <span
+                  className={cn(POST_LINK_MIRRORED_INLINE_CLASS, "cursor-default")}
+                  aria-label={
+                    mirroredCount === 1 ? "1 mirrored link" : `${mirroredCount} mirrored links`
+                  }
+                >
+                  <CornerDownRight size={11} strokeWidth={2.2} className="shrink-0" />
+                  <span className="tabular-nums">{mirroredCount}</span>
+                </span>
+              }
+            />
+            <TooltipContent
+              variant="light"
+              side="top"
+              align="start"
+              className="w-[min(300px,calc(100vw-2rem))] max-w-none gap-0 px-3 py-2.5"
+              data-figma-capture={figmaMirroredTooltipOpen ? "posting-mirrored-link-tooltip" : undefined}
+            >
+              <PostLinkMirroredTooltipContent links={mirroredLinks} />
+            </TooltipContent>
+          </Tooltip>
+        </>
+      ) : null}
+    </span>
   );
 }
 
 const POST_LINK_CELL_WIDTH = "w-[224px] min-w-[224px]";
 
+function PostLinkAddTaskButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex h-6 w-fit items-center gap-1 rounded-md border border-brand/30 bg-white px-2 text-[11px] font-medium text-brand transition-colors hover:border-brand/45 hover:bg-brand-50/40"
+    >
+      <Plus size={12} strokeWidth={2.25} />
+      Add Task
+    </button>
+  );
+}
+
 function PostLinkMasterRow({
   link,
   label,
+  mirroredLinks,
+  figmaMirroredTooltipOpen = false,
   trailingAction,
   onEdit,
   onFetch,
 }: {
   link: PostLink;
   label: string;
+  mirroredLinks: PostLink[];
+  figmaMirroredTooltipOpen?: boolean;
   trailingAction: "edit" | "fetch" | null;
   onEdit?: () => void;
   onFetch?: () => void;
@@ -547,7 +619,12 @@ function PostLinkMasterRow({
   return (
     <div className={cn(POST_LINK_ROW_CLASS, "group/master-link w-fit max-w-full")}>
       {hasUrl ? (
-        <PostLinkPillWithTooltip link={link} label={label} linkType="Master" />
+        <PostLinkMasterPillWithTooltip
+          link={link}
+          label={label}
+          mirroredLinks={mirroredLinks}
+          figmaMirroredTooltipOpen={figmaMirroredTooltipOpen}
+        />
       ) : (
         <span
           className={cn(
@@ -597,70 +674,6 @@ function PostLinkMirroredTooltipContent({ links }: { links: PostLink[] }) {
         </li>
       ))}
     </ul>
-  );
-}
-
-function PostLinkMirroredPillWithTooltip({
-  links,
-  figmaTooltipOpen = false,
-}: {
-  links: PostLink[];
-  figmaTooltipOpen?: boolean;
-}) {
-  const count = links.length;
-
-  return (
-    <Tooltip open={figmaTooltipOpen ? true : undefined}>
-      <TooltipTrigger
-        render={
-          <span
-            className="inline-flex cursor-default items-center"
-            aria-label={count === 1 ? "Mirrored link" : `${count} mirrored links`}
-          >
-            <PostLinkPill
-              label={count === 1 ? "Mirrored 1" : "Mirrored"}
-              linkType="Mirrored"
-              status="success"
-              showStatusIcon={false}
-              inlineCount={count > 1 ? count : undefined}
-              className="pointer-events-none"
-            />
-          </span>
-        }
-      />
-      <TooltipContent
-        variant="light"
-        side="top"
-        align="start"
-        className="w-[min(300px,calc(100vw-2rem))] max-w-none gap-0 px-3 py-2.5"
-        data-figma-capture={figmaTooltipOpen ? "posting-mirrored-link-tooltip" : undefined}
-      >
-        <PostLinkMirroredTooltipContent links={links} />
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
-function PostLinkMirroredGroup({
-  links,
-  showEdit,
-  onEdit,
-  figmaTooltipOpen = false,
-}: {
-  links: PostLink[];
-  showEdit: boolean;
-  onEdit?: () => void;
-  figmaTooltipOpen?: boolean;
-}) {
-  return (
-    <div className={cn(POST_LINK_ROW_CLASS, "group/master-link w-fit max-w-full")}>
-      <PostLinkMirroredPillWithTooltip links={links} figmaTooltipOpen={figmaTooltipOpen} />
-      {showEdit ? (
-        <LinkRowHoverAction>
-          <PostLinkRowAction variant="edit" onClick={onEdit!} ariaLabel="Edit post links" />
-        </LinkRowHoverAction>
-      ) : null}
-    </div>
   );
 }
 
@@ -723,18 +736,23 @@ function PostLinkCell({
   row,
   figmaMirroredTooltipOpen = false,
   onFetchPostLinks,
-  onEditPostLink,
+  onEditTask,
   onFetchMasterLink,
+  onAddTask,
 }: {
   row: PostingHubRow;
   figmaMirroredTooltipOpen?: boolean;
   onFetchPostLinks: (row: PostingHubRow) => void;
-  onEditPostLink: (row: PostingHubRow) => void;
+  onEditTask: (row: PostingHubRow, masterIndex: number) => void;
   onFetchMasterLink: (row: PostingHubRow, masterIndex: number) => void;
+  onAddTask: (row: PostingHubRow) => void;
 }) {
   const links = row.postLinks;
   const masters = getMasterPostLinks(links);
   const mirrored = getVisibleMirroredLinks(links);
+  const firstMirroredMasterIndex = masters.findIndex(
+    (_, index) => getVisibleMirroredLinksForMaster(links, index).length > 0
+  );
 
   if (!hasFetchedPostLinks(links) && masters.length === 0 && mirrored.length === 0) {
     return <PostLinkEmptyState onFetch={() => onFetchPostLinks(row)} />;
@@ -749,21 +767,16 @@ function PostLinkCell({
           key={`${link.url || "empty"}-${index}`}
           link={link}
           label={getMasterLabel(index, masters.length)}
+          mirroredLinks={getVisibleMirroredLinksForMaster(links, index)}
+          figmaMirroredTooltipOpen={
+            figmaMirroredTooltipOpen && index === firstMirroredMasterIndex
+          }
           trailingAction={getPostLinkMasterTrailingAction(link, hasAnyUrl)}
-          onEdit={() => onEditPostLink(row)}
+          onEdit={() => onEditTask(row, index)}
           onFetch={() => onFetchMasterLink(row, index)}
         />
       ))}
-      {mirrored.length ? (
-        <div className="border-t border-gray-100/80 pt-1">
-          <PostLinkMirroredGroup
-            links={mirrored}
-            showEdit={hasAnyUrl}
-            onEdit={() => onEditPostLink(row)}
-            figmaTooltipOpen={figmaMirroredTooltipOpen}
-          />
-        </div>
-      ) : null}
+      <PostLinkAddTaskButton onClick={() => onAddTask(row)} />
     </div>
   );
 }
@@ -845,10 +858,6 @@ function ContentValidationMasterRow({
   );
 }
 
-function ContentValidationMirroredRow() {
-  return <div className={POST_LINK_ROW_CLASS} aria-hidden />;
-}
-
 function ContentValidationCell({
   row,
   onAutoValidate,
@@ -870,17 +879,10 @@ function ContentValidationCell({
 
   if (masters.length === 0) {
     return (
-      <div className="flex min-w-0 flex-col gap-1 py-0.5">
-        <ContentValidationPlaceholderRow
-          disabled={!hasFetchedMaster}
-          onAutoValidate={() => onAutoValidate(row, 0)}
-        />
-        {mirrored.length ? (
-          <div className="border-t border-gray-100/80 pt-1">
-            <ContentValidationMirroredRow />
-          </div>
-        ) : null}
-      </div>
+      <ContentValidationPlaceholderRow
+        disabled={!hasFetchedMaster}
+        onAutoValidate={() => onAutoValidate(row, 0)}
+      />
     );
   }
 
@@ -893,11 +895,7 @@ function ContentValidationCell({
           onAutoValidate={() => onAutoValidate(row, index)}
         />
       ))}
-      {mirrored.length ? (
-        <div className="border-t border-gray-100/80 pt-1">
-          <ContentValidationMirroredRow />
-        </div>
-      ) : null}
+      <div className={POST_LINK_ADD_TASK_ROW_CLASS} aria-hidden />
     </div>
   );
 }
@@ -1055,7 +1053,13 @@ function PostingDateCountBadge({
   );
 }
 
-function PostingDateCell({ row }: { row: PostingHubRow }) {
+function PostingDateCell({
+  row,
+  onSetPostingDate,
+}: {
+  row: PostingHubRow;
+  onSetPostingDate: () => void;
+}) {
   const dateEntries = getPostLinkDateEntries(row.postLinks);
   const breakdownRows = dateEntries.map((entry) => ({
     label: entry.label,
@@ -1065,9 +1069,21 @@ function PostingDateCell({ row }: { row: PostingHubRow }) {
 
   return (
     <div className="space-y-0.5 leading-snug">
-      <p className="text-[11px] text-gray-400">
-        <span>Plan:</span> <span>{row.planDate}</span>
-      </p>
+      <div className="flex min-w-0 items-center gap-0.5">
+        <p className="text-[11px] text-gray-400">
+          <span>Plan:</span> <span className="font-medium text-gray-500">{row.planDate}</span>
+        </p>
+        <RowHoverAction>
+          <button
+            type="button"
+            onClick={onSetPostingDate}
+            aria-label="Set posting date"
+            className="inline-flex size-6 shrink-0 items-center justify-center rounded-md text-brand transition-colors hover:bg-brand-50"
+          >
+            <Pencil size={13} strokeWidth={2} />
+          </button>
+        </RowHoverAction>
+      </div>
       {row.actualDate ? (
         <p className="flex items-center gap-1 text-[12px] font-semibold text-gray-900">
           <span>Actual:</span>
@@ -1089,7 +1105,6 @@ function PostingHubTable({
   figmaCapture = false,
   figmaPostingHoverRowId,
   figmaPostingHoverRowIds,
-  figmaPostingActionsOpen = false,
   figmaPostingMirroredTooltipRowId,
   rows,
   selectedIds,
@@ -1097,16 +1112,16 @@ function PostingHubTable({
   onToggleRow,
   onStatusChange,
   onSetPostingDate,
-  onEditPostLink,
+  onEditTask,
   onUploadInsightReport,
   onFetchPostLinks,
   onFetchMasterLink,
+  onAddTask,
   onAutoValidate,
 }: {
   figmaCapture?: boolean;
   figmaPostingHoverRowId?: string;
   figmaPostingHoverRowIds?: string[];
-  figmaPostingActionsOpen?: boolean;
   figmaPostingMirroredTooltipRowId?: string;
   rows: PostingHubRow[];
   selectedIds: Set<string>;
@@ -1114,10 +1129,11 @@ function PostingHubTable({
   onToggleRow: (id: string, checked: boolean) => void;
   onStatusChange: (id: string, status: PostingHubStatus) => void;
   onSetPostingDate: (row: PostingHubRow) => void;
-  onEditPostLink: (row: PostingHubRow) => void;
+  onEditTask: (row: PostingHubRow, masterIndex: number) => void;
   onUploadInsightReport: (row: PostingHubRow) => void;
   onFetchPostLinks: (row: PostingHubRow) => void;
   onFetchMasterLink: (row: PostingHubRow, masterIndex: number) => void;
+  onAddTask: (row: PostingHubRow) => void;
   onAutoValidate: (row: PostingHubRow, masterIndex: number) => void;
 }) {
   const allSelected = rows.length > 0 && rows.every((row) => selectedIds.has(row.id));
@@ -1160,7 +1176,6 @@ function PostingHubTable({
             <TableHead className="min-w-[140px] text-[11px] font-semibold text-gray-500">
               Posting Date
             </TableHead>
-            <TableHead className="w-12 text-[11px] font-semibold text-gray-500">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -1223,8 +1238,9 @@ function PostingHubTable({
                   row={row}
                   figmaMirroredTooltipOpen={isFigmaMirroredTooltipOpen}
                   onFetchPostLinks={onFetchPostLinks}
-                  onEditPostLink={onEditPostLink}
+                  onEditTask={onEditTask}
                   onFetchMasterLink={onFetchMasterLink}
+                  onAddTask={onAddTask}
                 />
               </TableCell>
               <TableCell className="align-top py-3 pl-2 pr-5">
@@ -1241,43 +1257,7 @@ function PostingHubTable({
                 />
               </TableCell>
               <TableCell>
-                <PostingDateCell row={row} />
-              </TableCell>
-              <TableCell>
-                <DropdownMenu open={isFigmaHoveredRow && figmaPostingActionsOpen ? true : undefined}>
-                  <DropdownMenuTrigger
-                    type="button"
-                    className="inline-flex size-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
-                    aria-label={`Actions for ${row.name}`}
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => e.stopPropagation()}
-                  >
-                    <MoreHorizontal size={16} strokeWidth={2} />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-auto min-w-[210px] p-1 text-[13px]">
-                    <DropdownMenuItem
-                      className="cursor-pointer gap-2.5 whitespace-nowrap rounded-md px-2.5 py-2 text-gray-800"
-                      onSelect={() => onSetPostingDate(row)}
-                    >
-                      <Calendar size={16} className="shrink-0 text-brand" strokeWidth={2} />
-                      Set Posting Date
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="cursor-pointer gap-2.5 whitespace-nowrap rounded-md px-2.5 py-2 text-gray-800"
-                      onSelect={() => onEditPostLink(row)}
-                    >
-                      <Pencil size={16} className="shrink-0 text-brand" strokeWidth={2} />
-                      Edit Post Link
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="cursor-pointer gap-2.5 whitespace-nowrap rounded-md px-2.5 py-2 text-gray-800"
-                      onSelect={() => onUploadInsightReport(row)}
-                    >
-                      <Upload size={16} className="shrink-0 text-brand" strokeWidth={2} />
-                      Upload Insight Report
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <PostingDateCell row={row} onSetPostingDate={() => onSetPostingDate(row)} />
               </TableCell>
             </TableRow>
             );
@@ -1351,6 +1331,11 @@ export default function CampaignHubPostingView({
       ? { open: true, rowId: figmaEditPostLinkRowId ?? "p4" }
       : { open: false, rowId: null }
   );
+  const [postLinkTaskDialog, setPostLinkTaskDialog] = useState<{
+    open: boolean;
+    rowId: string | null;
+    masterIndex: number;
+  }>({ open: false, rowId: null, masterIndex: 0 });
   const [uploadInsightReportDialog, setUploadInsightReportDialog] = useState<{
     open: boolean;
     rowId: string | null;
@@ -1441,6 +1426,10 @@ export default function CampaignHubPostingView({
   const editPostLinkRow = useMemo(
     () => rows.find((row) => row.id === editPostLinkDialog.rowId) ?? null,
     [editPostLinkDialog.rowId, rows]
+  );
+  const postLinkTaskRow = useMemo(
+    () => rows.find((row) => row.id === postLinkTaskDialog.rowId) ?? null,
+    [postLinkTaskDialog.rowId, rows]
   );
 
   const openPostingDateDialog = (targetIds: string[], label: string) => {
@@ -1534,6 +1523,48 @@ export default function CampaignHubPostingView({
           actualDate: item.actualDate ?? item.planDate,
         };
       })
+    );
+  };
+
+  const handleAddTask = (row: PostingHubRow) => {
+    const masterIndex = getMasterPostLinks(row.postLinks).length;
+    setPostLinkTaskDialog({ open: true, rowId: row.id, masterIndex });
+  };
+
+  const handleEditTask = (row: PostingHubRow, masterIndex: number) => {
+    setPostLinkTaskDialog({ open: true, rowId: row.id, masterIndex });
+  };
+
+  const handlePostLinkTaskSubmit = (postLinks: PostLink[]) => {
+    if (!postLinkTaskDialog.rowId) return;
+    setRows((prev) =>
+      prev.map((row) =>
+        row.id === postLinkTaskDialog.rowId
+          ? {
+              ...row,
+              postLinks,
+              postingStatus: row.postingStatus === "Pending" ? "Posted" : row.postingStatus,
+              actualDate: row.actualDate ?? row.planDate,
+            }
+          : row
+      )
+    );
+  };
+
+  const handlePostLinkTaskInsightSubmit = (files: string[]) => {
+    const rowId = postLinkTaskDialog.rowId;
+    if (!rowId) return;
+    setRows((prev) =>
+      prev.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              insightReports: files,
+              insightReportShareUrl:
+                files.length > 0 ? buildInsightReportShareUrl(rowId) : undefined,
+            }
+          : row
+      )
     );
   };
 
@@ -1688,7 +1719,6 @@ export default function CampaignHubPostingView({
           figmaCapture={figmaCapture}
           figmaPostingHoverRowId={figmaPostingHoverRowId}
           figmaPostingHoverRowIds={figmaPostingHoverRowIds}
-          figmaPostingActionsOpen={figmaPostingActionsOpen}
           figmaPostingMirroredTooltipRowId={figmaPostingMirroredTooltipRowId}
           rows={filtered}
           selectedIds={selectedIds}
@@ -1696,12 +1726,13 @@ export default function CampaignHubPostingView({
           onToggleRow={toggleRow}
           onStatusChange={updateStatus}
           onSetPostingDate={(row) => openPostingDateDialog([row.id], row.name)}
-          onEditPostLink={(row) => setEditPostLinkDialog({ open: true, rowId: row.id })}
+          onEditTask={handleEditTask}
           onUploadInsightReport={(row) =>
             setUploadInsightReportDialog({ open: true, rowId: row.id })
           }
           onFetchPostLinks={handleFetchPostLinks}
           onFetchMasterLink={handleFetchMasterLink}
+          onAddTask={handleAddTask}
           onAutoValidate={handleAutoValidate}
         />
       </div>
@@ -1721,6 +1752,15 @@ export default function CampaignHubPostingView({
         onSubmit={handleEditPostLinkSubmit}
         figmaCapture={figmaCapture && figmaOpenEditPostLink}
         figmaEditPostLinkState={figmaEditPostLinkState}
+      />
+
+      <PostLinkManagementSheet
+        open={postLinkTaskDialog.open}
+        onOpenChange={(open) => setPostLinkTaskDialog((prev) => ({ ...prev, open }))}
+        row={postLinkTaskRow}
+        masterIndex={postLinkTaskDialog.masterIndex}
+        onSubmitPostLinks={handlePostLinkTaskSubmit}
+        onSubmitInsightReports={handlePostLinkTaskInsightSubmit}
       />
 
       <UploadInsightReportDialog
