@@ -158,23 +158,18 @@ function TaskFieldLabel({
   inputId,
   statusLink,
   variant = "master",
-  mirroredIndex,
+  labelSuffix,
 }: {
   label: string;
   inputId: string;
   statusLink: PostLink | null;
   variant?: "master" | "mirrored";
-  mirroredIndex?: number;
+  labelSuffix?: string;
 }) {
   const status = statusLink ? getPostLinkTooltipCopy(statusLink) : null;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {variant === "mirrored" && mirroredIndex !== undefined ? (
-        <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-[10px] font-bold text-gray-500">
-          {mirroredIndex}
-        </span>
-      ) : null}
       <label
         htmlFor={inputId}
         className={cn(
@@ -183,6 +178,12 @@ function TaskFieldLabel({
         )}
       >
         {label}
+        {labelSuffix ? (
+          <>
+            {" "}
+            <span className="font-normal text-gray-400">{labelSuffix}</span>
+          </>
+        ) : null}
       </label>
       {status ? (
         <span
@@ -248,7 +249,7 @@ function TaskLinkFieldRow({
   statusLink,
   source,
   variant,
-  mirroredIndex,
+  labelSuffix,
   error,
   onUrlChange,
   onBlur,
@@ -260,7 +261,7 @@ function TaskLinkFieldRow({
   statusLink: PostLink | null;
   source?: PostLinkSource;
   variant: "master" | "mirrored";
-  mirroredIndex?: number;
+  labelSuffix?: string;
   error?: string;
   onUrlChange: (value: string) => void;
   onBlur?: () => void;
@@ -280,7 +281,7 @@ function TaskLinkFieldRow({
         inputId={inputId}
         statusLink={statusLink}
         variant={variant}
-        mirroredIndex={mirroredIndex}
+        labelSuffix={labelSuffix}
       />
       <div className="flex items-center gap-2">
         <div className="relative min-w-0 flex-1">
@@ -384,7 +385,7 @@ function ConfirmTaskUpdateDialog({
           </p>
         </div>
 
-        <div className="flex justify-center gap-2 border-t border-gray-100 bg-gray-50/50 px-6 py-4">
+        <div className="flex justify-center gap-2 border-t border-gray-100 bg-white px-6 py-4">
           <Button
             type="button"
             variant="outline"
@@ -435,10 +436,9 @@ function ConfirmReportUpdateDialog({
         </div>
 
         <div className="space-y-3 px-6 pb-6 text-left">
-          <p className="text-[13px] font-normal leading-relaxed text-gray-500">
-            <span className="font-bold text-gray-900">Note:</span> Please ensure the uploaded
-            insight report is complete, accurate, and corresponds to the current{" "}
-            <span className="font-bold text-gray-900">Master Link</span>.
+          <p className="text-[13px] font-normal text-gray-500">
+            Note: Please ensure the uploaded insight report is complete, accurate, and corresponds
+            to the current Master Link.
           </p>
           <div className="flex items-start gap-2.5 rounded-lg border border-red-200/80 bg-red-50/70 px-3 py-3">
             <TriangleAlert
@@ -457,7 +457,7 @@ function ConfirmReportUpdateDialog({
           </div>
         </div>
 
-        <div className="flex justify-center gap-2 border-t border-gray-100 bg-gray-50/50 px-6 py-4">
+        <div className="flex justify-center gap-2 border-t border-gray-100 bg-white px-6 py-4">
           <Button
             type="button"
             variant="outline"
@@ -820,7 +820,8 @@ function PostLinkManagementSheetPanel({
                 </div>
 
                 <TaskLinkFieldRow
-                  label="Master Link (Original Posts)"
+                  label="Master Link"
+                  labelSuffix="(Original Posts)"
                   inputId={`${baseId}-master`}
                   url={master.url}
                   statusLink={masterStatusLink}
@@ -852,7 +853,6 @@ function PostLinkManagementSheetPanel({
                       <TaskLinkFieldRow
                         key={item.id}
                         label={`Mirrored ${index + 1}`}
-                        mirroredIndex={index + 1}
                         inputId={`${baseId}-mirrored-${item.id}`}
                         url={item.url}
                         statusLink={getDraftStatusLink(item.snapshot, item.url, "Mirrored")}
@@ -951,7 +951,7 @@ function PostLinkManagementSheetPanel({
                   />
                 ) : (
                   <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-8 text-center text-[12px] text-gray-400">
-                    No insight reports uploaded yet.
+                    No report submitted yet.
                   </div>
                 )}
               </div>
