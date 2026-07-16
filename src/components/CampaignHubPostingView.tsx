@@ -20,9 +20,11 @@ import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import PostingHubStatusSelect from "@/components/pipeline/PostingHubStatusSelect";
 import { SetPostingDateDialog } from "@/components/SetPostingDateDialog";
 import { EditPostLinkDialog } from "@/components/EditPostLinkDialog";
-import { PostLinkManagementSheet } from "@/components/PostLinkManagementSheet";
+import {
+  PostLinkManagementSheet,
+  type PostLinkManagementTabId,
+} from "@/components/PostLinkManagementSheet";
 import { ImportPostLinksDialog } from "@/components/ImportPostLinksDialog";
-import { UploadInsightReportDialog } from "@/components/UploadInsightReportDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -47,7 +49,6 @@ import {
   applyMockValidationToMasterLink,
   applyMockValidationToPostLinks,
   buildInsightReportShareUrl,
-  getInsightReportSharePageUrl,
   buildMockFetchedPostLinks,
   formatPostingPlanDate,
   getContentValidationTooltipDescription,
@@ -459,11 +460,45 @@ function PostingPostLinkTooltipsFigmaCapture() {
   );
 }
 
-function PostLinkTooltipContent({ link }: { link: PostLink }) {
+function PostLinkTooltipSection({
+  title,
+  link,
+  variant = "plain",
+}: {
+  title?: string;
+  link: PostLink;
+  variant?: "master" | "mirrored" | "plain";
+}) {
   const { tag, description, tagClassName } = getPostLinkTooltipCopy(link);
 
   return (
-    <div className="flex w-full flex-col gap-2.5">
+    <div
+      className={cn(
+        "flex w-full flex-col gap-2",
+        variant === "master" && "rounded-lg border border-brand/25 bg-brand-50/50 px-2.5 py-2",
+        variant === "mirrored" && "rounded-lg border border-gray-100 bg-gray-50/90 px-2.5 py-2"
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        {title ? (
+          <p
+            className={cn(
+              "font-semibold leading-none",
+              variant === "master" ? "text-[12px] text-gray-900" : "text-[11px] text-gray-600"
+            )}
+          >
+            {title}
+          </p>
+        ) : null}
+        <span
+          className={cn(
+            "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-none",
+            tagClassName
+          )}
+        >
+          {tag}
+        </span>
+      </div>
       <div className="flex items-center gap-2">
         <a
           href={link.url}
@@ -485,16 +520,38 @@ function PostLinkTooltipContent({ link }: { link: PostLink }) {
           <Copy size={13} strokeWidth={2} />
         </button>
       </div>
-      <span
-        className={cn(
-          "inline-flex w-fit rounded-full border px-2.5 py-0.5 text-[11px] font-semibold leading-none",
-          tagClassName
-        )}
-      >
-        {tag}
-      </span>
       {description ? (
         <p className="text-[11px] leading-relaxed text-gray-500">{description}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function PostLinkTooltipContent({ link }: { link: PostLink }) {
+  return <PostLinkTooltipSection link={link} variant="plain" />;
+}
+
+function PostLinkMasterTooltipContent({
+  masterLink,
+  masterLabel,
+  mirroredLinks,
+}: {
+  masterLink: PostLink;
+  masterLabel: string;
+  mirroredLinks: PostLink[];
+}) {
+  const hasMirrored = mirroredLinks.length > 0;
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <PostLinkTooltipSection title={masterLabel} link={masterLink} variant="master" />
+      {hasMirrored ? (
+        <div className="flex flex-col gap-2 border-t border-gray-100 pt-2.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+            Mirrored Links
+          </p>
+          <PostLinkMirroredTooltipContent links={mirroredLinks} />
+        </div>
       ) : null}
     </div>
   );
@@ -517,68 +574,57 @@ function PostLinkMasterPillWithTooltip({
   const mirroredCount = mirroredLinks.length;
 
   return (
-    <span
-      className={cn(
-        POST_LINK_PILL_BASE_CLASS,
-        mirroredCount > 0 ? POST_LINK_MASTER_WITH_MIRRORED_CLASS : POST_LINK_PILL_WIDTH_CLASS,
-        POST_LINK_TYPE_CLASS.Master
-      )}
-      title={statusConfig.title}
-    >
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <span className="inline-flex cursor-default items-center gap-1">
-              <StatusIcon
-                size={13}
-                strokeWidth={2.2}
-                className={cn("shrink-0", statusConfig.iconClassName)}
-              />
-              {label}
-            </span>
-          }
-        />
-        <TooltipContent
-          variant="light"
-          side="top"
-          align="start"
-          className="w-[min(300px,calc(100vw-2rem))] max-w-none gap-0 px-3 py-2.5"
-        >
-          <PostLinkTooltipContent link={link} />
-        </TooltipContent>
-      </Tooltip>
-      {mirroredCount > 0 ? (
-        <>
-          <span className="text-brand/35" aria-hidden>
-            |
-          </span>
-          <Tooltip open={figmaMirroredTooltipOpen ? true : undefined}>
-            <TooltipTrigger
-              render={
-                <span
-                  className={cn(POST_LINK_MIRRORED_INLINE_CLASS, "cursor-default")}
-                  aria-label={
-                    mirroredCount === 1 ? "1 mirrored link" : `${mirroredCount} mirrored links`
-                  }
-                >
+    <Tooltip open={figmaMirroredTooltipOpen ? true : undefined}>
+      <TooltipTrigger
+        render={
+          <span
+            className={cn(
+              POST_LINK_PILL_BASE_CLASS,
+              mirroredCount > 0 ? POST_LINK_MASTER_WITH_MIRRORED_CLASS : POST_LINK_PILL_WIDTH_CLASS,
+              POST_LINK_TYPE_CLASS.Master,
+              "cursor-default"
+            )}
+            title={statusConfig.title}
+            aria-label={
+              mirroredCount > 0
+                ? `${label}, ${mirroredCount} mirrored ${mirroredCount === 1 ? "link" : "links"}`
+                : label
+            }
+          >
+            <StatusIcon
+              size={13}
+              strokeWidth={2.2}
+              className={cn("shrink-0", statusConfig.iconClassName)}
+            />
+            {label}
+            {mirroredCount > 0 ? (
+              <>
+                <span className="text-gray-300" aria-hidden>
+                  |
+                </span>
+                <span className={POST_LINK_MIRRORED_INLINE_CLASS}>
                   <CornerDownRight size={11} strokeWidth={2.2} className="shrink-0" />
                   <span className="tabular-nums">{mirroredCount}</span>
                 </span>
-              }
-            />
-            <TooltipContent
-              variant="light"
-              side="top"
-              align="start"
-              className="w-[min(300px,calc(100vw-2rem))] max-w-none gap-0 px-3 py-2.5"
-              data-figma-capture={figmaMirroredTooltipOpen ? "posting-mirrored-link-tooltip" : undefined}
-            >
-              <PostLinkMirroredTooltipContent links={mirroredLinks} />
-            </TooltipContent>
-          </Tooltip>
-        </>
-      ) : null}
-    </span>
+              </>
+            ) : null}
+          </span>
+        }
+      />
+      <TooltipContent
+        variant="light"
+        side="top"
+        align="start"
+        className="w-[min(300px,calc(100vw-2rem))] max-w-none gap-0 px-3 py-2.5"
+        data-figma-capture={figmaMirroredTooltipOpen ? "posting-mirrored-link-tooltip" : undefined}
+      >
+        <PostLinkMasterTooltipContent
+          masterLink={link}
+          masterLabel={label}
+          mirroredLinks={mirroredLinks}
+        />
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -589,7 +635,7 @@ function PostLinkAddTaskButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-6 w-fit items-center gap-1 rounded-md border border-brand/30 bg-white px-2 text-[11px] font-medium text-brand transition-colors hover:border-brand/45 hover:bg-brand-50/40"
+      className="inline-flex h-6 w-fit items-center gap-1 rounded-md px-1.5 text-[11px] font-medium text-brand transition-colors hover:bg-brand-50/60 hover:text-brand"
     >
       <Plus size={12} strokeWidth={2.25} />
       Add Task
@@ -659,18 +705,14 @@ function getPostLinkMasterTrailingAction(
 
 function PostLinkMirroredTooltipContent({ links }: { links: PostLink[] }) {
   return (
-    <ul className="flex flex-col">
+    <ul className="flex flex-col gap-2">
       {links.map((link, index) => (
-        <li
-          key={`${link.url}-${index}`}
-          className={cn("flex flex-col gap-2.5", index > 0 && "mt-3 border-t border-gray-100 pt-3")}
-        >
-          {links.length > 1 ? (
-            <p className="text-[11px] font-semibold text-gray-500">
-              {getMirroredLabel(index, links.length)}
-            </p>
-          ) : null}
-          <PostLinkTooltipContent link={link} />
+        <li key={`${link.url}-${index}`}>
+          <PostLinkTooltipSection
+            title={getMirroredLabel(index, links.length)}
+            link={link}
+            variant="mirrored"
+          />
         </li>
       ))}
     </ul>
@@ -901,26 +943,12 @@ function ContentValidationCell({
 }
 
 function InsightReportTooltipContent({
-  shareUrl,
   files,
   onOpenDialog,
 }: {
-  shareUrl?: string;
   files: string[];
   onOpenDialog: () => void;
 }) {
-  const fullShareUrl = shareUrl ? getInsightReportSharePageUrl(shareUrl) : undefined;
-
-  const handleCopyLink = async (event: React.MouseEvent) => {
-    event.stopPropagation();
-    if (!fullShareUrl) return;
-    try {
-      await navigator.clipboard.writeText(fullShareUrl);
-    } catch {
-      // Clipboard may be unavailable outside secure context.
-    }
-  };
-
   const handleOpenDialog = (event: React.MouseEvent) => {
     event.stopPropagation();
     onOpenDialog();
@@ -928,28 +956,6 @@ function InsightReportTooltipContent({
 
   return (
     <div className="flex min-w-[240px] flex-col gap-2.5">
-      {fullShareUrl ? (
-        <div className="flex min-w-0 items-center gap-2 border-b border-gray-100 pb-2.5">
-          <a
-            href={fullShareUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(event) => event.stopPropagation()}
-            className="min-w-0 flex-1 truncate text-[12px] font-medium text-brand underline decoration-brand/40 underline-offset-[3px] transition-colors hover:decoration-brand/60"
-            title={fullShareUrl}
-          >
-            {fullShareUrl}
-          </a>
-          <button
-            type="button"
-            onClick={handleCopyLink}
-            className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-brand transition-colors hover:bg-brand-50"
-            aria-label="Copy share link"
-          >
-            <Copy size={14} strokeWidth={2} />
-          </button>
-        </div>
-      ) : null}
       <ul className="flex flex-col gap-2">
         {files.map((fileName, index) => (
           <li key={`${fileName}-${index}`}>
@@ -973,11 +979,9 @@ function InsightReportTooltipContent({
 
 function InsightReportCell({
   files,
-  shareUrl,
   onClick,
 }: {
   files?: string[];
-  shareUrl?: string;
   onClick: () => void;
 }) {
   const reportFiles = files ?? [];
@@ -1012,11 +1016,7 @@ function InsightReportCell({
     <Tooltip>
       <TooltipTrigger render={badge} />
       <TooltipContent variant="light" side="top" align="start" className="px-3 py-2.5">
-        <InsightReportTooltipContent
-          shareUrl={shareUrl}
-          files={reportFiles}
-          onOpenDialog={onClick}
-        />
+        <InsightReportTooltipContent files={reportFiles} onOpenDialog={onClick} />
       </TooltipContent>
     </Tooltip>
   );
@@ -1249,10 +1249,6 @@ function PostingHubTable({
               <TableCell>
                 <InsightReportCell
                   files={row.insightReports}
-                  shareUrl={
-                    row.insightReportShareUrl ??
-                    (row.insightReports?.length ? buildInsightReportShareUrl(row.id) : undefined)
-                  }
                   onClick={() => onUploadInsightReport(row)}
                 />
               </TableCell>
@@ -1335,22 +1331,20 @@ export default function CampaignHubPostingView({
     open: boolean;
     rowId: string | null;
     masterIndex: number;
-  }>({ open: false, rowId: null, masterIndex: 0 });
-  const [uploadInsightReportDialog, setUploadInsightReportDialog] = useState<{
-    open: boolean;
-    rowId: string | null;
-  }>(() =>
-    figmaCapture && figmaOpenUploadInsightReport
-      ? { open: true, rowId: figmaUploadInsightRowId ?? "p3" }
-      : { open: false, rowId: null }
-  );
+    initialTab: PostLinkManagementTabId;
+  }>(() => {
+    if (figmaCapture && figmaOpenUploadInsightReport) {
+      return {
+        open: true,
+        rowId: figmaUploadInsightRowId ?? "p3",
+        masterIndex: 0,
+        initialTab: "insight",
+      };
+    }
+    return { open: false, rowId: null, masterIndex: 0, initialTab: "links" };
+  });
   const [importPostLinksDialogOpen, setImportPostLinksDialogOpen] = useState(
     () => figmaCapture && figmaOpenImportPostLinks
-  );
-
-  const uploadInsightReportRow = useMemo(
-    () => rows.find((row) => row.id === uploadInsightReportDialog.rowId) ?? null,
-    [uploadInsightReportDialog.rowId, rows]
   );
 
   const syncRowInsightReportsFromH5 = (kolId: string) => {
@@ -1464,21 +1458,16 @@ export default function CampaignHubPostingView({
     );
   };
 
-  const handleUploadInsightReportSubmit = (files: string[]) => {
-    if (!uploadInsightReportDialog.rowId) return;
-    const rowId = uploadInsightReportDialog.rowId;
-    setRows((prev) =>
-      prev.map((row) =>
-        row.id === rowId
-          ? {
-              ...row,
-              insightReports: files,
-              insightReportShareUrl:
-                files.length > 0 ? buildInsightReportShareUrl(rowId) : undefined,
-            }
-          : row
-      )
-    );
+  const openPostLinkManagement = (
+    row: PostingHubRow,
+    options?: { masterIndex?: number; initialTab?: PostLinkManagementTabId }
+  ) => {
+    setPostLinkTaskDialog({
+      open: true,
+      rowId: row.id,
+      masterIndex: options?.masterIndex ?? 0,
+      initialTab: options?.initialTab ?? "links",
+    });
   };
 
   const handleFetchPostLinks = (row: PostingHubRow) => {
@@ -1527,12 +1516,18 @@ export default function CampaignHubPostingView({
   };
 
   const handleAddTask = (row: PostingHubRow) => {
-    const masterIndex = getMasterPostLinks(row.postLinks).length;
-    setPostLinkTaskDialog({ open: true, rowId: row.id, masterIndex });
+    openPostLinkManagement(row, {
+      masterIndex: getMasterPostLinks(row.postLinks).length,
+      initialTab: "links",
+    });
   };
 
   const handleEditTask = (row: PostingHubRow, masterIndex: number) => {
-    setPostLinkTaskDialog({ open: true, rowId: row.id, masterIndex });
+    openPostLinkManagement(row, { masterIndex, initialTab: "links" });
+  };
+
+  const handleOpenInsightReport = (row: PostingHubRow) => {
+    openPostLinkManagement(row, { initialTab: "insight" });
   };
 
   const handlePostLinkTaskSubmit = (postLinks: PostLink[]) => {
@@ -1727,9 +1722,7 @@ export default function CampaignHubPostingView({
           onStatusChange={updateStatus}
           onSetPostingDate={(row) => openPostingDateDialog([row.id], row.name)}
           onEditTask={handleEditTask}
-          onUploadInsightReport={(row) =>
-            setUploadInsightReportDialog({ open: true, rowId: row.id })
-          }
+          onUploadInsightReport={handleOpenInsightReport}
           onFetchPostLinks={handleFetchPostLinks}
           onFetchMasterLink={handleFetchMasterLink}
           onAddTask={handleAddTask}
@@ -1759,20 +1752,9 @@ export default function CampaignHubPostingView({
         onOpenChange={(open) => setPostLinkTaskDialog((prev) => ({ ...prev, open }))}
         row={postLinkTaskRow}
         masterIndex={postLinkTaskDialog.masterIndex}
+        initialTab={postLinkTaskDialog.initialTab}
         onSubmitPostLinks={handlePostLinkTaskSubmit}
         onSubmitInsightReports={handlePostLinkTaskInsightSubmit}
-      />
-
-      <UploadInsightReportDialog
-        open={uploadInsightReportDialog.open}
-        onOpenChange={(open) => setUploadInsightReportDialog((prev) => ({ ...prev, open }))}
-        initialFiles={uploadInsightReportRow?.insightReports}
-        submissionLink={uploadInsightReportRow?.insightReportShareUrl}
-        rowId={uploadInsightReportDialog.rowId ?? undefined}
-        h5KolId={parseKolIdFromH5Path(uploadInsightReportRow?.h5Path ?? "")}
-        onSubmit={handleUploadInsightReportSubmit}
-        figmaCapture={figmaCapture && figmaOpenUploadInsightReport}
-        figmaInsightReportState={figmaInsightReportState}
       />
 
       <ImportPostLinksDialog

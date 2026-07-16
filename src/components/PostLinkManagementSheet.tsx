@@ -75,7 +75,7 @@ const TASK_INPUT_CLASS = formInputClass(
   "h-10! px-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
 );
 
-type TaskTabId = (typeof TASK_TABS)[number]["id"];
+export type PostLinkManagementTabId = (typeof TASK_TABS)[number]["id"];
 
 type LinkDraft = {
   id: string;
@@ -195,8 +195,8 @@ function PostLinkManagementTabs({
   activeTab,
   onChange,
 }: {
-  activeTab: TaskTabId;
-  onChange: (tab: TaskTabId) => void;
+  activeTab: PostLinkManagementTabId;
+  onChange: (tab: PostLinkManagementTabId) => void;
 }) {
   return (
     <div className="px-6 pb-4">
@@ -331,33 +331,38 @@ function ConfirmTaskUpdateDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="z-[60] gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[440px]"
+        className="z-[60] gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[480px]"
         showCloseButton
       >
-        <div className="px-6 pt-6 pb-4 text-center">
-          <DialogTitle className="text-[16px] font-semibold text-gray-900">
+        <div className="px-6 pt-6 pb-4">
+          <DialogTitle className="text-center text-[17px] font-bold text-gray-900">
             Confirm Task Update
           </DialogTitle>
-          <DialogDescription className="mt-2 text-[13px] text-gray-500">
+          <DialogDescription className="mt-2 text-left text-[13px] font-normal text-gray-500">
             You are updating this task.
           </DialogDescription>
         </div>
 
-        <div className="space-y-3 px-6 pb-6">
-          <div className="flex items-start gap-2.5 rounded-lg border border-red-200/80 bg-red-50/70 px-3 py-3 text-left">
+        <div className="space-y-3 px-6 pb-6 text-left">
+          <div className="flex items-start gap-2.5 rounded-lg border border-red-200/80 bg-red-50/70 px-3 py-3">
             <TriangleAlert
               size={16}
               strokeWidth={2.2}
               className="mt-0.5 shrink-0 text-red-600"
             />
-            <p className="text-[12px] font-semibold leading-relaxed text-red-700">
-              Warning: If you leave the Master Link field empty, this task and all associated
-              data, including Mirrored Links, Validation results, and Insight Reports, will be
-              permanently deleted.
+            <p className="text-[12px] font-normal leading-relaxed text-gray-500">
+              <span className="font-bold text-gray-900">Warning:</span> If you leave the{" "}
+              <span className="font-bold text-gray-900">Master Link</span> field empty, this task
+              and all associated data, including{" "}
+              <span className="font-bold text-gray-900">Mirrored Links</span>,{" "}
+              <span className="font-bold text-gray-900">Validation results</span>, and{" "}
+              <span className="font-bold text-gray-900">Insight Reports</span>, will be permanently
+              deleted.
             </p>
           </div>
-          <p className="text-center text-[13px] leading-relaxed text-gray-700">
-            To preserve your data, you must provide a valid Master Link before saving.
+          <p className="text-[13px] font-normal leading-relaxed text-gray-500">
+            To preserve your data, you must provide a valid{" "}
+            <span className="font-bold text-gray-900">Master Link</span> before saving.
           </p>
         </div>
 
@@ -438,12 +443,14 @@ function TaskValidationPill({
 function PostLinkManagementSheetPanel({
   row,
   masterIndex,
+  initialTab = "links",
   onOpenChange,
   onSubmitPostLinks,
   onSubmitInsightReports,
 }: {
   row: PostingHubRow;
   masterIndex: number;
+  initialTab?: PostLinkManagementTabId;
   onOpenChange: (open: boolean) => void;
   onSubmitPostLinks: (links: PostLink[]) => void;
   onSubmitInsightReports: (files: string[]) => void;
@@ -455,7 +462,7 @@ function PostLinkManagementSheetPanel({
     [draftKey, masterIndex, row.postLinks]
   );
 
-  const [activeTab, setActiveTab] = useState<TaskTabId>("links");
+  const [activeTab, setActiveTab] = useState<PostLinkManagementTabId>(initialTab);
   const [master, setMaster] = useState<LinkDraft>(initialDraft.master);
   const [mirrored, setMirrored] = useState<LinkDraft[]>(initialDraft.mirrored);
   const [masterError, setMasterError] = useState<string | undefined>();
@@ -465,7 +472,7 @@ function PostLinkManagementSheetPanel({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   useEffect(() => {
-    setActiveTab("links");
+    setActiveTab(initialTab);
     setMaster(initialDraft.master);
     setMirrored(initialDraft.mirrored);
     setMasterError(undefined);
@@ -473,7 +480,7 @@ function PostLinkManagementSheetPanel({
     setPendingInsightFiles([]);
     setUploadError(null);
     setConfirmDeleteOpen(false);
-  }, [draftKey, initialDraft.master, initialDraft.mirrored, row.postLinks]);
+  }, [draftKey, initialDraft.master, initialDraft.mirrored, initialTab, row.postLinks]);
 
   const existingMasters = getMasterPostLinks(row.postLinks);
   const isNewTask =
@@ -917,6 +924,7 @@ export function PostLinkManagementSheet({
   onOpenChange,
   row,
   masterIndex,
+  initialTab = "links",
   onSubmitPostLinks,
   onSubmitInsightReports,
 }: {
@@ -924,6 +932,7 @@ export function PostLinkManagementSheet({
   onOpenChange: (open: boolean) => void;
   row: PostingHubRow | null;
   masterIndex: number;
+  initialTab?: PostLinkManagementTabId;
   onSubmitPostLinks: (links: PostLink[]) => void;
   onSubmitInsightReports: (files: string[]) => void;
 }) {
@@ -931,9 +940,10 @@ export function PostLinkManagementSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       {open && row ? (
         <PostLinkManagementSheetPanel
-          key={`${row.id}:${masterIndex}:${open}`}
+          key={`${row.id}:${masterIndex}:${initialTab}:${open}`}
           row={row}
           masterIndex={masterIndex}
+          initialTab={initialTab}
           onOpenChange={onOpenChange}
           onSubmitPostLinks={onSubmitPostLinks}
           onSubmitInsightReports={onSubmitInsightReports}

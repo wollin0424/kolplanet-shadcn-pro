@@ -33,7 +33,7 @@ const POST_LINK_STATUS_CONFIG: Record<
 };
 
 const POST_LINK_TYPE_CLASS: Record<PostLinkType, string> = {
-  Master: "border-brand/25 bg-brand-50 text-brand",
+  Master: "border-gray-200/90 bg-gray-50 text-gray-700",
   Mirrored: "border-gray-200 bg-gray-50 text-gray-500",
 };
 
@@ -45,7 +45,7 @@ const POST_LINK_PILL_BASE_CLASS =
 
 const POST_LINK_MASTER_WITH_MIRRORED_CLASS = "w-auto min-w-[108px] justify-start whitespace-nowrap";
 
-const POST_LINK_MIRRORED_INLINE_CLASS = "inline-flex items-center gap-0.5 text-brand";
+const POST_LINK_MIRRORED_INLINE_CLASS = "inline-flex items-center gap-0.5 text-gray-500";
 
 export const PostLinkPill = forwardRef<
   HTMLSpanElement,
