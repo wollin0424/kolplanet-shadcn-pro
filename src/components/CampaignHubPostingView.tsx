@@ -89,7 +89,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { AlertCircle, CheckCircle2, ChevronDown, Copy, FileText, FileX, Paperclip, Pencil, Plus, RefreshCcw, Send, Sparkles, Upload, X } from "@/lib/icons";
+import { AlertCircle, ArrowLeftRight, CheckCircle2, ChevronDown, Copy, FileText, FileX, Paperclip, Pencil, Plus, RefreshCcw, Sparkles, Upload, X } from "@/lib/icons";
 
 function mergePostingHubRowsInsightReports(rows: PostingHubRow[]): PostingHubRow[] {
   return rows.map((row) => {
@@ -548,9 +548,6 @@ function PostLinkMasterTooltipContent({
       <PostLinkTooltipSection title={masterLabel} link={masterLink} variant="master" />
       {hasMirrored ? (
         <div className="flex flex-col gap-2 border-t border-gray-100 pt-2.5">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-            Mirrored Links
-          </p>
           <PostLinkMirroredTooltipContent links={mirroredLinks} />
         </div>
       ) : null}
@@ -604,8 +601,10 @@ function PostLinkMasterPillWithTooltip({
                   |
                 </span>
                 <span className={POST_LINK_MIRRORED_INLINE_CLASS}>
-                  <Send size={11} strokeWidth={2.2} className="shrink-0" />
-                  <span className="tabular-nums">{mirroredCount}</span>
+                  <ArrowLeftRight size={11} strokeWidth={2.2} className="shrink-0" />
+                  <span className="inline-flex size-[14px] shrink-0 items-center justify-center rounded-full border border-blue-400 text-[10px] font-semibold leading-none tabular-nums text-gray-600">
+                    {mirroredCount}
+                  </span>
                 </span>
               </>
             ) : null}
