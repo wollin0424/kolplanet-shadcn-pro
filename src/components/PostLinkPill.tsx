@@ -43,9 +43,17 @@ const POST_LINK_PILL_WIDTH_CLASS = "w-[80px] justify-center whitespace-nowrap";
 const POST_LINK_PILL_BASE_CLASS =
   "inline-flex h-[22px] items-center gap-1 rounded-full border px-1.5 text-[11px] font-semibold leading-none";
 
-const POST_LINK_MASTER_WITH_MIRRORED_CLASS = "w-auto min-w-[108px] justify-start whitespace-nowrap";
+const POST_LINK_MASTER_WITH_MIRRORED_CLASS = "w-auto min-w-[118px] justify-start whitespace-nowrap";
 
-const POST_LINK_MIRRORED_INLINE_CLASS = "inline-flex items-center gap-0.5 text-gray-500";
+const POST_LINK_MIRRORED_INLINE_CLASS = "inline-flex items-center gap-1 text-gray-500";
+
+const POST_LINK_MIRRORED_ICON_CLASS =
+  "inline-flex size-3 shrink-0 flex-none items-center justify-center text-gray-500";
+
+const POST_LINK_INLINE_COUNT_CLASS =
+  "inline-grid size-[15px] shrink-0 place-items-center rounded-full border border-gray-200 bg-white text-[9px] font-semibold leading-none tabular-nums text-gray-500";
+
+const POST_LINK_MIRRORED_COUNT_CLASS = POST_LINK_INLINE_COUNT_CLASS;
 
 export const PostLinkPill = forwardRef<
   HTMLSpanElement,
@@ -81,10 +89,7 @@ export const PostLinkPill = forwardRef<
       ) : null}
       {label}
       {inlineCount != null && inlineCount > 1 ? (
-        <span
-          aria-hidden
-          className="inline-grid size-[15px] shrink-0 place-items-center rounded-full border border-gray-200 bg-white text-[9px] font-semibold leading-none tabular-nums text-gray-500"
-        >
+        <span aria-hidden className={POST_LINK_INLINE_COUNT_CLASS}>
           {inlineCount}
         </span>
       ) : null}
@@ -99,4 +104,6 @@ export {
   POST_LINK_PILL_BASE_CLASS,
   POST_LINK_MASTER_WITH_MIRRORED_CLASS,
   POST_LINK_MIRRORED_INLINE_CLASS,
+  POST_LINK_MIRRORED_ICON_CLASS,
+  POST_LINK_MIRRORED_COUNT_CLASS,
 };

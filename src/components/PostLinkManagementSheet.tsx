@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import { InsightReportImageGrid } from "@/components/InsightReportImageCard";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -85,6 +86,18 @@ type LinkDraft = {
 };
 
 type PendingInsightFile = WebInsightFileRecord & { id: string };
+
+type DataRemovalChoices = {
+  mirrored: boolean;
+  validation: boolean;
+  insight: boolean;
+};
+
+const EMPTY_DATA_REMOVAL_CHOICES: DataRemovalChoices = {
+  mirrored: false,
+  validation: false,
+  insight: false,
+};
 
 function toLinkDraft(link: PostLink, id: string): LinkDraft {
   return {
@@ -317,24 +330,116 @@ function TaskLinkFieldRow({
 }
 
 const TASK_VALIDATION_PILL_WIDTH: Record<ContentValidationField, string> = {
-  Caption: "min-w-[69px]",
-  Cover: "min-w-[60px]",
-  Video: "min-w-[59px]",
+  Caption: "min-w-[74px]",
+  Cover: "min-w-[65px]",
+  Video: "min-w-[64px]",
 };
+
+const TASK_VALIDATION_PILL_BASE_CLASS =
+  "inline-flex h-[24px] items-center gap-1 rounded-full border px-2 text-[11px] font-semibold leading-none";
 
 function TaskValidationPlaceholder({ label }: { label: ContentValidationField }) {
   return (
     <span
       className={cn(
-        "inline-flex h-[22px] items-center gap-1 rounded-full border border-gray-200 bg-white px-1.5 text-[10px] font-semibold leading-none text-gray-400",
+        TASK_VALIDATION_PILL_BASE_CLASS,
+        "border-gray-200 bg-white text-gray-400",
         TASK_VALIDATION_PILL_WIDTH[label]
       )}
     >
-      <span className="inline-flex size-[13px] shrink-0 items-center justify-center text-[9px] text-gray-300">
+      <span className="inline-flex size-[14px] shrink-0 items-center justify-center text-[10px] text-gray-300">
         --
       </span>
       <span className="whitespace-nowrap">{label}</span>
     </span>
+  );
+}
+
+function ConfirmDataRemovalDialog({
+  open,
+  onOpenChange,
+  choices,
+  onChoicesChange,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  choices: DataRemovalChoices;
+  onChoicesChange: (choices: DataRemovalChoices) => void;
+  onConfirm: () => void;
+}) {
+  const options: Array<{ id: keyof DataRemovalChoices; label: string }> = [
+    { id: "mirrored", label: "Clear all Mirrored Links" },
+    { id: "validation", label: "Clear Content Validation results" },
+    { id: "insight", label: "Clear Insight Reports" },
+  ];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="z-[60] gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[480px]"
+        showCloseButton
+      >
+        <div className="px-6 pt-6 pb-4">
+          <DialogTitle className="text-center text-[17px] font-bold text-gray-900">
+            Confirm Data Removal
+          </DialogTitle>
+          <DialogDescription className="mt-4 text-left text-[13px] font-normal leading-relaxed text-gray-500">
+            You are about to replace the current Master Link. Please choose which data you would like
+            to clear:
+          </DialogDescription>
+        </div>
+
+        <div className="space-y-3 px-6 pb-6 text-left">
+          <div className="space-y-3 rounded-xl border border-gray-200 px-4 py-3">
+            {options.map((option) => (
+              <label
+                key={option.id}
+                className="flex cursor-pointer items-center gap-3 text-[13px] font-semibold text-gray-800"
+              >
+                <Checkbox
+                  checked={choices[option.id]}
+                  onCheckedChange={(checked) =>
+                    onChoicesChange({
+                      ...choices,
+                      [option.id]: checked === true,
+                    })
+                  }
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+
+          <div className="rounded-lg border border-amber-200/80 bg-amber-50/70 px-3 py-3 text-[12px] leading-relaxed text-amber-900">
+            <span className="font-bold">Note:</span> Items checked will be permanently deleted.
+            Unchecked items will be kept and linked to your new Master Link.
+          </div>
+        </div>
+
+        <div className="flex justify-center gap-2 border-t border-gray-100 bg-white px-6 py-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 min-w-[88px] px-4 text-[13px]"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="brand"
+            className="h-9 min-w-[88px] px-4 text-[13px]"
+            onClick={() => {
+              onConfirm();
+              onOpenChange(false);
+            }}
+          >
+            Confirm
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -370,18 +475,14 @@ function ConfirmTaskUpdateDialog({
               className="mt-0.5 shrink-0 text-red-600"
             />
             <p className="text-[12px] font-normal leading-relaxed text-gray-500">
-              <span className="font-bold text-gray-900">Warning:</span> If you leave the{" "}
-              <span className="font-bold text-gray-900">Master Link</span> field empty, this task
-              and all associated data, including{" "}
-              <span className="font-bold text-gray-900">Mirrored Links</span>,{" "}
-              <span className="font-bold text-gray-900">Validation results</span>, and{" "}
-              <span className="font-bold text-gray-900">Insight Reports</span>, will be permanently
-              deleted.
+              <span className="font-bold text-gray-900">Warning:</span> If you leave the Master Link
+              field empty, this task and all associated data, including Mirrored Links, Validation
+              results, and Insight Reports, will be{" "}
+              <span className="font-bold text-gray-900">permanently deleted</span>.
             </p>
           </div>
           <p className="text-[13px] font-normal leading-relaxed text-gray-500">
-            To preserve your data, you must provide a valid{" "}
-            <span className="font-bold text-gray-900">Master Link</span> before saving.
+            To preserve your data, you must provide a valid Master Link before saving.
           </p>
         </div>
 
@@ -518,13 +619,13 @@ function TaskValidationPill({
   return (
     <span
       className={cn(
-        "inline-flex h-[22px] items-center gap-1 rounded-full border px-1.5 text-[10px] font-semibold leading-none",
+        TASK_VALIDATION_PILL_BASE_CLASS,
         TASK_VALIDATION_PILL_WIDTH[label],
         toneClass
       )}
     >
-      <span className="inline-flex size-[13px] shrink-0 items-center justify-center overflow-hidden leading-none">
-        <Icon size={13} strokeWidth={2.2} className={iconClass} />
+      <span className="inline-flex size-[14px] shrink-0 items-center justify-center overflow-hidden leading-none">
+        <Icon size={14} strokeWidth={2.2} className={iconClass} />
       </span>
       <span className="whitespace-nowrap">{label}</span>
     </span>
@@ -561,6 +662,10 @@ function PostLinkManagementSheetPanel({
   const [pendingInsightFiles, setPendingInsightFiles] = useState<PendingInsightFile[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmDataRemovalOpen, setConfirmDataRemovalOpen] = useState(false);
+  const [dataRemovalChoices, setDataRemovalChoices] = useState<DataRemovalChoices>(
+    EMPTY_DATA_REMOVAL_CHOICES
+  );
   const [confirmInsightOpen, setConfirmInsightOpen] = useState(false);
   const [removedSubmittedInsightIds, setRemovedSubmittedInsightIds] = useState<string[]>([]);
 
@@ -573,6 +678,8 @@ function PostLinkManagementSheetPanel({
     setPendingInsightFiles([]);
     setUploadError(null);
     setConfirmDeleteOpen(false);
+    setConfirmDataRemovalOpen(false);
+    setDataRemovalChoices(EMPTY_DATA_REMOVAL_CHOICES);
     setConfirmInsightOpen(false);
     setRemovedSubmittedInsightIds([]);
   }, [draftKey, initialDraft.master, initialDraft.mirrored, initialTab, row.postLinks]);
@@ -639,6 +746,16 @@ function PostLinkManagementSheetPanel({
     [pendingInsightFiles]
   );
 
+  const existingMasterUrl = useMemo(() => {
+    const masters = getMasterPostLinks(savedLinks ?? row.postLinks);
+    return masters[masterIndex]?.url.trim() ?? "";
+  }, [masterIndex, row.postLinks, savedLinks]);
+
+  const isReplacingMaster =
+    Boolean(existingMasterUrl) &&
+    Boolean(master.url.trim()) &&
+    master.url.trim() !== existingMasterUrl;
+
   const hasMasterUrl = Boolean(master.url.trim());
   const taskExistsAtIndex = Boolean(
     getMasterPostLinks(savedLinks ?? row.postLinks)[masterIndex]?.url.trim()
@@ -657,19 +774,55 @@ function PostLinkManagementSheetPanel({
     setMirrored((prev) => [...prev, { id: `mirrored-${prev.length}`, url: "" }]);
   };
 
-  const persistLinks = () => {
+  const persistLinks = (removalChoices: DataRemovalChoices = EMPTY_DATA_REMOVAL_CHOICES) => {
     const error = validateMasterUrl(master.url);
     setMasterError(error);
     if (error) return false;
 
-    const nextLinks = mergePostLinkTaskDraft(
+    const mirroredUrls = removalChoices.mirrored ? [] : mirrored.map((item) => item.url);
+
+    let nextLinks = mergePostLinkTaskDraft(
       row.postLinks,
       masterIndex,
       master.url,
-      mirrored.map((item) => item.url)
+      mirroredUrls
     );
+
+    if (removalChoices.validation) {
+      let masterCount = 0;
+      nextLinks = nextLinks.map((link) => {
+        if (link.type !== "Master") return link;
+        const currentIndex = masterCount++;
+        if (currentIndex !== masterIndex) return link;
+        return { ...link, validation: undefined };
+      });
+    }
+
+    if (removalChoices.insight) {
+      let masterCount = 0;
+      nextLinks = nextLinks.map((link) => {
+        if (link.type !== "Master") return link;
+        const currentIndex = masterCount++;
+        if (currentIndex !== masterIndex) return link;
+        return { ...link, insightReports: undefined };
+      });
+
+      if (masterIndex === 0) {
+        persistWebInsightFiles(row.id, []);
+        onSubmitInsightReports([]);
+      }
+
+      setPendingInsightFiles([]);
+      setRemovedSubmittedInsightIds([]);
+    }
+
     onSubmitPostLinks(nextLinks);
     setSavedLinks(nextLinks);
+
+    if (removalChoices.mirrored) {
+      setMirrored([]);
+    }
+
     return true;
   };
 
@@ -718,12 +871,21 @@ function PostLinkManagementSheetPanel({
         setConfirmDeleteOpen(true);
         return;
       }
+      if (isReplacingMaster) {
+        setDataRemovalChoices(EMPTY_DATA_REMOVAL_CHOICES);
+        setConfirmDataRemovalOpen(true);
+        return;
+      }
       persistLinks();
       return;
     }
 
     if (!canSaveInsight) return;
     setConfirmInsightOpen(true);
+  };
+
+  const handleConfirmDataRemoval = () => {
+    persistLinks(dataRemovalChoices);
   };
 
   const handleConfirmInsightSave = () => {
@@ -906,7 +1068,7 @@ function PostLinkManagementSheetPanel({
                     className={cn(
                       "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold transition-colors",
                       masterVerified
-                        ? "border border-amber-200 bg-amber-50 text-amber-600 hover:border-amber-300 hover:bg-amber-100/80"
+                        ? "border border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100/80"
                         : "cursor-not-allowed border border-gray-200 bg-gray-50 text-gray-400"
                     )}
                   >
@@ -1017,6 +1179,14 @@ function PostLinkManagementSheetPanel({
       open={confirmDeleteOpen}
       onOpenChange={setConfirmDeleteOpen}
       onConfirm={handleConfirmDeleteTask}
+    />
+
+    <ConfirmDataRemovalDialog
+      open={confirmDataRemovalOpen}
+      onOpenChange={setConfirmDataRemovalOpen}
+      choices={dataRemovalChoices}
+      onChoicesChange={setDataRemovalChoices}
+      onConfirm={handleConfirmDataRemoval}
     />
 
     <ConfirmReportUpdateDialog

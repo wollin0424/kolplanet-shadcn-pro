@@ -9,6 +9,8 @@ import {
 import { CampaignHubH5LinkCell } from "@/components/CampaignHubH5LinkCell";
 import {
   POST_LINK_MASTER_WITH_MIRRORED_CLASS,
+  POST_LINK_MIRRORED_COUNT_CLASS,
+  POST_LINK_MIRRORED_ICON_CLASS,
   POST_LINK_MIRRORED_INLINE_CLASS,
   POST_LINK_PILL_BASE_CLASS,
   POST_LINK_PILL_WIDTH_CLASS,
@@ -89,7 +91,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { AlertCircle, ArrowLeftRight, CheckCircle2, ChevronDown, Copy, FileText, FileX, Paperclip, Pencil, Plus, RefreshCcw, Sparkles, Upload, X } from "@/lib/icons";
+import { AlertCircle, CheckCircle2, ChevronDown, Copy, FileText, FileX, Paperclip, Pencil, Plus, RefreshCcw, Sparkles, Upload, X } from "@/lib/icons";
 
 function mergePostingHubRowsInsightReports(rows: PostingHubRow[]): PostingHubRow[] {
   return rows.map((row) => {
@@ -597,12 +599,12 @@ function PostLinkMasterPillWithTooltip({
             {label}
             {mirroredCount > 0 ? (
               <>
-                <span className="text-gray-300" aria-hidden>
-                  |
-                </span>
+                <span className="h-3 w-px shrink-0 bg-gray-200" aria-hidden />
                 <span className={POST_LINK_MIRRORED_INLINE_CLASS}>
-                  <ArrowLeftRight size={11} strokeWidth={2.2} className="shrink-0" />
-                  <span className="inline-flex size-[14px] shrink-0 items-center justify-center rounded-full border border-blue-400 text-[10px] font-semibold leading-none tabular-nums text-gray-600">
+                  <span className={POST_LINK_MIRRORED_ICON_CLASS}>
+                    <RefreshCcw size={12} strokeWidth={2} />
+                  </span>
+                  <span className={POST_LINK_MIRRORED_COUNT_CLASS} aria-hidden>
                     {mirroredCount}
                   </span>
                 </span>
