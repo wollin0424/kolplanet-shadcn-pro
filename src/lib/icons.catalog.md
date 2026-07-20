@@ -71,6 +71,7 @@ Do not import from `lucide-react` in feature code — add the icon to `icons.ts`
 | `UsersRound` | Team settings page |
 | `Wallet` | Influencer payments page |
 | `X` | Close / clear |
+| `XCircle` | Post link / validation error |
 
 ## shadcn UI (`src/components/ui/*`)
 

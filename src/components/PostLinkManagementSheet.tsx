@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import { InsightReportImageGrid } from "@/components/InsightReportImageCard";
+import { InfluencerAvatar } from "@/components/InfluencerAvatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -21,6 +22,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { formInputClass } from "@/lib/formControls";
+import { getMockInfluencerAvatar } from "@/lib/mockInfluencerAvatars";
 import {
   AlertCircle,
   CheckCircle2,
@@ -31,7 +33,7 @@ import {
   Sparkles,
   Trash2,
   TriangleAlert,
-  X,
+  XCircle,
 } from "@/lib/icons";
 import {
   mergeInsightReportFileNames,
@@ -212,6 +214,31 @@ function TaskFieldLabel({
   );
 }
 
+function PostLinkManagementTabButton({
+  active,
+  children,
+  onClick,
+}: {
+  active: boolean;
+  children: ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "inline-flex h-10 shrink-0 items-center border-b-2 px-2.5 text-[13px] font-medium leading-none transition-colors",
+        active
+          ? "border-brand text-gray-900"
+          : "border-transparent text-gray-500 hover:text-gray-800"
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
 function PostLinkManagementTabs({
   activeTab,
   onChange,
@@ -220,27 +247,16 @@ function PostLinkManagementTabs({
   onChange: (tab: PostLinkManagementTabId) => void;
 }) {
   return (
-    <div className="px-6 pb-4">
-      <div className="flex rounded-lg border border-gray-200 bg-gray-50/80 p-1">
-        {TASK_TABS.map((tab) => {
-          const isActive = tab.id === activeTab;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => onChange(tab.id)}
-              className={cn(
-                "flex-1 rounded-md px-2 py-2 text-center text-[11px] font-semibold leading-tight transition-colors",
-                isActive
-                  ? "bg-white text-brand shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
-                  : "text-gray-500 hover:text-gray-700"
-              )}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
+    <div className="mt-6 flex items-center gap-4 border-b border-gray-100">
+      {TASK_TABS.map((tab) => (
+        <PostLinkManagementTabButton
+          key={tab.id}
+          active={tab.id === activeTab}
+          onClick={() => onChange(tab.id)}
+        >
+          {tab.label}
+        </PostLinkManagementTabButton>
+      ))}
     </div>
   );
 }
@@ -395,7 +411,7 @@ function ConfirmDataRemovalDialog({
             {options.map((option) => (
               <label
                 key={option.id}
-                className="flex cursor-pointer items-center gap-3 text-[13px] font-semibold text-gray-800"
+                className="flex cursor-pointer items-center gap-3 text-[13px] font-normal text-gray-600"
               >
                 <Checkbox
                   checked={choices[option.id]}
@@ -447,11 +463,41 @@ function ConfirmTaskUpdateDialog({
   open,
   onOpenChange,
   onConfirm,
+  removalSummary,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
+  removalSummary: {
+    masterLinks: number;
+    mirroredLinks: number;
+    validationItems: number;
+    insightReports: number;
+  };
 }) {
+  const summaryLines = [
+    {
+      count: removalSummary.masterLinks,
+      singular: "Master Link",
+      plural: "Master Links",
+    },
+    {
+      count: removalSummary.mirroredLinks,
+      singular: "Mirrored Link",
+      plural: "Mirrored Links",
+    },
+    {
+      count: removalSummary.validationItems,
+      singular: "Content Validation item",
+      plural: "Content Validation items",
+    },
+    {
+      count: removalSummary.insightReports,
+      singular: "Insight Report",
+      plural: "Insight Reports",
+    },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -468,6 +514,17 @@ function ConfirmTaskUpdateDialog({
         </div>
 
         <div className="space-y-3 px-6 pb-6 text-left">
+          <div className="rounded-xl border border-gray-200 px-4 py-3">
+            <p className="text-[13px] font-bold text-gray-900">This delete will remove:</p>
+            <ul className="mt-2 space-y-1 text-[13px] leading-relaxed text-gray-600">
+              {summaryLines.map((line) => (
+                <li key={line.plural}>
+                  {line.count} {line.count === 1 ? line.singular : line.plural}
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <div className="flex items-start gap-2.5 rounded-lg border border-red-200/80 bg-red-50/70 px-3 py-3">
             <TriangleAlert
               size={16}
@@ -475,9 +532,12 @@ function ConfirmTaskUpdateDialog({
               className="mt-0.5 shrink-0 text-red-600"
             />
             <p className="text-[12px] font-normal leading-relaxed text-gray-500">
-              <span className="font-bold text-gray-900">Warning:</span> If you leave the Master Link
-              field empty, this task and all associated data, including Mirrored Links, Validation
-              results, and Insight Reports, will be{" "}
+              <span className="font-bold text-gray-900">Warning:</span> If you leave the{" "}
+              <span className="font-bold text-gray-900">Master Link</span> field empty, this task
+              and all associated data, including{" "}
+              <span className="font-bold text-gray-900">Mirrored Links</span>,{" "}
+              <span className="font-bold text-gray-900">Validation results</span>, and{" "}
+              <span className="font-bold text-gray-900">Insight Reports</span>, will be{" "}
               <span className="font-bold text-gray-900">permanently deleted</span>.
             </p>
           </div>
@@ -604,7 +664,7 @@ function TaskValidationPill({
     status === "Verified"
       ? CheckCircle2
       : status === "Mismatched"
-        ? X
+        ? XCircle
         : AlertCircle;
 
   const iconClass =
@@ -768,6 +828,26 @@ function PostLinkManagementSheetPanel({
     hasMasterUrl && mirrored.length < MIRRORED_MAX && allMirroredFilled;
   const hasRemovedSubmittedInsight = removedSubmittedInsightIds.length > 0;
   const canSaveInsight = pendingInsightFiles.length > 0 || hasRemovedSubmittedInsight;
+
+  const deleteRemovalSummary = useMemo(() => {
+    const sourceLinks = savedLinks ?? row.postLinks;
+    const masters = getMasterPostLinks(sourceLinks);
+    const existingMaster = masters[masterIndex];
+    const existingMirrored = getMirroredLinksForMaster(sourceLinks, masterIndex).filter((link) =>
+      link.url.trim()
+    );
+    const insightCount =
+      masterIndex === 0
+        ? submittedInsightFiles.length
+        : (existingMaster?.insightReports?.length ?? 0);
+
+    return {
+      masterLinks: existingMaster?.url.trim() ? 1 : 0,
+      mirroredLinks: existingMirrored.length,
+      validationItems: existingMaster?.validation ? 3 : 0,
+      insightReports: insightCount,
+    };
+  }, [masterIndex, row.postLinks, savedLinks, submittedInsightFiles.length]);
 
   const handleAddMirrored = () => {
     if (!canAddMirrored) return;
@@ -949,8 +1029,8 @@ function PostLinkManagementSheetPanel({
       side="right"
       className="flex h-full gap-0 bg-white p-0 data-[side=right]:w-full data-[side=right]:max-w-[520px] data-[side=right]:sm:max-w-[520px]"
     >
-      <div className="shrink-0 border-b border-gray-100 bg-white">
-        <SheetHeader className="gap-2 px-6 pt-5 pb-3 text-left">
+      <div className="shrink-0 bg-white">
+        <SheetHeader className="gap-2 border-b border-gray-100 px-6 pt-5 pb-3 text-left">
           <div className="flex items-center gap-2 pr-8">
             <SheetTitle className="text-[18px] font-semibold text-gray-900">
               Task Management
@@ -964,7 +1044,24 @@ function PostLinkManagementSheetPanel({
           </SheetDescription>
         </SheetHeader>
 
-        <PostLinkManagementTabs activeTab={activeTab} onChange={setActiveTab} />
+        <div className="border-b border-gray-100 px-6 pb-0 pt-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <InfluencerAvatar
+              src={getMockInfluencerAvatar(row.id)}
+              alt={row.name}
+              platform={row.platform}
+              size="md"
+              fallback={row.handle.replace(/^@/, "").slice(0, 2).toUpperCase()}
+              fallbackClassName="bg-violet-100 text-violet-700"
+            />
+            <div className="min-w-0">
+              <div className="truncate text-[13px] font-semibold text-gray-900">{row.handle}</div>
+              <div className="truncate text-[11px] text-gray-500">{row.name}</div>
+            </div>
+          </div>
+
+          <PostLinkManagementTabs activeTab={activeTab} onChange={setActiveTab} />
+        </div>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -1078,7 +1175,7 @@ function PostLinkManagementSheetPanel({
                 </div>
 
                 <div className="space-y-2 rounded-lg border border-gray-100 bg-gray-50/50 px-3 py-3">
-                  <p className="text-[11px] font-semibold text-gray-400">
+                  <p className="text-[12px] font-semibold text-gray-600">
                     Validation result
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -1141,17 +1238,21 @@ function PostLinkManagementSheetPanel({
                   onRemoveFile={handleRemovePendingInsight}
                 />
               ) : null}
-
-              <div className="flex items-start gap-2 rounded-lg border border-amber-200/80 bg-amber-50/60 px-3 py-2.5 text-[11px] leading-relaxed text-amber-800">
-                <AlertCircle size={14} strokeWidth={2.2} className="mt-0.5 shrink-0 text-amber-600" />
-                <p>
-                  Ensure this report matches the master link. Data will be auto-extracted for the
-                  campaign report for your review.
-                </p>
-              </div>
             </div>
           ) : null}
         </div>
+
+        {activeTab === "insight" ? (
+          <div className="shrink-0 px-6 pb-1 pt-1">
+            <div className="flex items-start gap-2 rounded-lg border border-amber-200/80 bg-amber-50/60 px-3 py-2.5 text-[11px] leading-relaxed text-amber-800">
+              <AlertCircle size={14} strokeWidth={2.2} className="mt-0.5 shrink-0 text-amber-600" />
+              <p>
+                Ensure this report matches the master link. Data will be auto-extracted for the
+                campaign report for your review.
+              </p>
+            </div>
+          </div>
+        ) : null}
 
         <SheetFooter className="shrink-0 flex-row justify-end gap-2 border-t border-gray-100 bg-gray-50/50 px-6 py-4">
           <Button
@@ -1179,6 +1280,7 @@ function PostLinkManagementSheetPanel({
       open={confirmDeleteOpen}
       onOpenChange={setConfirmDeleteOpen}
       onConfirm={handleConfirmDeleteTask}
+      removalSummary={deleteRemovalSummary}
     />
 
     <ConfirmDataRemovalDialog

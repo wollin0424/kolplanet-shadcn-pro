@@ -2,7 +2,7 @@
 
 import { forwardRef, type ComponentPropsWithoutRef } from "react";
 import { cn } from "@/lib/utils";
-import { AlertCircle, CheckCircle2, X } from "@/lib/icons";
+import { AlertCircle, CheckCircle2, XCircle } from "@/lib/icons";
 import type { PostLinkHealthStatus, PostLinkType } from "@/lib/postingHubMock";
 
 const STATUS_ICON_CLASS: Record<"success" | "warning" | "error", string> = {
@@ -27,7 +27,7 @@ const POST_LINK_STATUS_CONFIG: Record<
   },
   error: {
     iconClassName: STATUS_ICON_CLASS.error,
-    Icon: X,
+    Icon: XCircle,
     title: "Issue found",
   },
 };

@@ -83,6 +83,7 @@ import {
   UsersRound as LucideUsersRound,
   Wallet as LucideWallet,
   X as LucideX,
+  XCircle as LucideXCircle,
 } from "lucide-react";
 import { createIcon, type AppIcon } from "@/lib/createIcon";
 
@@ -167,3 +168,4 @@ export const Users = createIcon(LucideUsers, "Users");
 export const UsersRound = createIcon(LucideUsersRound, "UsersRound");
 export const Wallet = createIcon(LucideWallet, "Wallet");
 export const X = createIcon(LucideX, "X");
+export const XCircle = createIcon(LucideXCircle, "XCircle");

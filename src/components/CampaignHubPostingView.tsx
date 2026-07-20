@@ -91,7 +91,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { AlertCircle, CheckCircle2, ChevronDown, Copy, FileText, FileX, Paperclip, Pencil, Plus, RefreshCcw, Sparkles, Upload, X } from "@/lib/icons";
+import { AlertCircle, CheckCircle2, ChevronDown, Copy, FileText, FileX, Paperclip, Pencil, Plus, RefreshCcw, Sparkles, Upload, XCircle } from "@/lib/icons";
 
 function mergePostingHubRowsInsightReports(rows: PostingHubRow[]): PostingHubRow[] {
   return rows.map((row) => {
@@ -147,7 +147,7 @@ const VALIDATION_STATUS_CONFIG: Record<
     pillSurfaceClassName: "border-red-200/90 bg-red-50",
     tagClassName: "border-red-200/90 bg-red-50 text-red-700",
     iconClassName: STATUS_ICON_CLASS.error,
-    Icon: X,
+    Icon: XCircle,
     title: "Mismatched",
   },
   "Cannot Verify": {

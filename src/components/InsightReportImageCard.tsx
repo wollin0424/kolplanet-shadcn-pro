@@ -73,7 +73,7 @@ export function InsightReportImageCard({
       </div>
       {showFilename ? (
         <div className="px-2 py-1">
-          <p className="truncate text-[10px] font-medium text-gray-800">{file.name}</p>
+          <p className="truncate text-[10px] font-medium text-gray-500">{file.name}</p>
           <p className="text-[9px] text-gray-400">{file.sizeLabel}</p>
         </div>
       ) : null}
