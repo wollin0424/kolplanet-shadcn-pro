@@ -80,7 +80,7 @@ export function getScriptBriefH5Defaults(kolId: string): ScriptBriefH5Data {
     campaignTitle: kolId === "1" ? "Myth: Wu kong on Steam" : "Budweiser 2024 Sales Drive",
     campaignSubtitle: "Campaign Brief",
     intro:
-      "Open each H5 step to review, submit, and continue the workflow.",
+      "Tap each step below to submit your script, video, caption, and post links to complete your campaign.",
     influencer: {
       name: "Amelia Stone",
       handle: "@instagram ins",

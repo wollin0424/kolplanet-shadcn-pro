@@ -159,7 +159,12 @@ function H5PostLinkRefreshButton({
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      className="inline-grid size-10 shrink-0 place-items-center rounded-full border border-brand/25 bg-brand-50 p-0 text-brand transition-colors hover:border-brand/40 hover:bg-brand-100/80 active:border-brand/45 active:bg-brand-100 disabled:cursor-not-allowed disabled:opacity-40"
+      className={cn(
+        "inline-grid size-10 shrink-0 place-items-center rounded-full border p-0 transition-colors",
+        disabled
+          ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400"
+          : "border-brand/25 bg-brand-50 text-brand hover:border-brand/40 hover:bg-brand-100/80 active:border-brand/45 active:bg-brand-100"
+      )}
     >
       <RefreshCcw size={14} strokeWidth={2.2} />
     </button>
@@ -222,6 +227,9 @@ function H5PostLinkRow({
   const readOnly = entry.submitted;
   const showRefresh = entry.submitted;
   const isVerifying = entry.health === "verifying";
+  // Verified / verifying → refresh locked; private / issue (and other failures) → can retry
+  const refreshDisabled =
+    !entry.url.trim() || entry.health === "verified" || entry.health === "verifying";
   const [urlError, setUrlError] = useState<string | undefined>();
 
   const handleSubmit = () => {
@@ -301,7 +309,7 @@ function H5PostLinkRow({
         {showRefresh ? (
           <H5PostLinkRefreshButton
             onClick={onRefresh}
-            disabled={!entry.url.trim()}
+            disabled={refreshDisabled}
             ariaLabel={`Refresh ${label}`}
           />
         ) : null}

@@ -389,6 +389,9 @@ function parseFigmaPostingStateKey(
   value: string | undefined
 ): H5FigmaPostingStateKey {
   const key = value?.trim().toLowerCase();
+  // Developer-facing aliases for the core progressive states
+  if (key === "links" || key === "after-links") return "links-verified";
+  if (key === "images" || key === "after-images") return "insight-submitted";
   if (
     key === "empty" ||
     key === "multi-master" ||
@@ -406,9 +409,14 @@ function parseFigmaPostingStateKey(
 export function getFigmaCaptureH5InsightHoverCardId(
   stateKey?: string
 ): string | undefined {
-  const state = parseFigmaPostingStateKey(stateKey);
-  if (state === "insight-pending") return "figma-insight-draft-2";
-  if (state === "insight-submitted") return "figma-insight-draft-1";
+  const raw = stateKey?.trim().toLowerCase();
+  // Hover is opt-in so default image states stay readable for developers
+  if (raw === "insight-pending-hover" || raw === "insight-draft-hover") {
+    return "figma-insight-draft-2";
+  }
+  if (raw === "insight-submitted-hover") {
+    return "figma-insight-draft-1";
+  }
   return undefined;
 }
 
@@ -457,12 +465,22 @@ export function getFigmaCaptureH5PostingState(
 
   if (state === "links-verified") {
     return figmaDefaultState([
-      figmaTaskGroup({
-        id: "figma-master-0",
-        url: "https://www.instagram.com/p/figma-verified/",
-        health: "verified",
-        submitted: true,
-      }),
+      figmaTaskGroup(
+        {
+          id: "figma-master-0",
+          url: "https://www.instagram.com/p/figma-verified/",
+          health: "verified",
+          submitted: true,
+        },
+        [
+          {
+            id: "figma-mirrored-0",
+            url: "https://www.tiktok.com/@creator/video/figma-mirrored",
+            health: "verified",
+            submitted: true,
+          },
+        ]
+      ),
     ]);
   }
 
