@@ -12,7 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { getH5PostingState, removeH5InsightFile, subscribeH5PostingChanges, type H5InsightFile } from "@/lib/h5PostingSubmissions";
+import { getH5PostingState, getAllH5InsightFiles, hydrateInsightFiles, removeH5InsightFile, subscribeH5PostingChanges, type H5InsightFile } from "@/lib/h5PostingSubmissions";
 import {
   mergeInsightReportFileNames,
   mergeInsightReportImagesFromRecords,
@@ -158,11 +158,11 @@ function UploadInsightReportSheetPanel({
         sizeLabel: file.sizeLabel,
       }));
     }
-    const h5Files = h5KolId ? getH5PostingState(h5KolId).insightDraftFiles : [];
+    const h5Files = h5KolId ? getAllH5InsightFiles(getH5PostingState(h5KolId)) : [];
     return buildInitialWebInsightFiles(initialFiles, h5Files, rowId);
   });
   const [h5InsightFiles, setH5InsightFiles] = useState(() =>
-    h5KolId && !figmaCapture ? getH5PostingState(h5KolId).insightDraftFiles : []
+    h5KolId && !figmaCapture ? getAllH5InsightFiles(getH5PostingState(h5KolId)) : []
   );
   const [pendingFiles, setPendingFiles] = useState<InsightReportImage[]>(() =>
     captureState?.pendingFile
@@ -186,8 +186,14 @@ function UploadInsightReportSheetPanel({
   useEffect(() => {
     if (figmaCapture || !h5KolId) return;
 
+    const syncH5InsightFiles = async () => {
+      const files = getAllH5InsightFiles(getH5PostingState(h5KolId));
+      setH5InsightFiles(await hydrateInsightFiles(files));
+    };
+
+    void syncH5InsightFiles();
     return subscribeH5PostingChanges(() => {
-      setH5InsightFiles(getH5PostingState(h5KolId).insightDraftFiles);
+      void syncH5InsightFiles();
     });
   }, [figmaCapture, h5KolId]);
 
@@ -228,7 +234,7 @@ function UploadInsightReportSheetPanel({
       if (!h5KolId) return;
       const h5FileId = target.id.startsWith("h5-") ? target.id.slice(3) : target.id;
       removeH5InsightFile(h5KolId, h5FileId);
-      const nextH5Files = getH5PostingState(h5KolId).insightDraftFiles;
+      const nextH5Files = getAllH5InsightFiles(getH5PostingState(h5KolId));
       setH5InsightFiles(nextH5Files);
       const nextNames = mergeInsightReportFileNames(
         webInsightFiles.map((file) => file.name),

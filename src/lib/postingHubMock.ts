@@ -1,3 +1,5 @@
+import type { H5InsightFile } from "@/lib/h5PostingSubmissions";
+import { mergeInsightReportFileNames } from "@/lib/insightReportSync";
 import type { StageBadgeConfig } from "@/lib/pipeline/stageStatuses";
 
 /** Posting hub detail page statuses (dropdown options). */
@@ -456,7 +458,8 @@ export function getEffectiveMasterValidation(link: PostLink): ContentValidation 
 export function getInsightReportsForMaster(
   row: PostingHubRow,
   masterIndex: number,
-  webInsightFileNames: string[] = []
+  webInsightFileNames: string[] = [],
+  h5Files: H5InsightFile[] = []
 ): string[] {
   const master = getMasterPostLinks(row.postLinks)[masterIndex];
   if (!master) return [];
@@ -465,11 +468,14 @@ export function getInsightReportsForMaster(
     return master.insightReports;
   }
 
-  if (masterIndex === 0) {
-    return webInsightFileNames.length > 0 ? webInsightFileNames : (row.insightReports ?? []);
-  }
+  const baseWeb =
+    masterIndex === 0
+      ? webInsightFileNames.length > 0
+        ? webInsightFileNames
+        : (row.insightReports ?? [])
+      : [];
 
-  return [];
+  return mergeInsightReportFileNames(baseWeb, h5Files);
 }
 
 export function buildInsightReportSharePath(rowId: string) {

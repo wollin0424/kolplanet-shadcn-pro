@@ -44,6 +44,11 @@ export function parseCampaignDetailSearchParams(searchParams: {
   figmaOpenUploadInsightReport?: string;
   figmaInsightReportState?: string;
   figmaUploadInsightRow?: string;
+  figmaOpenTaskManagement?: string;
+  figmaTaskManagementTab?: string;
+  figmaTaskManagementRow?: string;
+  figmaTaskManagementState?: string;
+  figmaTaskManagementConfirm?: string;
   figmaOpenImportPostLinks?: string;
   figmaOpenExecutionGuide?: string;
   figmaPostingMirroredTooltip?: string;
@@ -73,6 +78,11 @@ export function parseCampaignDetailSearchParams(searchParams: {
   figmaOpenUploadInsightReport?: boolean;
   figmaInsightReportState?: string;
   figmaUploadInsightRowId?: string;
+  figmaOpenTaskManagement?: boolean;
+  figmaTaskManagementTab?: "links" | "insight";
+  figmaTaskManagementRowId?: string;
+  figmaTaskManagementState?: "new";
+  figmaTaskManagementConfirm?: "task-update" | "data-removal" | "report-update";
   figmaOpenImportPostLinks?: boolean;
   figmaOpenExecutionGuide?: boolean;
   figmaPostingMirroredTooltipRowId?: string;
@@ -129,9 +139,51 @@ export function parseCampaignDetailSearchParams(searchParams: {
         ? "full"
         : undefined;
   const figmaOpenUploadInsightReport = searchParams.figmaOpenUploadInsightReport === "1";
+  const figmaOpenTaskManagement = searchParams.figmaOpenTaskManagement === "1";
+  const taskManagementTabKey = searchParams.figmaTaskManagementTab?.toLowerCase().replace(/_/g, "-");
+  const figmaTaskManagementTab: "links" | "insight" | undefined =
+    taskManagementTabKey === "insight" || taskManagementTabKey === "insight-report"
+      ? "insight"
+      : taskManagementTabKey === "links" ||
+          taskManagementTabKey === "post-link" ||
+          taskManagementTabKey === "post-link-content-validation"
+        ? "links"
+        : figmaOpenTaskManagement || figmaOpenUploadInsightReport
+          ? figmaOpenUploadInsightReport
+            ? "insight"
+            : "links"
+          : undefined;
+  const figmaTaskManagementRowId =
+    figmaOpenTaskManagement || figmaOpenUploadInsightReport
+      ? searchParams.figmaTaskManagementRow?.trim() ||
+        searchParams.figmaUploadInsightRow?.trim() ||
+        (figmaOpenUploadInsightReport ? "p3" : "p1")
+      : undefined;
+  const taskManagementStateKey = searchParams.figmaTaskManagementState
+    ?.trim()
+    .toLowerCase();
+  const figmaTaskManagementState: "new" | undefined =
+    taskManagementStateKey === "new" ||
+    taskManagementStateKey === "empty" ||
+    taskManagementStateKey === "new-task"
+      ? "new"
+      : undefined;
   const figmaUploadInsightRowId = figmaOpenUploadInsightReport
     ? searchParams.figmaUploadInsightRow?.trim() || "p3"
     : undefined;
+  const confirmKey = searchParams.figmaTaskManagementConfirm?.toLowerCase().replace(/_/g, "-");
+  const figmaTaskManagementConfirm:
+    | "task-update"
+    | "data-removal"
+    | "report-update"
+    | undefined =
+    confirmKey === "task-update" || confirmKey === "confirm-task-update"
+      ? "task-update"
+      : confirmKey === "data-removal" || confirmKey === "confirm-data-removal"
+        ? "data-removal"
+        : confirmKey === "report-update" || confirmKey === "confirm-report-update"
+          ? "report-update"
+          : undefined;
   const figmaOpenImportPostLinks = searchParams.figmaOpenImportPostLinks === "1";
   const figmaOpenExecutionGuide = searchParams.figmaOpenExecutionGuide === "1";
   const figmaPostingMirroredTooltip = searchParams.figmaPostingMirroredTooltip === "1";
@@ -182,6 +234,11 @@ export function parseCampaignDetailSearchParams(searchParams: {
     figmaOpenUploadInsightReport,
     figmaInsightReportState: searchParams.figmaInsightReportState?.trim() || undefined,
     figmaUploadInsightRowId,
+    figmaOpenTaskManagement: figmaOpenTaskManagement || figmaOpenUploadInsightReport,
+    figmaTaskManagementTab,
+    figmaTaskManagementRowId,
+    figmaTaskManagementState,
+    figmaTaskManagementConfirm,
     figmaOpenImportPostLinks,
     figmaOpenExecutionGuide,
     figmaPostingMirroredTooltipRowId,

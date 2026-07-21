@@ -160,6 +160,11 @@ export default function CampaignHub({
   figmaOpenUploadInsightReport,
   figmaInsightReportState,
   figmaUploadInsightRowId,
+  figmaOpenTaskManagement,
+  figmaTaskManagementTab,
+  figmaTaskManagementRowId,
+  figmaTaskManagementState,
+  figmaTaskManagementConfirm,
   figmaOpenImportPostLinks,
   figmaPostingMirroredTooltipRowId,
   figmaPostingValidationTooltips,
@@ -186,6 +191,11 @@ export default function CampaignHub({
   figmaOpenUploadInsightReport?: boolean;
   figmaInsightReportState?: string;
   figmaUploadInsightRowId?: string;
+  figmaOpenTaskManagement?: boolean;
+  figmaTaskManagementTab?: "links" | "insight";
+  figmaTaskManagementRowId?: string;
+  figmaTaskManagementState?: "new";
+  figmaTaskManagementConfirm?: "task-update" | "data-removal" | "report-update";
   figmaOpenImportPostLinks?: boolean;
   figmaPostingMirroredTooltipRowId?: string;
   figmaPostingValidationTooltips?: boolean;
@@ -281,6 +291,11 @@ export default function CampaignHub({
         figmaOpenUploadInsightReport={figmaOpenUploadInsightReport}
         figmaInsightReportState={figmaInsightReportState}
         figmaUploadInsightRowId={figmaUploadInsightRowId}
+        figmaOpenTaskManagement={figmaOpenTaskManagement}
+        figmaTaskManagementTab={figmaTaskManagementTab}
+        figmaTaskManagementRowId={figmaTaskManagementRowId}
+        figmaTaskManagementState={figmaTaskManagementState}
+        figmaTaskManagementConfirm={figmaTaskManagementConfirm}
         figmaOpenImportPostLinks={figmaOpenImportPostLinks}
         figmaPostingMirroredTooltipRowId={figmaPostingMirroredTooltipRowId}
         figmaPostingValidationTooltips={figmaPostingValidationTooltips}

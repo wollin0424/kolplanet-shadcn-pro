@@ -1,3 +1,10 @@
+import {
+  cacheH5InsightPreviewUrl,
+  deleteH5InsightPreview,
+  getH5InsightPreview,
+  saveH5InsightPreview,
+} from "@/lib/h5InsightPreviewStore";
+
 export type H5PostLinkHealth = "empty" | "verifying" | "verified" | "private" | "issue";
 
 export type H5PostLinkEntry = {
@@ -5,6 +12,14 @@ export type H5PostLinkEntry = {
   url: string;
   health: H5PostLinkHealth;
   submitted: boolean;
+};
+
+export type H5MasterTaskGroup = {
+  id: string;
+  master: H5PostLinkEntry;
+  mirrored: H5PostLinkEntry[];
+  insightDraftFiles: H5InsightFile[];
+  insightSubmitted: boolean;
 };
 
 export type H5InsightFile = {
@@ -17,25 +32,256 @@ export type H5InsightFile = {
 };
 
 export type H5PostingState = {
-  masters: H5PostLinkEntry[];
-  mirrored: H5PostLinkEntry[];
-  insightDraftFiles: H5InsightFile[];
-  insightSubmitted: boolean;
+  taskGroups: H5MasterTaskGroup[];
 };
 
-const STORAGE_KEY = "kolplanet:h5-posting:v1";
+export const H5_MIRRORED_MAX = 3;
+
+const STORAGE_KEY = "kolplanet:h5-posting:v3";
+const LEGACY_STORAGE_KEYS = ["kolplanet:h5-posting:v2", "kolplanet:h5-posting:v1"];
 const CHANGE_EVENT = "kolplanet:h5-posting-change";
+
+type LegacyH5TaskGroup = {
+  id: string;
+  master: H5PostLinkEntry;
+  mirrored: H5PostLinkEntry[];
+  insightDraftFiles?: H5InsightFile[];
+  insightSubmitted?: boolean;
+};
+
+type LegacyH5PostingState = {
+  masters?: H5PostLinkEntry[];
+  mirrored?: H5PostLinkEntry[];
+  taskGroups?: LegacyH5TaskGroup[];
+  insightDraftFiles?: H5InsightFile[];
+  insightSubmitted?: boolean;
+};
 
 function createId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+function createEmptyMasterEntry(): H5PostLinkEntry {
+  return { id: createId(), url: "", health: "empty", submitted: false };
+}
+
+function createEmptyTaskGroup(): H5MasterTaskGroup {
+  return {
+    id: createId(),
+    master: createEmptyMasterEntry(),
+    mirrored: [],
+    insightDraftFiles: [],
+    insightSubmitted: false,
+  };
+}
+
+function normalizeTaskGroup(group: LegacyH5TaskGroup): H5MasterTaskGroup {
+  return {
+    id: group.id,
+    master: group.master,
+    mirrored: group.mirrored.slice(0, H5_MIRRORED_MAX),
+    insightDraftFiles: group.insightDraftFiles ?? [],
+    insightSubmitted: group.insightSubmitted ?? false,
+  };
+}
+
+function attachLegacyInsightToFirstGroup(
+  taskGroups: H5MasterTaskGroup[],
+  legacyInsightFiles: H5InsightFile[],
+  legacyInsightSubmitted: boolean
+): H5MasterTaskGroup[] {
+  if (!legacyInsightFiles.length || !taskGroups.length) return taskGroups;
+  if (taskGroups.some((group) => group.insightDraftFiles.length > 0)) return taskGroups;
+
+  const [first, ...rest] = taskGroups;
+  return [
+    {
+      ...first,
+      insightDraftFiles: legacyInsightFiles,
+      insightSubmitted: legacyInsightSubmitted,
+    },
+    ...rest,
+  ];
+}
+
+function migrateLegacyPostingState(stored: LegacyH5PostingState): H5PostingState {
+  const legacyInsightFiles = stored.insightDraftFiles ?? [];
+  const legacyInsightSubmitted = stored.insightSubmitted ?? false;
+
+  if (stored.taskGroups?.length) {
+    const taskGroups = attachLegacyInsightToFirstGroup(
+      stored.taskGroups.map(normalizeTaskGroup),
+      legacyInsightFiles,
+      legacyInsightSubmitted
+    );
+    return { taskGroups };
+  }
+
+  const masters =
+    stored.masters?.length && stored.masters.length > 0
+      ? stored.masters
+      : [createEmptyMasterEntry()];
+  const legacyMirrored = stored.mirrored ?? [];
+
+  const taskGroups = attachLegacyInsightToFirstGroup(
+    masters.map((master, index) => ({
+      id: createId(),
+      master,
+      mirrored: index === 0 ? legacyMirrored : [],
+      insightDraftFiles: [],
+      insightSubmitted: false,
+    })),
+    legacyInsightFiles,
+    legacyInsightSubmitted
+  );
+
+  return { taskGroups };
+}
+
+function isRasterDataPreview(previewUrl: string) {
+  return (
+    previewUrl.startsWith("data:image/") && !previewUrl.startsWith("data:image/svg+xml")
+  );
+}
+
+function shouldPersistPreviewInStorage(previewUrl: string) {
+  return previewUrl.startsWith("data:image/svg+xml");
+}
+
+function stripInsightFileForStorage(file: H5InsightFile): H5InsightFile {
+  if (!file.previewUrl || shouldPersistPreviewInStorage(file.previewUrl)) return file;
+  return { ...file, previewUrl: "" };
+}
+
+function stripPostingStateForStorage(state: H5PostingState): H5PostingState {
+  return {
+    taskGroups: state.taskGroups.map((group) => ({
+      ...group,
+      insightDraftFiles: group.insightDraftFiles.map(stripInsightFileForStorage),
+    })),
+  };
+}
+
+let previewMigrationScheduled = false;
+
+function scheduleLegacyPreviewMigration(states: Record<string, H5PostingState>) {
+  if (previewMigrationScheduled || typeof window === "undefined") return;
+  previewMigrationScheduled = true;
+
+  void (async () => {
+    for (const state of Object.values(states)) {
+      for (const group of state.taskGroups) {
+        for (const file of group.insightDraftFiles) {
+          if (isRasterDataPreview(file.previewUrl)) {
+            await saveH5InsightPreview(file.id, file.previewUrl);
+          }
+        }
+      }
+    }
+
+    const stripped = Object.fromEntries(
+      Object.entries(states).map(([kolId, state]) => [
+        kolId,
+        stripPostingStateForStorage(state),
+      ])
+    );
+
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stripped));
+    } catch {
+      // Ignore quota errors during background migration.
+    }
+  })();
+}
+
+async function hydrateInsightFile(file: H5InsightFile): Promise<H5InsightFile> {
+  if (file.previewUrl) {
+    if (isRasterDataPreview(file.previewUrl)) {
+      await saveH5InsightPreview(file.id, file.previewUrl);
+      cacheH5InsightPreviewUrl(file.id, file.previewUrl);
+    }
+    return file;
+  }
+
+  const previewUrl = await getH5InsightPreview(file.id);
+  return previewUrl ? { ...file, previewUrl } : file;
+}
+
+export async function hydrateInsightFiles(files: H5InsightFile[]): Promise<H5InsightFile[]> {
+  return Promise.all(files.map((file) => hydrateInsightFile(file)));
+}
+
+export async function hydratePostingStateInsightPreviews(
+  state: H5PostingState
+): Promise<H5PostingState> {
+  const taskGroups = await Promise.all(
+    state.taskGroups.map(async (group) => ({
+      ...group,
+      insightDraftFiles: await hydrateInsightFiles(group.insightDraftFiles),
+    }))
+  );
+  return { taskGroups };
+}
+
 function readAll(): Record<string, H5PostingState> {
   if (typeof window === "undefined") return {};
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    let raw = window.localStorage.getItem(STORAGE_KEY);
+    let fromLegacyKey: string | undefined;
+    if (!raw) {
+      for (const legacyKey of LEGACY_STORAGE_KEYS) {
+        raw = window.localStorage.getItem(legacyKey);
+        if (raw) {
+          fromLegacyKey = legacyKey;
+          break;
+        }
+      }
+    }
     if (!raw) return {};
-    return JSON.parse(raw) as Record<string, H5PostingState>;
+    const parsed = JSON.parse(raw) as Record<string, LegacyH5PostingState>;
+    const migrated = Object.fromEntries(
+      Object.entries(parsed).map(([kolId, state]) => [kolId, migrateLegacyPostingState(state)])
+    );
+    if (fromLegacyKey) {
+      try {
+        window.localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(
+            Object.fromEntries(
+              Object.entries(migrated).map(([kolId, state]) => [
+                kolId,
+                stripPostingStateForStorage(state),
+              ])
+            )
+          )
+        );
+      } catch {
+        // Ignore quota errors during migration write.
+      }
+    } else {
+      const needsRepair = Object.values(migrated).some(
+        (state) => !state.taskGroups?.length
+      );
+      if (needsRepair) {
+        try {
+          window.localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(
+              Object.fromEntries(
+                Object.entries(migrated).map(([kolId, state]) => [
+                  kolId,
+                  stripPostingStateForStorage(state),
+                ])
+              )
+            )
+          );
+        } catch {
+          // Ignore quota errors during repair write.
+        }
+      }
+    }
+    scheduleLegacyPreviewMigration(migrated);
+    return migrated;
   } catch {
     return {};
   }
@@ -43,7 +289,15 @@ function readAll(): Record<string, H5PostingState> {
 
 function writeAll(data: Record<string, H5PostingState>) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  const stripped = Object.fromEntries(
+    Object.entries(data).map(([kolId, state]) => [kolId, stripPostingStateForStorage(state)])
+  );
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stripped));
+  } catch (error) {
+    console.error("Failed to persist H5 posting state", error);
+    return;
+  }
   window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: { key: STORAGE_KEY } }));
 }
 
@@ -55,34 +309,43 @@ export function formatH5InsightFileSize(bytes: number) {
 
 const VERIFICATION_DELAY_MS = 2000;
 
-function scheduleMasterVerification(kolId: string, entryId: string) {
+function scheduleMasterVerification(kolId: string, groupId: string) {
   if (typeof window === "undefined") return;
   window.setTimeout(() => {
     updateState(kolId, (state) => ({
       ...state,
-      masters: state.masters.map((entry) => {
-        if (entry.id !== entryId || entry.health !== "verifying") return entry;
+      taskGroups: state.taskGroups.map((group) => {
+        if (group.id !== groupId || group.master.health !== "verifying") return group;
         return {
-          ...entry,
-          health: resolveLinkHealth(entry.url),
-          submitted: true,
+          ...group,
+          master: {
+            ...group.master,
+            health: resolveLinkHealth(group.master.url),
+            submitted: true,
+          },
         };
       }),
     }));
   }, VERIFICATION_DELAY_MS);
 }
 
-function scheduleMirroredVerification(kolId: string, entryId: string) {
+function scheduleMirroredVerification(kolId: string, groupId: string, entryId: string) {
   if (typeof window === "undefined") return;
   window.setTimeout(() => {
     updateState(kolId, (state) => ({
       ...state,
-      mirrored: state.mirrored.map((entry) => {
-        if (entry.id !== entryId || entry.health !== "verifying") return entry;
+      taskGroups: state.taskGroups.map((group) => {
+        if (group.id !== groupId) return group;
         return {
-          ...entry,
-          health: resolveLinkHealth(entry.url),
-          submitted: true,
+          ...group,
+          mirrored: group.mirrored.map((entry) => {
+            if (entry.id !== entryId || entry.health !== "verifying") return entry;
+            return {
+              ...entry,
+              health: resolveLinkHealth(entry.url),
+              submitted: true,
+            };
+          }),
         };
       }),
     }));
@@ -149,6 +412,24 @@ export function getFigmaCaptureH5InsightHoverCardId(
   return undefined;
 }
 
+function figmaTaskGroup(
+  master: H5PostLinkEntry,
+  mirrored: H5PostLinkEntry[] = [],
+  insight?: Pick<H5MasterTaskGroup, "insightDraftFiles" | "insightSubmitted">
+): H5MasterTaskGroup {
+  return {
+    id: createId(),
+    master,
+    mirrored,
+    insightDraftFiles: insight?.insightDraftFiles ?? [],
+    insightSubmitted: insight?.insightSubmitted ?? false,
+  };
+}
+
+function figmaDefaultState(taskGroups: H5MasterTaskGroup[]): H5PostingState {
+  return { taskGroups };
+}
+
 export function getFigmaCaptureH5PostingState(
   _kolId: string,
   stateKey?: string
@@ -156,193 +437,184 @@ export function getFigmaCaptureH5PostingState(
   const state = parseFigmaPostingStateKey(stateKey);
 
   if (state === "empty") {
-    return {
-      masters: [{ id: "figma-master-0", url: "", health: "empty", submitted: false }],
-      mirrored: [{ id: "figma-mirrored-0", url: "", health: "empty", submitted: false }],
-      insightDraftFiles: [],
-      insightSubmitted: false,
-    };
+    return figmaDefaultState([createEmptyTaskGroup()]);
   }
 
   if (state === "multi-master") {
-    return {
-      masters: Array.from({ length: 6 }, (_, index) => ({
-        id: `figma-master-${index}`,
-        url: "",
-        health: "empty" as const,
-        submitted: false,
-      })),
-      mirrored: [{ id: "figma-mirrored-0", url: "", health: "empty", submitted: false }],
-      insightDraftFiles: [],
-      insightSubmitted: false,
-    };
+    return figmaDefaultState(Array.from({ length: 6 }, () => createEmptyTaskGroup()));
   }
 
   if (state === "links-draft") {
-    return {
-      masters: [
-        {
-          id: "figma-master-0",
-          url: "https://www.instagram.com/p/draft-not-submitted/",
-          health: "empty",
-          submitted: false,
-        },
-      ],
-      mirrored: [{ id: "figma-mirrored-0", url: "", health: "empty", submitted: false }],
-      insightDraftFiles: [],
-      insightSubmitted: false,
-    };
+    return figmaDefaultState([
+      figmaTaskGroup({
+        id: "figma-master-0",
+        url: "https://www.instagram.com/p/draft-not-submitted/",
+        health: "empty",
+        submitted: false,
+      }),
+    ]);
   }
 
   if (state === "links-verified") {
-    return {
-      masters: [
-        {
-          id: "figma-master-0",
-          url: "https://www.instagram.com/p/figma-verified/",
-          health: "verified",
-          submitted: true,
-        },
-      ],
-      mirrored: [{ id: "figma-mirrored-0", url: "", health: "empty", submitted: false }],
-      insightDraftFiles: [],
-      insightSubmitted: false,
-    };
+    return figmaDefaultState([
+      figmaTaskGroup({
+        id: "figma-master-0",
+        url: "https://www.instagram.com/p/figma-verified/",
+        health: "verified",
+        submitted: true,
+      }),
+    ]);
   }
 
   if (state === "links-errors") {
-    return {
-      masters: [
+    return figmaDefaultState([
+      figmaTaskGroup(
         {
           id: "figma-master-private",
           url: "https://www.instagram.com/p/3-private",
           health: "private",
           submitted: true,
         },
-        {
-          id: "figma-master-issue",
-          url: "https://www.instagram.com/p/invalid-error-404",
-          health: "issue",
-          submitted: true,
-        },
-      ],
-      mirrored: [
-        {
-          id: "figma-mirrored-issue",
-          url: "https://www.tiktok.com/invalid-error",
-          health: "issue",
-          submitted: true,
-        },
-      ],
-      insightDraftFiles: [],
-      insightSubmitted: false,
-    };
+        [
+          {
+            id: "figma-mirrored-issue",
+            url: "https://www.tiktok.com/invalid-error",
+            health: "issue",
+            submitted: true,
+          },
+        ]
+      ),
+      figmaTaskGroup({
+        id: "figma-master-issue",
+        url: "https://www.instagram.com/p/invalid-error-404",
+        health: "issue",
+        submitted: true,
+      }),
+    ]);
   }
 
   if (state === "insight-pending") {
-    return {
-      masters: [
+    return figmaDefaultState([
+      figmaTaskGroup(
         {
           id: "figma-master-0",
           url: "https://www.instagram.com/p/figma-verified/",
           health: "verified",
           submitted: true,
         },
-      ],
-      mirrored: [{ id: "figma-mirrored-0", url: "", health: "empty", submitted: false }],
-      insightDraftFiles: [
+        [],
         {
-          id: "figma-insight-draft-1",
-          name: "Pinterest.png",
-          previewUrl: FIGMA_H5_INSIGHT_PREVIEW_A,
-          sizeLabel: "3.9 KB",
-          locked: false,
-        },
-        {
-          id: "figma-insight-draft-2",
-          name: "Line.png",
-          previewUrl: FIGMA_H5_INSIGHT_PREVIEW_B,
-          sizeLabel: "3.2 KB",
-          locked: false,
-        },
-      ],
-      insightSubmitted: false,
-    };
+          insightDraftFiles: [
+            {
+              id: "figma-insight-draft-1",
+              name: "Pinterest.png",
+              previewUrl: FIGMA_H5_INSIGHT_PREVIEW_A,
+              sizeLabel: "3.9 KB",
+              locked: false,
+            },
+            {
+              id: "figma-insight-draft-2",
+              name: "Line.png",
+              previewUrl: FIGMA_H5_INSIGHT_PREVIEW_B,
+              sizeLabel: "3.2 KB",
+              locked: false,
+            },
+          ],
+          insightSubmitted: false,
+        }
+      ),
+    ]);
   }
 
-  return {
-    masters: [
+  return figmaDefaultState([
+    figmaTaskGroup(
       {
         id: "figma-master-0",
         url: "https://www.instagram.com/p/figma-verified/",
         health: "verified",
         submitted: true,
       },
-    ],
-    mirrored: [
+      [
+        {
+          id: "figma-mirrored-0",
+          url: "https://www.tiktok.com/@creator/video/figma-mirrored",
+          health: "verified",
+          submitted: true,
+        },
+      ],
       {
-        id: "figma-mirrored-0",
-        url: "https://www.tiktok.com/@creator/video/figma-mirrored",
-        health: "verified",
-        submitted: true,
-      },
-    ],
-    insightDraftFiles: [
-      {
-        id: "figma-insight-submitted-1",
-        name: "Pinterest.png",
-        previewUrl: FIGMA_H5_INSIGHT_PREVIEW_A,
-        sizeLabel: "3.9 KB",
-        locked: true,
-      },
-      {
-        id: "figma-insight-submitted-2",
-        name: "Line.png",
-        previewUrl: FIGMA_H5_INSIGHT_PREVIEW_B,
-        sizeLabel: "3.2 KB",
-        locked: true,
-      },
-      {
-        id: "figma-insight-draft-1",
-        name: "Telegram.png",
-        previewUrl: FIGMA_H5_INSIGHT_PREVIEW_C,
-        sizeLabel: "3.2 KB",
-        locked: false,
-      },
-    ],
-    insightSubmitted: true,
+        insightDraftFiles: [
+          {
+            id: "figma-insight-submitted-1",
+            name: "Pinterest.png",
+            previewUrl: FIGMA_H5_INSIGHT_PREVIEW_A,
+            sizeLabel: "3.9 KB",
+            locked: true,
+          },
+          {
+            id: "figma-insight-submitted-2",
+            name: "Line.png",
+            previewUrl: FIGMA_H5_INSIGHT_PREVIEW_B,
+            sizeLabel: "3.2 KB",
+            locked: true,
+          },
+          {
+            id: "figma-insight-draft-1",
+            name: "Telegram.png",
+            previewUrl: FIGMA_H5_INSIGHT_PREVIEW_C,
+            sizeLabel: "3.2 KB",
+            locked: false,
+          },
+        ],
+        insightSubmitted: true,
+      }
+    ),
+  ]);
+}
+
+export function getDefaultH5PostingState(_kolId: string): H5PostingState {
+  return {
+    taskGroups: [createEmptyTaskGroup()],
   };
 }
 
-export function getDefaultH5PostingState(kolId: string): H5PostingState {
-  if (kolId === "1") {
-    return {
-      masters: [{ id: createId(), url: "", health: "empty", submitted: false }],
-      mirrored: [{ id: createId(), url: "", health: "empty", submitted: false }],
-      insightDraftFiles: [],
-      insightSubmitted: false,
-    };
-  }
+function normalizeLockedInsightFiles(files: H5InsightFile[]): H5InsightFile[] {
+  return files.map((file) => ({
+    ...file,
+    locked: file.locked === false ? false : true,
+  }));
+}
 
-  return {
-    masters: [{ id: createId(), url: "", health: "empty", submitted: false }],
-    mirrored: [{ id: createId(), url: "", health: "empty", submitted: false }],
-    insightDraftFiles: [],
-    insightSubmitted: false,
-  };
+export function getH5InsightFilesForMasterIndex(
+  state: H5PostingState,
+  masterIndex: number
+): H5InsightFile[] {
+  return state.taskGroups[masterIndex]?.insightDraftFiles ?? [];
+}
+
+export function getAllH5InsightFiles(state: H5PostingState): H5InsightFile[] {
+  return state.taskGroups.flatMap((group) => group.insightDraftFiles);
 }
 
 export function getH5PostingState(kolId: string): H5PostingState {
   const stored = readAll()[kolId];
   if (!stored) return getDefaultH5PostingState(kolId);
-  if (!stored.insightSubmitted) return stored;
+
+  const normalized = migrateLegacyPostingState(stored as LegacyH5PostingState);
+  const taskGroups =
+    normalized.taskGroups.length > 0
+      ? normalized.taskGroups
+      : getDefaultH5PostingState(kolId).taskGroups;
+
   return {
-    ...stored,
-    insightDraftFiles: stored.insightDraftFiles.map((file) => ({
-      ...file,
-      // Pending uploads must explicitly set locked: false; legacy rows without the field stay locked.
-      locked: file.locked === false ? false : true,
-    })),
+    taskGroups: taskGroups.map((group) =>
+      group.insightSubmitted
+        ? {
+            ...group,
+            insightDraftFiles: normalizeLockedInsightFiles(group.insightDraftFiles),
+          }
+        : group
+    ),
   };
 }
 
@@ -373,44 +645,61 @@ function updateState(kolId: string, updater: (state: H5PostingState) => H5Postin
 }
 
 export function hasVerifiedMasterPost(state: H5PostingState) {
-  return state.masters.some((entry) => entry.submitted && entry.health === "verified");
+  return state.taskGroups.some(
+    (group) => group.master.submitted && group.master.health === "verified"
+  );
 }
 
 export function hasSubmittedMasterPost(state: H5PostingState) {
-  return state.masters.some((entry) => entry.submitted && entry.url.trim().length > 0);
+  return state.taskGroups.some(
+    (group) => group.master.submitted && group.master.url.trim().length > 0
+  );
 }
 
-export function updateMasterUrl(kolId: string, entryId: string, url: string) {
+export function updateMasterUrl(kolId: string, groupId: string, url: string) {
   updateState(kolId, (state) => ({
     ...state,
-    masters: state.masters.map((entry) =>
-      entry.id === entryId && !entry.submitted
-        ? { ...entry, url, health: "empty" as const }
-        : entry
+    taskGroups: state.taskGroups.map((group) =>
+      group.id === groupId && !group.master.submitted
+        ? {
+            ...group,
+            master: { ...group.master, url, health: "empty" as const },
+          }
+        : group
     ),
   }));
 }
 
-export function refreshMasterLink(kolId: string, entryId: string) {
+export function refreshMasterLink(kolId: string, groupId: string) {
   updateState(kolId, (state) => ({
     ...state,
-    masters: state.masters.map((entry) => {
-      if (entry.id !== entryId) return entry;
+    taskGroups: state.taskGroups.map((group) => {
+      if (group.id !== groupId) return group;
+      const entry = group.master;
       if (!entry.url.trim()) {
-        return { ...entry, health: "empty" as const, submitted: false };
+        return {
+          ...group,
+          master: { ...entry, health: "empty" as const, submitted: false },
+        };
       }
       if (entry.health === "verifying") {
         return {
-          ...entry,
-          health: resolveLinkHealth(entry.url),
-          submitted: true,
+          ...group,
+          master: {
+            ...entry,
+            health: resolveLinkHealth(entry.url),
+            submitted: true,
+          },
         };
       }
       const health = resolveLinkHealth(entry.url);
       return {
-        ...entry,
-        health,
-        submitted: entry.url.trim().length > 0,
+        ...group,
+        master: {
+          ...entry,
+          health,
+          submitted: entry.url.trim().length > 0,
+        },
       };
     }),
   }));
@@ -419,113 +708,184 @@ export function refreshMasterLink(kolId: string, entryId: string) {
 export function addMasterPost(kolId: string) {
   updateState(kolId, (state) => ({
     ...state,
-    masters: [
-      ...state.masters,
-      { id: createId(), url: "", health: "empty", submitted: false },
-    ],
+    taskGroups: [...state.taskGroups, createEmptyTaskGroup()],
   }));
 }
 
-export function updateMirroredDraftUrl(kolId: string, entryId: string, url: string) {
+export function updateMirroredDraftUrl(
+  kolId: string,
+  groupId: string,
+  entryId: string,
+  url: string
+) {
   updateState(kolId, (state) => ({
     ...state,
-    mirrored: state.mirrored.map((entry) =>
-      entry.id === entryId && !entry.submitted
-        ? { ...entry, url, health: "empty" as const }
-        : entry
+    taskGroups: state.taskGroups.map((group) =>
+      group.id === groupId
+        ? {
+            ...group,
+            mirrored: group.mirrored.map((entry) =>
+              entry.id === entryId && !entry.submitted
+                ? { ...entry, url, health: "empty" as const }
+                : entry
+            ),
+          }
+        : group
     ),
   }));
 }
 
-export function submitMasterLink(kolId: string, entryId: string) {
+export function submitMasterLink(kolId: string, groupId: string) {
   let shouldVerify = false;
   updateState(kolId, (state) => ({
     ...state,
-    masters: state.masters.map((entry) => {
-      if (entry.id !== entryId || !entry.url.trim() || entry.submitted) return entry;
+    taskGroups: state.taskGroups.map((group) => {
+      if (group.id !== groupId) return group;
+      const entry = group.master;
+      if (!entry.url.trim() || entry.submitted) return group;
       shouldVerify = true;
-      return { ...entry, submitted: true, health: "verifying" as const };
-    }),
-  }));
-  if (shouldVerify) scheduleMasterVerification(kolId, entryId);
-}
-
-export function submitMirroredLink(kolId: string, entryId: string) {
-  let shouldVerify = false;
-  updateState(kolId, (state) => ({
-    ...state,
-    mirrored: state.mirrored.map((entry) => {
-      if (entry.id !== entryId || !entry.url.trim() || entry.submitted) return entry;
-      shouldVerify = true;
-      return { ...entry, submitted: true, health: "verifying" as const };
-    }),
-  }));
-  if (shouldVerify) scheduleMirroredVerification(kolId, entryId);
-}
-
-export function refreshMirroredLink(kolId: string, entryId: string) {
-  updateState(kolId, (state) => ({
-    ...state,
-    mirrored: state.mirrored.map((entry) => {
-      if (entry.id !== entryId) return entry;
-      if (!entry.url.trim()) {
-        return { ...entry, health: "empty" as const, submitted: false };
-      }
-      if (entry.health === "verifying") {
-        return {
-          ...entry,
-          health: resolveLinkHealth(entry.url),
-          submitted: true,
-        };
-      }
-      const health = resolveLinkHealth(entry.url);
       return {
-        ...entry,
-        health,
-        submitted: entry.url.trim().length > 0,
+        ...group,
+        master: { ...entry, submitted: true, health: "verifying" as const },
+      };
+    }),
+  }));
+  if (shouldVerify) scheduleMasterVerification(kolId, groupId);
+}
+
+export function submitMirroredLink(kolId: string, groupId: string, entryId: string) {
+  let shouldVerify = false;
+  updateState(kolId, (state) => ({
+    ...state,
+    taskGroups: state.taskGroups.map((group) => {
+      if (group.id !== groupId) return group;
+      return {
+        ...group,
+        mirrored: group.mirrored.map((entry) => {
+          if (entry.id !== entryId || !entry.url.trim() || entry.submitted) return entry;
+          shouldVerify = true;
+          return { ...entry, submitted: true, health: "verifying" as const };
+        }),
+      };
+    }),
+  }));
+  if (shouldVerify) scheduleMirroredVerification(kolId, groupId, entryId);
+}
+
+export function refreshMirroredLink(kolId: string, groupId: string, entryId: string) {
+  updateState(kolId, (state) => ({
+    ...state,
+    taskGroups: state.taskGroups.map((group) => {
+      if (group.id !== groupId) return group;
+      return {
+        ...group,
+        mirrored: group.mirrored.map((entry) => {
+          if (entry.id !== entryId) return entry;
+          if (!entry.url.trim()) {
+            return { ...entry, health: "empty" as const, submitted: false };
+          }
+          if (entry.health === "verifying") {
+            return {
+              ...entry,
+              health: resolveLinkHealth(entry.url),
+              submitted: true,
+            };
+          }
+          const health = resolveLinkHealth(entry.url);
+          return {
+            ...entry,
+            health,
+            submitted: entry.url.trim().length > 0,
+          };
+        }),
       };
     }),
   }));
 }
 
-export function addMirroredPost(kolId: string) {
+export function addMirroredPost(kolId: string, groupId: string) {
   updateState(kolId, (state) => ({
     ...state,
-    mirrored: [
-      ...state.mirrored,
-      { id: createId(), url: "", health: "empty", submitted: false },
-    ],
+    taskGroups: state.taskGroups.map((group) => {
+      if (group.id !== groupId || group.mirrored.length >= H5_MIRRORED_MAX) return group;
+      return {
+        ...group,
+        mirrored: [
+          ...group.mirrored,
+          { id: createId(), url: "", health: "empty", submitted: false },
+        ],
+      };
+    }),
   }));
 }
 
-export function addInsightDraftFiles(kolId: string, files: H5InsightFile[]) {
+export async function addInsightDraftFiles(
+  kolId: string,
+  groupId: string,
+  files: H5InsightFile[]
+) {
+  await Promise.all(
+    files.map(async (file) => {
+      await saveH5InsightPreview(file.id, file.previewUrl);
+      cacheH5InsightPreviewUrl(file.id, file.previewUrl);
+    })
+  );
+
   updateState(kolId, (state) => ({
     ...state,
-    insightDraftFiles: [
-      ...state.insightDraftFiles,
-      ...files.map((file) => ({ ...file, locked: false as const })),
-    ],
+    taskGroups: state.taskGroups.map((group) =>
+      group.id === groupId
+        ? {
+            ...group,
+            insightDraftFiles: [
+              ...group.insightDraftFiles,
+              ...files.map((file) => ({
+                id: file.id,
+                name: file.name,
+                sizeLabel: file.sizeLabel,
+                locked: false as const,
+                previewUrl: "",
+              })),
+            ],
+          }
+        : group
+    ),
   }));
 }
 
-export function removeInsightDraftFile(kolId: string, fileId: string) {
+export function removeInsightDraftFile(kolId: string, groupId: string, fileId: string) {
+  void deleteH5InsightPreview(fileId);
   updateState(kolId, (state) => ({
     ...state,
-    insightDraftFiles: state.insightDraftFiles.filter(
-      (file) => file.id !== fileId || file.locked
+    taskGroups: state.taskGroups.map((group) =>
+      group.id === groupId
+        ? {
+            ...group,
+            insightDraftFiles: group.insightDraftFiles.filter(
+              (file) => file.id !== fileId || file.locked
+            ),
+          }
+        : group
     ),
   }));
 }
 
 /** Web admin: remove any H5 insight file, including submitted/locked ones. */
 export function removeH5InsightFile(kolId: string, fileId: string) {
+  void deleteH5InsightPreview(fileId);
   updateState(kolId, (state) => {
-    const insightDraftFiles = state.insightDraftFiles.filter((file) => file.id !== fileId);
-    return {
-      ...state,
-      insightDraftFiles,
-      insightSubmitted: insightDraftFiles.length > 0 ? state.insightSubmitted : false,
-    };
+    let changed = false;
+    const taskGroups = state.taskGroups.map((group) => {
+      const insightDraftFiles = group.insightDraftFiles.filter((file) => file.id !== fileId);
+      if (insightDraftFiles.length === group.insightDraftFiles.length) return group;
+      changed = true;
+      return {
+        ...group,
+        insightDraftFiles,
+        insightSubmitted: insightDraftFiles.length > 0 ? group.insightSubmitted : false,
+      };
+    });
+    return changed ? { ...state, taskGroups } : state;
   });
 
   if (typeof window !== "undefined") {
@@ -535,18 +895,23 @@ export function removeH5InsightFile(kolId: string, fileId: string) {
   }
 }
 
-export function submitInsightReport(kolId: string) {
+export function submitInsightReport(kolId: string, groupId: string) {
   updateState(kolId, (state) => {
-    const hasPending = state.insightDraftFiles.some((file) => !file.locked);
-    if (!hasPending) return state;
-
-    return {
-      ...state,
-      insightSubmitted: true,
-      insightDraftFiles: state.insightDraftFiles.map((file) =>
-        file.locked ? file : { ...file, locked: true }
-      ),
-    };
+    let changed = false;
+    const taskGroups = state.taskGroups.map((group) => {
+      if (group.id !== groupId) return group;
+      const hasPending = group.insightDraftFiles.some((file) => !file.locked);
+      if (!hasPending) return group;
+      changed = true;
+      return {
+        ...group,
+        insightSubmitted: true,
+        insightDraftFiles: group.insightDraftFiles.map((file) =>
+          file.locked ? file : { ...file, locked: true }
+        ),
+      };
+    });
+    return changed ? { ...state, taskGroups } : state;
   });
 
   if (typeof window !== "undefined") {

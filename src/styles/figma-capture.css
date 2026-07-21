@@ -349,6 +349,59 @@ html.figma-capture [data-figma-capture="posting-post-link-tooltips-panel"] {
   max-height: none !important;
 }
 
+/* Task Management sheet — isolate right drawer for element capture */
+html.figma-capture [data-figma-capture="task-management-sheet"],
+html.figma-capture .figma-capture-task-management-sheet {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  width: 520px !important;
+  max-width: 520px !important;
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
+}
+
+html.figma-capture [data-figma-capture="task-management-sheet"].h-full,
+html.figma-capture .figma-capture-task-management-sheet.h-full {
+  height: auto !important;
+}
+
+html.figma-capture [data-figma-capture="task-management-sheet"] .no-scrollbar,
+html.figma-capture .figma-capture-task-management-sheet .no-scrollbar {
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+  flex: none !important;
+}
+
+html.figma-capture [data-figma-capture="task-management-sheet"] .min-h-0.flex-1,
+html.figma-capture .figma-capture-task-management-sheet .min-h-0.flex-1 {
+  flex: none !important;
+  min-height: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+html.figma-capture [data-figma-capture="confirm-task-update-dialog"],
+html.figma-capture [data-figma-capture="confirm-data-removal-dialog"],
+html.figma-capture [data-figma-capture="confirm-report-update-dialog"] {
+  position: fixed !important;
+  top: 80px !important;
+  left: 80px !important;
+  transform: none !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  width: 480px !important;
+  max-width: 480px !important;
+  max-height: none !important;
+}
+
 /* Contract Info sheet — isolate right drawer for element capture */
 html.figma-capture [data-figma-capture="contract-info-sheet"],
 html.figma-capture .figma-capture-contract-info-sheet {

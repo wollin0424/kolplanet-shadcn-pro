@@ -4,7 +4,7 @@ import {
   splitInitialWebInsightFileNames,
   type InsightReportImage,
 } from "@/lib/insightReportSync";
-import { getH5PostingState, subscribeH5InsightSync } from "@/lib/h5PostingSubmissions";
+import { getH5PostingState, getAllH5InsightFiles, subscribeH5InsightSync } from "@/lib/h5PostingSubmissions";
 import {
   POSTING_HUB_MOCK_ROWS,
   getInsightReportPreviewUrl,
@@ -32,7 +32,7 @@ export function getInsightReportSharePayload(rowId: string): InsightReportShareP
   if (!row) return null;
 
   const kolId = row.h5Path ? parseKolIdFromH5Path(row.h5Path) : undefined;
-  const h5Files = kolId ? getH5PostingState(kolId).insightDraftFiles : [];
+  const h5Files = kolId ? getAllH5InsightFiles(getH5PostingState(kolId)) : [];
   const storedWebFiles = getWebInsightFiles(rowId);
   const webFiles =
     storedWebFiles.length > 0

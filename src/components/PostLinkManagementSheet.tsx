@@ -41,7 +41,11 @@ import {
   type InsightReportImage,
   type WebInsightFileRecord,
 } from "@/lib/insightReportSync";
-import { getH5PostingState } from "@/lib/h5PostingSubmissions";
+import {
+  getH5PostingState,
+  getH5InsightFilesForMasterIndex,
+  hydrateInsightFiles,
+} from "@/lib/h5PostingSubmissions";
 import {
   applyMockValidationToMasterLink,
   getEffectiveMasterValidation,
@@ -377,12 +381,14 @@ function ConfirmDataRemovalDialog({
   choices,
   onChoicesChange,
   onConfirm,
+  figmaCapture = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   choices: DataRemovalChoices;
   onChoicesChange: (choices: DataRemovalChoices) => void;
   onConfirm: () => void;
+  figmaCapture?: boolean;
 }) {
   const options: Array<{ id: keyof DataRemovalChoices; label: string }> = [
     { id: "mirrored", label: "Clear all Mirrored Links" },
@@ -395,6 +401,7 @@ function ConfirmDataRemovalDialog({
       <DialogContent
         className="z-[60] gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[480px]"
         showCloseButton
+        data-figma-capture={figmaCapture ? "confirm-data-removal-dialog" : undefined}
       >
         <div className="px-6 pt-6 pb-4">
           <DialogTitle className="text-center text-[17px] font-bold text-gray-900">
@@ -464,6 +471,7 @@ function ConfirmTaskUpdateDialog({
   onOpenChange,
   onConfirm,
   removalSummary,
+  figmaCapture = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -474,6 +482,7 @@ function ConfirmTaskUpdateDialog({
     validationItems: number;
     insightReports: number;
   };
+  figmaCapture?: boolean;
 }) {
   const summaryLines = [
     {
@@ -503,6 +512,7 @@ function ConfirmTaskUpdateDialog({
       <DialogContent
         className="z-[60] gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[480px]"
         showCloseButton
+        data-figma-capture={figmaCapture ? "confirm-task-update-dialog" : undefined}
       >
         <div className="px-6 pt-6 pb-4">
           <DialogTitle className="text-center text-[17px] font-bold text-gray-900">
@@ -532,12 +542,9 @@ function ConfirmTaskUpdateDialog({
               className="mt-0.5 shrink-0 text-red-600"
             />
             <p className="text-[12px] font-normal leading-relaxed text-gray-500">
-              <span className="font-bold text-gray-900">Warning:</span> If you leave the{" "}
-              <span className="font-bold text-gray-900">Master Link</span> field empty, this task
-              and all associated data, including{" "}
-              <span className="font-bold text-gray-900">Mirrored Links</span>,{" "}
-              <span className="font-bold text-gray-900">Validation results</span>, and{" "}
-              <span className="font-bold text-gray-900">Insight Reports</span>, will be{" "}
+              <span className="font-bold text-gray-900">Warning:</span> If you leave the Master
+              Link field empty, this task and all associated data, including Mirrored Links,
+              Validation results, and Insight Reports, will be{" "}
               <span className="font-bold text-gray-900">permanently deleted</span>.
             </p>
           </div>
@@ -576,16 +583,19 @@ function ConfirmReportUpdateDialog({
   open,
   onOpenChange,
   onConfirm,
+  figmaCapture = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
+  figmaCapture?: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="z-[60] gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-[480px]"
         showCloseButton
+        data-figma-capture={figmaCapture ? "confirm-report-update-dialog" : undefined}
       >
         <div className="px-6 pt-6 pb-4">
           <DialogTitle className="text-center text-[17px] font-bold text-gray-900">
@@ -699,6 +709,8 @@ function PostLinkManagementSheetPanel({
   onOpenChange,
   onSubmitPostLinks,
   onSubmitInsightReports,
+  figmaCapture = false,
+  figmaConfirmDialog,
 }: {
   row: PostingHubRow;
   masterIndex: number;
@@ -706,6 +718,8 @@ function PostLinkManagementSheetPanel({
   onOpenChange: (open: boolean) => void;
   onSubmitPostLinks: (links: PostLink[]) => void;
   onSubmitInsightReports: (files: string[]) => void;
+  figmaCapture?: boolean;
+  figmaConfirmDialog?: "task-update" | "data-removal" | "report-update";
 }) {
   const baseId = useId();
   const draftKey = `${row.id}:${masterIndex}:${JSON.stringify(row.postLinks ?? [])}`;
@@ -721,12 +735,18 @@ function PostLinkManagementSheetPanel({
   const [savedLinks, setSavedLinks] = useState<PostLink[] | undefined>(row.postLinks);
   const [pendingInsightFiles, setPendingInsightFiles] = useState<PendingInsightFile[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [confirmDataRemovalOpen, setConfirmDataRemovalOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(
+    () => figmaCapture && figmaConfirmDialog === "task-update"
+  );
+  const [confirmDataRemovalOpen, setConfirmDataRemovalOpen] = useState(
+    () => figmaCapture && figmaConfirmDialog === "data-removal"
+  );
   const [dataRemovalChoices, setDataRemovalChoices] = useState<DataRemovalChoices>(
     EMPTY_DATA_REMOVAL_CHOICES
   );
-  const [confirmInsightOpen, setConfirmInsightOpen] = useState(false);
+  const [confirmInsightOpen, setConfirmInsightOpen] = useState(
+    () => figmaCapture && figmaConfirmDialog === "report-update"
+  );
   const [removedSubmittedInsightIds, setRemovedSubmittedInsightIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -737,12 +757,20 @@ function PostLinkManagementSheetPanel({
     setSavedLinks(row.postLinks);
     setPendingInsightFiles([]);
     setUploadError(null);
-    setConfirmDeleteOpen(false);
-    setConfirmDataRemovalOpen(false);
+    setConfirmDeleteOpen(figmaCapture && figmaConfirmDialog === "task-update");
+    setConfirmDataRemovalOpen(figmaCapture && figmaConfirmDialog === "data-removal");
     setDataRemovalChoices(EMPTY_DATA_REMOVAL_CHOICES);
-    setConfirmInsightOpen(false);
+    setConfirmInsightOpen(figmaCapture && figmaConfirmDialog === "report-update");
     setRemovedSubmittedInsightIds([]);
-  }, [draftKey, initialDraft.master, initialDraft.mirrored, initialTab, row.postLinks]);
+  }, [
+    draftKey,
+    figmaCapture,
+    figmaConfirmDialog,
+    initialDraft.master,
+    initialDraft.mirrored,
+    initialTab,
+    row.postLinks,
+  ]);
 
   const existingMasters = getMasterPostLinks(row.postLinks);
   const isNewTask =
@@ -760,10 +788,22 @@ function PostLinkManagementSheetPanel({
 
   const masterStatusLink = getDraftStatusLink(master.snapshot, master.url, "Master");
 
-  const h5InsightFiles = useMemo(() => {
+  const [h5InsightFiles, setH5InsightFiles] = useState<
+    ReturnType<typeof getH5InsightFilesForMasterIndex>
+  >([]);
+
+  useEffect(() => {
     const kolId = row.h5Path.split("/").pop();
-    return kolId ? getH5PostingState(kolId).insightDraftFiles : [];
-  }, [row.h5Path]);
+    if (!kolId) {
+      setH5InsightFiles([]);
+      return;
+    }
+
+    void (async () => {
+      const files = getH5InsightFilesForMasterIndex(getH5PostingState(kolId), masterIndex);
+      setH5InsightFiles(await hydrateInsightFiles(files));
+    })();
+  }, [masterIndex, row.h5Path]);
 
   const submittedInsightFiles = useMemo(() => {
     const stored = getWebInsightFiles(row.id);
@@ -1027,7 +1067,11 @@ function PostLinkManagementSheetPanel({
     <>
     <SheetContent
       side="right"
-      className="flex h-full gap-0 bg-white p-0 data-[side=right]:w-full data-[side=right]:max-w-[520px] data-[side=right]:sm:max-w-[520px]"
+      className={cn(
+        "flex h-full gap-0 bg-white p-0 data-[side=right]:w-full data-[side=right]:max-w-[520px] data-[side=right]:sm:max-w-[520px]",
+        figmaCapture && "figma-capture-task-management-sheet"
+      )}
+      data-figma-capture={figmaCapture && !figmaConfirmDialog ? "task-management-sheet" : undefined}
     >
       <div className="shrink-0 bg-white">
         <SheetHeader className="gap-2 border-b border-gray-100 px-6 pt-5 pb-3 text-left">
@@ -1280,7 +1324,17 @@ function PostLinkManagementSheetPanel({
       open={confirmDeleteOpen}
       onOpenChange={setConfirmDeleteOpen}
       onConfirm={handleConfirmDeleteTask}
-      removalSummary={deleteRemovalSummary}
+      removalSummary={
+        figmaCapture && figmaConfirmDialog === "task-update"
+          ? {
+              masterLinks: 1,
+              mirroredLinks: 2,
+              validationItems: 3,
+              insightReports: 2,
+            }
+          : deleteRemovalSummary
+      }
+      figmaCapture={figmaCapture && figmaConfirmDialog === "task-update"}
     />
 
     <ConfirmDataRemovalDialog
@@ -1289,12 +1343,14 @@ function PostLinkManagementSheetPanel({
       choices={dataRemovalChoices}
       onChoicesChange={setDataRemovalChoices}
       onConfirm={handleConfirmDataRemoval}
+      figmaCapture={figmaCapture && figmaConfirmDialog === "data-removal"}
     />
 
     <ConfirmReportUpdateDialog
       open={confirmInsightOpen}
       onOpenChange={setConfirmInsightOpen}
       onConfirm={handleConfirmInsightSave}
+      figmaCapture={figmaCapture && figmaConfirmDialog === "report-update"}
     />
     </>
   );
@@ -1308,6 +1364,8 @@ export function PostLinkManagementSheet({
   initialTab = "links",
   onSubmitPostLinks,
   onSubmitInsightReports,
+  figmaCapture = false,
+  figmaConfirmDialog,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -1316,18 +1374,22 @@ export function PostLinkManagementSheet({
   initialTab?: PostLinkManagementTabId;
   onSubmitPostLinks: (links: PostLink[]) => void;
   onSubmitInsightReports: (files: string[]) => void;
+  figmaCapture?: boolean;
+  figmaConfirmDialog?: "task-update" | "data-removal" | "report-update";
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       {open && row ? (
         <PostLinkManagementSheetPanel
-          key={`${row.id}:${masterIndex}:${initialTab}:${open}`}
+          key={`${row.id}:${masterIndex}:${initialTab}:${open}:${figmaConfirmDialog ?? ""}`}
           row={row}
           masterIndex={masterIndex}
           initialTab={initialTab}
           onOpenChange={onOpenChange}
           onSubmitPostLinks={onSubmitPostLinks}
           onSubmitInsightReports={onSubmitInsightReports}
+          figmaCapture={figmaCapture}
+          figmaConfirmDialog={figmaConfirmDialog}
         />
       ) : null}
     </Sheet>

@@ -78,7 +78,7 @@ import {
   type PostingHubRow,
   type PostingHubStatus,
 } from "@/lib/postingHubMock";
-import { getH5PostingState, subscribeH5InsightSync } from "@/lib/h5PostingSubmissions";
+import { getH5PostingState, getAllH5InsightFiles, getH5InsightFilesForMasterIndex, subscribeH5InsightSync } from "@/lib/h5PostingSubmissions";
 import { getWebInsightFiles, subscribeWebInsightChanges } from "@/lib/webInsightSubmissions";
 import {
   mergeInsightReportFileNames,
@@ -96,7 +96,7 @@ import { AlertCircle, CheckCircle2, ChevronDown, Copy, FileText, FileX, Papercli
 function mergePostingHubRowsInsightReports(rows: PostingHubRow[]): PostingHubRow[] {
   return rows.map((row) => {
     const kolId = parseKolIdFromH5Path(row.h5Path);
-    const h5Files = kolId ? getH5PostingState(kolId).insightDraftFiles : [];
+    const h5Files = kolId ? getAllH5InsightFiles(getH5PostingState(kolId)) : [];
 
     const storedWebNames = getWebInsightFiles(row.id).map((file) => file.name);
     const baseWebNames = storedWebNames.length > 0 ? storedWebNames : (row.insightReports ?? []);
@@ -1046,6 +1046,8 @@ function InsightReportsColumnCell({ row }: { row: PostingHubRow }) {
   const masters = getMasterPostLinks(row.postLinks);
   const mirrored = getVisibleMirroredLinks(row.postLinks);
   const webInsightFileNames = getWebInsightFiles(row.id).map((file) => file.name);
+  const kolId = parseKolIdFromH5Path(row.h5Path);
+  const h5State = kolId ? getH5PostingState(kolId) : null;
   const isEmpty =
     !hasFetchedPostLinks(row.postLinks) && masters.length === 0 && mirrored.length === 0;
 
@@ -1062,7 +1064,12 @@ function InsightReportsColumnCell({ row }: { row: PostingHubRow }) {
       {masters.map((link, index) => (
         <div key={`${link.url || "empty"}-${index}`} className={POST_LINK_ROW_CLASS}>
           <InsightReportCell
-            files={getInsightReportsForMaster(row, index, webInsightFileNames)}
+            files={getInsightReportsForMaster(
+              row,
+              index,
+              webInsightFileNames,
+              h5State ? getH5InsightFilesForMasterIndex(h5State, index) : []
+            )}
             hasMasterLink={Boolean(link.url.trim())}
           />
         </div>
@@ -1308,6 +1315,11 @@ export default function CampaignHubPostingView({
   figmaOpenUploadInsightReport = false,
   figmaInsightReportState,
   figmaUploadInsightRowId,
+  figmaOpenTaskManagement = false,
+  figmaTaskManagementTab,
+  figmaTaskManagementRowId,
+  figmaTaskManagementState,
+  figmaTaskManagementConfirm,
   figmaOpenImportPostLinks = false,
 }: {
   campaignId: string;
@@ -1326,6 +1338,11 @@ export default function CampaignHubPostingView({
   figmaOpenUploadInsightReport?: boolean;
   figmaInsightReportState?: string;
   figmaUploadInsightRowId?: string;
+  figmaOpenTaskManagement?: boolean;
+  figmaTaskManagementTab?: "links" | "insight";
+  figmaTaskManagementRowId?: string;
+  figmaTaskManagementState?: "new";
+  figmaTaskManagementConfirm?: "task-update" | "data-removal" | "report-update";
   figmaOpenImportPostLinks?: boolean;
 }) {
   const [rows, setRows] = useState(() =>
@@ -1360,12 +1377,18 @@ export default function CampaignHubPostingView({
     masterIndex: number;
     initialTab: PostLinkManagementTabId;
   }>(() => {
-    if (figmaCapture && figmaOpenUploadInsightReport) {
+    if (figmaCapture && (figmaOpenTaskManagement || figmaOpenUploadInsightReport)) {
+      const rowId = figmaTaskManagementRowId ?? figmaUploadInsightRowId ?? "p1";
+      const row = POSTING_HUB_MOCK_ROWS.find((item) => item.id === rowId);
+      const masterIndex =
+        figmaTaskManagementState === "new"
+          ? getMasterPostLinks(row?.postLinks).length
+          : 0;
       return {
         open: true,
-        rowId: figmaUploadInsightRowId ?? "p3",
-        masterIndex: 0,
-        initialTab: "insight",
+        rowId,
+        masterIndex,
+        initialTab: figmaTaskManagementTab ?? (figmaOpenUploadInsightReport ? "insight" : "links"),
       };
     }
     return { open: false, rowId: null, masterIndex: 0, initialTab: "links" };
@@ -1383,7 +1406,7 @@ export default function CampaignHubPostingView({
         const baseWebNames = storedWebNames.length > 0 ? storedWebNames : (row.insightReports ?? []);
         const merged = mergeInsightReportFileNames(
           baseWebNames,
-          getH5PostingState(kolId).insightDraftFiles
+          getAllH5InsightFiles(getH5PostingState(kolId))
         );
         const current = row.insightReports ?? [];
 
@@ -1413,7 +1436,7 @@ export default function CampaignHubPostingView({
           if (row.id !== rowId) return row;
 
           const kolId = parseKolIdFromH5Path(row.h5Path);
-          const h5Files = kolId ? getH5PostingState(kolId).insightDraftFiles : [];
+          const h5Files = kolId ? getAllH5InsightFiles(getH5PostingState(kolId)) : [];
           const storedWebNames = getWebInsightFiles(rowId).map((file) => file.name);
           const baseWebNames = storedWebNames.length > 0 ? storedWebNames : (row.insightReports ?? []);
           const merged = mergeInsightReportFileNames(baseWebNames, h5Files);
@@ -1777,6 +1800,10 @@ export default function CampaignHubPostingView({
         initialTab={postLinkTaskDialog.initialTab}
         onSubmitPostLinks={handlePostLinkTaskSubmit}
         onSubmitInsightReports={handlePostLinkTaskInsightSubmit}
+        figmaCapture={
+          figmaCapture && (figmaOpenTaskManagement || figmaOpenUploadInsightReport)
+        }
+        figmaConfirmDialog={figmaCapture ? figmaTaskManagementConfirm : undefined}
       />
 
       <ImportPostLinksDialog

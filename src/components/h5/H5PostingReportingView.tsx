@@ -8,7 +8,6 @@ import {
 } from "@/components/h5/H5MultiImageUploadField";
 import { H5SectionHeading, H5SectionNote } from "@/components/h5/H5SectionHeading";
 import { H5InfluencerCard } from "@/components/h5/H5InfluencerCard";
-import { InstagramRepostIcon } from "@/components/icons/InstagramUiIcons";
 import {
   H5_DASHED_ADD_BUTTON_CLASS,
   H5_INPUT_CLASS,
@@ -29,7 +28,8 @@ import {
   getFigmaCaptureH5PostingState,
   getFigmaCaptureH5InsightHoverCardId,
   getH5PostingState,
-  hasSubmittedMasterPost,
+  hydratePostingStateInsightPreviews,
+  H5_MIRRORED_MAX,
   refreshMasterLink,
   refreshMirroredLink,
   removeInsightDraftFile,
@@ -40,6 +40,7 @@ import {
   updateMasterUrl,
   updateMirroredDraftUrl,
   type H5InsightFile,
+  type H5MasterTaskGroup,
   type H5PostLinkEntry,
   type H5PostLinkHealth,
   type H5PostingState,
@@ -48,7 +49,6 @@ import { cn } from "@/lib/utils";
 import {
   AlertCircle,
   CheckCircle2,
-  FileText,
   Images,
   Plus,
   RefreshCcw,
@@ -170,9 +170,11 @@ function H5PostLinkRefreshButton({
 function H5PostLinkSubmitButton({
   disabled,
   onClick,
+  compact = false,
 }: {
   disabled: boolean;
   onClick: () => void;
+  compact?: boolean;
 }) {
   return (
     <button
@@ -180,10 +182,14 @@ function H5PostLinkSubmitButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        H5_PRIMARY_BUTTON_CLASS,
+        compact
+          ? "h-9 w-full rounded-lg text-[12px] font-semibold transition-colors"
+          : H5_PRIMARY_BUTTON_CLASS,
         disabled
           ? "cursor-not-allowed border border-gray-200 bg-gray-50 text-gray-400"
-          : "bg-brand text-white hover:bg-brand/90"
+          : compact
+            ? "border border-brand/25 bg-white text-brand hover:border-brand/40 hover:bg-brand-50/60"
+            : "bg-brand text-white hover:bg-brand/90"
       )}
     >
       Submit Link
@@ -191,15 +197,23 @@ function H5PostLinkSubmitButton({
   );
 }
 
-function H5MasterPostRow({
+function H5PostLinkRow({
   entry,
   label,
+  labelSuffix,
+  required = false,
+  variant = "master",
+  placeholder,
   onUrlChange,
   onRefresh,
   onSubmit,
 }: {
   entry: H5PostLinkEntry;
   label: string;
+  labelSuffix?: string;
+  required?: boolean;
+  variant?: "master" | "mirrored";
+  placeholder: string;
   onUrlChange: (url: string) => void;
   onRefresh: () => void;
   onSubmit: () => void;
@@ -220,9 +234,25 @@ function H5MasterPostRow({
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[12px] font-medium text-gray-500">{label}</p>
+    <div className="space-y-2.5">
+      <div className="flex items-start justify-between gap-2">
+        <p
+          className={cn(
+            "min-w-0 leading-snug",
+            variant === "master"
+              ? "text-[13px] font-semibold text-gray-900"
+              : "text-[12px] font-medium text-gray-700"
+          )}
+        >
+          {label}
+          {labelSuffix ? (
+            <>
+              {" "}
+              <span className="font-normal text-gray-400">{labelSuffix}</span>
+            </>
+          ) : null}
+          {required ? <span className="ml-0.5 text-red-500">*</span> : null}
+        </p>
         <H5PostLinkStatusBadge health={entry.health} submitted={entry.submitted} />
       </div>
       <div className="flex items-center gap-2">
@@ -239,11 +269,15 @@ function H5MasterPostRow({
             setUrlError(entry.url.trim() ? validateH5PostUrl(entry.url) : undefined)
           }
           readOnly={readOnly}
-          placeholder="Paste original post link here..."
+          placeholder={placeholder}
           aria-invalid={Boolean(urlError)}
           className={cn(
             H5_LINK_INPUT_CLASS,
-            readOnly && "bg-gray-50 text-gray-700",
+            readOnly && "border-gray-200 bg-gray-50/80 text-gray-700",
+            variant === "master" &&
+              !readOnly &&
+              !urlError &&
+              "border-brand/20 focus-visible:border-brand/40 focus-visible:ring-brand/15",
             urlError && "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
           )}
         />
@@ -260,6 +294,7 @@ function H5MasterPostRow({
           <H5PostLinkSubmitButton
             disabled={!entry.url.trim() || Boolean(urlError)}
             onClick={handleSubmit}
+            compact={variant === "mirrored"}
           />
           {urlError ? (
             <p className="text-[11px] leading-relaxed text-red-600">{urlError}</p>
@@ -272,84 +307,120 @@ function H5MasterPostRow({
   );
 }
 
-function H5MirroredPostRow({
-  entry,
-  label,
-  onUrlChange,
-  onRefresh,
-  onSubmit,
+function H5TaskGroupCard({
+  group,
+  groupIndex,
+  kolId,
+  insightHoverCardId,
 }: {
-  entry: H5PostLinkEntry;
-  label: string;
-  onUrlChange: (url: string) => void;
-  onRefresh: () => void;
-  onSubmit: () => void;
+  group: H5MasterTaskGroup;
+  groupIndex: number;
+  kolId: string;
+  insightHoverCardId?: string;
 }) {
-  const readOnly = entry.submitted;
-  const showRefresh = entry.submitted;
-  const isVerifying = entry.health === "verifying";
-  const [urlError, setUrlError] = useState<string | undefined>();
-
-  const handleSubmit = () => {
-    const error = validateH5PostUrl(entry.url);
-    if (error) {
-      setUrlError(error);
-      return;
-    }
-    setUrlError(undefined);
-    onSubmit();
-  };
+  const showMirroredSection = group.master.submitted || group.mirrored.length > 0;
+  const allMirroredFilled = group.mirrored.every(
+    (entry) => entry.submitted || entry.url.trim()
+  );
+  const canAddMirrored =
+    group.master.submitted &&
+    group.mirrored.length < H5_MIRRORED_MAX &&
+    (group.mirrored.length === 0 || allMirroredFilled);
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[12px] font-medium text-gray-500">{label}</p>
-        <H5PostLinkStatusBadge health={entry.health} submitted={entry.submitted} />
-      </div>
-      <div className="flex items-center gap-2">
-        <Input
-          type="url"
-          value={entry.url}
-          onChange={(e) => {
-            onUrlChange(e.target.value);
-            setUrlError(
-              e.target.value.trim() ? validateH5PostUrl(e.target.value) : undefined
-            );
-          }}
-          onBlur={() =>
-            setUrlError(entry.url.trim() ? validateH5PostUrl(entry.url) : undefined)
-          }
-          readOnly={readOnly}
-          placeholder="Paste repost link here..."
-          aria-invalid={Boolean(urlError)}
-          className={cn(
-            H5_LINK_INPUT_CLASS,
-            readOnly && "bg-gray-50 text-gray-700",
-            urlError && "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
-          )}
-        />
-        {showRefresh ? (
-          <H5PostLinkRefreshButton
-            onClick={onRefresh}
-            disabled={!entry.url.trim()}
-            ariaLabel={`Refresh ${label}`}
-          />
+    <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <span className="inline-flex h-6 items-center rounded-full border border-brand/20 bg-brand-50 px-2.5 text-[11px] font-semibold tracking-wide text-brand">
+          Task Group {groupIndex + 1}
+        </span>
+        {group.mirrored.length > 0 ? (
+          <span className="text-[11px] font-medium text-gray-400">
+            {group.mirrored.filter((entry) => entry.submitted).length}/{group.mirrored.length}{" "}
+            mirrored
+          </span>
         ) : null}
       </div>
-      {!entry.submitted ? (
-        <>
-          <H5PostLinkSubmitButton
-            disabled={!entry.url.trim() || Boolean(urlError)}
-            onClick={handleSubmit}
-          />
-          {urlError ? (
-            <p className="text-[11px] leading-relaxed text-red-600">{urlError}</p>
-          ) : null}
-        </>
-      ) : isVerifying ? null : (
-        <H5PostLinkHealthNote health={entry.health} submitted={entry.submitted} />
-      )}
-    </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50/70 text-brand/80">
+            <Send size={15} strokeWidth={2} />
+          </span>
+          <h2 className="text-[15px] font-semibold text-gray-900">Post Link</h2>
+        </div>
+
+        <H5PostLinkRow
+          entry={group.master}
+          label="Master Link"
+          labelSuffix="(Original Posts)"
+          required
+          variant="master"
+          placeholder="Paste original post link here..."
+          onUrlChange={(url) => updateMasterUrl(kolId, group.id, url)}
+          onRefresh={() => refreshMasterLink(kolId, group.id)}
+          onSubmit={() => submitMasterLink(kolId, group.id)}
+        />
+
+        {showMirroredSection ? (
+          <div className="space-y-3 border-t border-gray-100 pt-4">
+            <p className="text-[12px] font-semibold text-gray-700">
+              Mirrored Links{" "}
+              <span className="font-normal text-gray-400">(Cross-platform Reposts)</span>
+            </p>
+
+            {group.mirrored.map((entry, index) => (
+              <H5PostLinkRow
+                key={entry.id}
+                entry={entry}
+                label={`Mirrored ${index + 1}`}
+                variant="mirrored"
+                placeholder="Paste repost link here..."
+                onUrlChange={(url) => updateMirroredDraftUrl(kolId, group.id, entry.id, url)}
+                onRefresh={() => refreshMirroredLink(kolId, group.id, entry.id)}
+                onSubmit={() => submitMirroredLink(kolId, group.id, entry.id)}
+              />
+            ))}
+
+            {canAddMirrored ? (
+              <button
+                type="button"
+                onClick={() => addMirroredPost(kolId, group.id)}
+                className="inline-flex items-center gap-1.5 text-[12px] font-medium text-brand transition-colors hover:text-brand/80"
+              >
+                <Plus size={13} strokeWidth={2.25} />
+                Add Mirrored Link (Up to {H5_MIRRORED_MAX})
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        {group.master.submitted ? (
+          <div className="space-y-4 border-t border-gray-100 pt-4">
+            <H5SectionHeading
+              icon={Images}
+              title="Insight Report"
+              description={
+                <>
+                  <p>
+                    Submit platform insight screenshots for this master link to unlock review and
+                    payment.
+                  </p>
+                  <H5SectionNote>Note: Best captured 7 days after posting.</H5SectionNote>
+                </>
+              }
+            />
+
+            <H5InsightUploadSection
+              files={group.insightDraftFiles}
+              onAddFiles={(files) => void addInsightDraftFiles(kolId, group.id, files)}
+              onRemoveFile={(fileId) => removeInsightDraftFile(kolId, group.id, fileId)}
+              onSubmit={() => submitInsightReport(kolId, group.id)}
+              hoverCardId={insightHoverCardId}
+            />
+          </div>
+        ) : null}
+      </div>
+    </section>
   );
 }
 
@@ -377,15 +448,9 @@ function H5InsightUploadSection({
         <H5SubmittedImagesPanel files={submittedFiles} hoverCardId={hoverCardId} />
       ) : null}
 
-      <section
-        className={cn(
-          "space-y-3",
-          hasSubmittedFiles &&
-            "rounded-xl border border-dashed border-brand/25 bg-brand-50/20 p-3"
-        )}
-      >
+      <div className="space-y-3">
         {hasSubmittedFiles ? (
-          <h3 className="text-[12px] font-semibold text-brand">Add more screenshots</h3>
+          <h3 className="text-[12px] font-semibold text-gray-700">Add more screenshots</h3>
         ) : null}
 
         <H5PendingImagesUploadField
@@ -405,17 +470,9 @@ function H5InsightUploadSection({
         >
           Submit Image
         </Button>
-      </section>
+      </div>
     </div>
   );
-}
-
-function getMasterLabel(index: number) {
-  return `Master ${index + 1}`;
-}
-
-function getMirroredLabel(index: number) {
-  return `Mirrored ${index + 1}`;
 }
 
 type H5PostingReportingViewProps = {
@@ -446,12 +503,20 @@ export function H5PostingReportingView({
 
   useEffect(() => {
     if (figmaCapture) return;
-    const syncPosting = () => setPosting(getH5PostingState(kolId));
-    syncPosting();
-    return subscribeH5PostingChanges(syncPosting);
+    let cancelled = false;
+
+    const syncPosting = async () => {
+      const next = getH5PostingState(kolId);
+      const hydrated = await hydratePostingStateInsightPreviews(next);
+      if (!cancelled) setPosting(hydrated);
+    };
+
+    void syncPosting();
+    return subscribeH5PostingChanges(() => {
+      void syncPosting();
+    });
   }, [figmaCapture, kolId]);
 
-  const showInsightSection = hasSubmittedMasterPost(posting);
   const insightHoverCardId = figmaCapture
     ? getFigmaCaptureH5InsightHoverCardId(figmaPostingState)
     : undefined;
@@ -464,7 +529,7 @@ export function H5PostingReportingView({
     <H5PageShell
       backHref={overviewHref}
       pageTitle="Posting & Reporting"
-      pageIntro="Submit your original post links first. Once verified, you can upload insight reports for final review and payment."
+      pageIntro="Submit each original post link separately. Once verified, upload its dedicated insight report to the corresponding task group to unlock review and payment."
     >
       <H5InfluencerCard
         name={brief.influencer.name}
@@ -472,123 +537,26 @@ export function H5PostingReportingView({
         avatar={brief.influencer.avatar}
       />
 
-      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-        <H5SectionHeading
-          icon={FileText}
-          title="Posting Submission & Reporting"
-          description="Paste the public post URL to verify your publication. Please submit performance insights report later."
-          className="mb-0"
-        />
-      </section>
-
-      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-        <div className="mb-4 flex items-start gap-2">
-          <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
-            <Send size={15} strokeWidth={2} />
-          </span>
-          <div>
-            <h2 className="text-[15px] font-semibold text-gray-900">
-              Master Link (Original Posts)
-              <span className="ml-0.5 text-red-500">*</span>
-            </h2>
-            <p className="mt-1.5 text-[12px] leading-relaxed text-gray-500">
-              Submit your main campaign content links here.
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          {posting.masters.map((entry, index) => (
-            <H5MasterPostRow
-              key={entry.id}
-              entry={entry}
-              label={getMasterLabel(index)}
-              onUrlChange={(url) => updateMasterUrl(kolId, entry.id, url)}
-              onRefresh={() => refreshMasterLink(kolId, entry.id)}
-              onSubmit={() => submitMasterLink(kolId, entry.id)}
-            />
-          ))}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => addMasterPost(kolId)}
-          className={cn(H5_DASHED_ADD_BUTTON_CLASS, "mt-4")}
-        >
-          <Plus size={14} strokeWidth={2.2} />
-          Add another post
-        </button>
-        <p className="mt-3 text-[11px] leading-relaxed text-gray-400">
-          Ensure all links are set to public.
-        </p>
-      </section>
-
-      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-        <div className="mb-4 flex items-start gap-2">
-          <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand">
-            <InstagramRepostIcon size={15} strokeWidth={2} />
-          </span>
-          <div>
-            <h2 className="text-[15px] font-semibold text-gray-900">
-              Mirrored Link (Cross-platform Reposts)
-            </h2>
-            <p className="mt-1.5 text-[12px] leading-relaxed text-gray-500">
-              If you mirrored the content to other social platform, submit Link here.{" "}
-              <span className="font-semibold text-gray-600">If not, please skip.</span>
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          {posting.mirrored.map((entry, index) => (
-            <H5MirroredPostRow
-              key={entry.id}
-              entry={entry}
-              label={getMirroredLabel(index)}
-              onUrlChange={(url) => updateMirroredDraftUrl(kolId, entry.id, url)}
-              onRefresh={() => refreshMirroredLink(kolId, entry.id)}
-              onSubmit={() => submitMirroredLink(kolId, entry.id)}
-            />
-          ))}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => addMirroredPost(kolId)}
-          className={cn(H5_DASHED_ADD_BUTTON_CLASS, "mt-3")}
-        >
-          <Plus size={14} strokeWidth={2.2} />
-          Add another repost
-        </button>
-        <p className="mt-3 text-[11px] leading-relaxed text-gray-400">
-          Ensure all links are set to public.
-        </p>
-      </section>
-
-      {showInsightSection ? (
-        <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-          <H5SectionHeading
-            icon={Images}
-            title="Insight Report"
-            description={
-              <>
-                <p>
-                  Submit platform insight screenshots for final review and payment release.
-                </p>
-                <H5SectionNote>Note: Best captured 7 days after posting.</H5SectionNote>
-              </>
-            }
+      <div className="space-y-4">
+        {(posting.taskGroups ?? []).map((group, index) => (
+          <H5TaskGroupCard
+            key={group.id}
+            group={group}
+            groupIndex={index}
+            kolId={kolId}
+            insightHoverCardId={index === 0 ? insightHoverCardId : undefined}
           />
+        ))}
+      </div>
 
-          <H5InsightUploadSection
-            files={posting.insightDraftFiles}
-            onAddFiles={(files) => addInsightDraftFiles(kolId, files)}
-            onRemoveFile={(fileId) => removeInsightDraftFile(kolId, fileId)}
-            onSubmit={() => submitInsightReport(kolId)}
-            hoverCardId={insightHoverCardId}
-          />
-        </section>
-      ) : null}
+      <button
+        type="button"
+        onClick={() => addMasterPost(kolId)}
+        className={cn(H5_DASHED_ADD_BUTTON_CLASS, "shadow-[0_1px_2px_rgba(15,23,42,0.03)]")}
+      >
+        <Plus size={14} strokeWidth={2.2} />
+        Add Task Group
+      </button>
     </H5PageShell>
     </div>
   );

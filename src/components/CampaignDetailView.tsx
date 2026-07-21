@@ -26,6 +26,11 @@ export default function CampaignDetailView({
   figmaOpenUploadInsightReport,
   figmaInsightReportState,
   figmaUploadInsightRowId,
+  figmaOpenTaskManagement,
+  figmaTaskManagementTab,
+  figmaTaskManagementRowId,
+  figmaTaskManagementState,
+  figmaTaskManagementConfirm,
   figmaOpenImportPostLinks,
   figmaOpenExecutionGuide,
   figmaPostingMirroredTooltipRowId,
@@ -55,6 +60,11 @@ export default function CampaignDetailView({
   figmaOpenUploadInsightReport?: boolean;
   figmaInsightReportState?: string;
   figmaUploadInsightRowId?: string;
+  figmaOpenTaskManagement?: boolean;
+  figmaTaskManagementTab?: "links" | "insight";
+  figmaTaskManagementRowId?: string;
+  figmaTaskManagementState?: "new";
+  figmaTaskManagementConfirm?: "task-update" | "data-removal" | "report-update";
   figmaOpenImportPostLinks?: boolean;
   figmaOpenExecutionGuide?: boolean;
   figmaPostingMirroredTooltipRowId?: string;
@@ -115,6 +125,11 @@ export default function CampaignDetailView({
             figmaOpenUploadInsightReport={hubMountKey === 0 ? figmaOpenUploadInsightReport : undefined}
             figmaInsightReportState={hubMountKey === 0 ? figmaInsightReportState : undefined}
             figmaUploadInsightRowId={hubMountKey === 0 ? figmaUploadInsightRowId : undefined}
+            figmaOpenTaskManagement={hubMountKey === 0 ? figmaOpenTaskManagement : undefined}
+            figmaTaskManagementTab={hubMountKey === 0 ? figmaTaskManagementTab : undefined}
+            figmaTaskManagementRowId={hubMountKey === 0 ? figmaTaskManagementRowId : undefined}
+            figmaTaskManagementState={hubMountKey === 0 ? figmaTaskManagementState : undefined}
+            figmaTaskManagementConfirm={hubMountKey === 0 ? figmaTaskManagementConfirm : undefined}
             figmaOpenImportPostLinks={hubMountKey === 0 ? figmaOpenImportPostLinks : undefined}
             figmaPostingMirroredTooltipRowId={hubMountKey === 0 ? figmaPostingMirroredTooltipRowId : undefined}
             figmaPostingValidationTooltips={hubMountKey === 0 ? figmaPostingValidationTooltips : undefined}

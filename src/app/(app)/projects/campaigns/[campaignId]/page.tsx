@@ -23,6 +23,11 @@ export default async function CampaignDetailPage({
     figmaOpenUploadInsightReport?: string;
     figmaInsightReportState?: string;
     figmaUploadInsightRow?: string;
+    figmaOpenTaskManagement?: string;
+    figmaTaskManagementTab?: string;
+    figmaTaskManagementRow?: string;
+    figmaTaskManagementState?: string;
+    figmaTaskManagementConfirm?: string;
     figmaOpenImportPostLinks?: string;
     figmaOpenExecutionGuide?: string;
     figmaPostingMirroredTooltip?: string;
@@ -55,6 +60,11 @@ export default async function CampaignDetailPage({
     figmaOpenUploadInsightReport,
     figmaInsightReportState,
     figmaUploadInsightRowId,
+    figmaOpenTaskManagement,
+    figmaTaskManagementTab,
+    figmaTaskManagementRowId,
+    figmaTaskManagementState,
+    figmaTaskManagementConfirm,
     figmaOpenImportPostLinks,
     figmaOpenExecutionGuide,
     figmaPostingMirroredTooltipRowId,
@@ -86,6 +96,11 @@ export default async function CampaignDetailPage({
       figmaOpenUploadInsightReport={figmaOpenUploadInsightReport}
       figmaInsightReportState={figmaInsightReportState}
       figmaUploadInsightRowId={figmaUploadInsightRowId}
+      figmaOpenTaskManagement={figmaOpenTaskManagement}
+      figmaTaskManagementTab={figmaTaskManagementTab}
+      figmaTaskManagementRowId={figmaTaskManagementRowId}
+      figmaTaskManagementState={figmaTaskManagementState}
+      figmaTaskManagementConfirm={figmaTaskManagementConfirm}
       figmaOpenImportPostLinks={figmaOpenImportPostLinks}
       figmaOpenExecutionGuide={figmaOpenExecutionGuide}
       figmaPostingMirroredTooltipRowId={figmaPostingMirroredTooltipRowId}
