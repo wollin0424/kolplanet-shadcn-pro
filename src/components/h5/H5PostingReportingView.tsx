@@ -200,6 +200,7 @@ function H5PostLinkRow({
   entry,
   label,
   labelSuffix,
+  description,
   required = false,
   variant = "master",
   placeholder,
@@ -210,6 +211,7 @@ function H5PostLinkRow({
   entry: H5PostLinkEntry;
   label: string;
   labelSuffix?: string;
+  description?: string;
   required?: boolean;
   variant?: "master" | "mirrored";
   placeholder: string;
@@ -241,25 +243,30 @@ function H5PostLinkRow({
         variant === "mirrored" && "rounded-lg border border-gray-200 bg-gray-50/80 p-3"
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <p
-          className={cn(
-            "min-w-0 leading-snug",
-            variant === "master"
-              ? "text-[14px] font-semibold text-gray-900"
-              : "text-[12px] font-medium text-gray-700"
-          )}
-        >
-          {label}
-          {labelSuffix ? (
-            <>
-              {" "}
-              <span className="font-normal text-gray-400">{labelSuffix}</span>
-            </>
-          ) : null}
-          {required ? <span className="ml-0.5 text-red-500">*</span> : null}
-        </p>
-        <H5PostLinkStatusBadge health={entry.health} submitted={entry.submitted} />
+      <div className="space-y-1">
+        <div className="flex items-start justify-between gap-2">
+          <p
+            className={cn(
+              "min-w-0 leading-snug",
+              variant === "master"
+                ? "text-[14px] font-semibold text-gray-900"
+                : "text-[12px] font-medium text-gray-700"
+            )}
+          >
+            {label}
+            {labelSuffix ? (
+              <>
+                {" "}
+                <span className="font-normal text-gray-400">{labelSuffix}</span>
+              </>
+            ) : null}
+            {required ? <span className="ml-0.5 text-red-500">*</span> : null}
+          </p>
+          <H5PostLinkStatusBadge health={entry.health} submitted={entry.submitted} />
+        </div>
+        {description ? (
+          <p className="text-[11px] leading-relaxed text-gray-500">{description}</p>
+        ) : null}
       </div>
       <div className="flex items-center gap-2">
         <Input
@@ -376,6 +383,7 @@ function H5TaskGroupCard({
           entry={group.master}
           label="Master Link"
           labelSuffix="(Original Posts)"
+          description="Enter the primary URL of the content published on the main platform."
           required
           variant="master"
           placeholder="Paste original post link here..."
