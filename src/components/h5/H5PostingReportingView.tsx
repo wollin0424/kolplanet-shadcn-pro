@@ -342,7 +342,7 @@ function H5TaskGroupCard({
 
   return (
     <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-      <div className="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50/80 px-4 py-3.5">
+      <div className="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50/80 px-4 py-2.5">
         <h2 className="text-[15px] font-semibold tracking-tight text-gray-900">
           Task Group {groupIndex + 1}
         </h2>
@@ -386,10 +386,16 @@ function H5TaskGroupCard({
 
         {showMirroredSection ? (
           <div className="space-y-3 border-t border-gray-100 pt-4">
-            <p className="text-[12px] font-semibold text-gray-700">
-              Mirrored Links{" "}
-              <span className="font-normal text-gray-400">(Cross-platform Reposts)</span>
-            </p>
+            <div className="space-y-1">
+              <p className="text-[12px] font-semibold text-gray-700">
+                Mirrored Links{" "}
+                <span className="font-normal text-gray-400">(Cross-platform Reposts)</span>
+              </p>
+              <p className="text-[11px] leading-relaxed text-gray-500">
+                If you reposted this content to other platforms, submit the repost links here. If
+                not, please skip.
+              </p>
+            </div>
 
             {group.mirrored.map((entry, index) => (
               <H5PostLinkRow
@@ -553,7 +559,7 @@ export function H5PostingReportingView({
     <H5PageShell
       backHref={overviewHref}
       pageTitle="Posting & Reporting"
-      pageIntro="Submit each original post link separately. Once verified, upload its dedicated insight report to the corresponding task group to unlock review and payment."
+      pageIntro="Create a Master Link for each original post, followed by its Mirrored Links and Insight Report screenshot for settlement. Each unique original post counts as one task."
     >
       <H5InfluencerCard
         name={brief.influencer.name}
