@@ -49,6 +49,7 @@ import { cn } from "@/lib/utils";
 import {
   AlertCircle,
   CheckCircle2,
+  ChevronDown,
   Images,
   Plus,
   RefreshCcw,
@@ -75,9 +76,12 @@ function H5PostLinkStatusBadge({
   health: H5PostLinkHealth;
   submitted?: boolean;
 }) {
+  const badgeClass =
+    "inline-flex h-[22px] shrink-0 items-center gap-1 rounded-full border px-2.5 text-[10px] font-semibold leading-none";
+
   if (health === "verifying") {
     return (
-      <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold leading-none text-gray-600">
+      <span className={cn(badgeClass, "border-gray-200 bg-gray-50 text-gray-600")}>
         <span
           className="inline-block size-2.5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600"
           aria-hidden
@@ -89,7 +93,7 @@ function H5PostLinkStatusBadge({
 
   if (health === "verified" && submitted) {
     return (
-      <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold leading-none text-emerald-700">
+      <span className={cn(badgeClass, "border-emerald-200 bg-emerald-50 text-emerald-700")}>
         <CheckCircle2 size={11} strokeWidth={2.2} />
         Verified
       </span>
@@ -107,12 +111,7 @@ function H5PostLinkStatusBadge({
         };
 
   return (
-    <span
-      className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-none",
-        copy.className
-      )}
-    >
+    <span className={cn(badgeClass, copy.className)}>
       <AlertCircle size={11} strokeWidth={2.2} />
       {copy.label}
     </span>
@@ -234,13 +233,20 @@ function H5PostLinkRow({
   };
 
   return (
-    <div className="space-y-2.5">
+    <div
+      className={cn(
+        "space-y-2.5",
+        variant === "master" &&
+          "rounded-xl border-2 border-brand/30 bg-white p-3.5 shadow-[0_1px_2px_rgba(37,99,235,0.06)]",
+        variant === "mirrored" && "rounded-lg border border-gray-200 bg-gray-50/80 p-3"
+      )}
+    >
       <div className="flex items-start justify-between gap-2">
         <p
           className={cn(
             "min-w-0 leading-snug",
             variant === "master"
-              ? "text-[13px] font-semibold text-gray-900"
+              ? "text-[14px] font-semibold text-gray-900"
               : "text-[12px] font-medium text-gray-700"
           )}
         >
@@ -277,7 +283,11 @@ function H5PostLinkRow({
             variant === "master" &&
               !readOnly &&
               !urlError &&
-              "border-brand/20 focus-visible:border-brand/40 focus-visible:ring-brand/15",
+              "border-brand/25 bg-white focus-visible:border-brand/45 focus-visible:ring-brand/15",
+            variant === "mirrored" &&
+              !readOnly &&
+              !urlError &&
+              "border-gray-200 bg-white focus-visible:border-gray-300",
             urlError && "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
           )}
         />
@@ -312,12 +322,15 @@ function H5TaskGroupCard({
   groupIndex,
   kolId,
   insightHoverCardId,
+  collapsible = false,
 }: {
   group: H5MasterTaskGroup;
   groupIndex: number;
   kolId: string;
   insightHoverCardId?: string;
+  collapsible?: boolean;
 }) {
+  const [expanded, setExpanded] = useState(true);
   const showMirroredSection = group.master.submitted || group.mirrored.length > 0;
   const allMirroredFilled = group.mirrored.every(
     (entry) => entry.submitted || entry.url.trim()
@@ -328,20 +341,30 @@ function H5TaskGroupCard({
     (group.mirrored.length === 0 || allMirroredFilled);
 
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <span className="inline-flex h-6 items-center rounded-full border border-brand/20 bg-brand-50 px-2.5 text-[11px] font-semibold tracking-wide text-brand">
+    <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+      <div className="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50/80 px-4 py-3.5">
+        <h2 className="text-[15px] font-semibold tracking-tight text-gray-900">
           Task Group {groupIndex + 1}
-        </span>
-        {group.mirrored.length > 0 ? (
-          <span className="text-[11px] font-medium text-gray-400">
-            {group.mirrored.filter((entry) => entry.submitted).length}/{group.mirrored.length}{" "}
-            mirrored
-          </span>
+        </h2>
+        {collapsible ? (
+          <button
+            type="button"
+            onClick={() => setExpanded((value) => !value)}
+            aria-expanded={expanded}
+            aria-label={expanded ? "Collapse task group" : "Expand task group"}
+            className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+          >
+            <ChevronDown
+              size={16}
+              strokeWidth={2.2}
+              className={cn("transition-transform duration-200", expanded && "rotate-180")}
+            />
+          </button>
         ) : null}
       </div>
 
-      <div className="space-y-4">
+      {expanded ? (
+      <div className="space-y-4 p-4">
         <div className="flex items-center gap-2">
           <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50/70 text-brand/80">
             <Send size={15} strokeWidth={2} />
@@ -420,6 +443,7 @@ function H5TaskGroupCard({
           </div>
         ) : null}
       </div>
+      ) : null}
     </section>
   );
 }
@@ -544,6 +568,7 @@ export function H5PostingReportingView({
             group={group}
             groupIndex={index}
             kolId={kolId}
+            collapsible={(posting.taskGroups ?? []).length > 1}
             insightHoverCardId={index === 0 ? insightHoverCardId : undefined}
           />
         ))}
